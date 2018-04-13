@@ -20,7 +20,7 @@ import copy
 import csv
 import matplotlib as mpl
 from a3d_modules.a3d_georaster import A3DDEMRaster, A3DGeoRaster
-from a3d_scripts.dem_compare_lib import initialization, coregistration, stats, report
+from dem_compare_lib import initialization, coregistration, stats, report
 
 
 gdal.UseExceptions()
