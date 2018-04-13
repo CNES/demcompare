@@ -6,7 +6,7 @@ planimetric resolution, and altimetric unit.
 The coregistration algorithm is based on the Nuth & Kääb universal coregistration method.
 
 dem_compare provides a wide variety of standard metrics and allows one to classify the statistics. The default behavior
-classifies the stats by slope ranges but one can provides any other data to classify the stats from.
+classifies the stats by slope ranges but one can provide any other data to classify the stats from.
 
 A comparison report can be compiled as html or pdf documentation with statistics printed as tables and plots.
 
@@ -35,10 +35,11 @@ unit.
 
 #### ROI definition
 
-The processed Region of interest (ROI) is either defined by
-    * the image coordinates (x,y) of its top-left corner, and its dimensions (w, h) in pixels as a python dictionary with
+The processed Region of interest (ROI) is either defined by:
+
+    the image coordinates (x,y) of its top-left corner, and its dimensions (w, h) in pixels as a python dictionary with
     'x', 'y', 'w' and 'h' keys
-    * or the geographical coordinates of the projected image as tuple with (left, right, bottom, top) coordinates
+    or the geographical coordinates of the projected image as tuple with (left, right, bottom, top) coordinates
 
 In anyway, this is four numbers that ought to be given in the `json` configuration file.
 
@@ -48,12 +49,12 @@ If no ROI definition is provided then DEMs raster are fully processed.
 
 Here is the list of required dependencies for the python environment:
 
-    * `gdal` with version 2.1.0 or higher.
-    * `numpy`
-    * `scipy`
-    * `pyproj`
-    * `astropy`
-    * `matplotlib`
+    `gdal` with version 2.1.0 or higher.
+    `numpy`
+    `scipy`
+    `pyproj`
+    `astropy`
+    `matplotlib`
 
 For the report to be compied one shall install `latex` and `latex` (for the .pdf version).
 
