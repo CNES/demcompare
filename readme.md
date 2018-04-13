@@ -35,15 +35,29 @@ unit.
 
 #### ROI definition
 
-The processed Region of interest (ROI) is either defined by:
-
-    the image coordinates (x,y) of its top-left corner, and its dimensions (w, h) in pixels as a python dictionary with
-    'x', 'y', 'w' and 'h' keys
-    or the geographical coordinates of the projected image as tuple with (left, right, bottom, top) coordinates
+The processed Region of interest (ROI) is either defined by (1) either the image coordinates (x,y) of its top-left corner,
+and its dimensions (w, h) in pixels as a python dictionary with 'x', 'y', 'w' and 'h' keys or (2) the geographical
+coordinates of the projected image as tuple with (left, right, bottom, top) coordinates
 
 In anyway, this is four numbers that ought to be given in the `json` configuration file.
 
 If no ROI definition is provided then DEMs raster are fully processed.
+
+#### step by step process (and the possibility to avoid the coregistration step)
+
+dem_compare allows one to execute only a subset of the whole process. As such, a `--step` command line argument is
+provided. It accepts values from `{coregistration,stats,report}` :
+
+    [user@machine] $ python dem_compare.py
+    usage: dem_compare.py [-h]
+                          [--step {coregistration,stats,report} [{coregistration,stats,report} ...]]
+                          [--debug] [--display]
+                          config.json
+
+All the steps are optional, and a dem_compare can start at any step as long as previously required step have been launched.
+This means that one can launch the report step only as long as the stats step has already been performed from a previous
+dem_compare launch and the config.json remains the same.
+Note that the coregistration step is not mandatory as one can decide its DEMs are already coregistered.
 
 ## Dependencies
 
