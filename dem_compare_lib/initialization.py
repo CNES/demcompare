@@ -82,11 +82,8 @@ def initialization_plani_opts(cfg):
     :return:
     """
 
-    default_plani_opts = {'auto_guess_disp_params' : False,
-                          'coregistration_method' : 'correlation',
-                          'correlator' : 'PRO_Medicis',
-                          'disp_init': {'x':0, 'y':0},
-                          'disp_range': {'x':30, 'y':30}}
+    default_plani_opts = {'coregistration_method' : 'nuth_kaab',
+                          'disp_init': {'x': 0, 'y': 0}}
 
     if 'plani_opts' not in cfg:
         cfg['plani_opts'] = default_plani_opts
