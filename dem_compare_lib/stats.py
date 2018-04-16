@@ -16,7 +16,7 @@ import math
 import json
 import collections
 import csv
-from a3d_modules.a3d_georaster import A3DGeoRaster
+from dem_compare_lib.a3d_georaster import A3DGeoRaster
 
 
 def gaus(x, a, x_zero, sigma):

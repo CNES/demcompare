@@ -10,7 +10,7 @@ import os
 import glob
 import csv
 
-from a3d_modules.sphinx_project_generator import SphinxProjectManager
+from dem_compare_lib.sphinx_project_generator import SphinxProjectManager
 
 
 def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', projectDir='.'):

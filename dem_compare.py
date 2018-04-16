@@ -19,7 +19,7 @@ import numpy as np
 import copy
 import csv
 import matplotlib as mpl
-from a3d_modules.a3d_georaster import A3DDEMRaster, A3DGeoRaster
+from dem_compare_lib.a3d_georaster import A3DDEMRaster, A3DGeoRaster
 from dem_compare_lib import initialization, coregistration, stats, report
 
 
@@ -206,7 +206,7 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
         mpl.use('Agg')
 
     # Only now import a3d_georaster classes since they rely on matplotlib
-    from a3d_modules.a3d_georaster import A3DDEMRaster, A3DGeoRaster
+    from dem_compare_lib.a3d_georaster import A3DDEMRaster, A3DGeoRaster
 
     # Set final_json_file name and try to read it if it exists (if a previous run was launched)
     final_json_file = os.path.join(cfg['outputDir'], 'final_config.json')

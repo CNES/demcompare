@@ -11,8 +11,7 @@ import numpy as np
 import matplotlib.pyplot as pl
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
-from a3d_modules.a3d_georaster import A3DDEMRaster
-from a3d_modules.a3d_georaster import A3DGeoRaster
+from dem_compare_lib.a3d_georaster import A3DDEMRaster, A3DGeoRaster
 
 
 def grad2d(dem):
