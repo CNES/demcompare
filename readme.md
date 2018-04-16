@@ -13,9 +13,9 @@ A comparison report can be compiled as html or pdf documentation with statistics
 ## Usage
 
 Run the python script `dem_compare.py` with a json configuration file as unique
-argument:
+argument (see `test_config.json` as an example):
 
-    python dem_compare.py example_config.json
+    python dem_compare.py test_config.json
 
 #### Conventions
 
@@ -70,7 +70,7 @@ Here is the list of required dependencies for the python environment:
     `astropy`
     `matplotlib`
 
-For the report to be compied one shall install `latex` and `latex` (for the .pdf version).
+For the report to be compied one shall install `sphinx` and `latex` (for the .pdf version).
 
 ## References
 
