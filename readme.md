@@ -17,6 +17,10 @@ argument (see `test_config.json` as an example):
 
     python dem_compare.py test_config.json
 
+The results can be observed with:
+
+    firefox test_output/report_documentation/html/dem_compare_report.html &
+
 #### Conventions
 
 Inside the `json` file, the DEMs are referred to as inputDSM and inputRef. The last one is supposed to be the denser one.
