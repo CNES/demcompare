@@ -63,6 +63,115 @@ This means that one can launch the report step only as long as the stats step ha
 dem_compare launch and the config.json remains the same.
 Note that the coregistration step is not mandatory as one can decide its DEMs are already coregistered.
 
+
+#### The parameters
+
+Here is the list of the parameters and the associated default value when it exists:
+
+    {
+        "outputDir" :
+        "inputDSM" : {  "path",
+                        "zunit" : "meter",
+                        "georef" : "WGS84",
+                        "nodata" : }
+        "inputRef" : {  "path",
+                        "zunit" : "meter",
+                        "georef" : "WGS84",
+                        "nodata" : }}
+        "plani_opts" : {    "coregistration_method" : "nuth_kaab",
+                            "disp_init" : {"x": 0, "y": 0}},
+        "stats_opts" : {    "class_type": "slope",
+                            "class_rad_range": [0, 10, 25, 50, 90],
+                            "cross_classification': False}
+    }
+
+## Processing the outputs
+
+#### The stats
+
+dem_compare results display some basic statistics computed on the image on altitude differences (calles `errors` below)
+that are listed here :
+- the minimal and maximal values
+- the mean and the standard deviation
+- the median and the NMAD (see the References section)
+- the '90 percentile' which is actually the 90% percentile of the absolute differences between errors and the mean(errors)
+- and, the percentage of valid points (for whom the statistics have been computed)
+
+Those stats are actually displayed by stats set (see next section).
+
+#### The stats sets
+
+Using dem_compare one can get a closer look on particular areas compared together. It is by setting the `class_type` value
+and the `class_rad_range` of the stats options (`stats_opts`) that one can set how the stats shall be classified if at
+all.
+
+The default behavior is `class_type`: `slope` which means the stats are going to be classified by slope range. The slope
+range can be set with the `class_rad_range` argument. Hence, the statistics will be displayed overall, and by stats set,
+each set containing all the pixels for whom the inputRef slope is contained inside the associated slope range. Hence,
+there is a stats set for each slope range, and all the stats set form a partition of the altitude differences image.
+
+Now, one can decide not to classify the stats by slope range but to use instead any other exogenous data he posses. For
+that purpose, one might set `class_type`: `user` and add a file path as value to the `class_support_ref` key. Still,
+the `class_rad_range` argument is to be set.
+
+The `class_rad_range` key requires a list as : `[0, 5, 10]`. Set like this, three sets will partitioned the stats :
+(1) the `class_support_ref` pixels with radiometry inside [0, 5[, (2) the one with radiometry inside [5, 10[, and (3),
+the ones inside [10, inf[. Note that if `class_type` is set to `slope` (default value), then no `class_support_ref` is
+required and the slope image to classify stats from will be computed by dem_compare on the inputRef DEM.
+
+#### The cross classification and the modes
+
+Along with classifying the statistics, dem_compare can display those stats in three different modes where a mode is
+actually a set of all the pixels of the altitude differences image.
+
+By default, the `cross_classification` is set to `False`. Hence only the standard mode will be displayed. If, the
+`cross_classification` was to be set to `True`, then the coherent and the incoherent (both forming a partition of the
+standard one) modes would also be displayed.
+
+The cross classification activation allows dem_compare to classify not only the pixels of the inputRef (which is performed
+when `class_type` is not `None`) but also the pixels of the inputDSM. This will be done the same way, which means this
+will be done considering the same `class_rad_range`. Plus, if `class_type` is `slope` (default), then the classification
+of the inputDSM pixels rely on its slope values (computed by dem_compare itself). And if `class_type` is set to `user`,
+then one has to set a full file path to the `class_support_dsm` key.
+
+Now here is how the modes are defined :
+(1) the standard mode results simply on all on valid pixels. This means nan values but also ouliers and masked ones are
+discarded. Note that the nan values can be originated from the altitude differences image and / or the reference support
+image. The last one being the slope image or the image given by the user as value to the class_support_ref` key and
+`class_type` is not None.
+(2) the coherent mode which is the standard mode where only the pixels for which input DEMs classifications are coherent.
+(3) the incoherent mode which is the coherent one complementary.
+
+#### The dh map and the intermediate data and
+
+dem_compare will store several data and here is a brief explanation for each one.
+
+First, the images :
+
+(1) the intial_dh.tif image is the altitude differences image when both DEMs have been reprojected to the same grid (the
+one of inputDSM) and no coregistration has been performed.
+(2) final_dh.tif is the altitude differences image from the reprojected DEMs after the coregistration
+(3) the coreg_DSM.tif and coreg_Ref.tif are the coregistered DEMS.
+(4) the Ref_support.tif and DSM_support.tif are the images from which the stats have been classified. Depending on the
+values given to the parameters those images might not be there. With default behavior only the Ref_support.tif is computed
+and it is the coreg_Ref.tif slope.
+(5) the Ref_support_classified.png and the DSM_support_classified.png are the classified version of the images listed
+previously. The alpha band is used to mask the pixels for whom both classification do not match. This could be because
+one pixel has a slope between [0; 20[ for one DEM and between [45; 100[ for the other one.
+(6) the images whose names start with 'AltiErrors-' are the plots saved by dem_compare. They show histograms by stats
+set and same histograms fitted by gaussian.
+
+Then, the remaining files :
+
+(7) the final_config.json is the completion of the initial config.json file given by the user. It contains additional
+information and is used when dem_compare is launched step by step.
+(8) the files whose names start with 'stats_results-' are the .json and .csv files listed the statistics for each
+set. There is one file by mode.
+(9) the .npy files are the numpy histograms for each stats mode and set.
+
+Eventually, one shall find in the report_documentation/ directory the full documentation with all the results presented
+for each mode and each set.
+
 ## Dependencies
 
 Here is the list of required dependencies for the python environment:
