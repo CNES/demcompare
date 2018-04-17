@@ -32,9 +32,9 @@ def roundUp(x, y):
 def getColor(nb_color=10):
     import matplotlib.pyplot as P
     if 10 < nb_color < 21:
-        x = P.cm.get_cmap('tab20')
+        x = P.cm.get_cmap('Vega20')
     if nb_color < 11:
-        x = P.cm.get_cmap('tab10')
+        x = P.cm.get_cmap('Vega10')
     if nb_color > 20:
         raise NameError("Error : Too many colors requested")
 
