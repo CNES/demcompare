@@ -52,7 +52,9 @@ def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
 
     # function to be correlated with terrain aspect
     # NB : target = dh / tan(alpha) (see Fig. 2 of Nuth & Kaab 2011)
-    target = dh/slope
+    # Explicitely ignore divide by zero warning, as they will be processed as nan later.
+    with np.errstate(divide='ignore', invalid='ignore'):
+        target = dh/slope
     target = target[np.isfinite(dh)]
     aspect = aspect[np.isfinite(dh)]
 
