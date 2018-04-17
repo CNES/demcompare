@@ -104,7 +104,7 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     cfg['alti_results']['rectifiedRef']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_dem2.r))
 
     # Print report
-    print("Plani 2D shift between input dsm ({}) and input ref ({}) is".format(dem1.ds_file,
+    print("Plani 2D shift between input dsm ({}) and input ref ({}) is".format(cfg['inputDSM']['path'],
                                                                                cfg['inputRef']['path']))
     print(" -> row : {}".format(cfg['plani_results']['dy']['bias_value'] * coreg_dem1.plani_unit))
     print(" -> col : {}".format(cfg['plani_results']['dx']['bias_value'] * coreg_dem1.plani_unit))
