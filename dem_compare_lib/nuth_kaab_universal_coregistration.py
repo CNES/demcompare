@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 
+# Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
+
 """
 Nuth and Kaab universal co-registration (Correcting elevation data for glacier change detection 2011).
 """

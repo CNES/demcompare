@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 
+# Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
+
+# This file include code under the georaster Copyright:
+#   https://github.com/GeoUtils/georaster
+#   georaster is released under the LGPL 3.0 licence:
+#   https://github.com/GeoUtils/georaster/blob/master/LICENSE.txt
+
 """
 a3d_georaster contains classes to deal with georeferenced raster
 

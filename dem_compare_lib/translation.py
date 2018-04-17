@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 
+# Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
+
 """
 Translate DSMs
 

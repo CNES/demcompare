@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 
+# Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
+
 """
 dem_compare_extra contains scripts unecessary for dem_compare but which can still add value to the results like:
 - merge_stats that merges stats computed by dem_compare.py on several tiles / part of the image

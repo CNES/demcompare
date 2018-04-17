@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 
+# Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
+
 """
 sphinx_project_generator was built for dsm_compare.py and its 'report' step.
 As so, it is designed for this simple purpose, meaning only light version of
