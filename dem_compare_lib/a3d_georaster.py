@@ -236,6 +236,12 @@ class A3DGeoRaster(object):
             # Spatial Reference System
             self.srs = spatial_ref_sys
 
+        # Handle geographic units
+        if self.srs.IsGeographic():
+            self.plani_unit = u.deg
+        else:
+            self.plani_unit = u.m
+            
         # Create footprint tuple in native dataset coordinates
         self.footprint = ( self.trans[0],
                            self.trans[0] + self.ds.RasterXSize * self.trans[1],
