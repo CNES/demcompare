@@ -30,11 +30,20 @@ def roundUp(x, y):
 
 
 def getColor(nb_color=10):
+    import matplotlib
     import matplotlib.pyplot as P
     if 10 < nb_color < 21:
-        x = P.cm.get_cmap('Vega20')
+        if matplotlib.__version__ >= '2.0.1':
+            # According to matplotlib documentation the Vega colormaps are deprecated since the 2.0.1 and
+            # disabled since 2.2.0
+            x = P.cm.get_cmap('tab20')
+        else:
+            x = P.cm.get_cmap('Vega20')
     if nb_color < 11:
-        x = P.cm.get_cmap('Vega10')
+        if matplotlib.__version__ >= '2.0.1':
+            x = P.cm.get_cmap('tab10')
+        else:
+            x = P.cm.get_cmap('Vega10')
     if nb_color > 20:
         raise NameError("Error : Too many colors requested")
 
