@@ -135,42 +135,51 @@ of the inputDSM pixels rely on its slope values (computed by dem_compare itself)
 then one has to set a full file path to the `class_support_dsm` key.
 
 Now here is how the modes are defined :
-(1) the standard mode results simply on all on valid pixels. This means nan values but also ouliers and masked ones are
+1. the standard mode results simply on all on valid pixels. This means nan values but also ouliers and masked ones are
 discarded. Note that the nan values can be originated from the altitude differences image and / or the reference support
 image. The last one being the slope image or the image given by the user as value to the class_support_ref` key and
 `class_type` is not None.
-(2) the coherent mode which is the standard mode where only the pixels for which input DEMs classifications are coherent.
-(3) the incoherent mode which is the coherent one complementary.
 
-#### The dh map and the intermediate data and
+2. the coherent mode which is the standard mode where only the pixels for which input DEMs classifications are coherent.
+
+3. the incoherent mode which is the coherent one complementary.
+
+#### The dh map and the intermediate data
 
 dem_compare will store several data and here is a brief explanation for each one.
 
 First, the images :
 
-(1) the intial_dh.tif image is the altitude differences image when both DEMs have been reprojected to the same grid (the
+1. the `intial_dh.tif` image is the altitude differences image when both DEMs have been reprojected to the same grid (the
 one of inputDSM) and no coregistration has been performed.
-(2) final_dh.tif is the altitude differences image from the reprojected DEMs after the coregistration
-(3) the coreg_DSM.tif and coreg_Ref.tif are the coregistered DEMS.
-(4) the Ref_support.tif and DSM_support.tif are the images from which the stats have been classified. Depending on the
-values given to the parameters those images might not be there. With default behavior only the Ref_support.tif is computed
-and it is the coreg_Ref.tif slope.
-(5) the Ref_support_classified.png and the DSM_support_classified.png are the classified version of the images listed
+
+2. `final_dh.tif` is the altitude differences image from the reprojected DEMs after the coregistration
+
+3. the `coreg_DSM.tif` and `coreg_Ref.tif` are the coregistered DEMS.
+
+4. the `Ref_support.tif` and `DSM_support.tif` are the images from which the stats have been classified. Depending on the
+values given to the parameters those images might not be there. With default behavior only the `Ref_support.tif` is computed
+and it is the `coreg_Ref.tif` slope.
+
+5. the `Ref_support_classified.png` and the `DSM_support_classified.png` are the classified version of the images listed
 previously. The alpha band is used to mask the pixels for whom both classification do not match. This could be because
 one pixel has a slope between [0; 20[ for one DEM and between [45; 100[ for the other one.
-(6) the images whose names start with 'AltiErrors-' are the plots saved by dem_compare. They show histograms by stats
+
+6. the images whose names start with 'AltiErrors-' are the plots saved by dem_compare. They show histograms by stats
 set and same histograms fitted by gaussian.
 
 Then, the remaining files :
 
-(7) the final_config.json is the completion of the initial config.json file given by the user. It contains additional
+7. the `final_config.json` is the completion of the initial `config.json` file given by the user. It contains additional
 information and is used when dem_compare is launched step by step.
-(8) the files whose names start with 'stats_results-' are the .json and .csv files listed the statistics for each
-set. There is one file by mode.
-(9) the .npy files are the numpy histograms for each stats mode and set.
 
-Eventually, one shall find in the report_documentation/ directory the full documentation with all the results presented
-for each mode and each set.
+8. the files whose names start with 'stats_results-' are the `.json` and `.csv` files listed the statistics for each
+set. There is one file by mode.
+
+9. the `.npy` files are the numpy histograms for each stats mode and set.
+
+Eventually, one shall find in the `report_documentation/ directory` the full documentation with all the results presented
+for each mode and each set, in `html` or `latex` format.
 
 ## Dependencies
 
