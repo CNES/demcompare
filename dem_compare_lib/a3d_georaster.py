@@ -514,8 +514,11 @@ class A3DGeoRaster(object):
                                       interp_type, 0.0, 0.0, None)
 
         # Load data
-        new_raster = self.__class__(target_ds)
-        new_raster.r[new_raster.r == 0] = nodata
+        new_raster = self.__class__(target_ds, nodata=self.nodata, rpc=self.rpc, band=self.band)
+        # ! As far as known gdal.ReprojectImage returns a dataset filled with '0' values instead of 'nodata' values...
+        #   Hence we cannot rely on the class constructor to replace nodata by np.nan and we do it here.
+        new_raster.nodata = nodata
+        new_raster.r[new_raster.r == 0] = np.nan
 
         return new_raster
 
@@ -569,7 +572,11 @@ class A3DGeoRaster(object):
 
     def biggest_common_footprint(self, other_geo_raster):
         """
-        Get biggest common footprint between self and filename dataset
+        Get biggest common footprint between self and filename dataset, so that the output footprint is superposable to
+        self footprint.
+
+        Hence, self.biggest_common_footprint(other_geo_raster) might output a different result than
+        other_geo_raster.biggest_common_footprint(self).
 
         :param other_geo_raster: A3DGeoRaster, to intersect footprint with
         :return: (left, right, bottom, top) coordinates
@@ -590,16 +597,20 @@ class A3DGeoRaster(object):
                                                                  left, bottom)
         poly2 = ogr.CreateGeometryFromWkt(wkt)
 
-        # Get back biggest common footprint
+        # Get back biggest common footprint that relies on self grid
         intersect = poly1.Intersection(poly2)
-        footprint = intersect.GetEnvelope()
+        left, right, bottom, top = intersect.GetEnvelope()
+        left = self.footprint[0] + np.ceil((left - self.footprint[0]) / self.xres) * self.xres
+        right = self.footprint[1] - np.ceil((self.footprint[1] - right) / self.xres) * self.xres
+        bottom = self.footprint[2] - np.ceil((self.footprint[2] - bottom) / self.yres) * self.yres
+        top = self.footprint[3] + np.ceil((top - self.footprint[3]) / self.yres) * self.yres
 
         # check that intersection is not void
         if intersect.GetArea() == 0:
             print('Warning: Intersection is void')
             return 0
         else:
-            return footprint
+            return left, right, bottom, top
 
     def _get_orthodromic_distance(self, lon1, lat1, lon2, lat2):
         """
