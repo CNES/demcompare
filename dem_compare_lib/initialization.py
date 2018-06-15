@@ -11,6 +11,7 @@ This is where high level parameters are checked and default options are set
 
 from osgeo import gdal
 from astropy import units as u
+import ast
 
 
 def check_parameters(cfg):
@@ -119,3 +120,4 @@ def initialization_stats_opts(cfg):
     else:
         # we keep users items and add default items he has not set
         cfg['stats_opts'] = dict(default_stats_opts.items() + cfg['stats_opts'].items())
+    cfg['stats_opts']['cross_classification'] = ast.literal_eval(cfg['stats_opts']['cross_classification'])
