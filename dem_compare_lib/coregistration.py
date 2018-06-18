@@ -41,6 +41,19 @@ def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpD
                                                                        dem2,
                                                                        outdirPlot=tmpDir)
 
+    # Instead of taking nk_a3d_libAPI results we change their georef
+    # -> this is because
+    #    NK library takes two DEMs georeferenced and gives back two coreg DEMs keeping the initial georef
+    #    This is done by interpolating & resampling the REF DEM (dem2 here)
+    #    The initial georef is the input DSM (dem1) one, since dem1 and dem2 have supposedly been reprojected onto dem1
+    #    so that dem1 was not resampled
+    #    While this is good behavior for independent use, this is not exactly what we 're wishing for
+    #    We do want the REF DEM to be the one resampled, but we want to keep its georef, and so here is what we do
+    #    so that coreg dem from NK are not modified, but their georef now is the one of dem2
+    coreg_dem1 = coreg_dem1.geo_translate(x_off - 0.5, -y_off - 0.5, system='pixel')
+    coreg_dem2 = coreg_dem2.geo_translate(x_off - 0.5, -y_off - 0.5, system='pixel')
+    final_dh = final_dh.geo_translate(x_off - 0.5, -y_off - 0.5, system='pixel')
+
     # Eventually we return nuth and kaab results :
     #  NB : -y_off because y_off from nk is north oriented
     #       we take into account initial disparity
