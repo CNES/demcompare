@@ -53,7 +53,7 @@ def getColor(nb_color=10):
 def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref):
     """
     Prepares images to classify dz errors from.
-    If 'class_type' is slope, we use gdaldem. Otherwiser we use user defined images but we need to rectify them.
+    If 'class_type' is slope, we use gdaldem. Otherwise we use user defined images but we need to rectify them.
 
     :param cfg: config file
     :param coreg_dsm : A3DDEMRaster, input coregistered DSM
@@ -159,17 +159,22 @@ def rectify_user_support_img(cfg, coreg_dsm, do_cross_classification = False):
     rectified_support_ref = None
     rectified_support_dsm = None
     if 'class_support_ref' in cfg['stats_opts']:
-        input_support_ref = A3DGeoRaster(cfg['stats_opts']['class_support_ref'], nodata=-32768)
+        input_support_ref = A3DGeoRaster(str(cfg['stats_opts']['class_support_ref']), nodata=-32768)
         rectified_support_ref = input_support_ref.reproject(coreg_dsm.srs, int(coreg_dsm.nx), int(coreg_dsm.ny),
                                                             coreg_dsm.footprint[0], coreg_dsm.footprint[3],
                                                             coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_ref.nodata)
-        rectified_support_ref.save_geotif(os.path.join(cfg['outputDir'], 'Ref_support.tif'))
+        rectified_support_ref.save_geotiff(os.path.join(cfg['outputDir'], 'Ref_support.tif'))
     if 'class_support_dsm' in cfg['stats_opts'] and do_cross_classification is True:
-        input_support_dsm = A3DGeoRaster(cfg['stats_opts']['class_support_dsm'], nodata=-32768)
+        input_support_dsm = A3DGeoRaster(str(cfg['stats_opts']['class_support_dsm']), nodata=-32768)
+        # Keep in mind that the DSM geo ref has been shifted, hence we need to shift the support here
+        x_off = cfg['plani_results']['dx']['bias_value'] / input_support_dsm.xres
+        y_off = cfg['plani_results']['dy']['bias_value'] / input_support_dsm.yres
+        input_support_dsm = input_support_dsm.geo_translate(x_off - 0.5, -y_off - 0.5, system='pixel')
         rectified_support_dsm = input_support_dsm.reproject(coreg_dsm.srs, int(coreg_dsm.nx), int(coreg_dsm.ny),
                                                             coreg_dsm.footprint[0], coreg_dsm.footprint[3],
-                                                            coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_dsm.nodata)
-        rectified_support_dsm.save_geotif(os.path.join(cfg['outputDir'], 'DSM_support.tif'))
+                                                            coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_dsm.nodata,
+                                                            interp_type=gdal.GRA_NearestNeighbour)
+        rectified_support_dsm.save_geotiff(os.path.join(cfg['outputDir'], 'DSM_support.tif'))
 
     #
     # Save results into cfg
