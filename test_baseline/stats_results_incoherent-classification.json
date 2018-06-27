@@ -1,0 +1,134 @@
+{
+    "1": {
+        "max": 16.000001907348633, 
+        "plot_file": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/incoherent-classification1.npy", 
+        "90p": 6.0572458267211911, 
+        "set_label": "$\\nabla \\in$ [0% ; 5%]", 
+        "sum_err": -320.99822998046875, 
+        "nmad": 1.4826068928480147, 
+        "std": 3.646912097930908, 
+        "set_name": "[0; 5]", 
+        "%": 1.0951246334310851, 
+        "min": -16.0000057220459, 
+        "rmse": 3.6470344066619873, 
+        "median": -8.815140972728841e-08, 
+        "sum_err.err": 143050.75, 
+        "nbpts": 10755, 
+        "plot_color": [
+            0.12156862745098039, 
+            0.46666666666666667, 
+            0.70588235294117652
+        ], 
+        "mean": -0.029846418648958206
+    }, 
+    "0": {
+        "max": 16.000045776367188, 
+        "plot_file": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/incoherent-classification0.npy", 
+        "90p": 9.0778007507324219, 
+        "set_label": "all", 
+        "sum_err": 8971.0478515625, 
+        "nmad": 4.447780912113189, 
+        "std": 5.001963138580322, 
+        "set_name": "All classes considered", 
+        "%": 15.650354349951124, 
+        "min": -16.000041961669922, 
+        "rmse": 5.002303600311279, 
+        "median": 3.5260518416180275e-07, 
+        "sum_err.err": 3846016.75, 
+        "nbpts": 153699, 
+        "plot_color": [
+            0.0, 
+            0.0, 
+            0.0
+        ], 
+        "mean": 0.058367639780044556
+    }, 
+    "3": {
+        "max": 16.000011444091797, 
+        "plot_file": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/incoherent-classification3.npy", 
+        "90p": 8.821192741394043, 
+        "set_label": "$\\nabla \\in$ [10% ; 25%]", 
+        "sum_err": -7635.9833984375, 
+        "nmad": 4.447764652061462, 
+        "std": 4.757707595825195, 
+        "set_name": "[10; 25]", 
+        "%": 4.290689149560118, 
+        "min": -16.000017166137695, 
+        "rmse": 4.761157512664795, 
+        "median": -3.2210841709456872e-06, 
+        "sum_err.err": 955210.3125, 
+        "nbpts": 42138, 
+        "plot_color": [
+            0.17254901960784313, 
+            0.62745098039215685, 
+            0.17254901960784313
+        ], 
+        "mean": -0.18121370673179626
+    }, 
+    "2": {
+        "max": 16.00000762939453, 
+        "plot_file": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/incoherent-classification2.npy", 
+        "90p": 7.169869756698608, 
+        "set_label": "$\\nabla \\in$ [5% ; 10%]", 
+        "sum_err": -4168.99267578125, 
+        "nmad": 2.965196111726761, 
+        "std": 4.064586162567139, 
+        "set_name": "[5; 10]", 
+        "%": 2.7581256109481918, 
+        "min": -16.000003814697266, 
+        "rmse": 4.067499160766602, 
+        "median": -1.742770109558478e-06, 
+        "sum_err.err": 448142.1875, 
+        "nbpts": 27087, 
+        "plot_color": [
+            1.0, 
+            0.49803921568627452, 
+            0.054901960784313725
+        ], 
+        "mean": -0.15391120314598083
+    }, 
+    "5": {
+        "max": 16.000045776367188, 
+        "plot_file": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/incoherent-classification5.npy", 
+        "90p": 10.622675895690918, 
+        "set_label": "$\\nabla$ > 45%", 
+        "sum_err": 11643.0078125, 
+        "nmad": 5.9303540476799, 
+        "std": 5.895519256591797, 
+        "set_name": "[45; inf[", 
+        "%": 2.3012381883349624, 
+        "min": -16.000041961669922, 
+        "rmse": 5.917985916137695, 
+        "median": 4.070188515470363e-05, 
+        "sum_err.err": 791509.75, 
+        "nbpts": 22600, 
+        "plot_color": [
+            0.58039215686274515, 
+            0.40392156862745099, 
+            0.74117647058823533
+        ], 
+        "mean": 0.515177309513092
+    }, 
+    "4": {
+        "max": 16.000043869018555, 
+        "plot_file": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/incoherent-classification4.npy", 
+        "90p": 9.795262336730957, 
+        "set_label": "$\\nabla \\in$ [25% ; 45%]", 
+        "sum_err": 9454.015625, 
+        "nmad": 4.447828631830215, 
+        "std": 5.428408622741699, 
+        "set_name": "[25; 45]", 
+        "%": 5.205176767676767, 
+        "min": -16.00004005432129, 
+        "rmse": 5.431558132171631, 
+        "median": 1.1108184480690397e-05, 
+        "sum_err.err": 1508103.625, 
+        "nbpts": 51119, 
+        "plot_color": [
+            0.83921568627450982, 
+            0.15294117647058825, 
+            0.15686274509803921
+        ], 
+        "mean": 0.18494132161140442
+    }
+}
