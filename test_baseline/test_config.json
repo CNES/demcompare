@@ -1,0 +1,18 @@
+{
+	"outputDir" : "./test_output/",
+	"inputRef" : {
+		"path" : "./test_data/srtm_ref.tif",
+		"zunit" : "meter",
+		"georef" : "WGS84"
+	},
+	"inputDSM" : {
+		"path" : "./test_data/srtm_blurred_and_shifted.tif",
+		"zunit" : "meter",
+		"georef" : "WGS84",
+		"nodata" : -32768
+	},
+	"plani_opts": {	"coregistration_method": "nuth_kaab",
+			"disp_init": {"x": 0, "y": 0} },
+	"stats_opts": {	"cross_classification": "True",
+			"class_rad_range": [0, 5, 10, 25, 45] }
+}
