@@ -249,12 +249,12 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
     #
     # Compute initial dh and save it
     #
-    initial_dh = A3DGeoRaster.from_raster(reproj_dem.r - reproj_ref.r,
+    initial_dh = A3DGeoRaster.from_raster(reproj_ref.r - reproj_dem.r,
                                           reproj_dem.trans,
                                           "{}".format(reproj_dem.srs.ExportToProj4()),
                                           nodata=-32768)
     initial_dh.save_geotiff(os.path.join(cfg['outputDir'],'initial_dh.tif'))
-    stats.dem_diff_plot(initial_dh, title='DSMs diff without coregistration',
+    stats.dem_diff_plot(initial_dh, title='DSMs diff without coregistration (REF - DSM)',
                         plot_file=os.path.join(cfg['outputDir'],'initial_dem_diff.png'), display=False)
 
     #
@@ -263,7 +263,7 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
     coreg_dem, coreg_ref, final_dh = computeCoregistration(cfg, steps, reproj_dem, reproj_ref, initial_dh,
                                                            final_cfg= final_cfg, final_json_file=final_json_file)
     if final_dh is not initial_dh:
-        stats.dem_diff_plot(final_dh, title='DSMs diff with coregistration',
+        stats.dem_diff_plot(final_dh, title='DSMs diff with coregistration (REF - DSM)',
                             plot_file=os.path.join(cfg['outputDir'],'final_dem_diff.png'), display=False)
 
     #
