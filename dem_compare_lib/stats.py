@@ -739,10 +739,6 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     :return:
     """
 
-    cfg['stats_results'] = {}
-    cfg['stats_results']['images'] = {}
-    cfg['stats_results']['images']['list'] = []
-
     #
     # If we are to classify the 'z' stats then we make sure we have what it takes
     #
@@ -865,3 +861,33 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         # Create the stat report
         #
         # report_multi_tiles([cfg['stats_results']['modes'][modes[mode]]], cfg['outputDir'])
+
+
+def wave_detection(cfg, dh, display=False):
+    """
+    Detect potential oscillations inside dh
+
+    :param cfg: config file
+    :param dh: A3DGeoRaster, dsm - ref
+    :return:
+
+    """
+
+    # Compute mean dh row and mean dh col
+    # -> then compute the min between dh mean row (col) vector and dh rows (cols)
+    res = {'row_wise': np.zeros(dh.r.shape, dtype=np.float32), 'col_wise': np.zeros(dh.r.shape, dtype=np.float32)}
+    axis = -1
+    for dim in res.keys():
+        axis += 1
+        mean = np.nanmean(dh.r, axis=axis)
+        if axis == 1:
+            mean = np.transpose(np.ones((1, mean.size), dtype=np.float32) * mean)
+        res[dim] = dh.r - mean
+
+        cfg['stats_results']['images']['list'].append(dim)
+        cfg['stats_results']['images'][dim] = copy.deepcopy(cfg['alti_results']['dzMap'])
+        cfg['stats_results']['images'][dim].pop('nb_points')
+        cfg['stats_results']['images'][dim]['path'] = os.path.join(cfg['outputDir'], 'dh_{}_wave_detection.tif'.format(dim))
+
+        georaster = A3DGeoRaster.from_raster(res[dim], dh.trans, "{}".format(dh.srs.ExportToProj4()), nodata=-32768)
+        georaster.save_geotiff(cfg['stats_results']['images'][dim]['path'])
