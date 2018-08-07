@@ -881,6 +881,7 @@ def wave_detection(cfg, dh, display=False):
         axis += 1
         mean = np.nanmean(dh.r, axis=axis)
         if axis == 1:
+            # for axis == 1, we need to transpose the array to substitute it to dh.r otherwise 1D array stays row array
             mean = np.transpose(np.ones((1, mean.size), dtype=np.float32) * mean)
         res[dim] = dh.r - mean
 
