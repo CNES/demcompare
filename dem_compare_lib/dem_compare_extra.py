@@ -20,9 +20,8 @@ import argparse
 import copy
 import numpy as np
 import matplotlib as mpl
-from a3d_modules.a3d_georaster import A3DGeoRaster
+from dem_compare_lib.a3d_georaster import A3DGeoRaster
 from stats import create_sets, create_masks
-
 
 DEFAULT_STEPS = []
 ALL_STEPS = ['mosaic', 'merge_stats', 'merge_plots']
@@ -31,6 +30,56 @@ ALL_STEPS = ['mosaic', 'merge_stats', 'merge_plots']
 def load_json(json_file):
     with open(json_file, 'r') as f:
         return json.load(f)
+
+
+def computeMosaic(tiles_path, output_dir):
+    """
+    Compute mosaic thanks to s2p_mosaic.py from all images resulting from tiles computation
+
+    :param tiles_path: a list of all the tiles path
+    :param output_dir: directory where to store json and csv output files
+    :return:
+    """
+
+    import mosaic
+
+    # Reads .json files
+    # - get rid of invalid tiles (the ones without a final_config.json file)
+    final_json_file = 'final_config.json'
+    valid_tiles_path = [tile_path for tile_path in tiles_path if os.path.isfile(os.path.join(tile_path, final_json_file))]
+    # - load the tiles final config json files
+    tiles_final_cfg = [load_json(os.path.join(a_valid_tile, final_json_file)) for a_valid_tile in valid_tiles_path]
+
+    # all tiles do not have all images, they might have failed somewhere before processing remaining images
+    #  -> get all image lists inside a single big list to own them all
+    list_of_label_img_list = [config['stats_results']['images']['list'] if 'stats_results' in config else []
+                              for config in tiles_final_cfg]
+    #  -> get the biggest list (we strongly assume here that the biggest list contains all the images possibly created)
+    index_biggest, biggest_label_img_list = max(enumerate(list_of_label_img_list), key=lambda tup: len(tup[1]))
+    #  -> get the images' name corresponding to the list of labels
+    img_list = [os.path.basename(tiles_final_cfg[index_biggest]['stats_results']['images'][label_img]['path'])
+                for label_img in biggest_label_img_list]
+    # -> we add the dzMap and the initial_dh
+    for config in tiles_final_cfg:
+        if 'alti_results' in config and 'dzMap' in config['alti_results']:
+            img_list.append(os.path.basename(config['alti_results']['dzMap']['path']))
+            continue
+    img_list.append('initial_dh.tif')
+
+    tiles = [os.path.join(a_valid_tile, final_json_file) for a_valid_tile in valid_tiles_path]
+    for img in img_list:
+        if os.path.splitext(img)[1] != '.png':
+            output_img = os.path.join(output_dir, img)
+            color = False
+            nbBands = 1
+            dataType='Float32'
+        else:
+            output_img = os.path.join(output_dir, os.path.splitext(img)[0]+'.tif')
+            color = True
+            nbBands = 4
+            dataType = 'Byte'
+
+        mosaic.main(tiles, output_img, img, color=color, nbBands=nbBands, dataType=dataType)
 
 
 def computeMergePlots(tiles_path, output_dir):
@@ -515,9 +564,12 @@ def computeInitialization(config_json):
     :param config_json:
     :return: config as a dictionary and the list of tiles path
     """
-    # read the json configuration file
-    with open(config_json, 'r') as f:
-        cfg = json.load(f)
+    if isinstance(config_json, dict):
+        cfg = config_json
+    else:
+        # read the json configuration file
+        with open(config_json, 'r') as f:
+            cfg = json.load(f)
 
     # if no 'json_list_file' then nothing to do
     try:
@@ -556,6 +608,8 @@ def main(json_file, steps=DEFAULT_STEPS, debug=False, force=False):
         computeMergeStats(list_of_tiles_path, cfg['outputDir'])
     if 'merge_plots' in steps:
         computeMergePlots(list_of_tiles_path, cfg['outputDir'])
+    if 'mosaic' in steps:
+        computeMosaic(list_of_tiles_path, cfg['outputDir'])
 
 
 def get_parser():
