@@ -115,7 +115,7 @@
       25, 
       45
     ], 
-    "cross_classification": "True", 
+    "cross_classification": true, 
     "class_type": "slope", 
     "alti_error_threshold": {
       "unit": "meter", 
