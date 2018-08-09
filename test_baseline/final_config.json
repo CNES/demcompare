@@ -2,11 +2,11 @@
   "plani_results": {
     "dx": {
       "unit": "deg", 
-      "bias_value": 0.0025000009380921799
+      "bias_value": 0.0025000009362819344
     }, 
     "dy": {
       "unit": "deg", 
-      "bias_value": 0.0041666665932072909
+      "bias_value": 0.0041666665946305118
     }
   }, 
   "inputRef": {
@@ -22,29 +22,29 @@
   }, 
   "alti_results": {
     "dzMap": {
-      "nb_valid_points": 982080, 
+      "nb_valid_points": 980099, 
       "path": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/final_dh.tif", 
       "nodata": -32768.0, 
       "zunit": "m", 
-      "nb_points": 982080
+      "nb_points": 980099
     }, 
     "dz": {
       "percent": 100, 
       "unit": "m", 
-      "bias_value": -0.017563408240675926
+      "bias_value": -0.017627475783228874
     }, 
     "rectifiedDSM": {
-      "nb_points": 982080, 
+      "nb_points": 980099, 
       "zunit": "meter", 
-      "nb_valid_points": 982080, 
+      "nb_valid_points": 980099, 
       "georef": "WGS84", 
       "path": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/coreg_DEM.tif", 
       "nodata": -32768.0
     }, 
     "rectifiedRef": {
-      "nb_points": 982080, 
+      "nb_points": 980099, 
       "zunit": "meter", 
-      "nb_valid_points": 982080, 
+      "nb_valid_points": 980099, 
       "georef": "WGS84", 
       "path": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/coreg_REF.tif", 
       "nodata": -32768.0
