@@ -20,17 +20,19 @@ def load_json(json_file):
 
 
 def main():
-    output_dir='../test_output/'
-    baseline_dir='../test_baseline/'
+    output_dir = '../test_output/'
+    baseline_dir = '../test_baseline/'
 
     # Check json files consistency
     ext='.json'
-    json_files = glob.glob('{}/*{}'.format(baseline_dir,ext))
+    json_files = glob.glob('{}/*{}'.format(baseline_dir, ext))
     baseline_data = [load_json(json_file) for json_file in json_files]
-    test_data = [load_json(os.path.join(baseline_dir,os.path.basename(json_file))) for json_file in json_files]
-    results = [a==b for a,b in zip(baseline_data, test_data)]
+    test_data = [load_json(os.path.join(output_dir, os.path.basename(json_file))) for json_file in json_files]
+    results = [a == b for a, b in zip(baseline_data, test_data)]
     if sum(results) != len(results):
-        raise ValueError('invalid results obtained with this version of dem_compare.py')
+        raise ValueError('Invalid results obtained with this version of dem_compare.py. '
+                         'There are {}/{} files that do not match.'.format(len(results)-sum(results), len(results)))
+
 
 def get_parser():
     """
