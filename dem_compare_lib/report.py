@@ -45,12 +45,19 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
                                                                'complementary.'}
     for mode in modes_information:
         # find both graph and csv stats associated with the mode
-        # - graph
+        # - histograms
+        result = [graph for graph in glob.glob(os.path.join(workingDir, 'AltiErrors-Histograms_*{}*.png'.format(mode)))
+                  if graph.find('Fitted') == -1]
+        if len(result):
+            modes_information[mode]['histo'] = result[0]
+        else:
+            modes_information[mode]['histo'] = None
+        # - fitted histograms
         result = glob.glob(os.path.join(workingDir, '*Fitted*_{}*.png'.format(mode)))
         if len(result):
-            modes_information[mode]['graph'] = result[0]
+            modes_information[mode]['fitted_histo'] = result[0]
         else:
-            modes_information[mode]['graph'] = None
+            modes_information[mode]['fitted_histo'] = None
         # - csv
         result = glob.glob(os.path.join(workingDir, '*_{}*.csv'.format(mode)))
         if len(result):
@@ -65,6 +72,7 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
                 modes_information[mode]['csv'] = None
         else:
             modes_information[mode]['csv'] = None
+    print('modes_info = {}'.format(modes_information))
 
     # Find DSMs differences
     dem_diff_without_coreg = glob.glob(os.path.join(workingDir, 'initial_dem_diff.png'))[0]
@@ -122,7 +130,8 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
     for mode in modes_information:
         if mode in modeNames:
             the_mode_pitch = modes_information[mode]['pitch']
-            the_mode_graph = modes_information[mode]['graph']
+            the_mode_histo = modes_information[mode]['histo']
+            the_mode_fitted_histo = modes_information[mode]['fitted_histo']
             the_mode_csv = modes_information[mode]['csv']
         else:
             continue
@@ -137,12 +146,20 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
             '{}'.format(the_mode_pitch),
             ''
         ])
-        if the_mode_graph:
+        if the_mode_histo:
             src = '\n'.join([
                 src,
                 # 'Graph showing mean and standard deviation',
                 # '-----------------------------------------',
-                '.. image:: /{}'.format(the_mode_graph),
+                '.. image:: /{}'.format(the_mode_histo),
+                ''
+            ])
+        if the_mode_fitted_histo:
+            src = '\n'.join([
+                src,
+                # 'Fitted graph showing mean and standard deviation',
+                # '-----------------------------------------',
+                '.. image:: /{}'.format(the_mode_fitted_histo),
                 ''
             ])
         if the_mode_csv:

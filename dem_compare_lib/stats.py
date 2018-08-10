@@ -601,7 +601,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                 try:
                     P.figure(1)
                     n, bins, patches = P.hist(data, bins, normed=True,
-                                              label=sets_labels[set_idx], color=sets_colors[set_idx])
+                                              label=sets_labels[set_idx], color=sets_colors[set_idx], histtype='step')
                     popt, pcov = curve_fit(gaus, bins[0:bins.shape[0] - 1] + int(bin_step / 2), n,
                                            p0=[1, mean, std])
                     P.figure(2)
