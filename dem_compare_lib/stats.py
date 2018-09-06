@@ -440,7 +440,10 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
         :param array:
         :return:
         """
-        return np.nanpercentile(np.abs(array - np.nanmean(array)), 90)
+        if array.size:
+            return np.nanpercentile(np.abs(array - np.nanmean(array)), 90)
+        else:
+            return np.nan
 
     # Init
     output_list = []
@@ -622,7 +625,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                                weight='bold', horizontalalignment='left')
                 except RuntimeError:
                     print('No fitted gaussian plot created as curve_fit failed to converge')
-                    raise
+                    pass
 
                 # save outputs (plot files and name of labels kept)
                 saved_labels.append(sets_labels[set_idx])

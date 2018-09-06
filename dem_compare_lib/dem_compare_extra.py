@@ -460,11 +460,12 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
             merged_results = {}
             merged_results['set_name'] = all_results[0][key]['set_name']
             merged_results['set_label'] = all_results[0][key]['set_label']
-            merged_results['plot_file'] = None
-            merged_results['plot_color'] = all_results[0][key]['plot_color']
             merged_results['90p'] = np.nan
             merged_results['nmad'] = np.nan
             merged_results['median'] = np.nan
+            merged_results['plot_file'] = None
+            if 'plot_color' in all_results[0][key]:
+                merged_results['plot_color'] = all_results[0][key]['plot_color']
 
             # then we carry on with conditional stats
             if numberOfPoints:
@@ -481,17 +482,15 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
                                                            (merged_results['mean'] * merged_results['mean']))
                 merged_results['rmse'] = np.sqrt(sum_errxerr / numberOfValidPoints)
             else:
-                merged_results += {
-                    '%': 0.0,
-                    'nbpts':numberOfPoints,
-                    'sum_err':np.nan,
-                    'sum_err.err':np.nan,
-                    'max': np.nan,
-                    'min': np.nan,
-                    'mean': np.nan,
-                    'std': np.nan,
-                    'rmse': np.nan
-                }
+                merged_results['%'] = 0.0
+                merged_results['nbpts'] = numberOfPoints
+                merged_results['sum_err'] = np.nan
+                merged_results['sum_err.err']  = np.nan
+                merged_results['max'] = np.nan
+                merged_results['min'] = np.nan
+                merged_results['mean'] = np.nan
+                merged_results['std'] = np.nan
+                merged_results['rmse'] = np.nan
             list_of_merged_results.append(merged_results)
 
         # if required, we also compute merged percentiles
