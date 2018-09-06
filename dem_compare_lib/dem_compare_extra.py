@@ -14,10 +14,9 @@ altered because of a dem_compare.py evolution, then dem_compare_extra might need
 from __future__ import print_function
 import os
 import sys
-import errno
+import shutil
 import json
 import argparse
-import copy
 import numpy as np
 import matplotlib as mpl
 from dem_compare_lib.a3d_georaster import A3DGeoRaster
@@ -80,6 +79,21 @@ def computeMergePlots(tiles_path, output_dir):
     # - get rid of invalid tiles (the ones without a final_config.json file)
     final_json_file = 'final_config.json'
     valid_tiles_path = [tile_path for tile_path in tiles_path if os.path.isfile(os.path.join(tile_path, final_json_file))]
+
+    #
+    # Special case : only one valid tile => its results are copy / pasted
+    #
+    if len(valid_tiles_path) == 1:
+        # Get the tile plots
+        tile_plots = glob.glob(os.path.join(valid_tiles_path[0], 'AltiErrors-Histograms_*'))
+
+        # Output plots
+        output_plots = [os.path.join(output_dir, os.path.basename(plot)) for plot in tile_plots]
+
+        # Copy plots
+        [shutil.copyfile(tile_plot, output_plot) for output_plot, tile_plot in zip(output_plots, tile_plots)]
+        return
+
     # - load the tiles final config json files
     tiles_final_cfg = [load_json(os.path.join(a_valid_tile, final_json_file)) for a_valid_tile in valid_tiles_path]
     # - compute the weight mean biases without using nan values (trying to be consistent with tiles used to merge stats)
@@ -427,6 +441,22 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
         raise
 
     #
+    # Special case : only one valid tile => its results are copy / pasted
+    #
+    if len(valid_tiles_path) == 1:
+        for mode in modes:
+            # Get the json and csv stat filename
+            the_json_name_for_this_mode = os.path.join(valid_tiles_path[0], os.path.basename(modes[mode]))
+            the_csv_name_for_this_mode = the_json_name_for_this_mode.replace('.json', '.csv')
+
+            # Output name
+            json_output_name = os.path.join(output_dir, 'merged_stats_for_{}_mode.json'.format(mode))
+            csv_output_name = json_output_name .replace('.json', '.csv')
+            shutil.copyfile(the_json_name_for_this_mode, json_output_name)
+            shutil.copyfile(the_csv_name_for_this_mode, csv_output_name)
+        return
+
+    #
     # Merge the stats by mode
     #
     for mode in modes:
@@ -460,11 +490,12 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
             merged_results = {}
             merged_results['set_name'] = all_results[0][key]['set_name']
             merged_results['set_label'] = all_results[0][key]['set_label']
-            merged_results['plot_file'] = None
-            merged_results['plot_color'] = all_results[0][key]['plot_color']
             merged_results['90p'] = np.nan
             merged_results['nmad'] = np.nan
             merged_results['median'] = np.nan
+            merged_results['plot_file'] = None
+            if 'plot_color' in all_results[0][key]:
+                merged_results['plot_color'] = all_results[0][key]['plot_color']
 
             # then we carry on with conditional stats
             if numberOfPoints:
@@ -481,17 +512,15 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
                                                            (merged_results['mean'] * merged_results['mean']))
                 merged_results['rmse'] = np.sqrt(sum_errxerr / numberOfValidPoints)
             else:
-                merged_results += {
-                    '%': 0.0,
-                    'nbpts':numberOfPoints,
-                    'sum_err':np.nan,
-                    'sum_err.err':np.nan,
-                    'max': np.nan,
-                    'min': np.nan,
-                    'mean': np.nan,
-                    'std': np.nan,
-                    'rmse': np.nan
-                }
+                merged_results['%'] = 0.0
+                merged_results['nbpts'] = numberOfPoints
+                merged_results['sum_err'] = np.nan
+                merged_results['sum_err.err']  = np.nan
+                merged_results['max'] = np.nan
+                merged_results['min'] = np.nan
+                merged_results['mean'] = np.nan
+                merged_results['std'] = np.nan
+                merged_results['rmse'] = np.nan
             list_of_merged_results.append(merged_results)
 
         # if required, we also compute merged percentiles
