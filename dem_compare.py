@@ -201,9 +201,22 @@ def main_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=
                        nodata=(cfg['inputDSM']['nodata'] if 'nodata' in cfg['inputDSM'] else None),
                        load_data=(cfg['roi'] if 'roi' in cfg else True), ref=cfg['inputDSM']['georef'],
                        zunit=(cfg['inputDSM']['zunit'] if 'zunit' in cfg['inputDSM'] else 'm'))
+    # the ref dem is read according to the tested dem roi
+    # -> this means first we get back ref footprint by only reading metadata (load_data is False)
+    ref = A3DDEMRaster(cfg['inputRef']['path'],
+                       load_data=False)
+    # -> then we compute the common footprint between dem roi and ref
+    ref_matching_footprint = ref.biggest_common_footprint(dem)
+    # -> finally we add a marge to this footprint because data will be loaded from image indexes
+    #    and there is no bijection from pixels indexes to footprint
+    ref_matching_roi = ref.footprint_to_roi(ref_matching_footprint)
+    ref_matching_roi['x'] -= 1
+    ref_matching_roi['y'] -= 1
+    ref_matching_roi['w'] += 1
+    ref_matching_roi['h'] += 1
     ref = A3DDEMRaster(cfg['inputRef']['path'],
                        nodata=(cfg['inputRef']['nodata'] if 'nodata' in cfg['inputRef'] else None),
-                       load_data=(cfg['roi'] if 'roi' in cfg else True), ref=cfg['inputRef']['georef'],
+                       load_data=ref_matching_roi, ref=cfg['inputRef']['georef'],
                        zunit=(cfg['inputRef']['zunit'] if 'zunit' in cfg['inputRef'] else 'm'))
     nodata1 = dem.nodata
     nodata2 = ref.nodata
