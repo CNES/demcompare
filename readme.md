@@ -47,6 +47,14 @@ In anyway, this is four numbers that ought to be given in the `json` configurati
 
 If no ROI definition is provided then DEMs raster are fully processed.
 
+#### Tile processing
+
+Note that a `tile_size` parameter can be set to compute dem comparison by tile. As dem_compare can load the full size
+DEMs (if no ROI is provided) it can sometimes run out of memory and fail. To prevent this from happening one can set a
+`tile_size` (in pixel) where a tile is assumed to be squared. Then dem_compare will divide DEMs according to `tile_size`
+and process each tile independently. To merge every tile results into one, some optional post-processing steps are
+provided by dem_compare (see next chapter).
+
 #### step by step process (and the possibility to avoid the coregistration step)
 
 dem_compare allows one to execute only a subset of the whole process. As such, a `--step` command line argument is
@@ -54,14 +62,15 @@ provided. It accepts values from `{coregistration,stats,report}` :
 
     [user@machine] $ python dem_compare.py
     usage: dem_compare.py [-h]
-                          [--step {coregistration,stats,report} [{coregistration,stats,report} ...]]
+                          [--step {coregistration,stats,report,mosaic,merge_stats,merge_plots} [{coregistration,stats,report,mosaic,merge_stats,merge_plots} ...]]
                           [--debug] [--display]
                           config.json
 
-All the steps are optional, and a dem_compare can start at any step as long as previously required step have been launched.
+All the steps but stats are optional, and dem_compare can start at any step as long as previously required steps have been launched.
 This means that one can launch the report step only as long as the stats step has already been performed from a previous
 dem_compare launch and the config.json remains the same.
-Note that the coregistration step is not mandatory as one can decide its DEMs are already coregistered.
+Note that the coregistration step is not mandatory for stats and following steps as one can decide its DEMs are already
+coregistered.
 
 
 #### The parameters
