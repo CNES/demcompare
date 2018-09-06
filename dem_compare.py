@@ -290,8 +290,11 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
     # Run classic steps by tiles (there can be just one tile which could be the whole image)
     #
     for tile in tiles:
-        main_tile(tile['json'], steps, display=display, debug=debug, force=force)
-
+        try:
+            main_tile(tile['json'], steps, display=display, debug=debug, force=force)
+        except Exception, e:
+            print('Error encoutered for tile: {} -> {}'.format(tile, e))
+            pass
 
     #
     # Run merge steps
