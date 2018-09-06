@@ -45,6 +45,8 @@ coordinates of the projected image as tuple with (left, right, bottom, top) coor
 
 In anyway, this is four numbers that ought to be given in the `json` configuration file.
 
+The ROI refers to the tested DEM and will be adapted to the REF dem georef by dem_compare.py itself.
+
 If no ROI definition is provided then DEMs raster are fully processed.
 
 #### Tile processing

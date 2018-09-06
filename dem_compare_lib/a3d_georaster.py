@@ -136,6 +136,7 @@ class A3DGeoRaster(object):
                 load_data = self.footprint_to_roi(load_data, latlon=latlon)
             self.r = self._load_raster_subset_from_roi(load_data, band=band, update_info=True)
         elif load_data is False:
+            self.nodata = nodata
             return
         else:
             print('Warning : load_data argument not understood. No data loaded.')
@@ -289,6 +290,14 @@ class A3DGeoRaster(object):
         # In special case of being called to read a single point, offset 1 px
         if x_offset == 0: x_offset = 1
         if y_offset == 0: y_offset = 1
+
+        # In case roi has been computed and is off limits
+        if xpx1 < 0: xpx1 = 0
+        if ypx1 < 0: ypx1 = 0
+        if xpx1 > self.nx - 1: xpx1 = self.nx - 1
+        if ypx1 > self.ny - 1: ypx1 = self.ny - 1
+        x_offset = min(x_offset, self.nx - xpx1)
+        y_offset = min(y_offset, self.ny - ypx1)
 
         # Read array and return
         arr = self.ds.GetRasterBand(band).ReadAsArray( int(xpx1), int(ypx1), int(x_offset), int(y_offset))
@@ -658,31 +667,33 @@ class A3DDEMRaster(A3DGeoRaster):
 
     def __init__(self, ds_filename, band=1, ref='WGS84', nodata=None, zunit='m', load_data=True, latlon=False, rpc=None):
         super(A3DDEMRaster, self).__init__(ds_filename, nodata=nodata, load_data=load_data, latlon=latlon, band=band)
+        self.zunit = zunit
 
-        # Convert to float32 for future computations
-        self.r = np.float32(self.r)
+        if load_data is not False :
+            # Convert to float32 for future computations
+            self.r = np.float32(self.r)
 
-        # Convert to meter (so all A3DDEMRaster have meter as unit)
-        self.r = ((self.r * u.Unit(zunit)).to(u.meter)).value
-        self.zunit = u.meter
+            # Convert to meter (so all A3DDEMRaster have meter as unit)
+            self.r = ((self.r * u.Unit(zunit)).to(u.meter)).value
+            self.zunit = u.meter
 
-        # Works with ellispoid reference so if 'EGM96' (geoid) we translate to 'WGS84' (ellipsoid) by adding EGM96
-        # Let Oe be the ellipsoid WGS84 origin and Og be the EGM96 geoid one, then if a point M altitude is referred to
-        # inside geoid reference, and we want to translate it to WGS84 reference then we write
-        # OeM = OgM + OeOg with OeOg being the egm96-15 datum, OeM what we want and OgM what we have.
-        if ref == 'EGM96':
-            xP = np.arange(self.nx) -0.5
-            yP = np.arange(self.nx) -0.5
-            if self.srs.IsProjected():
-                xGeo, yGeo = self.px_to_coord(xP, yP)
-                lons, lats = self.proj(xGeo, yGeo, inverse=True)
-            else:
-                lons, lats = self.px_to_coord(xP, yP)
-            egm96 = _A3DEGM96Manager()
-            self.r += egm96(lons, lats)
+            # Works with ellispoid reference so if 'EGM96' (geoid) we translate to 'WGS84' (ellipsoid) by adding EGM96
+            # Let Oe be the ellipsoid WGS84 origin and Og be the EGM96 geoid one, then if a point M altitude is referred to
+            # inside geoid reference, and we want to translate it to WGS84 reference then we write
+            # OeM = OgM + OeOg with OeOg being the egm96-15 datum, OeM what we want and OgM what we have.
+            if ref == 'EGM96':
+                xP = np.arange(self.nx) -0.5
+                yP = np.arange(self.nx) -0.5
+                if self.srs.IsProjected():
+                    xGeo, yGeo = self.px_to_coord(xP, yP)
+                    lons, lats = self.proj(xGeo, yGeo, inverse=True)
+                else:
+                    lons, lats = self.px_to_coord(xP, yP)
+                egm96 = _A3DEGM96Manager()
+                self.r += egm96(lons, lats)
 
-        # create a in Memory dataset since we might have change self.r here, so it needs to be saved and linked with a dataset
-        self.save_geotiff('')
+            # create a in Memory dataset since we might have change self.r here, so it needs to be saved and linked with a dataset
+            self.save_geotiff('')
 
     def get_slope_and_aspect(self, degree=False):
         """
