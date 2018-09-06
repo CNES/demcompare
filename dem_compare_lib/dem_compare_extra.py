@@ -525,6 +525,8 @@ def computeInitialization(config_json):
         with open(tiles_list, 'r') as f:
             list_of_tiles_path = f.readlines()
         list_of_tiles_path = [tile_path.strip('\n') for tile_path in list_of_tiles_path]
+        # get rid off "config.json" suffix if there
+        list_of_tiles_path = [tile_path.split('config.json')[0] for tile_path in list_of_tiles_path]
     except:
         print("One shall indicate where to find the list of tiles from dem_compare.py previous launches to be merged. "
                         "Use the \'tiles_list_file\' key for this purpose.")
