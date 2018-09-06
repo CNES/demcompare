@@ -20,7 +20,7 @@ import argparse
 import copy
 import numpy as np
 import matplotlib as mpl
-from a3d_modules.a3d_georaster import A3DGeoRaster
+from dem_compare_lib.a3d_georaster import A3DGeoRaster
 from stats import create_sets, create_masks
 
 
@@ -305,7 +305,7 @@ def _mergePercentile(a_final_config, tile_stats_list, the_zip, infimum, supremum
     # Assuming all nb_before elements have been discarded from kth_element, find out how many elements remain
     remaining_elements = {stats_set: kth_element[stats_set] - nb_before[stats_set] for stats_set in tile_stats_list[0]}
 
-    # Get the median from the concatenate sub images
+    # Get the median from the concatenated sub images
     return {stats_set: float(np.sort(np.concatenate(sub_img[stats_set]))[int(remaining_elements[stats_set])-1])
             for stats_set in tile_stats_list[0]}
 
@@ -346,7 +346,7 @@ def _mergePercentiles(valid_tiles_path, tile_stats_list, mode='standard'):
     #
     # First things first : we need to get the list of images (final dh map) and their support image
     #
-    # read the json configuration file of a single tile to get the the final dh map name and the support image name
+    # read the json configuration file of a single tile to get the final dh map name and the support image name
     # WARNING : note that it is assumed here those names are the same for all tiles
     a_final_config = load_json(os.path.join(valid_tiles_path[0], 'final_config.json'))
     try:
@@ -516,8 +516,11 @@ def computeInitialization(config_json):
     :return: config as a dictionary and the list of tiles path
     """
     # read the json configuration file
-    with open(config_json, 'r') as f:
-        cfg = json.load(f)
+    if isinstance(config_json, dict):
+        cfg = config_json
+    else:
+        with open(config_json, 'r') as f:
+            cfg = json.load(f)
 
     # if no 'json_list_file' then nothing to do
     try:
@@ -535,14 +538,13 @@ def computeInitialization(config_json):
     # there must be a outputDir location specified
     try:
         outputDir = cfg['outputDir']
-        from a3d_modules.a3d_system_manager import create_dir
-        create_dir(outputDir)
+        from initialization import mkdir_p
+        mkdir_p(outputDir)
     except:
         print("One might set a outputDir directory")
         raise
 
     return cfg, list_of_tiles_path
-
 
 def main(json_file, steps=DEFAULT_STEPS, debug=False, force=False):
     #
