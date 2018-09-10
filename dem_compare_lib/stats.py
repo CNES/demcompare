@@ -138,6 +138,16 @@ def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False)
         slope_dsm_georaster.save_geotiff(cfg['stats_results']['images']['DSM_support']['path'])
         cfg['stats_results']['images']['DSM_support']['nodata'] = slope_dsm_georaster.nodata
 
+        # Compute slope differences between both slope images
+        cfg['stats_results']['images']['list'].append('Ref_support-DSM_support')
+        cfg['stats_results']['images']['Ref_support-DSM_support'] = copy.deepcopy(cfg['stats_results']['images']['DSM_support'])
+        cfg['stats_results']['images']['Ref_support-DSM_support']['path'] = os.path.join(cfg['outputDir'],
+                                                                                     'Ref_support-DSM_support.tif')
+        slope_differences = A3DGeoRaster.from_raster(slope_ref_georaster.r - slope_dsm_georaster.r,
+                                                     slope_dsm_georaster.trans,
+                                                     "{}".format(slope_dsm_georaster.srs.ExportToProj4()),
+                                                     nodata=-32768)
+        slope_differences.save_geotiff(cfg['stats_results']['images']['Ref_support-DSM_support']['path'])
         return slope_ref_georaster, slope_dsm_georaster
     return slope_ref_georaster, None
 

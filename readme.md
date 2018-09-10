@@ -170,7 +170,9 @@ one of inputDSM) and no coregistration has been performed.
 
 4. the `Ref_support.tif` and `DSM_support.tif` are the images from which the stats have been classified. Depending on the
 values given to the parameters those images might not be there. With default behavior only the `Ref_support.tif` is computed
-and it is the `coreg_Ref.tif` slope.
+and it is the `coreg_Ref.tif` slope. When `cross_classification` is on, and `class_type` is `slope` (default), then
+`Ref_support.tif` and `DSM_support.tif` and both slope images. Plus, in this case, the `Ref_support-DSM_support.tif`
+(which the slope differences between both slope images) is also computed and stored.
 
 5. the `Ref_support_classified.png` and the `DSM_support_classified.png` are the classified version of the images listed
 previously. The alpha band is used to mask the pixels for whom both classification do not match. This could be because
