@@ -175,6 +175,8 @@ def main_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=
     :param force:
     :return:
     """
+    if all(step in dem_compare_extra.ALL_STEPS for step in steps):
+        return
 
     #
     # Initialization
