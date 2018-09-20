@@ -319,15 +319,33 @@ def _mergePercentile(a_final_config, tile_stats_list, the_zip, infimum, supremum
     # Assuming all nb_before elements have been discarded from kth_element, find out how many elements remain
     remaining_elements = {stats_set: kth_element[stats_set] - nb_before[stats_set] for stats_set in tile_stats_list[0]}
 
-    # Get the median from the concatenated sub images
-    return {stats_set: float(np.sort(np.concatenate(sub_img[stats_set]))[int(remaining_elements[stats_set])-1])
-            for stats_set in tile_stats_list[0]}
-
+    # Get the percentile from the concatenated sub images
+    output_dict = {}
+    for stats_set in tile_stats_list[0]:
+        data = np.sort(np.concatenate(sub_img[stats_set]))
+        if kth_element[stats_set] == nb_before[stats_set]:
+            # no value remaining here inside [infimum; supremum]
+            # this is special case where maybe infimum == supremum
+            if infimum[stats_set] == supremum[stats_set]:
+                if np.isnan(infimum[stats_set]):
+                    stats_class_name = tile_stats_list[0][stats_set]['set_name']
+                    print('WARNING : Could not compute the desired percentile for stats range named {}.'
+                          'This is because no tile contains data for this stats range'.format(
+                        stats_class_name))
+                    output_dict[stats_set] = np.nan
+                    continue
+            stats_class_name = tile_stats_list[0][stats_set]['set_name']
+            print('WARNING : The desired percentile for stats range named {} might be computed as an approximation of '
+                  'the right value if more than a tile contains data for this stats range'.format(stats_class_name))
+            output_dict[stats_set] = (infimum[stats_set] + supremum[stats_set])*0.5
+        else:
+            output_dict[stats_set] = float(data[[int(remaining_elements[stats_set])-1]])
+    return output_dict
 
 def _mergePercentiles(valid_tiles_path, tile_stats_list, mode='standard'):
     """
     Compute percentiles of big data set distributed over several image file.
-    Returns the median, znd the nmad
+    Returns the median, and the nmad
 
 
     :param valid_tiles_path: list of path of valid tiles where to find final dh maps one wishes to compute percentiles
