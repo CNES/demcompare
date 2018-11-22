@@ -134,7 +134,8 @@ def initialization_stats_opts(cfg):
     default_stats_opts = {'class_type': 'slope',
                           'class_rad_range': [0, 10, 25, 50, 90],
                           'cross_classification': False,
-                          'alti_error_threshold': {'value': 0.1, 'unit': 'meter'}}
+                          'alti_error_threshold': {'value': 0.1, 'unit': 'meter'},
+                          'elevation_thresholds' : {'list': [0.5,1,3], 'unit': 'meter'}}
 
     if 'stats_opts' not in cfg:
         cfg['stats_opts'] = default_stats_opts
