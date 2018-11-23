@@ -19,6 +19,8 @@ import json
 import collections
 import csv
 from dem_compare_lib.a3d_georaster import A3DGeoRaster
+from astropy import units as u
+
 
 
 def gaus(x, a, x_zero, sigma):
@@ -823,13 +825,19 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         #
         # Compute stats for all sets of a single mode
         #
+        elevation_thresholds = None
+        if cfg['stats_opts']['elevation_thresholds']['list']:
+            # Convert thresholds to meter since all dem_compare elevation unit is "meter"
+            original_unit = cfg['stats_opts']['elevation_thresholds']['unit']
+            elevation_thresholds = [((threshold * u.Unit(original_unit)).to(u.meter)).value
+                                    for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
         mode_stats = get_stats(alti_map.r,
                                to_keep_mask=to_keep_masks[mode],
                                no_outliers_mask=no_outliers_mask,
                                sets=ref_sets_def,
                                sets_labels=sets_labels,
                                sets_names=sets_names,
-                               list_threshold=cfg['stats_opts']['elevation_thresholds']['list'])
+                               list_threshold=elevation_thresholds)
 
         # TODO (peut etre prevoir une activation optionnelle du plotage...)
         #
