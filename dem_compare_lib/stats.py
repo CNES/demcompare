@@ -395,11 +395,12 @@ def create_masks(alti_map,
     return masks, modes, no_outliers
 
 
-def stats_computation(array):
+def stats_computation(array, list_threshold=None):
     """
     Compute stats for a specific array
 
     :param array: numpy array
+    :param list_threshold: list, defines thresholds to be used for pixels above thresholds ratio computation
     :return: dict with stats name and values
     """
     if array.size:
@@ -415,6 +416,9 @@ def stats_computation(array):
             'sum_err': float(np.sum(array)),
             'sum_err.err': float(np.sum(array * array)),
         }
+        if list_threshold:
+            res['ratio_above_threshold'] = {threshold: float(np.count_nonzero(array>threshold))/float(array.size)
+                                            for threshold in list_threshold}
     else:
         res = {
             'nbpts': array.size,
@@ -428,10 +432,13 @@ def stats_computation(array):
             'sum_err': np.nan,
             'sum_err.err': np.nan,
         }
+        if list_threshold:
+            res['ratio_above_threshold'] = {threshold: np.nan for threshold in list_threshold}
     return res
 
 
-def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, sets_labels=None, sets_names=None):
+def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, sets_labels=None, sets_names=None,
+              list_threshold=None):
     """
     Get Stats for a specific array, considering potentially subsets of it
 
@@ -440,6 +447,7 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
     :param sets: list of sets (boolean arrays that indicate which class a pixel belongs to)
     :param sets_labels: label associated to the sets
     :param sets_names: name associated to the sets
+    :param list_threshold: list, defines thresholds to be used for pixels above thresholds ratio computation
     :return: list of dictionary (set_name, nbpts, %(out_of_all_pts), max, min, mean, std, rmse, ...)
     """
 
@@ -465,7 +473,7 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
         no_outliers_mask = np.ones(dz_values.shape)
 
     # Computing first set of values with all pixels considered -except the ones masked or the outliers-
-    output_list.append(stats_computation(dz_values[np.where((to_keep_mask*no_outliers_mask) == True)]))
+    output_list.append(stats_computation(dz_values[np.where((to_keep_mask*no_outliers_mask) == True)], list_threshold))
     # - we add standard information for later use
     output_list[0]['set_label'] = 'all'
     output_list[0]['set_name'] = 'All classes considered'
@@ -479,7 +487,7 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
             set = sets[set_idx] * to_keep_mask * no_outliers_mask
 
             data = dz_values[np.where(set == True)]
-            output_list.append(stats_computation(data))
+            output_list.append(stats_computation(data, list_threshold))
             output_list[set_idx+1]['set_label'] = sets_labels[set_idx]
             output_list[set_idx+1]['set_name'] = sets_names[set_idx]
             output_list[set_idx+1]['%'] = 100 * float(output_list[set_idx+1]['nbpts']) / float(nb_total_points)
@@ -805,7 +813,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     #
     to_keep_masks, modes, no_outliers_mask = create_masks(alti_map, do_classify_results, support_ref,
                                                           do_cross_classification, ref_classified_img_descriptor,
-                                                          remove_outliers = True)
+                                                          remove_outliers=True)
 
     #
     # Next is done for all modes
@@ -820,7 +828,8 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                no_outliers_mask=no_outliers_mask,
                                sets=ref_sets_def,
                                sets_labels=sets_labels,
-                               sets_names=sets_names)
+                               sets_names=sets_names,
+                               list_threshold=cfg['stats_opts']['elevation_thresholds']['list'])
 
         # TODO (peut etre prevoir une activation optionnelle du plotage...)
         #
