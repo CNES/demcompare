@@ -511,16 +511,25 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
                 merged_results['std'] = np.sqrt((sum_errxerr / numberOfValidPoints) -
                                                            (merged_results['mean'] * merged_results['mean']))
                 merged_results['rmse'] = np.sqrt(sum_errxerr / numberOfValidPoints)
+
+                #NB : for above threshold ratio we do for every ratio :
+                #       SUM(tile[i][ratio] * tile[i][nbPts]) / SUM(tile[i][nbPts])  with tile[i] a tile among all tiles
+                merged_results['ratio_above_threshold'] = {threshold: np.nansum(np.array([tile_results[key]['ratio_above_threshold'][threshold]*tile_results[key]['nbpts']
+                                                                                          for tile_results in all_results]))
+                                                                      / merged_results['nbpts']
+                                                           for threshold in all_results[0][key]['ratio_above_threshold']}
             else:
                 merged_results['%'] = 0.0
                 merged_results['nbpts'] = numberOfPoints
                 merged_results['sum_err'] = np.nan
-                merged_results['sum_err.err']  = np.nan
+                merged_results['sum_err.err'] = np.nan
                 merged_results['max'] = np.nan
                 merged_results['min'] = np.nan
                 merged_results['mean'] = np.nan
                 merged_results['std'] = np.nan
                 merged_results['rmse'] = np.nan
+                merged_results['ratio_above_threshold'] = {threshold: np.nan
+                                                           for threshold in all_results[0][key]['ratio_above_threshold']}
             list_of_merged_results.append(merged_results)
 
         # if required, we also compute merged percentiles

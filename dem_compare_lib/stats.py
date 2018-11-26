@@ -421,6 +421,8 @@ def stats_computation(array, list_threshold=None):
         if list_threshold:
             res['ratio_above_threshold'] = {threshold: float(np.count_nonzero(array>threshold))/float(array.size)
                                             for threshold in list_threshold}
+        else:
+            res['ratio_above_threshold'] = {'none': np.nan}
     else:
         res = {
             'nbpts': array.size,
@@ -436,6 +438,8 @@ def stats_computation(array, list_threshold=None):
         }
         if list_threshold:
             res['ratio_above_threshold'] = {threshold: np.nan for threshold in list_threshold}
+        else:
+            res['ratio_above_threshold'] = {'none': np.nan}
     return res
 
 
