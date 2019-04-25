@@ -77,7 +77,7 @@ class SphinxProjectManager(object):
                  '',
                  '# User-friendly check for sphinx-build',
                  'ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)',
-                 '\t$(error The sphinx-build command was not found. Make sure you have Sphinx installed.',
+                 '$(error The sphinx-build command was not found. Make sure you have Sphinx installed.',
                  'endif',
                  '',
                  '# Internal variables.',
