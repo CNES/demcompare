@@ -59,6 +59,12 @@ def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     :return:
     """
 
+    cfg['stats_results'] = {}
+    cfg['stats_results']['images'] = {}
+    cfg['stats_results']['images']['list'] = []
+
+    stats.wave_detection(cfg, final_dh, display=display)
+
     stats.alti_diff_stats(cfg, dem, ref, final_dh, display=display)
     # save results
     with open(final_json_file, 'w') as outfile:
