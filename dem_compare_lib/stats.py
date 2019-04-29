@@ -138,6 +138,16 @@ def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False)
         slope_dsm_georaster.save_geotiff(cfg['stats_results']['images']['DSM_support']['path'])
         cfg['stats_results']['images']['DSM_support']['nodata'] = slope_dsm_georaster.nodata
 
+        # Compute slope differences between both slope images
+        cfg['stats_results']['images']['list'].append('Ref_support-DSM_support')
+        cfg['stats_results']['images']['Ref_support-DSM_support'] = copy.deepcopy(cfg['stats_results']['images']['DSM_support'])
+        cfg['stats_results']['images']['Ref_support-DSM_support']['path'] = os.path.join(cfg['outputDir'],
+                                                                                     'Ref_support-DSM_support.tif')
+        slope_differences = A3DGeoRaster.from_raster(slope_ref_georaster.r - slope_dsm_georaster.r,
+                                                     slope_dsm_georaster.trans,
+                                                     "{}".format(slope_dsm_georaster.srs.ExportToProj4()),
+                                                     nodata=-32768)
+        slope_differences.save_geotiff(cfg['stats_results']['images']['Ref_support-DSM_support']['path'])
         return slope_ref_georaster, slope_dsm_georaster
     return slope_ref_georaster, None
 
@@ -440,7 +450,10 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
         :param array:
         :return:
         """
-        return np.nanpercentile(np.abs(array - np.nanmean(array)), 90)
+        if array.size:
+            return np.nanpercentile(np.abs(array - np.nanmean(array)), 90)
+        else:
+            return np.nan
 
     # Init
     output_list = []
@@ -622,7 +635,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                                weight='bold', horizontalalignment='left')
                 except RuntimeError:
                     print('No fitted gaussian plot created as curve_fit failed to converge')
-                    raise
+                    pass
 
                 # save outputs (plot files and name of labels kept)
                 saved_labels.append(sets_labels[set_idx])
@@ -738,10 +751,6 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     :param display: boolean, display option (set to False to save plot on file system)
     :return:
     """
-
-    cfg['stats_results'] = {}
-    cfg['stats_results']['images'] = {}
-    cfg['stats_results']['images']['list'] = []
 
     #
     # If we are to classify the 'z' stats then we make sure we have what it takes
@@ -865,3 +874,34 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         # Create the stat report
         #
         # report_multi_tiles([cfg['stats_results']['modes'][modes[mode]]], cfg['outputDir'])
+
+
+def wave_detection(cfg, dh, display=False):
+    """
+    Detect potential oscillations inside dh
+
+    :param cfg: config file
+    :param dh: A3DGeoRaster, dsm - ref
+    :return:
+
+    """
+
+    # Compute mean dh row and mean dh col
+    # -> then compute the min between dh mean row (col) vector and dh rows (cols)
+    res = {'row_wise': np.zeros(dh.r.shape, dtype=np.float32), 'col_wise': np.zeros(dh.r.shape, dtype=np.float32)}
+    axis = -1
+    for dim in res.keys():
+        axis += 1
+        mean = np.nanmean(dh.r, axis=axis)
+        if axis == 1:
+            # for axis == 1, we need to transpose the array to substitute it to dh.r otherwise 1D array stays row array
+            mean = np.transpose(np.ones((1, mean.size), dtype=np.float32) * mean)
+        res[dim] = dh.r - mean
+
+        cfg['stats_results']['images']['list'].append(dim)
+        cfg['stats_results']['images'][dim] = copy.deepcopy(cfg['alti_results']['dzMap'])
+        cfg['stats_results']['images'][dim].pop('nb_points')
+        cfg['stats_results']['images'][dim]['path'] = os.path.join(cfg['outputDir'], 'dh_{}_wave_detection.tif'.format(dim))
+
+        georaster = A3DGeoRaster.from_raster(res[dim], dh.trans, "{}".format(dh.srs.ExportToProj4()), nodata=-32768)
+        georaster.save_geotiff(cfg['stats_results']['images'][dim]['path'])

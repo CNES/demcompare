@@ -12,52 +12,20 @@ dem_compare aims at coregistering and comparing two dsms
 from __future__ import print_function
 import os
 import sys
-import errno
 import json
 import argparse
 import shutil
 from osgeo import gdal
 import numpy as np
 import copy
-import csv
 import matplotlib as mpl
 from dem_compare_lib.a3d_georaster import A3DDEMRaster, A3DGeoRaster
-from dem_compare_lib import initialization, coregistration, stats, report
+from dem_compare_lib import initialization, coregistration, stats, report, dem_compare_extra
 
 
 gdal.UseExceptions()
-DEFAULT_STEPS = ['coregistration', 'stats', 'report']
-ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
-
-###############
-#configuration#
-def mkdir_p(path):
-    """
-    Create a directory without complaining if it already exists.
-    """
-    try:
-        os.makedirs(path)
-    except OSError as exc: # requires Python > 2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
-
-
-def get_tile_dir(cfg, c, r, w, h):
-    """
-    Get the name of a tile directory
-    """
-    max_digit_row = 0
-    max_digit_col = 0
-    if 'max_digit_tile_row' in cfg:
-        max_digit_row = cfg['max_digit_tile_row']
-    if 'max_digit_tile_col' in cfg:
-        max_digit_col = cfg['max_digit_tile_col']
-    return os.path.join(cfg['outputDir'],
-                        'tiles',
-                        'row_{:0{}}_height_{}'.format(r, max_digit_row, h),
-                        'col_{:0{}}_width_{}'.format(c, max_digit_col, w))
+DEFAULT_STEPS = ['coregistration', 'stats', 'report'] + dem_compare_extra.DEFAULT_STEPS
+ALL_STEPS = copy.deepcopy(DEFAULT_STEPS) + dem_compare_extra.ALL_STEPS
 
 
 def computeReport(cfg, steps, dem, ref):
@@ -90,6 +58,12 @@ def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     :param final_json_file: filename of final_cfg
     :return:
     """
+
+    cfg['stats_results'] = {}
+    cfg['stats_results']['images'] = {}
+    cfg['stats_results']['images']['list'] = []
+
+    stats.wave_detection(cfg, final_dh, display=display)
 
     stats.alti_diff_stats(cfg, dem, ref, final_dh, display=display)
     # save results
@@ -160,7 +134,7 @@ def computeInitialization(config_json):
 
     # create output directory
     cfg['outputDir'] = os.path.abspath(cfg['outputDir'])
-    mkdir_p(cfg['outputDir'])
+    initialization.mkdir_p(cfg['outputDir'])
 
     # copy config into outputDir
     try:
@@ -177,7 +151,7 @@ def computeInitialization(config_json):
 
     # set tmpDir (trash dir)
     cfg['tmpDir'] = os.path.join(cfg['outputDir'], 'tmp')
-    mkdir_p(cfg['tmpDir'])
+    initialization.mkdir_p(cfg['tmpDir'])
     # if "clean_tmp" not in cfg or cfg["clean_tmp"] is True:
         # if "TMPDIR" not in os.environ:
         #     os.environ["TMPDIR"] = os.path.join(cfg['outputDir'], "tmp")
@@ -196,7 +170,20 @@ def computeInitialization(config_json):
     return cfg
 
 
-def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
+def main_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
+    """
+    dem_compare execution for a single tile
+
+    :param json_file:
+    :param steps:
+    :param display:
+    :param debug:
+    :param force:
+    :return:
+    """
+    if all(step in dem_compare_extra.ALL_STEPS for step in steps):
+        return
+
     #
     # Initialization
     #
@@ -206,9 +193,6 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
     if display is False:
         # if display is False we have to tell matplotlib to cancel it
         mpl.use('Agg')
-
-    # Only now import a3d_georaster classes since they rely on matplotlib
-    from dem_compare_lib.a3d_georaster import A3DDEMRaster, A3DGeoRaster
 
     # Set final_json_file name and try to read it if it exists (if a previous run was launched)
     final_json_file = os.path.join(cfg['outputDir'], 'final_config.json')
@@ -220,11 +204,27 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
     #
     # Create A3DDEMRaster
     #
-    dem = A3DDEMRaster(cfg['inputDSM']['path'], nodata=(cfg['inputDSM']['nodata'] if 'nodata' in cfg['inputDSM'] else None),
+    from dem_compare_lib.a3d_georaster import A3DDEMRaster, A3DGeoRaster
+    dem = A3DDEMRaster(cfg['inputDSM']['path'],
+                       nodata=(cfg['inputDSM']['nodata'] if 'nodata' in cfg['inputDSM'] else None),
                        load_data=(cfg['roi'] if 'roi' in cfg else True), ref=cfg['inputDSM']['georef'],
                        zunit=(cfg['inputDSM']['zunit'] if 'zunit' in cfg['inputDSM'] else 'm'))
-    ref = A3DDEMRaster(cfg['inputRef']['path'], nodata=(cfg['inputRef']['nodata'] if 'nodata' in cfg['inputRef'] else None),
-                       load_data=(cfg['roi'] if 'roi' in cfg else True), ref=cfg['inputRef']['georef'],
+    # the ref dem is read according to the tested dem roi
+    # -> this means first we get back ref footprint by only reading metadata (load_data is False)
+    ref = A3DDEMRaster(cfg['inputRef']['path'],
+                       load_data=False)
+    # -> then we compute the common footprint between dem roi and ref
+    ref_matching_footprint = ref.biggest_common_footprint(dem)
+    # -> finally we add a marge to this footprint because data will be loaded from image indexes
+    #    and there is no bijection from pixels indexes to footprint
+    ref_matching_roi = ref.footprint_to_roi(ref_matching_footprint)
+    ref_matching_roi['x'] -= 1
+    ref_matching_roi['y'] -= 1
+    ref_matching_roi['w'] += 1
+    ref_matching_roi['h'] += 1
+    ref = A3DDEMRaster(cfg['inputRef']['path'],
+                       nodata=(cfg['inputRef']['nodata'] if 'nodata' in cfg['inputRef'] else None),
+                       load_data=ref_matching_roi, ref=cfg['inputRef']['georef'],
                        zunit=(cfg['inputRef']['zunit'] if 'zunit' in cfg['inputRef'] else 'm'))
     nodata1 = dem.nodata
     nodata2 = ref.nodata
@@ -253,18 +253,18 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
                                           reproj_dem.trans,
                                           "{}".format(reproj_dem.srs.ExportToProj4()),
                                           nodata=-32768)
-    initial_dh.save_geotiff(os.path.join(cfg['outputDir'],'initial_dh.tif'))
+    initial_dh.save_geotiff(os.path.join(cfg['outputDir'], 'initial_dh.tif'))
     stats.dem_diff_plot(initial_dh, title='DSMs diff without coregistration (REF - DSM)',
-                        plot_file=os.path.join(cfg['outputDir'],'initial_dem_diff.png'), display=False)
+                        plot_file=os.path.join(cfg['outputDir'], 'initial_dem_diff.png'), display=False)
 
     #
     # Coregister both DSMs together and compute final differences
     #
     coreg_dem, coreg_ref, final_dh = computeCoregistration(cfg, steps, reproj_dem, reproj_ref, initial_dh,
-                                                           final_cfg= final_cfg, final_json_file=final_json_file)
+                                                           final_cfg=final_cfg, final_json_file=final_json_file)
     if final_dh is not initial_dh:
         stats.dem_diff_plot(final_dh, title='DSMs diff with coregistration (REF - DSM)',
-                            plot_file=os.path.join(cfg['outputDir'],'final_dem_diff.png'), display=False)
+                            plot_file=os.path.join(cfg['outputDir'], 'final_dem_diff.png'), display=False)
 
     #
     # Compute stats
@@ -275,6 +275,41 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
     # Compute reports
     #
     computeReport(cfg, steps, coreg_dem, coreg_ref)
+
+
+def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
+    #
+    # Initialization
+    #
+    cfg = computeInitialization(json_file)
+    if display is False:
+        # if display is False we have to tell matplotlib to cancel it
+        mpl.use('Agg')
+
+    #
+    # Get back tiles
+    #
+    if 'tile_size' not in cfg:
+        tiles = [{'json': json_file}]
+    else:
+        tiles = initialization.divide_images(cfg)
+
+    #
+    # Run classic steps by tiles (there can be just one tile which could be the whole image)
+    #
+    for tile in tiles:
+        try:
+            main_tile(tile['json'], steps, display=display, debug=debug, force=force)
+        except Exception, e:
+            print('Error encoutered for tile: {} -> {}'.format(tile, e))
+            pass
+
+    #
+    # Run merge steps
+    #
+    if len(tiles) > 1:
+        cfg['tiles_list_file'] = os.path.join(cfg['outputDir'], 'tiles.txt')
+        dem_compare_extra.main(cfg, steps, debug=debug, force=force)
 
 
 def get_parser():

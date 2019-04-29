@@ -14,10 +14,9 @@ altered because of a dem_compare.py evolution, then dem_compare_extra might need
 from __future__ import print_function
 import os
 import sys
-import errno
+import shutil
 import json
 import argparse
-import copy
 import numpy as np
 import matplotlib as mpl
 from dem_compare_lib.a3d_georaster import A3DGeoRaster
@@ -129,6 +128,21 @@ def computeMergePlots(tiles_path, output_dir):
     # - get rid of invalid tiles (the ones without a final_config.json file)
     final_json_file = 'final_config.json'
     valid_tiles_path = [tile_path for tile_path in tiles_path if os.path.isfile(os.path.join(tile_path, final_json_file))]
+
+    #
+    # Special case : only one valid tile => its results are copy / pasted
+    #
+    if len(valid_tiles_path) == 1:
+        # Get the tile plots
+        tile_plots = glob.glob(os.path.join(valid_tiles_path[0], 'AltiErrors-Histograms_*'))
+
+        # Output plots
+        output_plots = [os.path.join(output_dir, os.path.basename(plot)) for plot in tile_plots]
+
+        # Copy plots
+        [shutil.copyfile(tile_plot, output_plot) for output_plot, tile_plot in zip(output_plots, tile_plots)]
+        return
+
     # - load the tiles final config json files
     tiles_final_cfg = [load_json(os.path.join(a_valid_tile, final_json_file)) for a_valid_tile in valid_tiles_path]
     # - compute the weight mean biases without using nan values (trying to be consistent with tiles used to merge stats)
@@ -354,15 +368,33 @@ def _mergePercentile(a_final_config, tile_stats_list, the_zip, infimum, supremum
     # Assuming all nb_before elements have been discarded from kth_element, find out how many elements remain
     remaining_elements = {stats_set: kth_element[stats_set] - nb_before[stats_set] for stats_set in tile_stats_list[0]}
 
-    # Get the median from the concatenate sub images
-    return {stats_set: float(np.sort(np.concatenate(sub_img[stats_set]))[int(remaining_elements[stats_set])-1])
-            for stats_set in tile_stats_list[0]}
-
+    # Get the percentile from the concatenated sub images
+    output_dict = {}
+    for stats_set in tile_stats_list[0]:
+        data = np.sort(np.concatenate(sub_img[stats_set]))
+        if kth_element[stats_set] == nb_before[stats_set]:
+            # no value remaining here inside [infimum; supremum]
+            # this is special case where maybe infimum == supremum
+            if infimum[stats_set] == supremum[stats_set]:
+                if np.isnan(infimum[stats_set]):
+                    stats_class_name = tile_stats_list[0][stats_set]['set_name']
+                    print('WARNING : Could not compute the desired percentile for stats range named {}.'
+                          'This is because no tile contains data for this stats range'.format(
+                        stats_class_name))
+                    output_dict[stats_set] = np.nan
+                    continue
+            stats_class_name = tile_stats_list[0][stats_set]['set_name']
+            print('WARNING : The desired percentile for stats range named {} might be computed as an approximation of '
+                  'the right value if more than a tile contains data for this stats range'.format(stats_class_name))
+            output_dict[stats_set] = (infimum[stats_set] + supremum[stats_set])*0.5
+        else:
+            output_dict[stats_set] = float(data[[int(remaining_elements[stats_set])-1]])
+    return output_dict
 
 def _mergePercentiles(valid_tiles_path, tile_stats_list, mode='standard'):
     """
     Compute percentiles of big data set distributed over several image file.
-    Returns the median, znd the nmad
+    Returns the median, and the nmad
 
 
     :param valid_tiles_path: list of path of valid tiles where to find final dh maps one wishes to compute percentiles
@@ -395,7 +427,7 @@ def _mergePercentiles(valid_tiles_path, tile_stats_list, mode='standard'):
     #
     # First things first : we need to get the list of images (final dh map) and their support image
     #
-    # read the json configuration file of a single tile to get the the final dh map name and the support image name
+    # read the json configuration file of a single tile to get the final dh map name and the support image name
     # WARNING : note that it is assumed here those names are the same for all tiles
     a_final_config = load_json(os.path.join(valid_tiles_path[0], 'final_config.json'))
     try:
@@ -476,6 +508,22 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
         raise
 
     #
+    # Special case : only one valid tile => its results are copy / pasted
+    #
+    if len(valid_tiles_path) == 1:
+        for mode in modes:
+            # Get the json and csv stat filename
+            the_json_name_for_this_mode = os.path.join(valid_tiles_path[0], os.path.basename(modes[mode]))
+            the_csv_name_for_this_mode = the_json_name_for_this_mode.replace('.json', '.csv')
+
+            # Output name
+            json_output_name = os.path.join(output_dir, 'merged_stats_for_{}_mode.json'.format(mode))
+            csv_output_name = json_output_name .replace('.json', '.csv')
+            shutil.copyfile(the_json_name_for_this_mode, json_output_name)
+            shutil.copyfile(the_csv_name_for_this_mode, csv_output_name)
+        return
+
+    #
     # Merge the stats by mode
     #
     for mode in modes:
@@ -509,11 +557,12 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
             merged_results = {}
             merged_results['set_name'] = all_results[0][key]['set_name']
             merged_results['set_label'] = all_results[0][key]['set_label']
-            merged_results['plot_file'] = None
-            merged_results['plot_color'] = all_results[0][key]['plot_color']
             merged_results['90p'] = np.nan
             merged_results['nmad'] = np.nan
             merged_results['median'] = np.nan
+            merged_results['plot_file'] = None
+            if 'plot_color' in all_results[0][key]:
+                merged_results['plot_color'] = all_results[0][key]['plot_color']
 
             # then we carry on with conditional stats
             if numberOfPoints:
@@ -530,17 +579,15 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
                                                            (merged_results['mean'] * merged_results['mean']))
                 merged_results['rmse'] = np.sqrt(sum_errxerr / numberOfValidPoints)
             else:
-                merged_results += {
-                    '%': 0.0,
-                    'nbpts':numberOfPoints,
-                    'sum_err':np.nan,
-                    'sum_err.err':np.nan,
-                    'max': np.nan,
-                    'min': np.nan,
-                    'mean': np.nan,
-                    'std': np.nan,
-                    'rmse': np.nan
-                }
+                merged_results['%'] = 0.0
+                merged_results['nbpts'] = numberOfPoints
+                merged_results['sum_err'] = np.nan
+                merged_results['sum_err.err']  = np.nan
+                merged_results['max'] = np.nan
+                merged_results['min'] = np.nan
+                merged_results['mean'] = np.nan
+                merged_results['std'] = np.nan
+                merged_results['rmse'] = np.nan
             list_of_merged_results.append(merged_results)
 
         # if required, we also compute merged percentiles
@@ -564,10 +611,10 @@ def computeInitialization(config_json):
     :param config_json:
     :return: config as a dictionary and the list of tiles path
     """
+    # read the json configuration file
     if isinstance(config_json, dict):
         cfg = config_json
     else:
-        # read the json configuration file
         with open(config_json, 'r') as f:
             cfg = json.load(f)
 
@@ -577,6 +624,8 @@ def computeInitialization(config_json):
         with open(tiles_list, 'r') as f:
             list_of_tiles_path = f.readlines()
         list_of_tiles_path = [tile_path.strip('\n') for tile_path in list_of_tiles_path]
+        # get rid off "config.json" suffix if there
+        list_of_tiles_path = [tile_path.split('config.json')[0] for tile_path in list_of_tiles_path]
     except:
         print("One shall indicate where to find the list of tiles from dem_compare.py previous launches to be merged. "
                         "Use the \'tiles_list_file\' key for this purpose.")
@@ -585,14 +634,13 @@ def computeInitialization(config_json):
     # there must be a outputDir location specified
     try:
         outputDir = cfg['outputDir']
-        from a3d_modules.a3d_system_manager import create_dir
-        create_dir(outputDir)
+        from initialization import mkdir_p
+        mkdir_p(outputDir)
     except:
         print("One might set a outputDir directory")
         raise
 
     return cfg, list_of_tiles_path
-
 
 def main(json_file, steps=DEFAULT_STEPS, debug=False, force=False):
     #
