@@ -832,7 +832,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         elevation_thresholds = None
         if cfg['stats_opts']['elevation_thresholds']['list']:
             # Convert thresholds to meter since all dem_compare elevation unit is "meter"
-            original_unit = cfg['stats_opts']['elevation_thresholds']['unit']
+            original_unit = cfg['stats_opts']['elevation_thresholds']['zunit']
             elevation_thresholds = [((threshold * u.Unit(original_unit)).to(u.meter)).value
                                     for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
         mode_stats = get_stats(alti_map.r,
