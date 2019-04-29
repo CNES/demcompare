@@ -93,7 +93,8 @@ Here is the list of the parameters and the associated default value when it exis
                             "disp_init" : {"x": 0, "y": 0}},
         "stats_opts" : {    "class_type": "slope",
                             "class_rad_range": [0, 10, 25, 50, 90],
-                            "cross_classification': False}
+                            "cross_classification": False,
+                            "elevation_thresholds" : {"list": [0.5,1,3], "zunit": "meter"}
     }
 
 ## Processing the outputs
@@ -155,6 +156,15 @@ image. The last one being the slope image or the image given by the user as valu
 
 3. the incoherent mode which is the coherent one complementary.
 
+#### The elevation threshold
+
+Using the `elevation_thresholds` parameter one can set a list of thresholds. Then for each threshold dem_compare will
+compute the ratio  of pixels for which the altitude difference is larger than this particular threshold.
+
+Note that so far results are only visible inside `stats_results-*.json` output files (see next chapter). Please also
+note that the threshold is compared against the altitude differences being signed. This means that the result is not
+always relevant and this stats computation shall be used carefully.
+
 #### The dh map and the intermediate data
 
 dem_compare will store several data and here is a brief explanation for each one.
@@ -209,7 +219,7 @@ Here is the list of required dependencies for the python environment:
     `astropy`
     `matplotlib`
 
-For the report to be compied one shall install `sphinx` and `latex` (for the .pdf version).
+For the report to be compiled one shall install `sphinx` and `latex` (for the .pdf version).
 
 ## References
 
