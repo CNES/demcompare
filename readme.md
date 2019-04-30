@@ -203,9 +203,9 @@ information and is used when dem_compare is launched step by step.
 - the files whose names start with 'stats_results-' are the `.json` and `.csv` files listed the statistics for each
 set. There is one file by mode.
 
-- the `.npy` files are the numpy histograms for each stats mode and set.
+- the `histograms/*.npy` files are the numpy histograms for each stats mode and set.
 
-Eventually, one shall find in the `report_documentation/ directory` the full documentation with all the results presented
+Eventually, one shall find in the `doc/` directory the full documentation with all the results presented
 for each mode and each set, in `html` or `latex` format.
 
 ## Dependencies
