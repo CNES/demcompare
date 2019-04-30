@@ -12,8 +12,9 @@ level of customization.
 """
 
 import os
-import shutil, distutils
+import shutil
 import errno
+import subprocess
 
 
 def mkdir_p(path):
@@ -168,19 +169,26 @@ class SphinxProjectManager(object):
         :param mode: 'html' or 'latex' or 'latexpdf'
         :return:
         """
-        os.chdir(self._workingDir)
-        cmd = 'make {}'.format(mode)
-        os.system(cmd)
+
+        cur_dir = os.curdir
+        try:
+            os.chdir(self._workingDir)
+            cr_build = open(os.path.join(self._workingDir, 'cr_build-{}.txt'.format(mode)), 'w')
+            subprocess.check_call(['make', mode], stdout=cr_build, stderr=subprocess.STDOUT, env=os.environ)
+            os.chdir(cur_dir)
+        except:
+            os.chdir(cur_dir)
+            raise
+        else:
+            print('Sphinx build succeeded for {} mode'.format(mode))
 
     def install_project(self):
         try:
-            shutil.copytree(os.path.join(self._buildDir), self._outputDir)
-            print('Documentation installed under {} directory'.format(self._outputDir))
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-            else:
-                print("! Error : A documentation already exists in install directory : {}".format(self._outputDir))
+            shutil.rmtree(self._outputDir)
+        except:
+            pass
+        shutil.copytree(self._buildDir, self._outputDir)
+        print('Documentation installed under {} directory'.format(self._outputDir))
 
     def clean(self):
         cmd = 'make clean'
