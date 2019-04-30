@@ -164,11 +164,11 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
         SPM.build_project('html')
     except:
         print('Error when building report as {} output'.format('html'))
-        raise
+        pass
     try:
         SPM.build_project('latexpdf')
     except:
-        print('Error when building report as {} output'.format('html'))
-        raise
+        print('Error when building report as {} output'.format('pdf'))
+        pass
     SPM.install_project()
 

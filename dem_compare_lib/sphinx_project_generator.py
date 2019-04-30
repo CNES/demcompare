@@ -12,7 +12,7 @@ level of customization.
 """
 
 import os
-import shutil, distutils
+import shutil
 import errno
 
 
@@ -174,13 +174,11 @@ class SphinxProjectManager(object):
 
     def install_project(self):
         try:
-            shutil.copytree(os.path.join(self._buildDir), self._outputDir)
-            print('Documentation installed under {} directory'.format(self._outputDir))
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-            else:
-                print("! Error : A documentation already exists in install directory : {}".format(self._outputDir))
+            shutil.rmtree(self._outputDir)
+        except:
+            pass
+        shutil.copytree(self._buildDir, self._outputDir)
+        print('Documentation installed under {} directory'.format(self._outputDir))
 
     def clean(self):
         cmd = 'make clean'
