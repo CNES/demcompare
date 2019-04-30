@@ -14,6 +14,7 @@ level of customization.
 import os
 import shutil
 import errno
+import subprocess
 
 
 def mkdir_p(path):
@@ -168,9 +169,18 @@ class SphinxProjectManager(object):
         :param mode: 'html' or 'latex' or 'latexpdf'
         :return:
         """
-        os.chdir(self._workingDir)
-        cmd = 'make {}'.format(mode)
-        os.system(cmd)
+
+        cur_dir = os.curdir
+        try:
+            os.chdir(self._workingDir)
+            cr_build = open(os.path.join(self._workingDir, 'cr_build-{}.txt'.format(mode)), 'w')
+            subprocess.check_call(['make', mode], stdout=cr_build, stderr=subprocess.STDOUT, env=os.environ)
+            os.chdir(cur_dir)
+        except:
+            os.chdir(cur_dir)
+            raise
+        else:
+            print('Sphinx build succeeded for {} mode'.format(mode))
 
     def install_project(self):
         try:
