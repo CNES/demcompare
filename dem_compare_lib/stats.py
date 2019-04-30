@@ -526,9 +526,9 @@ def dem_diff_plot(dem_diff, title='', plot_file='dem_diff.png', display=False):
     #
     P.figure(1, figsize=(7.0, 8.0))
     P.title(title)
-    nmad = float(1.4826 * np.nanmedian(np.abs(dem_diff.r-np.nanmedian(dem_diff.r))))
-    maxval = 3 * nmad
-    P.imshow(dem_diff.r, vmin=-maxval, vmax=maxval)
+    mu = np.nanmean(dem_diff.r)
+    sigma = np.nanstd(dem_diff.r)
+    P.imshow(dem_diff.r, vmin=mu-sigma, vmax=mu+sigma)
     cb = P.colorbar()
     cb.set_label('Elevation differences (m)')
 
