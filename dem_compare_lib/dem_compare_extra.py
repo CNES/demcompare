@@ -62,7 +62,7 @@ def computeMosaic(tiles_path, output_dir):
     for config in tiles_final_cfg:
         if 'alti_results' in config and 'dzMap' in config['alti_results']:
             img_list.append(os.path.basename(config['alti_results']['dzMap']['path']))
-            continue
+            break
     img_list.append('initial_dh.tif')
 
     tiles = [os.path.join(a_valid_tile, final_json_file) for a_valid_tile in valid_tiles_path]
@@ -78,6 +78,7 @@ def computeMosaic(tiles_path, output_dir):
             nbBands = 4
             dataType = 'Byte'
 
+        print('Mosaic {} images'.format(img))
         mosaic.main(tiles, output_img, img, color=color, nbBands=nbBands, dataType=dataType)
 
 
