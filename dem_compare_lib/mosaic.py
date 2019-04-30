@@ -1,10 +1,34 @@
 #!/usr/bin/env python
+# -*- coding: iso-8859-15 -*-
 
-# Extrait de s2p_mosaic.py avec quelques modifications
+# Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
 
-import argparse, json, os
+import argparse, json, os, datetime, subprocess, sys
 
-from s2plib import common
+import numpy as np
+from osgeo import gdal
+
+
+def shellquote(s):
+    return "'%s'" % s.replace("'", "'\\''")
+
+garbage = list()
+
+
+def remove(target):
+    try:
+        os.remove(target)
+    except OSError:
+        pass
+
+
+def garbage_cleanup():
+    """
+    Removes all the files listed in the global variable 'garbage'.
+    """
+    while garbage:
+        remove(garbage.pop())
+
 
 def read_tiles(tiles_file):
     tiles = []
@@ -18,6 +42,7 @@ def read_tiles(tiles_file):
     tiles = [os.path.join(outdir, t) for t in tiles]
 
     return tiles
+
 
 def vrt_body_source(fname, band, src_x, src_y, src_w, src_h, dst_x, dst_y, dst_w, dst_h):
     """
@@ -40,6 +65,7 @@ def vrt_body_source(fname, band, src_x, src_y, src_w, src_h, dst_x, dst_y, dst_w
     body += '\t\t</SimpleSource>\n'
 
     return body
+
 
 def vrt_header(w, h, dataType='Float32', band=1, color=False):
     """
@@ -89,6 +115,7 @@ def vrt_bandfooter():
     footer = '\t</VRTRasterBand>\n'
 
     return footer
+
 
 def global_extent(tiles):
     """
@@ -196,6 +223,8 @@ def write_row_vrts(outDir, tiles, sub_img, vrt_basename, min_x, max_x, nbBands=1
             # Write vrt footer
             row_vrt_file.write(vrt_footer())
 
+        garbage.append(row_vrt_filename)
+
     return vrt_row
 
 
@@ -209,7 +238,7 @@ def write_main_vrt(vrt_row, vrt_name, min_x, max_x, min_y, max_y, nbBands=1, dat
         min_x,max_x,min_y,max_y: Extent of the raster
     """
     vrt_basename = os.path.basename(vrt_name)
-    vrt_dirname = os.path.dirname(vrt_name)
+    vrt_dirname = os.path.dirname(vrt_name) or '.'
 
     with open(vrt_name, 'w') as main_vrt_file:
         main_vrt_file.write(vrt_header(max_x - min_x, max_y - min_y, dataType=dataType, color=color))
@@ -233,13 +262,70 @@ def write_main_vrt(vrt_row, vrt_name, min_x, max_x, min_y, max_y, nbBands=1, dat
         main_vrt_file.write(vrt_footer())
 
 
+def write_vrt_from_a_list(vrt_outfile, tiles_list):
+    """
+    Write a vrt file from a list of tiles as tuples
+
+    Args:
+    tiles_tiles: list of tiles as tuples: [(fname, dst_x, dst_y), ...]
+    vrt_outfile: vrt output file
+    """
+
+    dst_list = list()
+    vrt_content = list()
+    rastercount_sav = None
+    bandtype_sav = None
+
+    for tile in tiles_list:
+        fname, dst_x, dst_y = tile
+        dataset = gdal.Open(fname)
+        dst_w = dataset.RasterXSize
+        dst_h = dataset.RasterYSize
+        dst_list.append([dst_x, dst_y, dst_w, dst_h])
+
+        rastercount = dataset.RasterCount
+        bandtype = gdal.GetDataTypeName(dataset.GetRasterBand(1).DataType)
+
+        rastercount_sav = rastercount if rastercount_sav is None else rastercount_sav
+        bandtype_sav = bandtype if bandtype_sav is None else bandtype_sav
+
+        assert rastercount_sav == rastercount
+        assert bandtype_sav == bandtype
+
+        while len(vrt_content) < rastercount:
+            if vrt_content:
+                vrt_content.append([vrt_bandheader(band=len(vrt_content)+1,
+                                                   dataType=bandtype)])
+            else:
+                vrt_content.append([])
+
+        for band in range(rastercount):
+            vrt_content[band].append(vrt_body_source(fname, band+1, 0, 0, dst_w, dst_h,
+                                                     dst_x, dst_y, dst_w, dst_h))
+
+    for band in range(rastercount-1):
+        vrt_content[band].append(vrt_bandfooter())
+
+    vrt_content = [item for sublist in vrt_content for item in sublist]
+
+    dst_numpy = np.array(dst_list)
+    vrt_sizex = np.amax(dst_numpy[:, 2] + dst_numpy[:, 0])
+    vrt_sizey = np.amax(dst_numpy[:, 3] + dst_numpy[:, 1])
+
+    vrt_content.insert(0, vrt_header(vrt_sizex, vrt_sizey,
+                                     dataType=bandtype))
+
+    vrt_content.append(vrt_footer())
+
+    with open(vrt_outfile, 'w') as vrt_file:
+        vrt_file.write(' '.join((vrt_content)))
+
+
 def main(tiles_file, outfile, sub_img, nbBands=1, dataType='Float32', color=False):
     outfile_basename = os.path.basename(outfile)
-    outfile_dirname = os.path.dirname(outfile)
+    outfile_dirname = os.path.dirname(outfile) or '.'
 
     output_format = outfile_basename[-3:]
-
-    print('Output format is ' + output_format)
 
     # If output format is tif, we need to generate a temporary vrt
     # with the same name
@@ -254,53 +340,38 @@ def main(tiles_file, outfile, sub_img, nbBands=1, dataType='Float32', color=Fals
     vrt_name = os.path.join(outfile_dirname, vrt_basename)
 
     # Read the tiles file
-    print('tiles_file = {}'.format(tiles_file))
-    print('~isinstance(tiles_file, list) = {}'.format(~isinstance(tiles_file, list)))
     if isinstance(tiles_file, list):
         tiles = tiles_file
     else:
         tiles = read_tiles(tiles_file)
 
 
-    print(str(len(tiles)) + ' tiles found')
-
     # Compute the global extent of the output image
     (min_x, max_x, min_y, max_y) = global_extent(tiles)
 
-    print('Global extent: [%i,%i]x[%i,%i]' % (min_x, max_x, min_y, max_y))
-
     # Now, write all row vrts
-    print("Writing row vrt files " + vrt_basename)
     vrt_row=write_row_vrts(outfile_dirname, tiles, sub_img, vrt_basename, min_x, max_x,
                            nbBands=nbBands, color=color, dataType=dataType)
 
     # Finally, write main vrt
-    print('Writing ' + vrt_name)
     write_main_vrt(vrt_row, vrt_name, min_x, max_x, min_y, max_y, nbBands=nbBands, color=color, dataType=dataType)
 
     # If Output format is tif, convert vrt file to tif
     if output_format == 'tif':
-        print('Converting vrt to tif ...')
-        common.run(('gdal_translate -ot Float32 -co TILED=YES -co'
-                    ' BIGTIFF=IF_NEEDED %s %s'
-                    % (common.shellquote(vrt_name), common.shellquote(outfile))))
+        try:
+            devnull = open(os.devnull, 'w')
+            cmd = ['gdal_translate', '-ot', 'Float32', '-co', 'TILES=YES', '-co', 'BIGTIFF=IF_NEEDED',
+                   '{}'.format(vrt_name),
+                   '{}'.format(outfile)]
+            subprocess.check_call(cmd, stdout=devnull, stderr=subprocess.STDOUT, env=os.environ)
+        except:
+            raise
 
-        # print('Removing temporary vrt files')
-        # # Do not use items()/iteritems() here because of python 2 and 3 compat
-        # for y in vrt_row:
-        #     vrt_data = vrt_row[y]
-        #     row_vrt_filename = os.path.join(vrt_data['vrt_dir'], vrt_basename)
-        #     try:
-        #         os.remove(row_vrt_filename)
-        #     except OSError:
-        #         pass
-        # try:
-        #     os.remove(vrt_name)
-        # except OSError:
-        #     pass
+        garbage.append(vrt_name)
+        garbage_cleanup()
 
 
-FORMAT=['Float32', 'Byte']
+FORMAT = ['Float32', 'Byte']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=('mosaic tool'))
