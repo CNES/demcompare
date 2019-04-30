@@ -20,6 +20,7 @@ import numpy as np
 import copy
 import matplotlib as mpl
 from dem_compare_lib import initialization, coregistration, stats, report, dem_compare_extra
+from dem_compare_lib.output_tree_design import get_out_dir, get_out_file_path, get_otd_dirs
 from dem_compare_lib.a3d_georaster import A3DDEMRaster, A3DGeoRaster
 
 
@@ -42,8 +43,8 @@ def computeReport(cfg, steps, dem, ref):
                                dem.ds_file,
                                ref.ds_file,
                                [modename for modename, modefile in cfg['stats_results']['modes'].items()],
-                               os.path.join(cfg['outputDir'], 'report_documentation'),
-                               os.path.join(cfg['outputDir'], 'tmpDir'))
+                               os.path.join(cfg['outputDir'], get_out_dir('sphinx_built_doc')),
+                               os.path.join(cfg['outputDir'], get_out_dir('sphinx_src_doc')))
 
 
 def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
@@ -113,9 +114,9 @@ def computeCoregistration(cfg, steps, dem, ref, initial_dh, final_cfg=None, fina
             cfg['alti_results'] = {}
             cfg['alti_results']['rectifiedDSM'] = copy.deepcopy(cfg['inputDSM'])
             cfg['alti_results']['rectifiedRef'] = copy.deepcopy(cfg['inputRef'])
-            coreg_dem.save_geotiff(os.path.join(cfg['outputDir'], 'coreg_DEM.tif'))
-            coreg_ref.save_geotiff(os.path.join(cfg['outputDir'], 'coreg_REF.tif'))
-            final_dh.save_geotiff(os.path.join(cfg['outputDir'], 'final_dh.tif'))
+            coreg_dem.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('coreg_DEM.tif')))
+            coreg_ref.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('coreg_REF.tif')))
+            final_dh.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('final_dh.tif')))
             cfg['alti_results']['rectifiedDSM']['path'] = coreg_dem.ds_file
             cfg['alti_results']['rectifiedRef']['path'] = coreg_ref.ds_file
             cfg['alti_results']['rectifiedDSM']['nb_points'] = coreg_dem.r.size
@@ -207,19 +208,8 @@ def computeInitialization(config_json):
     # checks config
     initialization.check_parameters(cfg)
 
-    # set tmpDir (trash dir)
-    cfg['tmpDir'] = os.path.join(cfg['outputDir'], 'tmp')
-    initialization.mkdir_p(cfg['tmpDir'])
-    # if "clean_tmp" not in cfg or cfg["clean_tmp"] is True:
-        # if "TMPDIR" not in os.environ:
-        #     os.environ["TMPDIR"] = os.path.join(cfg['outputDir'], "tmp")
-        #     try:
-        #         os.makedirs(os.environ["TMPDIR"])
-        #     except OSError as e:
-        #         if e.errno != errno.EEXIST:
-        #             raise
-        # else :
-        #     cfg['tmpDir'] = os.path.expandvars("$TMPDIR")
+    #create output tree dirs
+    [initialization.mkdir_p(os.path.join(cfg['outputDir'], directory)) for directory in get_otd_dirs(cfg['otd'])]
 
     initialization.initialization_plani_opts(cfg)
     initialization.initialization_alti_opts(cfg)
@@ -253,7 +243,7 @@ def main_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=
         mpl.use('Agg')
 
     # Set final_json_file name and try to read it if it exists (if a previous run was launched)
-    final_json_file = os.path.join(cfg['outputDir'], 'final_config.json')
+    final_json_file = os.path.join(cfg['outputDir'], get_out_file_path('final_config.json'))
     final_cfg = None
     if os.path.isfile(final_json_file):
         with open(final_json_file, 'r') as f:
@@ -277,9 +267,10 @@ def main_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=
                                           dem.trans,
                                           "{}".format(dem.srs.ExportToProj4()),
                                           nodata=-32768)
-    initial_dh.save_geotiff(os.path.join(cfg['outputDir'], 'initial_dh.tif'))
+    initial_dh.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('initial_dh.tif')))
     stats.dem_diff_plot(initial_dh, title='DSMs diff without coregistration (REF - DSM)',
-                        plot_file=os.path.join(cfg['outputDir'], 'initial_dem_diff.png'), display=False)
+                        plot_file=os.path.join(cfg['outputDir'], get_out_file_path('initial_dem_diff.png')),
+                        display=False)
 
     #
     # Coregister both DSMs together and compute final differences
@@ -288,7 +279,8 @@ def main_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=
                                                            final_cfg=final_cfg, final_json_file=final_json_file)
     if final_dh is not initial_dh:
         stats.dem_diff_plot(final_dh, title='DSMs diff with coregistration (REF - DSM)',
-                            plot_file=os.path.join(cfg['outputDir'], 'final_dem_diff.png'), display=False)
+                            plot_file=os.path.join(cfg['outputDir'], get_out_file_path('final_dem_diff.png')),
+                            display=False)
 
     #
     # Compute stats
@@ -325,8 +317,9 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
         try:
             main_tile(tile['json'], steps, display=display, debug=debug, force=force)
         except Exception, e:
-            print('Error encoutered for tile: {} -> {}'.format(tile, e))
-            pass
+            print('Error encountered for tile: {} -> {}'.format(tile, e))
+            raise
+            #TODO pass
 
     #
     # Run merge steps

@@ -18,6 +18,7 @@ import copy
 import errno
 import os
 from dem_compare_lib.a3d_georaster import A3DDEMRaster
+from dem_compare_lib.output_tree_design import supported_OTD
 
 
 
@@ -89,6 +90,13 @@ def check_parameters(cfg):
                 cfg['inputRef']['georef'] = 'WGS84'
     else:
         cfg['inputRef']['georef'] = 'WGS84'
+
+    # check output tree design
+    if 'otd' in cfg and cfg['otd'] not in supported_OTD:
+        raise NameError('ERROR: output tree design set by user ({}) is not supported'
+                        ' (available options are)'.format(cfg['otd'], supported_OTD))
+    else:
+        cfg['otd'] = 'default_OTD'
 
 
 def initialization_plani_opts(cfg):

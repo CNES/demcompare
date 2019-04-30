@@ -11,8 +11,30 @@ import collections
 import os
 import glob
 import csv
+import sys
+import fnmatch
 
 from dem_compare_lib.sphinx_project_generator import SphinxProjectManager
+
+
+def recursive_search(directory, pattern):
+    """
+    Recursively look up pattern filename into dir tree
+
+    :param directory:
+    :param pattern:
+    :return:
+    """""
+
+    if sys.version[0:3] < '3.5':
+        matches = []
+        for root, dirnames, filenames in os.walk(directory):
+            for filename in fnmatch.filter(filenames, pattern):
+                matches.append(os.path.join(root, filename))
+    else:
+        matches = glob.glob('{}/**/{}'.format(directory, pattern), recursive=True)
+
+    return matches
 
 
 def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', projectDir='.'):
@@ -46,13 +68,13 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
     for mode in modes_information:
         # find both graph and csv stats associated with the mode
         # - graph
-        result = glob.glob(os.path.join(workingDir, '*Fitted*_{}*.png'.format(mode)))
+        result = recursive_search(workingDir, '*Fitted*_{}*.png'.format(mode))
         if len(result):
             modes_information[mode]['graph'] = result[0]
         else:
             modes_information[mode]['graph'] = None
         # - csv
-        result = glob.glob(os.path.join(workingDir, '*_{}*.csv'.format(mode)))
+        result = recursive_search(workingDir, '*_{}*.csv'.format(mode))
         if len(result):
             if os.path.exists(result[0]):
                 csv_data = []
@@ -67,8 +89,8 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
             modes_information[mode]['csv'] = None
 
     # Find DSMs differences
-    dem_diff_without_coreg = glob.glob(os.path.join(workingDir, 'initial_dem_diff.png'))[0]
-    result = glob.glob(os.path.join(workingDir, 'final_dem_diff.png'))
+    dem_diff_without_coreg = recursive_search(workingDir, 'initial_dem_diff.png')[0]
+    result = recursive_search(workingDir, 'final_dem_diff.png')
     if len(result):
         dem_diff_with_coreg = result[0]
     else:

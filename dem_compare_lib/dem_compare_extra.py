@@ -20,6 +20,7 @@ import argparse
 import numpy as np
 import matplotlib as mpl
 from dem_compare_lib.a3d_georaster import A3DGeoRaster
+from dem_compare_lib.output_tree_design import get_out_dir, get_out_file_path
 from stats import create_sets, create_masks
 
 DEFAULT_STEPS = []
@@ -45,7 +46,8 @@ def computeMosaic(tiles_path, output_dir):
     # Reads .json files
     # - get rid of invalid tiles (the ones without a final_config.json file)
     final_json_file = 'final_config.json'
-    valid_tiles_path = [tile_path for tile_path in tiles_path if os.path.isfile(os.path.join(tile_path, final_json_file))]
+    valid_tiles_path = [tile_path for tile_path in tiles_path if os.path.isfile(os.path.join(tile_path,
+                                                                                             get_out_file_path(final_json_file)))]
     # - load the tiles final config json files
     tiles_final_cfg = [load_json(os.path.join(a_valid_tile, final_json_file)) for a_valid_tile in valid_tiles_path]
 
@@ -113,21 +115,22 @@ def computeMergePlots(tiles_path, output_dir):
     # Get the modes list
     #
     import glob
-    prefix = os.path.join(output_dir,'merged_stats_for_')
+    prefix = os.path.join(output_dir, get_out_dir('stats_dir'), 'merged_stats_for_')
     suffix = '_mode.json'
-    json_mode_files = glob.glob('{}*{}'.format(prefix,suffix))
+    json_mode_files = glob.glob('{}*{}'.format(prefix, suffix))
     if len(json_mode_files) == 0:
         # If merge_stats has not been performed, we launch it so we can get access to merged mean and std
         computeMergeStats(tiles_path, output_dir)
         json_mode_files = glob.glob('{}*{}'.format(prefix, suffix))
-    modes = [filename.replace(prefix,'').replace(suffix,'') for filename in json_mode_files]
+    modes = [filename.replace(prefix,'').replace(suffix, '') for filename in json_mode_files]
 
 
     #
     # Because we are going to need some information inside the final_config.json we need to load them
     # - get rid of invalid tiles (the ones without a final_config.json file)
     final_json_file = 'final_config.json'
-    valid_tiles_path = [tile_path for tile_path in tiles_path if os.path.isfile(os.path.join(tile_path, final_json_file))]
+    valid_tiles_path = [tile_path for tile_path in tiles_path if os.path.isfile(os.path.join(tile_path,
+                                                                                             get_out_file_path(final_json_file)))]
 
     #
     # Special case : only one valid tile => its results are copy / pasted
@@ -234,7 +237,7 @@ def computeMergePlots(tiles_path, output_dir):
         P.xlim([bin_min,bin_max])
 
         # save the figure
-        P.savefig(os.path.join(output_dir, 'AltiErrors-Histograms_FittedWithGaussians_' + mode + '.png'),
+        P.savefig(os.path.join(output_dir, get_out_dir('snapshots_dir'), 'AltiErrors-Histograms_FittedWithGaussians_' + mode + '.png'),
                   dpi=100, bbox_inches='tight')
 
 
@@ -429,7 +432,7 @@ def _mergePercentiles(valid_tiles_path, tile_stats_list, mode='standard'):
     #
     # read the json configuration file of a single tile to get the final dh map name and the support image name
     # WARNING : note that it is assumed here those names are the same for all tiles
-    a_final_config = load_json(os.path.join(valid_tiles_path[0], 'final_config.json'))
+    a_final_config = load_json(os.path.join(valid_tiles_path[0], get_out_file_path('final_config.json')))
     try:
         final_dh_filename = os.path.basename(a_final_config['alti_results']['dzMap']['path'])
         list_final_dh_files = [os.path.join(valid_tile_path, final_dh_filename) for valid_tile_path in valid_tiles_path]
@@ -497,7 +500,8 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
 
     # get rid of invalid tiles (the ones without a final_config.json file)
     final_json_file = 'final_config.json'
-    valid_tiles_path = [tile_path for tile_path in tiles_path if os.path.isfile(os.path.join(tile_path, final_json_file))]
+    valid_tiles_path = [tile_path for tile_path in tiles_path if os.path.isfile(os.path.join(tile_path,
+                                                                                             get_out_file_path(final_json_file)))]
 
     # read the json configuration file of a single tile to get the modes and the name of the .json associated
     # WARNING : note that it is assumed here that the stats .json file shared the same name for all the tiles !
@@ -517,8 +521,8 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
             the_csv_name_for_this_mode = the_json_name_for_this_mode.replace('.json', '.csv')
 
             # Output name
-            json_output_name = os.path.join(output_dir, 'merged_stats_for_{}_mode.json'.format(mode))
-            csv_output_name = json_output_name .replace('.json', '.csv')
+            json_output_name = os.path.join(output_dir, get_out_dir('stats_dir'), 'merged_stats_for_{}_mode.json'.format(mode))
+            csv_output_name = json_output_name.replace('.json', '.csv')
             shutil.copyfile(the_json_name_for_this_mode, json_output_name)
             shutil.copyfile(the_csv_name_for_this_mode, csv_output_name)
         return
