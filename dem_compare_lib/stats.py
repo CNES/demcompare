@@ -222,10 +222,10 @@ def get_sets_labels_and_names(class_type, class_rad_range):
             sets_name_list.append('[{}; inf['.format(class_rad_range[i]))
         else:
             if class_type == 'slope':
-                sets_label_list.append(r'$\nabla \in$ [{}% ; {}%]'.format(class_rad_range[i], class_rad_range[i + 1]))
+                sets_label_list.append(r'$\nabla \in$ [{}% ; {}%['.format(class_rad_range[i], class_rad_range[i + 1]))
             else:
-                sets_label_list.append(r'val $\in$ [{}% ; {}%]'.format(class_rad_range[i], class_rad_range[i + 1]))
-            sets_name_list.append('[{}; {}]'.format(class_rad_range[i], class_rad_range[i + 1]))
+                sets_label_list.append(r'val $\in$ [{}% ; {}%['.format(class_rad_range[i], class_rad_range[i + 1]))
+            sets_name_list.append('[{}; {}['.format(class_rad_range[i], class_rad_range[i + 1]))
 
     return sets_label_list, sets_name_list
 
@@ -577,7 +577,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     import matplotlib.pyplot as P
     from matplotlib import gridspec
 
-    # -> bins should rely on [-A;A], A being the higher absolute error value (all histograms rely on the same bins range)
+    # -> bins should rely on [-A;A],A being the higher absolute error value (all histograms rely on the same bins range)
     if to_keep_mask is not None:
         borne = np.max([abs(np.nanmin(input_array[np.where(to_keep_mask==True)])),
                         abs(np.nanmax(input_array[np.where(to_keep_mask==True)]))])
