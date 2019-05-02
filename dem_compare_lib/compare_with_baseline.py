@@ -15,6 +15,8 @@ import os
 from collections import OrderedDict
 
 
+from dem_compare_lib.output_tree_design import get_out_dir
+
 def load_json(json_file):
     with open(json_file, 'r') as f:
         return json.load(f)
@@ -62,16 +64,33 @@ def check_csv(csv_ref, csv_test, csv_file, epsilon):
     return csv_differences
 
 
-def main():
-    output_dir = '../test_output/'
-    baseline_dir = '../test_baseline/'
-    epsilon = 1.e-15
+def main(baseline_dir, output_dir, epsilon=1.e-15):
+    """
+    Compare output_dir results to baseline_dir ones
+
+    :param baseline_dir:
+    :param output_dir:
+    :param epsilon:
+    :return:
+    """
+
+    # read both json files
+    baseline_fjson = load_json(os.path.join(baseline_dir, 'final_config.json'))
+    output_fjson = load_json(os.path.join(output_dir, 'final_config.json'))
+
+    # get both stats dir
+    baseline_statsdir = os.path.join(baseline_dir,
+                                     get_out_dir('stats_dir', design=(baseline_fjson['otd'] if 'otd' in baseline_fjson
+                                                                      else 'raw_OTD'))
+                                     )
+    output_statsdir = os.path.join(output_dir, get_out_dir('stats_dir', design=output_fjson['otd']))
 
     # check csv files consistency
     ext = '.csv'
-    csv_files = glob.glob('{}/*{}'.format(baseline_dir, ext))
-    baseline_data = [load_csv(csv_file) for csv_file in csv_files]
-    test_data = [load_csv(os.path.join(output_dir, os.path.basename(csv_file))) for csv_file in csv_files]
+    baseline_csv_files = glob.glob('{}/*{}'.format(baseline_statsdir, ext))
+    output_csv_files = glob.glob('{}/*{}'.format(output_statsdir, ext))
+    baseline_data = [load_csv(csv_file) for csv_file in baseline_csv_files]
+    test_data = [load_csv(csv_file) for csv_file in output_csv_files]
 
     # before checking values we see if class names (slope range) and stats tested are the same between both versions
     if len(baseline_data) != len(test_data):
@@ -80,11 +99,13 @@ def main():
 
     # for each csv file
     differences = [check_csv(csv_ref, csv_test, csv_file, epsilon)
-                   for csv_ref, csv_test, csv_file in zip(baseline_data, test_data, csv_files)]
+                   for csv_ref, csv_test, csv_file in zip(baseline_data, test_data, baseline_csv_files)]
 
     if sum([len(diff) for diff in differences]) != 0:
         error = 'Invalid results obtained with this version of dem_compare.py: \n{}'.format(differences)
         raise ValueError(error)
+    else:
+        print('No difference between tested files : {}'.format(zip(baseline_csv_files, output_csv_files)))
 
 
 def get_parser():
@@ -95,10 +116,15 @@ def get_parser():
     """
     parser = argparse.ArgumentParser(description=('Compares dem_compare.py test_config.json outputs to baseline'))
 
+    parser.add_argument('--baselinePath', default='./test_baseline',
+                        help='path to the baseline')
+    parser.add_argument('--currentRunPath', default='./test_output',
+                        help='path to the dem_compare run to test against the baseline')
+
     return parser
 
 
 if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
-    main()
+    main(args.baselinePath, args.currentRunPath)

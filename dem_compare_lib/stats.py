@@ -19,6 +19,7 @@ import json
 import collections
 import csv
 from dem_compare_lib.a3d_georaster import A3DGeoRaster
+from dem_compare_lib.output_tree_design import get_out_dir, get_out_file_path
 from astropy import units as u
 
 
@@ -109,7 +110,7 @@ def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False)
     cfg['stats_results']['images']['Ref_support'].pop('nb_points')
     cfg['stats_results']['images']['Ref_support'].pop('nb_valid_points')
     cfg['stats_results']['images']['Ref_support']['path'] = os.path.join(cfg['outputDir'],
-                                                                         'Ref_support.tif')
+                                                                         get_out_file_path('Ref_support.tif'))
 
     # Compute slope
     slope_ref, aspect_ref = coreg_ref.get_slope_and_aspect(degree=False)
@@ -129,7 +130,7 @@ def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False)
         cfg['stats_results']['images']['DSM_support'].pop('nb_points')
         cfg['stats_results']['images']['DSM_support'].pop('nb_valid_points')
         cfg['stats_results']['images']['DSM_support']['path'] = os.path.join(cfg['outputDir'],
-                                                                                     'DSM_support.tif')
+                                                                             get_out_file_path('DSM_support.tif'))
 
         # Compute slope
         slope_dsm, aspect_dsm = coreg_dsm.get_slope_and_aspect(degree=False)
@@ -143,8 +144,8 @@ def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False)
         # Compute slope differences between both slope images
         cfg['stats_results']['images']['list'].append('Ref_support-DSM_support')
         cfg['stats_results']['images']['Ref_support-DSM_support'] = copy.deepcopy(cfg['stats_results']['images']['DSM_support'])
-        cfg['stats_results']['images']['Ref_support-DSM_support']['path'] = os.path.join(cfg['outputDir'],
-                                                                                     'Ref_support-DSM_support.tif')
+        cfg['stats_results']['images']['Ref_support-DSM_support']['path'] = \
+            os.path.join(cfg['outputDir'], get_out_file_path('Ref_support-DSM_support.tif'))
         slope_differences = A3DGeoRaster.from_raster(slope_ref_georaster.r - slope_dsm_georaster.r,
                                                      slope_dsm_georaster.trans,
                                                      "{}".format(slope_dsm_georaster.srs.ExportToProj4()),
@@ -175,7 +176,7 @@ def rectify_user_support_img(cfg, coreg_dsm, do_cross_classification = False):
         rectified_support_ref = input_support_ref.reproject(coreg_dsm.srs, int(coreg_dsm.nx), int(coreg_dsm.ny),
                                                             coreg_dsm.footprint[0], coreg_dsm.footprint[3],
                                                             coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_ref.nodata)
-        rectified_support_ref.save_geotiff(os.path.join(cfg['outputDir'], 'Ref_support.tif'))
+        rectified_support_ref.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('Ref_support.tif')))
     if 'class_support_dsm' in cfg['stats_opts'] and do_cross_classification is True:
         input_support_dsm = A3DGeoRaster(str(cfg['stats_opts']['class_support_dsm']), nodata=-32768)
         # Keep in mind that the DSM geo ref has been shifted, hence we need to shift the support here
@@ -186,7 +187,7 @@ def rectify_user_support_img(cfg, coreg_dsm, do_cross_classification = False):
                                                             coreg_dsm.footprint[0], coreg_dsm.footprint[3],
                                                             coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_dsm.nodata,
                                                             interp_type=gdal.GRA_NearestNeighbour)
-        rectified_support_dsm.save_geotiff(os.path.join(cfg['outputDir'], 'DSM_support.tif'))
+        rectified_support_dsm.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('DSM_support.tif')))
 
     #
     # Save results into cfg
@@ -230,10 +231,7 @@ def get_sets_labels_and_names(class_type, class_rad_range):
     return sets_label_list, sets_name_list
 
 
-def create_sets(img_to_classify,
-                             sets_rad_range,
-                             tmpDir='.',
-                             output_descriptor=None):
+def create_sets(img_to_classify, sets_rad_range, tmpDir='.', output_descriptor=None):
     """
     Returns a list of boolean arrays. Each array defines a set. The sets partition / classify the image.
     A boolean array defines indices to kept for the associated set / class.
@@ -544,7 +542,7 @@ def dem_diff_plot(dem_diff, title='', plot_file='dem_diff.png', display=False):
 
 def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                        sets=None, sets_labels=None, sets_colors=None,
-                       plot_title='', outdir='.', save_prefix='', display=False):
+                       plot_title='', outplotdir='.', outhistdir='.', save_prefix='', display=False):
     """
     Creates a histogram plot for all sets given and saves them on disk.
     Note : If more than one set is given, than all the remaining sets are supposed to partitioned the first one. Hence
@@ -559,7 +557,8 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     :param sets_colors: color set for plotting
     :param sets_stats: where should be retrived mean and std values for all sets
     :param plot_title: plot primary title
-    :param outdir: directory where histograms are to be saved
+    :param outplotdir: directory where histograms are to be saved
+    :param outhistdir: directory where histograms (as numpy files) are to be saved
     :param save_prefix: prefix to the histogram files saved by this method
     :return: list saved files
     """
@@ -584,7 +583,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     else:
         borne = np.max([abs(np.nanmin(input_array)), abs(np.nanmax(input_array))])
     bins = np.arange(-roundUp(borne, bin_step), roundUp(borne, bin_step)+bin_step, bin_step)
-    np.savetxt(os.path.join(outdir, save_prefix+'bins'+'.txt'), [bins[0],bins[len(bins)-1], bin_step])
+    np.savetxt(os.path.join(outhistdir, save_prefix+'bins'+'.txt'), [bins[0],bins[len(bins)-1], bin_step])
 
     # -> set figures shape, titles and axes
     #    -> first figure is just one plot of normalized histograms
@@ -654,7 +653,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                 # save outputs (plot files and name of labels kept)
                 saved_labels.append(sets_labels[set_idx])
                 saved_colors.append(sets_colors[set_idx])
-                saved_file = os.path.join(outdir, save_prefix + str(set_idx) + '.npy')
+                saved_file = os.path.join(outhistdir, save_prefix + str(set_idx) + '.npy')
                 saved_files.append(saved_file)
                 np.save(saved_file, n)
 
@@ -664,13 +663,13 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     P.figure(1)
     P.legend()
     if display is False:
-        P.savefig(os.path.join(outdir,'AltiErrors-Histograms_'+save_prefix+'.png'),
+        P.savefig(os.path.join(outplotdir,'AltiErrors-Histograms_'+save_prefix+'.png'),
                   dpi=100, bbox_inches='tight')
     P.figure(2)
     P.subplot(gs[0])
     P.legend(loc="upper left")
     if display is False:
-        P.savefig(os.path.join(outdir,'AltiErrors-Histograms_FittedWithGaussians_'+save_prefix+'.png'),
+        P.savefig(os.path.join(outplotdir,'AltiErrors-Histograms_FittedWithGaussians_'+save_prefix+'.png'),
                   dpi=100, bbox_inches='tight')
     else:
         P.show()
@@ -790,19 +789,21 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         cfg['stats_results']['images']['list'].append('Ref_support_classified')
         cfg['stats_results']['images']['Ref_support_classified'] = {}
         ref_classified_img_descriptor = cfg['stats_results']['images']['Ref_support_classified']
-        ref_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'], 'Ref_support_classified.png')
+        ref_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'],
+                                                             get_out_file_path('Ref_support_classified.png'))
         ref_classified_img_descriptor['nodata'] = [0, 0, 0, 0]
         ref_sets_def, sets_color = create_sets(support_ref, cfg['stats_opts']['class_rad_range'],
-                                               tmpDir=cfg['tmpDir'], output_descriptor=ref_classified_img_descriptor)
+                                               tmpDir=cfg['outputDir'], output_descriptor=ref_classified_img_descriptor)
 
         if do_cross_classification:
             cfg['stats_results']['images']['list'].append('DSM_support_classified')
             cfg['stats_results']['images']['DSM_support_classified'] = {}
             dsm_classified_img_descriptor = cfg['stats_results']['images']['DSM_support_classified']
-            dsm_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'], 'DSM_support_classified.png')
+            dsm_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'],
+                                                                 get_out_file_path('DSM_support_classified.png'))
             dsm_classified_img_descriptor['nodata'] = [0, 0, 0, 0]
             dsm_sets_def, sets_color = create_sets(support_dsm, cfg['stats_opts']['class_rad_range'],
-                                                   tmpDir=cfg['tmpDir'], output_descriptor=dsm_classified_img_descriptor)
+                                                   tmpDir=cfg['outputDir'], output_descriptor=dsm_classified_img_descriptor)
 
     #
     # If cross-classification is 'on' we set the alphas bands transparent where ref and dsm support classified differ
@@ -872,7 +873,10 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                                     sets_labels=['all']+sets_labels,
                                                                     sets_colors=np.array([(0,0,0)]+list(sets_color)),
                                                                     plot_title='\n'.join(title),
-                                                                    outdir=cfg['outputDir'],
+                                                                    outplotdir=os.path.join(cfg['outputDir'],
+                                                                                            get_out_dir('snapshots_dir')),
+                                                                    outhistdir=os.path.join(cfg['outputDir'],
+                                                                                            get_out_dir('histograms_dir')),
                                                                     save_prefix=modes[mode],
                                                                     display=display)
         else:
@@ -883,7 +887,9 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         #
         # Save results as .json and .csv file
         #
-        cfg['stats_results']['modes'][modes[mode]] = os.path.join(cfg['outputDir'],'stats_results_'+modes[mode]+'.json')
+        cfg['stats_results']['modes'][modes[mode]] = os.path.join(cfg['outputDir'],
+                                                                  get_out_dir('stats_dir'),
+                                                                  'stats_results_'+modes[mode]+'.json')
         save_results(cfg['stats_results']['modes'][modes[mode]],
                      mode_stats,
                      labels_plotted=labels_saved,
@@ -922,7 +928,8 @@ def wave_detection(cfg, dh, display=False):
         cfg['stats_results']['images']['list'].append(dim)
         cfg['stats_results']['images'][dim] = copy.deepcopy(cfg['alti_results']['dzMap'])
         cfg['stats_results']['images'][dim].pop('nb_points')
-        cfg['stats_results']['images'][dim]['path'] = os.path.join(cfg['outputDir'], 'dh_{}_wave_detection.tif'.format(dim))
+        cfg['stats_results']['images'][dim]['path'] = os.path.join(cfg['outputDir'],
+                                                                   get_out_file_path('dh_{}_wave_detection.tif'.format(dim)))
 
         georaster = A3DGeoRaster.from_raster(res[dim], dh.trans, "{}".format(dh.srs.ExportToProj4()), nodata=-32768)
         georaster.save_geotiff(cfg['stats_results']['images'][dim]['path'])
