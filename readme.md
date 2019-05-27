@@ -45,7 +45,17 @@ coordinates of the projected image as tuple with (left, right, bottom, top) coor
 
 In anyway, this is four numbers that ought to be given in the `json` configuration file.
 
+The ROI refers to the tested DEM and will be adapted to the REF dem georef by dem_compare.py itself.
+
 If no ROI definition is provided then DEMs raster are fully processed.
+
+#### Tile processing
+
+Note that a `tile_size` parameter can be set to compute dem comparison by tile. As dem_compare can load the full size
+DEMs (if no ROI is provided) it can sometimes run out of memory and fail. To prevent this from happening one can set a
+`tile_size` (in pixel) where a tile is assumed to be squared. Then dem_compare will divide DEMs according to `tile_size`
+and process each tile independently. To merge every tile results into one, some optional post-processing steps are
+provided by dem_compare (see next chapter).
 
 #### step by step process (and the possibility to avoid the coregistration step)
 
@@ -54,14 +64,15 @@ provided. It accepts values from `{coregistration,stats,report}` :
 
     [user@machine] $ python dem_compare.py
     usage: dem_compare.py [-h]
-                          [--step {coregistration,stats,report} [{coregistration,stats,report} ...]]
+                          [--step {coregistration,stats,report,mosaic,merge_stats,merge_plots} [{coregistration,stats,report,mosaic,merge_stats,merge_plots} ...]]
                           [--debug] [--display]
                           config.json
 
-All the steps are optional, and a dem_compare can start at any step as long as previously required step have been launched.
+All the steps but stats are optional, and dem_compare can start at any step as long as previously required steps have been launched.
 This means that one can launch the report step only as long as the stats step has already been performed from a previous
 dem_compare launch and the config.json remains the same.
-Note that the coregistration step is not mandatory as one can decide its DEMs are already coregistered.
+Note that the coregistration step is not mandatory for stats and following steps as one can decide its DEMs are already
+coregistered.
 
 
 #### The parameters
@@ -82,7 +93,8 @@ Here is the list of the parameters and the associated default value when it exis
                             "disp_init" : {"x": 0, "y": 0}},
         "stats_opts" : {    "class_type": "slope",
                             "class_rad_range": [0, 10, 25, 50, 90],
-                            "cross_classification': False}
+                            "cross_classification": False,
+                            "elevation_thresholds" : {"list": [0.5,1,3], "zunit": "meter"}
     }
 
 ## Processing the outputs
@@ -144,41 +156,56 @@ image. The last one being the slope image or the image given by the user as valu
 
 3. the incoherent mode which is the coherent one complementary.
 
+#### The elevation threshold
+
+Using the `elevation_thresholds` parameter one can set a list of thresholds. Then for each threshold dem_compare will
+compute the ratio  of pixels for which the altitude difference is larger than this particular threshold.
+
+Note that so far results are only visible inside `stats_results-*.json` output files (see next chapter). Please also
+note that the threshold is compared against the altitude differences being signed. This means that the result is not
+always relevant and this stats computation shall be used carefully.
+
 #### The dh map and the intermediate data
 
 dem_compare will store several data and here is a brief explanation for each one.
 
 First, the images :
 
-1. the `intial_dh.tif` image is the altitude differences image when both DEMs have been reprojected to the same grid (the
+- the `intial_dh.tif` image is the altitude differences image when both DEMs have been reprojected to the same grid (the
 one of inputDSM) and no coregistration has been performed.
 
-2. `final_dh.tif` is the altitude differences image from the reprojected DEMs after the coregistration
+- `final_dh.tif` is the altitude differences image from the reprojected DEMs after the coregistration
 
-3. the `coreg_DSM.tif` and `coreg_Ref.tif` are the coregistered DEMS.
+- the `dh_col_wise_wave_detection.tif` and `dh_row_wise_wave_detection.tif` are respectively computed by substituting
+the `final_dh.tif` average col (row) to `final_dh.tif` itself. It helps to detect any residual oscillation.
 
-4. the `Ref_support.tif` and `DSM_support.tif` are the images from which the stats have been classified. Depending on the
+
+- the `coreg_DSM.tif` and `coreg_Ref.tif` are the coregistered DEMS.
+
+- the `Ref_support.tif` and `DSM_support.tif` are the images from which the stats have been classified. Depending on the
 values given to the parameters those images might not be there. With default behavior only the `Ref_support.tif` is computed
-and it is the `coreg_Ref.tif` slope.
+and it is the `coreg_Ref.tif` slope. When `cross_classification` is on, and `class_type` is `slope` (default), then
+`Ref_support.tif` and `DSM_support.tif` and both slope images. Plus, in this case, the `Ref_support-DSM_support.tif`
+(which the slope differences between both slope images) is also computed and stored.
 
-5. the `Ref_support_classified.png` and the `DSM_support_classified.png` are the classified version of the images listed
+- the `Ref_support_classified.png` and the `DSM_support_classified.png` are the classified version of the images listed
 previously. The alpha band is used to mask the pixels for whom both classification do not match. This could be because
 one pixel has a slope between [0; 20[ for one DEM and between [45; 100[ for the other one.
 
-6. the images whose names start with 'AltiErrors-' are the plots saved by dem_compare. They show histograms by stats
+- the images whose names start with 'AltiErrors-' are the plots saved by dem_compare. They show histograms by stats
 set and same histograms fitted by gaussian.
 
 Then, the remaining files :
 
-7. the `final_config.json` is the completion of the initial `config.json` file given by the user. It contains additional
+- the `final_config.json` is the completion of the initial `config.json` file given by the user. It contains additional
 information and is used when dem_compare is launched step by step.
 
-8. the files whose names start with 'stats_results-' are the `.json` and `.csv` files listed the statistics for each
+- the files whose names start with 'stats_results-' are the `.json` and `.csv` files listed the statistics for each
 set. There is one file by mode.
 
-9. the `.npy` files are the numpy histograms for each stats mode and set.
+- the `histograms/*.npy` files are the numpy histograms for each stats mode and set.
 
-Eventually, one shall find in the `report_documentation/ directory` the full documentation with all the results presented
+Eventually, one shall find in the `doc/` directory the full documentation with all the results presented
 for each mode and each set, in `html` or `latex` format.
 
 ## Dependencies
@@ -192,7 +219,7 @@ Here is the list of required dependencies for the python environment:
     `astropy`
     `matplotlib`
 
-For the report to be compied one shall install `sphinx` and `latex` (for the .pdf version).
+For the report to be compiled one shall install `sphinx` and `latex` (for the .pdf version).
 
 ## References
 

@@ -12,6 +12,7 @@ import re
 import os
 import copy
 import numpy as np
+from dem_compare_lib.output_tree_design import get_out_dir, get_out_file_path
 
 
 def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpDir='.'):
@@ -38,8 +39,8 @@ def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpD
     # Compute nuth and kaab coregistration
     from nuth_kaab_universal_coregistration import a3D_libAPI as nk_a3D_libAPI
     x_off, y_off, z_off, coreg_dem1, coreg_dem2, init_dh, final_dh = nk_a3D_libAPI(dem1,
-                                                                       dem2,
-                                                                       outdirPlot=tmpDir)
+                                                                                   dem2,
+                                                                                   outdirPlot=tmpDir)
 
     # Instead of taking nk_a3d_libAPI results we change their georef
     # -> this is because
@@ -75,18 +76,19 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     """
 
     if cfg['plani_opts']['coregistration_method'] == 'nuth_kaab':
-        x_bias, y_bias, z_bias, coreg_dem1, coreg_dem2, final_dh = coregister_with_Nuth_and_Kaab(dem1, dem2,
-                                                                                                 init_disp_x=cfg['plani_opts']['disp_init']['x'],
-                                                                                                 init_disp_y=cfg['plani_opts']['disp_init']['y'],
-                                                                                                 tmpDir=cfg['tmpDir'])
+        x_bias, y_bias, z_bias, coreg_dem1, coreg_dem2, final_dh = \
+            coregister_with_Nuth_and_Kaab(dem1, dem2,
+                                          init_disp_x=cfg['plani_opts']['disp_init']['x'],
+                                          init_disp_y=cfg['plani_opts']['disp_init']['y'],
+                                          tmpDir=os.path.join(cfg['outputDir'], get_out_dir('nuth_kaab_tmpDir')))
         z_bias = np.nanmean(final_dh.r)
     else:
         raise NameError("coregistration method unsupported")
 
     # Saves output coreg DEM to file system
-    coreg_dem1.save_geotiff(os.path.join(cfg['outputDir'], 'coreg_DEM.tif'))
-    coreg_dem2.save_geotiff(os.path.join(cfg['outputDir'], 'coreg_REF.tif'))
-    final_dh.save_geotiff(os.path.join(cfg['outputDir'], 'final_dh.tif'))
+    coreg_dem1.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('coreg_DEM.tif')))
+    coreg_dem2.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('coreg_REF.tif')))
+    final_dh.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('final_dh.tif')))
 
     # Update cfg
     # -> for plani_results

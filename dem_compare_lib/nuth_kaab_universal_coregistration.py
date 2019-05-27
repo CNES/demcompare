@@ -129,6 +129,8 @@ def a3D_libAPI(dsm_dem3Draster, ref_dem3Draster, outdirPlot=None, nb_iters=6):
     Output coregister DSM might be saved.
     Plots might be saved as well (and then not printed) if outputPlot is set.
 
+    NB : it is assumed that both dem3Draster have np.nan values inside the '.r' field as masked values
+
     :param dsm_dem3Draster: A3DDEMRaster
     :param dsm_from: path to dsm to coregister from
     :param nb_iters:

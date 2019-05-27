@@ -11,8 +11,30 @@ import collections
 import os
 import glob
 import csv
+import sys
+import fnmatch
 
 from dem_compare_lib.sphinx_project_generator import SphinxProjectManager
+
+
+def recursive_search(directory, pattern):
+    """
+    Recursively look up pattern filename into dir tree
+
+    :param directory:
+    :param pattern:
+    :return:
+    """""
+
+    if sys.version[0:3] < '3.5':
+        matches = []
+        for root, dirnames, filenames in os.walk(directory):
+            for filename in fnmatch.filter(filenames, pattern):
+                matches.append(os.path.join(root, filename))
+    else:
+        matches = glob.glob('{}/**/{}'.format(directory, pattern), recursive=True)
+
+    return matches
 
 
 def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', projectDir='.'):
@@ -46,20 +68,20 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
     for mode in modes_information:
         # find both graph and csv stats associated with the mode
         # - histograms
-        result = [graph for graph in glob.glob(os.path.join(workingDir, 'AltiErrors-Histograms_*{}*.png'.format(mode)))
-                  if graph.find('Fitted') == -1]
+        result = recursive_search(workingDir, 'AltiErrors-Histograms.png'.format(mode))
         if len(result):
             modes_information[mode]['histo'] = result[0]
         else:
             modes_information[mode]['histo'] = None
-        # - fitted histograms
-        result = glob.glob(os.path.join(workingDir, '*Fitted*_{}*.png'.format(mode)))
+
+        # - graph
+        result = recursive_search(workingDir, '*Fitted*_{}*.png'.format(mode))
         if len(result):
             modes_information[mode]['fitted_histo'] = result[0]
         else:
             modes_information[mode]['fitted_histo'] = None
         # - csv
-        result = glob.glob(os.path.join(workingDir, '*_{}*.csv'.format(mode)))
+        result = recursive_search(workingDir, '*_{}*.csv'.format(mode))
         if len(result):
             if os.path.exists(result[0]):
                 csv_data = []
@@ -75,8 +97,8 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
     print('modes_info = {}'.format(modes_information))
 
     # Find DSMs differences
-    dem_diff_without_coreg = glob.glob(os.path.join(workingDir, 'initial_dem_diff.png'))[0]
-    result = glob.glob(os.path.join(workingDir, 'final_dem_diff.png'))
+    dem_diff_without_coreg = recursive_search(workingDir, 'initial_dem_diff.png')[0]
+    result = recursive_search(workingDir, 'final_dem_diff.png')
     if len(result):
         dem_diff_with_coreg = result[0]
     else:
@@ -180,12 +202,11 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
     try:
         SPM.build_project('html')
     except:
-        print('Error when building report as {} output'.format('html'))
-        raise
+        print('Error when building report as {} output (ignored)'.format('html'))
+        pass
     try:
         SPM.build_project('latexpdf')
     except:
-        print('Error when building report as {} output'.format('html'))
-        raise
+        print('Error when building report as {} output (ignored)'.format('pdf'))
+        pass
     SPM.install_project()
-

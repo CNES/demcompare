@@ -19,6 +19,9 @@ import json
 import collections
 import csv
 from dem_compare_lib.a3d_georaster import A3DGeoRaster
+from dem_compare_lib.output_tree_design import get_out_dir, get_out_file_path
+from astropy import units as u
+
 
 
 def gaus(x, a, x_zero, sigma):
@@ -107,7 +110,7 @@ def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False)
     cfg['stats_results']['images']['Ref_support'].pop('nb_points')
     cfg['stats_results']['images']['Ref_support'].pop('nb_valid_points')
     cfg['stats_results']['images']['Ref_support']['path'] = os.path.join(cfg['outputDir'],
-                                                                         'Ref_support.tif')
+                                                                         get_out_file_path('Ref_support.tif'))
 
     # Compute slope
     slope_ref, aspect_ref = coreg_ref.get_slope_and_aspect(degree=False)
@@ -127,7 +130,7 @@ def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False)
         cfg['stats_results']['images']['DSM_support'].pop('nb_points')
         cfg['stats_results']['images']['DSM_support'].pop('nb_valid_points')
         cfg['stats_results']['images']['DSM_support']['path'] = os.path.join(cfg['outputDir'],
-                                                                                     'DSM_support.tif')
+                                                                             get_out_file_path('DSM_support.tif'))
 
         # Compute slope
         slope_dsm, aspect_dsm = coreg_dsm.get_slope_and_aspect(degree=False)
@@ -138,6 +141,16 @@ def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False)
         slope_dsm_georaster.save_geotiff(cfg['stats_results']['images']['DSM_support']['path'])
         cfg['stats_results']['images']['DSM_support']['nodata'] = slope_dsm_georaster.nodata
 
+        # Compute slope differences between both slope images
+        cfg['stats_results']['images']['list'].append('Ref_support-DSM_support')
+        cfg['stats_results']['images']['Ref_support-DSM_support'] = copy.deepcopy(cfg['stats_results']['images']['DSM_support'])
+        cfg['stats_results']['images']['Ref_support-DSM_support']['path'] = \
+            os.path.join(cfg['outputDir'], get_out_file_path('Ref_support-DSM_support.tif'))
+        slope_differences = A3DGeoRaster.from_raster(slope_ref_georaster.r - slope_dsm_georaster.r,
+                                                     slope_dsm_georaster.trans,
+                                                     "{}".format(slope_dsm_georaster.srs.ExportToProj4()),
+                                                     nodata=-32768)
+        slope_differences.save_geotiff(cfg['stats_results']['images']['Ref_support-DSM_support']['path'])
         return slope_ref_georaster, slope_dsm_georaster
     return slope_ref_georaster, None
 
@@ -163,7 +176,7 @@ def rectify_user_support_img(cfg, coreg_dsm, do_cross_classification = False):
         rectified_support_ref = input_support_ref.reproject(coreg_dsm.srs, int(coreg_dsm.nx), int(coreg_dsm.ny),
                                                             coreg_dsm.footprint[0], coreg_dsm.footprint[3],
                                                             coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_ref.nodata)
-        rectified_support_ref.save_geotiff(os.path.join(cfg['outputDir'], 'Ref_support.tif'))
+        rectified_support_ref.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('Ref_support.tif')))
     if 'class_support_dsm' in cfg['stats_opts'] and do_cross_classification is True:
         input_support_dsm = A3DGeoRaster(str(cfg['stats_opts']['class_support_dsm']), nodata=-32768)
         # Keep in mind that the DSM geo ref has been shifted, hence we need to shift the support here
@@ -174,7 +187,7 @@ def rectify_user_support_img(cfg, coreg_dsm, do_cross_classification = False):
                                                             coreg_dsm.footprint[0], coreg_dsm.footprint[3],
                                                             coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_dsm.nodata,
                                                             interp_type=gdal.GRA_NearestNeighbour)
-        rectified_support_dsm.save_geotiff(os.path.join(cfg['outputDir'], 'DSM_support.tif'))
+        rectified_support_dsm.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('DSM_support.tif')))
 
     #
     # Save results into cfg
@@ -210,18 +223,15 @@ def get_sets_labels_and_names(class_type, class_rad_range):
             sets_name_list.append('[{}; inf['.format(class_rad_range[i]))
         else:
             if class_type == 'slope':
-                sets_label_list.append(r'$\nabla \in$ [{}% ; {}%]'.format(class_rad_range[i], class_rad_range[i + 1]))
+                sets_label_list.append(r'$\nabla \in$ [{}% ; {}%['.format(class_rad_range[i], class_rad_range[i + 1]))
             else:
-                sets_label_list.append(r'val $\in$ [{}% ; {}%]'.format(class_rad_range[i], class_rad_range[i + 1]))
-            sets_name_list.append('[{}; {}]'.format(class_rad_range[i], class_rad_range[i + 1]))
+                sets_label_list.append(r'val $\in$ [{}% ; {}%['.format(class_rad_range[i], class_rad_range[i + 1]))
+            sets_name_list.append('[{}; {}['.format(class_rad_range[i], class_rad_range[i + 1]))
 
     return sets_label_list, sets_name_list
 
 
-def create_sets(img_to_classify,
-                             sets_rad_range,
-                             tmpDir='.',
-                             output_descriptor=None):
+def create_sets(img_to_classify, sets_rad_range, tmpDir='.', output_descriptor=None):
     """
     Returns a list of boolean arrays. Each array defines a set. The sets partition / classify the image.
     A boolean array defines indices to kept for the associated set / class.
@@ -385,11 +395,12 @@ def create_masks(alti_map,
     return masks, modes, no_outliers
 
 
-def stats_computation(array):
+def stats_computation(array, list_threshold=None):
     """
     Compute stats for a specific array
 
     :param array: numpy array
+    :param list_threshold: list, defines thresholds to be used for pixels above thresholds ratio computation
     :return: dict with stats name and values
     """
     if array.size:
@@ -405,6 +416,11 @@ def stats_computation(array):
             'sum_err': float(np.sum(array)),
             'sum_err.err': float(np.sum(array * array)),
         }
+        if list_threshold:
+            res['ratio_above_threshold'] = {threshold: float(np.count_nonzero(array>threshold))/float(array.size)
+                                            for threshold in list_threshold}
+        else:
+            res['ratio_above_threshold'] = {'none': np.nan}
     else:
         res = {
             'nbpts': array.size,
@@ -418,10 +434,15 @@ def stats_computation(array):
             'sum_err': np.nan,
             'sum_err.err': np.nan,
         }
+        if list_threshold:
+            res['ratio_above_threshold'] = {threshold: np.nan for threshold in list_threshold}
+        else:
+            res['ratio_above_threshold'] = {'none': np.nan}
     return res
 
 
-def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, sets_labels=None, sets_names=None):
+def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, sets_labels=None, sets_names=None,
+              list_threshold=None):
     """
     Get Stats for a specific array, considering potentially subsets of it
 
@@ -430,6 +451,7 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
     :param sets: list of sets (boolean arrays that indicate which class a pixel belongs to)
     :param sets_labels: label associated to the sets
     :param sets_names: name associated to the sets
+    :param list_threshold: list, defines thresholds to be used for pixels above thresholds ratio computation
     :return: list of dictionary (set_name, nbpts, %(out_of_all_pts), max, min, mean, std, rmse, ...)
     """
 
@@ -440,7 +462,10 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
         :param array:
         :return:
         """
-        return np.nanpercentile(np.abs(array - np.nanmean(array)), 90)
+        if array.size:
+            return np.nanpercentile(np.abs(array - np.nanmean(array)), 90)
+        else:
+            return np.nan
 
     # Init
     output_list = []
@@ -452,7 +477,7 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
         no_outliers_mask = np.ones(dz_values.shape)
 
     # Computing first set of values with all pixels considered -except the ones masked or the outliers-
-    output_list.append(stats_computation(dz_values[np.where((to_keep_mask*no_outliers_mask) == True)]))
+    output_list.append(stats_computation(dz_values[np.where((to_keep_mask*no_outliers_mask) == True)], list_threshold))
     # - we add standard information for later use
     output_list[0]['set_label'] = 'all'
     output_list[0]['set_name'] = 'All classes considered'
@@ -466,7 +491,7 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
             set = sets[set_idx] * to_keep_mask * no_outliers_mask
 
             data = dz_values[np.where(set == True)]
-            output_list.append(stats_computation(data))
+            output_list.append(stats_computation(data, list_threshold))
             output_list[set_idx+1]['set_label'] = sets_labels[set_idx]
             output_list[set_idx+1]['set_name'] = sets_names[set_idx]
             output_list[set_idx+1]['%'] = 100 * float(output_list[set_idx+1]['nbpts']) / float(nb_total_points)
@@ -499,9 +524,9 @@ def dem_diff_plot(dem_diff, title='', plot_file='dem_diff.png', display=False):
     #
     P.figure(1, figsize=(7.0, 8.0))
     P.title(title)
-    nmad = float(1.4826 * np.nanmedian(np.abs(dem_diff.r-np.nanmedian(dem_diff.r))))
-    maxval = 3 * nmad
-    P.imshow(dem_diff.r, vmin=-maxval, vmax=maxval)
+    mu = np.nanmean(dem_diff.r)
+    sigma = np.nanstd(dem_diff.r)
+    P.imshow(dem_diff.r, vmin=mu-sigma, vmax=mu+sigma)
     cb = P.colorbar()
     cb.set_label('Elevation differences (m)')
 
@@ -517,7 +542,7 @@ def dem_diff_plot(dem_diff, title='', plot_file='dem_diff.png', display=False):
 
 def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                        sets=None, sets_labels=None, sets_colors=None,
-                       plot_title='', outdir='.', save_prefix='', display=False):
+                       plot_title='', outplotdir='.', outhistdir='.', save_prefix='', display=False):
     """
     Creates a histogram plot for all sets given and saves them on disk.
     Note : If more than one set is given, than all the remaining sets are supposed to partitioned the first one. Hence
@@ -532,7 +557,8 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     :param sets_colors: color set for plotting
     :param sets_stats: where should be retrived mean and std values for all sets
     :param plot_title: plot primary title
-    :param outdir: directory where histograms are to be saved
+    :param outplotdir: directory where histograms are to be saved
+    :param outhistdir: directory where histograms (as numpy files) are to be saved
     :param save_prefix: prefix to the histogram files saved by this method
     :return: list saved files
     """
@@ -550,14 +576,14 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     import matplotlib.pyplot as P
     from matplotlib import gridspec
 
-    # -> bins should rely on [-A;A], A being the higher absolute error value (all histograms rely on the same bins range)
+    # -> bins should rely on [-A;A],A being the higher absolute error value (all histograms rely on the same bins range)
     if to_keep_mask is not None:
         borne = np.max([abs(np.nanmin(input_array[np.where(to_keep_mask==True)])),
                         abs(np.nanmax(input_array[np.where(to_keep_mask==True)]))])
     else:
         borne = np.max([abs(np.nanmin(input_array)), abs(np.nanmax(input_array))])
     bins = np.arange(-roundUp(borne, bin_step), roundUp(borne, bin_step)+bin_step, bin_step)
-    np.savetxt(os.path.join(outdir, save_prefix+'bins'+'.txt'), [bins[0],bins[len(bins)-1], bin_step])
+    np.savetxt(os.path.join(outhistdir, save_prefix+'bins'+'.txt'), [bins[0],bins[len(bins)-1], bin_step])
 
     # -> set figures shape, titles and axes
     #    -> first figure is just one plot of normalized histograms
@@ -622,12 +648,12 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                                weight='bold', horizontalalignment='left')
                 except RuntimeError:
                     print('No fitted gaussian plot created as curve_fit failed to converge')
-                    raise
+                    pass
 
                 # save outputs (plot files and name of labels kept)
                 saved_labels.append(sets_labels[set_idx])
                 saved_colors.append(sets_colors[set_idx])
-                saved_file = os.path.join(outdir, save_prefix + str(set_idx) + '.npy')
+                saved_file = os.path.join(outhistdir, save_prefix + str(set_idx) + '.npy')
                 saved_files.append(saved_file)
                 np.save(saved_file, n)
 
@@ -637,13 +663,13 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     P.figure(1)
     P.legend()
     if display is False:
-        P.savefig(os.path.join(outdir,'AltiErrors-Histograms_'+save_prefix+'.png'),
+        P.savefig(os.path.join(outplotdir,'AltiErrors-Histograms_'+save_prefix+'.png'),
                   dpi=100, bbox_inches='tight')
     P.figure(2)
     P.subplot(gs[0])
     P.legend(loc="upper left")
     if display is False:
-        P.savefig(os.path.join(outdir,'AltiErrors-Histograms_FittedWithGaussians_'+save_prefix+'.png'),
+        P.savefig(os.path.join(outplotdir,'AltiErrors-Histograms_FittedWithGaussians_'+save_prefix+'.png'),
                   dpi=100, bbox_inches='tight')
     else:
         P.show()
@@ -739,10 +765,6 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     :return:
     """
 
-    cfg['stats_results'] = {}
-    cfg['stats_results']['images'] = {}
-    cfg['stats_results']['images']['list'] = []
-
     #
     # If we are to classify the 'z' stats then we make sure we have what it takes
     #
@@ -767,19 +789,21 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         cfg['stats_results']['images']['list'].append('Ref_support_classified')
         cfg['stats_results']['images']['Ref_support_classified'] = {}
         ref_classified_img_descriptor = cfg['stats_results']['images']['Ref_support_classified']
-        ref_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'], 'Ref_support_classified.png')
+        ref_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'],
+                                                             get_out_file_path('Ref_support_classified.png'))
         ref_classified_img_descriptor['nodata'] = [0, 0, 0, 0]
         ref_sets_def, sets_color = create_sets(support_ref, cfg['stats_opts']['class_rad_range'],
-                                               tmpDir=cfg['tmpDir'], output_descriptor=ref_classified_img_descriptor)
+                                               tmpDir=cfg['outputDir'], output_descriptor=ref_classified_img_descriptor)
 
         if do_cross_classification:
             cfg['stats_results']['images']['list'].append('DSM_support_classified')
             cfg['stats_results']['images']['DSM_support_classified'] = {}
             dsm_classified_img_descriptor = cfg['stats_results']['images']['DSM_support_classified']
-            dsm_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'], 'DSM_support_classified.png')
+            dsm_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'],
+                                                                 get_out_file_path('DSM_support_classified.png'))
             dsm_classified_img_descriptor['nodata'] = [0, 0, 0, 0]
             dsm_sets_def, sets_color = create_sets(support_dsm, cfg['stats_opts']['class_rad_range'],
-                                                   tmpDir=cfg['tmpDir'], output_descriptor=dsm_classified_img_descriptor)
+                                                   tmpDir=cfg['outputDir'], output_descriptor=dsm_classified_img_descriptor)
 
     #
     # If cross-classification is 'on' we set the alphas bands transparent where ref and dsm support classified differ
@@ -792,7 +816,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     #
     to_keep_masks, modes, no_outliers_mask = create_masks(alti_map, do_classify_results, support_ref,
                                                           do_cross_classification, ref_classified_img_descriptor,
-                                                          remove_outliers = True)
+                                                          remove_outliers=True)
 
     #
     # Next is done for all modes
@@ -802,12 +826,19 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         #
         # Compute stats for all sets of a single mode
         #
+        elevation_thresholds = None
+        if cfg['stats_opts']['elevation_thresholds']['list']:
+            # Convert thresholds to meter since all dem_compare elevation unit is "meter"
+            original_unit = cfg['stats_opts']['elevation_thresholds']['zunit']
+            elevation_thresholds = [((threshold * u.Unit(original_unit)).to(u.meter)).value
+                                    for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
         mode_stats = get_stats(alti_map.r,
                                to_keep_mask=to_keep_masks[mode],
                                no_outliers_mask=no_outliers_mask,
                                sets=ref_sets_def,
                                sets_labels=sets_labels,
-                               sets_names=sets_names)
+                               sets_names=sets_names,
+                               list_threshold=elevation_thresholds)
 
         # TODO (peut etre prevoir une activation optionnelle du plotage...)
         #
@@ -842,7 +873,10 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                                     sets_labels=['all']+sets_labels,
                                                                     sets_colors=np.array([(0,0,0)]+list(sets_color)),
                                                                     plot_title='\n'.join(title),
-                                                                    outdir=cfg['outputDir'],
+                                                                    outplotdir=os.path.join(cfg['outputDir'],
+                                                                                            get_out_dir('snapshots_dir')),
+                                                                    outhistdir=os.path.join(cfg['outputDir'],
+                                                                                            get_out_dir('histograms_dir')),
                                                                     save_prefix=modes[mode],
                                                                     display=display)
         else:
@@ -853,7 +887,9 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         #
         # Save results as .json and .csv file
         #
-        cfg['stats_results']['modes'][modes[mode]] = os.path.join(cfg['outputDir'],'stats_results_'+modes[mode]+'.json')
+        cfg['stats_results']['modes'][modes[mode]] = os.path.join(cfg['outputDir'],
+                                                                  get_out_dir('stats_dir'),
+                                                                  'stats_results_'+modes[mode]+'.json')
         save_results(cfg['stats_results']['modes'][modes[mode]],
                      mode_stats,
                      labels_plotted=labels_saved,
@@ -865,3 +901,35 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         # Create the stat report
         #
         # report_multi_tiles([cfg['stats_results']['modes'][modes[mode]]], cfg['outputDir'])
+
+
+def wave_detection(cfg, dh, display=False):
+    """
+    Detect potential oscillations inside dh
+
+    :param cfg: config file
+    :param dh: A3DGeoRaster, dsm - ref
+    :return:
+
+    """
+
+    # Compute mean dh row and mean dh col
+    # -> then compute the min between dh mean row (col) vector and dh rows (cols)
+    res = {'row_wise': np.zeros(dh.r.shape, dtype=np.float32), 'col_wise': np.zeros(dh.r.shape, dtype=np.float32)}
+    axis = -1
+    for dim in res.keys():
+        axis += 1
+        mean = np.nanmean(dh.r, axis=axis)
+        if axis == 1:
+            # for axis == 1, we need to transpose the array to substitute it to dh.r otherwise 1D array stays row array
+            mean = np.transpose(np.ones((1, mean.size), dtype=np.float32) * mean)
+        res[dim] = dh.r - mean
+
+        cfg['stats_results']['images']['list'].append(dim)
+        cfg['stats_results']['images'][dim] = copy.deepcopy(cfg['alti_results']['dzMap'])
+        cfg['stats_results']['images'][dim].pop('nb_points')
+        cfg['stats_results']['images'][dim]['path'] = os.path.join(cfg['outputDir'],
+                                                                   get_out_file_path('dh_{}_wave_detection.tif'.format(dim)))
+
+        georaster = A3DGeoRaster.from_raster(res[dim], dh.trans, "{}".format(dh.srs.ExportToProj4()), nodata=-32768)
+        georaster.save_geotiff(cfg['stats_results']['images'][dim]['path'])
