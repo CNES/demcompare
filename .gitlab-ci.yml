@@ -23,12 +23,12 @@ before_script:
   - which python
   - virtualenv venv --system-site-package
   - source venv/bin/activate
-  - pip install astropy
+  - pip install .
 
 test:
   script:
-  - python dem_compare.py test_config.json --step coregistration stats
-  - python dem_compare_lib/compare_with_baseline.py
+  - cli-dem_compare.py test_config.json --step coregistration stats
+  - python dem_compare/compare_with_baseline.py
 
 #pages:
 #  script:
