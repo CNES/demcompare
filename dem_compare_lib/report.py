@@ -68,7 +68,7 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
     for mode in modes_information:
         # find both graph and csv stats associated with the mode
         # - histograms
-        result = recursive_search(workingDir, 'AltiErrors-Histograms.png'.format(mode))
+        result = recursive_search(workingDir, '*Real*_{}*.png'.format(mode))
         if len(result):
             modes_information[mode]['histo'] = result[0]
         else:
@@ -94,7 +94,6 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
                 modes_information[mode]['csv'] = None
         else:
             modes_information[mode]['csv'] = None
-    print('modes_info = {}'.format(modes_information))
 
     # Find DSMs differences
     dem_diff_without_coreg = recursive_search(workingDir, 'initial_dem_diff.png')[0]
@@ -203,7 +202,7 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
         SPM.build_project('html')
     except:
         print('Error when building report as {} output (ignored)'.format('html'))
-        pass
+        raise
     try:
         SPM.build_project('latexpdf')
     except:
