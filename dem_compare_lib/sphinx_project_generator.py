@@ -78,7 +78,7 @@ class SphinxProjectManager(object):
                  '',
                  '# User-friendly check for sphinx-build',
                  'ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)',
-                 '$(error The sphinx-build command was not found. Make sure you have Sphinx installed.',
+                 '$(error The sphinx-build command was not found. Make sure you have Sphinx installed.)',
                  'endif',
                  '',
                  '# Internal variables.',
@@ -204,7 +204,7 @@ if __name__ == '__main__':
         ' Projet Test',
         '*************',
         '',
-        'Présentation du projet Test'
+        'Presentation du projet Test'
     ]))
     SPM.build_project('html')
     SPM.install_project()
