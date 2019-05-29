@@ -19,9 +19,9 @@ from osgeo import gdal
 import numpy as np
 import copy
 import matplotlib as mpl
-from dem_compare_lib import initialization, coregistration, stats, report, dem_compare_extra
-from dem_compare_lib.output_tree_design import get_out_dir, get_out_file_path, get_otd_dirs
-from dem_compare_lib.a3d_georaster import A3DDEMRaster, A3DGeoRaster
+import initialization, coregistration, stats, report, dem_compare_extra
+from output_tree_design import get_out_dir, get_out_file_path, get_otd_dirs
+from a3d_georaster import A3DDEMRaster, A3DGeoRaster
 
 
 gdal.UseExceptions()
@@ -218,7 +218,7 @@ def computeInitialization(config_json):
     return cfg
 
 
-def main_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
+def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
     """
     dem_compare execution for a single tile
 
@@ -293,7 +293,7 @@ def main_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=
     computeReport(cfg, steps, coreg_dem, coreg_ref)
 
 
-def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
+def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
     #
     # Initialization
     #
@@ -315,7 +315,7 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
     #
     for tile in tiles:
         try:
-            main_tile(tile['json'], steps, display=display, debug=debug, force=force)
+            run_tile(tile['json'], steps, display=display, debug=debug, force=force)
         except Exception, e:
             print('Error encountered for tile: {} -> {}'.format(tile, e))
             raise
@@ -326,31 +326,4 @@ def main(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
     #
     if len(tiles) > 1:
         cfg['tiles_list_file'] = os.path.join(cfg['outputDir'], 'tiles.txt')
-        dem_compare_extra.main(cfg, steps, debug=debug, force=force)
-
-
-def get_parser():
-    """
-    ArgumentParser for dem_compare
-    :param None
-    :return parser
-    """
-    parser = argparse.ArgumentParser(description=('Compares DSMs'))
-
-    parser.add_argument('config', metavar='config.json',
-                        help=('path to a json file containing the paths to '
-                              'input and output files and the algorithm '
-                              'parameters'))
-    parser.add_argument('--step', type=str, nargs='+', choices=ALL_STEPS,
-                        default=DEFAULT_STEPS)
-    parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--display', action='store_true')
-
-    return parser
-
-
-if __name__ == "__main__":
-    parser = get_parser()
-    args = parser.parse_args()
-    main(args.config, args.step, debug=args.debug, display=args.display)
-
+        dem_compare_extra.merge_tiles(cfg, steps, debug=debug, force=force)

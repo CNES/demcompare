@@ -18,10 +18,9 @@ import math
 import json
 import collections
 import csv
-from dem_compare_lib.a3d_georaster import A3DGeoRaster
-from dem_compare_lib.output_tree_design import get_out_dir, get_out_file_path
 from astropy import units as u
-
+from a3d_georaster import A3DGeoRaster
+from output_tree_design import get_out_dir, get_out_file_path
 
 
 def gaus(x, a, x_zero, sigma):

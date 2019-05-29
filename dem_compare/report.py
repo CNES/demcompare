@@ -14,7 +14,7 @@ import csv
 import sys
 import fnmatch
 
-from dem_compare_lib.sphinx_project_generator import SphinxProjectManager
+from sphinx_project_generator import SphinxProjectManager
 
 
 def recursive_search(directory, pattern):
@@ -193,4 +193,3 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
         print('Error when building report as {} output (ignored)'.format('pdf'))
         pass
     SPM.install_project()
-

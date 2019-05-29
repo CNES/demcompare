@@ -19,8 +19,8 @@ import json
 import argparse
 import numpy as np
 import matplotlib as mpl
-from dem_compare_lib.a3d_georaster import A3DGeoRaster
-from dem_compare_lib.output_tree_design import get_out_dir, get_out_file_path
+from a3d_georaster import A3DGeoRaster
+from output_tree_design import get_out_dir, get_out_file_path
 from stats import create_sets, create_masks
 
 DEFAULT_STEPS = []
@@ -665,7 +665,8 @@ def computeInitialization(config_json):
 
     return cfg, list_of_tiles_path
 
-def main(json_file, steps=DEFAULT_STEPS, debug=False, force=False):
+
+def merge_tiles(json_file, steps=DEFAULT_STEPS, debug=False, force=False):
     #
     # Initialization
     #
@@ -704,4 +705,4 @@ def get_parser():
 if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
-    main(args.config, args.step, debug=args.debug)
+    merge_tiles(args.config, args.step, debug=args.debug)

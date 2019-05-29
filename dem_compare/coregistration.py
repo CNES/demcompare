@@ -12,7 +12,7 @@ import re
 import os
 import copy
 import numpy as np
-from dem_compare_lib.output_tree_design import get_out_dir, get_out_file_path
+from output_tree_design import get_out_dir, get_out_file_path
 
 
 def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpDir='.'):

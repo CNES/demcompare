@@ -17,8 +17,8 @@ import json
 import copy
 import errno
 import os
-from dem_compare_lib.a3d_georaster import A3DDEMRaster
-from dem_compare_lib.output_tree_design import supported_OTD
+from a3d_georaster import A3DDEMRaster
+from output_tree_design import supported_OTD
 
 
 
