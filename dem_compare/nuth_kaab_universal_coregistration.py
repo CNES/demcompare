@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as pl
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
-from dem_compare_lib.a3d_georaster import A3DDEMRaster, A3DGeoRaster
+from a3d_georaster import A3DDEMRaster, A3DGeoRaster
 
 
 def grad2d(dem):
@@ -255,22 +255,22 @@ def a3D_libAPI(dsm_dem3Draster, ref_dem3Draster, outdirPlot=None, nb_iters=6):
 def main(dsm_to, dsm_from, outfile=None, nb_iters=6, outputDirPlot=None, nan_dsm_to=None, nan_dsm_from=None, save_diff=False):
     """
     Coregister dsm_from to dsm_to using Nuth & Kaab (2011) algorithm.
-    
+
     Output coregister DSM might be saved.
     Plots might be saved as well (and then not printed) if outputPlot is set.
-    
+
     If nan_dsm and/or nan_ref are not set, no data values are read from dsms metadata
 
     Both input dsm are projected on the same grid :
      - with dsm_to resolution
      - on the biggest common footprint
-    
+
     :param dsm_to: path to dsm to coregister to
     :param dsm_from: path to dsm to coregister from
     :param outfile: path to dsm_from after coregistration to dsm_to
-    :param nb_iters: 
+    :param nb_iters:
     :param outputDirPlot: path to output Plot directory (plots are printed if set to None)
-    :param nan_dsm_to: 
+    :param nan_dsm_to:
     :param nan_dsm_from:
     :param save_diff: save ./initial_dh.tiff and ./final_dh.tiff with dsms diff before and after coregistration
     :return: x and y shifts (as 'dsm_from + (x,y) = dsm_to')
@@ -321,7 +321,7 @@ def main(dsm_to, dsm_from, outfile=None, nb_iters=6, outputDirPlot=None, nan_dsm
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(os.path.basename(__file__), 
+    parser = argparse.ArgumentParser(os.path.basename(__file__),
                                      description='The universal co-registration method presented in Nuth & Kaab 2011.'
                                                  'NB : 1) It is supposed that both dsms share common reference (whether it is geoid or ellipsoid).'
                                                  '     2) DSMs must be georefenced.')
