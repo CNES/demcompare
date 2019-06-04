@@ -10,16 +10,23 @@ classifies the stats by slope ranges but one can provide any other data to class
 
 A comparison report can be compiled as html or pdf documentation with statistics printed as tables and plots.
 
+## Install
+
+This package can be install through the following commands:
+
+    cd dem_compare
+    pip install .
+
 ## Usage
 
-Run the python script `dem_compare.py` with a json configuration file as unique
+Run the python script `cli-dem_compare.py` with a json configuration file as unique
 argument (see `test_config.json` as an example):
 
-    python dem_compare.py test_config.json
+    cli-dem_compare.py test_config.json
 
 The results can be observed with:
 
-    firefox test_output/report_documentation/html/dem_compare_report.html &
+    firefox test_output/doc/published_report/html/dem_compare_report.html &
 
 #### Conventions
 
@@ -62,11 +69,11 @@ provided by dem_compare (see next chapter).
 dem_compare allows one to execute only a subset of the whole process. As such, a `--step` command line argument is
 provided. It accepts values from `{coregistration,stats,report}` :
 
-    [user@machine] $ python dem_compare.py
-    usage: dem_compare.py [-h]
-                          [--step {coregistration,stats,report,mosaic,merge_stats,merge_plots} [{coregistration,stats,report,mosaic,merge_stats,merge_plots} ...]]
-                          [--debug] [--display]
-                          config.json
+    [user@machine] $ cli-dem_compare.py
+    usage: cli-dem_compare.py [-h]
+                              [--step {coregistration,stats,report,mosaic,merge_stats,merge_plots} [{coregistration,stats,report,mosaic,merge_stats,merge_plots} ...]]
+                              [--debug] [--display]
+                              config.json
 
 All the steps but stats are optional, and dem_compare can start at any step as long as previously required steps have been launched.
 This means that one can launch the report step only as long as the stats step has already been performed from a previous
@@ -210,16 +217,7 @@ for each mode and each set, in `html` or `latex` format.
 
 ## Dependencies
 
-Here is the list of required dependencies for the python environment:
-
-    `gdal` with version 2.1.0 or higher.
-    `numpy`
-    `scipy`
-    `pyproj`
-    `astropy`
-    `matplotlib`
-
-For the report to be compiled one shall install `sphinx` and `latex` (for the .pdf version).
+The full list of dependencies can be observed from the setup.py file.
 
 ## References
 
