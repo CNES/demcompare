@@ -143,7 +143,8 @@ def initialization_stats_opts(cfg):
                           'class_rad_range': [0, 10, 25, 50, 90],
                           'cross_classification': False,
                           'alti_error_threshold': {'value': 0.1, 'unit': 'meter'},
-                          'elevation_thresholds' : {'list': [0.5,1,3], 'zunit': 'meter'}}
+                          'elevation_thresholds' : {'list': [0.5,1,3], 'zunit': 'meter'},
+                          'plot_real_hists': False}
 
     if 'stats_opts' not in cfg:
         cfg['stats_opts'] = default_stats_opts

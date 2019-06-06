@@ -541,7 +541,8 @@ def dem_diff_plot(dem_diff, title='', plot_file='dem_diff.png', display=False):
 
 def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                        sets=None, sets_labels=None, sets_colors=None,
-                       plot_title='', outplotdir='.', outhistdir='.', save_prefix='', display=False):
+                       plot_title='', outplotdir='.', outhistdir='.',
+                       save_prefix='', display=False, plot_real_hist=False):
     """
     Creates a histogram plot for all sets given and saves them on disk.
     Note : If more than one set is given, than all the remaining sets are supposed to partitioned the first one. Hence
@@ -559,6 +560,8 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     :param outplotdir: directory where histograms are to be saved
     :param outhistdir: directory where histograms (as numpy files) are to be saved
     :param save_prefix: prefix to the histogram files saved by this method
+    :param dsplay: set to False to save plot instead of actually plotting them
+    :param plot_real_hist: plot or save (see display param) real histrograms
     :return: list saved files
     """
 
@@ -586,9 +589,25 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
 
     # -> set figures shape, titles and axes
     #    -> first figure is just one plot of normalized histograms
-    P.figure(1, figsize=(7.0, 8.0))
-    P.title('Normalized histograms')
-    P.xlabel('Errors (meter)')
+    if plot_real_hist:
+        P.figure(1, figsize=(7.0, 8.0))
+        P.suptitle(plot_title)
+        P.title('Data shown as normalized histograms')
+        P.xlabel('Errors (meter)')
+        data = []
+        full_color = []
+        for set_idx in range(0, len(sets)):
+            # -> restricts to input data
+            if to_keep_mask is not None:
+                sets[set_idx] = sets[set_idx] * to_keep_mask
+            data.append(input_array[np.where(sets[set_idx] == True)])
+            full_color.append(sets_colors[set_idx])
+        P.hist(data, density=True, label=sets_labels, histtype='step', color=full_color)
+        P.legend()
+        if display is False:
+            P.savefig(os.path.join(outplotdir,'AltiErrors_RealHistrograms_'+save_prefix+'.png'),
+                          dpi=100, bbox_inches='tight')
+        P.close()
     #    -> second one is two plots : fitted by gaussian histograms & classes contributions
     P.figure(2, figsize=(7.0, 8.0))
     gs = gridspec.GridSpec(1,2, width_ratios=[10,1])
@@ -624,9 +643,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                     set_zero_size = data.size
 
                 try:
-                    P.figure(1)
-                    n, bins, patches = P.hist(data, bins, normed=True,
-                                              label=sets_labels[set_idx], color=sets_colors[set_idx])
+                    n, bins = np.histogram(data, bins=bins, density=True)
                     popt, pcov = curve_fit(gaus, bins[0:bins.shape[0] - 1] + int(bin_step / 2), n,
                                            p0=[1, mean, std])
                     P.figure(2)
@@ -659,11 +676,6 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     #
     # Plot save or show
     #
-    P.figure(1)
-    P.legend()
-    if display is False:
-        P.savefig(os.path.join(outplotdir,'AltiErrors-Histograms_'+save_prefix+'.png'),
-                  dpi=100, bbox_inches='tight')
     P.figure(2)
     P.subplot(gs[0])
     P.legend(loc="upper left")
@@ -673,8 +685,6 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     else:
         P.show()
 
-    P.figure(1)
-    P.close()
     P.figure(2)
     P.close()
 
@@ -877,7 +887,8 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                                     outhistdir=os.path.join(cfg['outputDir'],
                                                                                             get_out_dir('histograms_dir')),
                                                                     save_prefix=modes[mode],
-                                                                    display=display)
+                                                                    display=display,
+                                                                    plot_real_hist=cfg['stats_opts']['plot_real_hists'])
         else:
             plot_files = []
             plot_colors = []

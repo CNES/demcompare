@@ -67,12 +67,19 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
                                                                'complementary.'}
     for mode in modes_information:
         # find both graph and csv stats associated with the mode
+        # - histograms
+        result = recursive_search(workingDir, '*Real*_{}*.png'.format(mode))
+        if len(result):
+            modes_information[mode]['histo'] = result[0]
+        else:
+            modes_information[mode]['histo'] = None
+
         # - graph
         result = recursive_search(workingDir, '*Fitted*_{}*.png'.format(mode))
         if len(result):
-            modes_information[mode]['graph'] = result[0]
+            modes_information[mode]['fitted_histo'] = result[0]
         else:
-            modes_information[mode]['graph'] = None
+            modes_information[mode]['fitted_histo'] = None
         # - csv
         result = recursive_search(workingDir, '*_{}*.csv'.format(mode))
         if len(result):
@@ -144,7 +151,8 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
     for mode in modes_information:
         if mode in modeNames:
             the_mode_pitch = modes_information[mode]['pitch']
-            the_mode_graph = modes_information[mode]['graph']
+            the_mode_histo = modes_information[mode]['histo']
+            the_mode_fitted_histo = modes_information[mode]['fitted_histo']
             the_mode_csv = modes_information[mode]['csv']
         else:
             continue
@@ -159,12 +167,20 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
             '{}'.format(the_mode_pitch),
             ''
         ])
-        if the_mode_graph:
+        if the_mode_histo:
             src = '\n'.join([
                 src,
                 # 'Graph showing mean and standard deviation',
                 # '-----------------------------------------',
-                '.. image:: /{}'.format(the_mode_graph),
+                '.. image:: /{}'.format(the_mode_histo),
+                ''
+            ])
+        if the_mode_fitted_histo:
+            src = '\n'.join([
+                src,
+                # 'Fitted graph showing mean and standard deviation',
+                # '-----------------------------------------',
+                '.. image:: /{}'.format(the_mode_fitted_histo),
                 ''
             ])
         if the_mode_csv:
@@ -186,7 +202,7 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
         SPM.build_project('html')
     except:
         print('Error when building report as {} output (ignored)'.format('html'))
-        pass
+        raise
     try:
         SPM.build_project('latexpdf')
     except:
