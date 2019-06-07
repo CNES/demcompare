@@ -180,7 +180,7 @@ class SphinxProjectManager(object):
             os.chdir(cur_dir)
             raise
         else:
-            print('Sphinx build succeeded for {} mode'.format(mode))
+            print(('Sphinx build succeeded for {} mode'.format(mode)))
 
     def install_project(self):
         try:
@@ -188,7 +188,7 @@ class SphinxProjectManager(object):
         except:
             pass
         shutil.copytree(self._buildDir, self._outputDir)
-        print('Documentation installed under {} directory'.format(self._outputDir))
+        print(('Documentation installed under {} directory'.format(self._outputDir)))
 
     def clean(self):
         cmd = 'make clean'

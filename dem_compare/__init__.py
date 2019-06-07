@@ -9,7 +9,7 @@ dem_compare aims at coregistering and comparing two dsms
 
 """
 
-from __future__ import print_function
+
 import os
 import sys
 import json
@@ -19,9 +19,9 @@ from osgeo import gdal
 import numpy as np
 import copy
 import matplotlib as mpl
-import initialization, coregistration, stats, report, dem_compare_extra
-from output_tree_design import get_out_dir, get_out_file_path, get_otd_dirs
-from a3d_georaster import A3DDEMRaster, A3DGeoRaster
+from . import initialization, coregistration, stats, report, dem_compare_extra
+from .output_tree_design import get_out_dir, get_out_file_path, get_otd_dirs
+from .a3d_georaster import A3DDEMRaster, A3DGeoRaster
 
 
 gdal.UseExceptions()
@@ -42,7 +42,7 @@ def computeReport(cfg, steps, dem, ref):
         report.generate_report(cfg['outputDir'],
                                dem.ds_file,
                                ref.ds_file,
-                               [modename for modename, modefile in cfg['stats_results']['modes'].items()],
+                               [modename for modename, modefile in list(cfg['stats_results']['modes'].items())],
                                os.path.join(cfg['outputDir'], get_out_dir('sphinx_built_doc')),
                                os.path.join(cfg['outputDir'], get_out_dir('sphinx_src_doc')))
 
@@ -236,7 +236,7 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=F
     # Initialization
     #
     cfg = computeInitialization(json_file)
-    print('*** dem_compare.py : start processing into {} ***'.format(cfg['outputDir']))
+    print(('*** dem_compare.py : start processing into {} ***'.format(cfg['outputDir'])))
     sys.stdout.flush()
     if display is False:
         # if display is False we have to tell matplotlib to cancel it
@@ -316,10 +316,9 @@ def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False)
     for tile in tiles:
         try:
             run_tile(tile['json'], steps, display=display, debug=debug, force=force)
-        except Exception, e:
-            print('Error encountered for tile: {} -> {}'.format(tile, e))
-            raise
-            #TODO pass
+        except Exception as e:
+            print(('Error encountered for tile: {} -> {}'.format(tile, e)))
+            pass
 
     #
     # Run merge steps

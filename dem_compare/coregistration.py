@@ -12,7 +12,7 @@ import re
 import os
 import copy
 import numpy as np
-from output_tree_design import get_out_dir, get_out_file_path
+from .output_tree_design import get_out_dir, get_out_file_path
 
 
 def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpDir='.'):
@@ -32,12 +32,12 @@ def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpD
 
     # Resample images to pre-coregistered geometry according to the initial disp
     if init_disp_x != 0 or init_disp_y != 0:
-        from translation import translate_to_coregistered_geometry
+        from .translation import translate_to_coregistered_geometry
         dem1, dem2 = translate_to_coregistered_geometry(dem1, dem2, init_disp_x, init_disp_y)
 
 
     # Compute nuth and kaab coregistration
-    from nuth_kaab_universal_coregistration import a3D_libAPI as nk_a3D_libAPI
+    from .nuth_kaab_universal_coregistration import a3D_libAPI as nk_a3D_libAPI
     x_off, y_off, z_off, coreg_dem1, coreg_dem2, init_dh, final_dh = nk_a3D_libAPI(dem1,
                                                                                    dem2,
                                                                                    outdirPlot=tmpDir)
@@ -119,13 +119,13 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     cfg['alti_results']['rectifiedRef']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_dem2.r))
 
     # Print report
-    print("Plani 2D shift between input dsm ({}) and input ref ({}) is".format(cfg['inputDSM']['path'],
-                                                                               cfg['inputRef']['path']))
-    print(" -> row : {}".format(cfg['plani_results']['dy']['bias_value'] * coreg_dem1.plani_unit))
-    print(" -> col : {}".format(cfg['plani_results']['dx']['bias_value'] * coreg_dem1.plani_unit))
+    print(("Plani 2D shift between input dsm ({}) and input ref ({}) is".format(cfg['inputDSM']['path'],
+                                                                               cfg['inputRef']['path'])))
+    print((" -> row : {}".format(cfg['plani_results']['dy']['bias_value'] * coreg_dem1.plani_unit)))
+    print((" -> col : {}".format(cfg['plani_results']['dx']['bias_value'] * coreg_dem1.plani_unit)))
     print('')
-    print("Alti shift between coreg dsm ({}) and coreg ref ({}) is".format(cfg['alti_results']['rectifiedDSM']['path'],
-                                                                           cfg['alti_results']['rectifiedRef']['path']))
-    print(" -> alti : {}".format(z_bias * coreg_dem1.zunit))
+    print(("Alti shift between coreg dsm ({}) and coreg ref ({}) is".format(cfg['alti_results']['rectifiedDSM']['path'],
+                                                                           cfg['alti_results']['rectifiedRef']['path'])))
+    print((" -> alti : {}".format(z_bias * coreg_dem1.zunit)))
 
     return coreg_dem1, coreg_dem2, final_dh

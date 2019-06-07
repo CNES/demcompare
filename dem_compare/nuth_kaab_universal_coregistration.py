@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as pl
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
-from a3d_georaster import A3DDEMRaster, A3DGeoRaster
+from .a3d_georaster import A3DDEMRaster, A3DGeoRaster
 
 
 def grad2d(dem):
@@ -190,7 +190,7 @@ def a3D_libAPI(dsm_dem3Draster, ref_dem3Draster, outdirPlot=None, nb_iters=6):
         else:
             plotfile = None
         east, north, z = nuth_kaab_single_iter(dh, slope, aspect, plotFile=plotfile)
-        print("#{} - Offset in pixels : ({},{}), -bias : ({})".format(i + 1, east, north, z))
+        print(("#{} - Offset in pixels : ({},{}), -bias : ({})".format(i + 1, east, north, z)))
         xoff += east
         yoff += north
         zoff += z
@@ -224,10 +224,10 @@ def a3D_libAPI(dsm_dem3Draster, ref_dem3Draster, outdirPlot=None, nb_iters=6):
         NMAD_new = 1.4826 * np.median(np.abs(diff - np.median(diff)))
         median = np.median(diff)
 
-        print("Median : {0:.2f}, NMAD = {1:.2f}, Gain : {2:.2f}".format(median, NMAD_new, (NMAD_new - NMAD_old) / NMAD_old * 100))
+        print(("Median : {0:.2f}, NMAD = {1:.2f}, Gain : {2:.2f}".format(median, NMAD_new, (NMAD_new - NMAD_old) / NMAD_old * 100)))
         NMAD_old = NMAD_new
 
-    print("Final Offset in pixels (east, north) : ({},{})".format(xoff, yoff))
+    print(("Final Offset in pixels (east, north) : ({},{})".format(xoff, yoff)))
 
     #
     # Get geo raster from coreg_ref array

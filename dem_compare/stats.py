@@ -19,8 +19,8 @@ import json
 import collections
 import csv
 from astropy import units as u
-from a3d_georaster import A3DGeoRaster
-from output_tree_design import get_out_dir, get_out_file_path
+from .a3d_georaster import A3DGeoRaster
+from .output_tree_design import get_out_dir, get_out_file_path
 
 
 def gaus(x, a, x_zero, sigma):
@@ -740,7 +740,7 @@ def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=N
             csv_results[key]['90 percentile'] = results[key]['90p']
         # - writes the results down as csv format
         with open(csv_filename, 'w') as csvfile:
-            fieldnames = csv_results["0"].keys()
+            fieldnames = list(csv_results["0"].keys())
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_NONNUMERIC)
 
             writer.writeheader()
@@ -927,7 +927,7 @@ def wave_detection(cfg, dh, display=False):
     # -> then compute the min between dh mean row (col) vector and dh rows (cols)
     res = {'row_wise': np.zeros(dh.r.shape, dtype=np.float32), 'col_wise': np.zeros(dh.r.shape, dtype=np.float32)}
     axis = -1
-    for dim in res.keys():
+    for dim in list(res.keys()):
         axis += 1
         mean = np.nanmean(dh.r, axis=axis)
         if axis == 1:
