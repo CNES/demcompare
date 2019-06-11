@@ -15,7 +15,7 @@ import os
 from collections import OrderedDict
 
 
-from .output_tree_design import get_out_dir
+from dem_compare.output_tree_design import get_out_dir
 
 def load_json(json_file):
     with open(json_file, 'r') as f:

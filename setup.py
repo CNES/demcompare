@@ -26,5 +26,5 @@ setup(name='dem_compare',
       author_email='julien.michel@cnes.fr',
       license='GNU LGPLv3',
       packages=['dem_compare'],
-      scripts=['cli/cli-dem_compare.py'],
+      scripts=['cli/cli-dem_compare.py', 'cli/compare_with_baseline.py'],
       install_requires=requirements)
