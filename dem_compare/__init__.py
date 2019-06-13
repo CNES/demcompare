@@ -317,6 +317,8 @@ def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False)
         try:
             run_tile(tile['json'], steps, display=display, debug=debug, force=force)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             print(('Error encountered for tile: {} -> {}'.format(tile, e)))
             pass
 
