@@ -144,6 +144,7 @@ class A3DGeoRaster(object):
         # Deal with no data by setting no data to np.nan
         self.r = np.float32(self.r)
         meta_nodata = self.ds.GetRasterBand(1).GetNoDataValue()
+
         if meta_nodata is not None:
             # we to explicitly write 'is not None' because 0.0 can be a no data value and the if won't take it otherwise
             self.r[self.r == meta_nodata] = np.nan
@@ -154,10 +155,16 @@ class A3DGeoRaster(object):
             self.ds.GetRasterBand(1).SetNoDataValue(self.nodata)
             self.r[self.r == self.nodata] = np.nan
         if nodata is not None:
-            # we change the nodata value as wished
-            self.ds.GetRasterBand(1).SetNoDataValue(nodata)
-            self.r[self.r == nodata] = np.nan
-            self.nodata = nodata
+            if isinstance(nodata, list):
+                self.ds.GetRasterBand(1).SetNoDataValue(nodata[0])
+                self.nodata = nodata[0]
+                for nd in nodata:
+                    self.r[self.r == nd] = np.nan
+            else:
+                # we change the nodata value as wished
+                self.ds.GetRasterBand(1).SetNoDataValue(nodata)
+                self.r[self.r == nodata] = np.nan
+                self.nodata = nodata
 
 
     @classmethod
