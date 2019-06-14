@@ -159,6 +159,7 @@ class A3DGeoRaster(object):
             self.r[self.r == nodata] = np.nan
             self.nodata = nodata
 
+
     @classmethod
     def from_raster(cls, raster, geo_transform, proj4, gdal_dtype=gdal.GDT_Float32, nodata=None):
         """

@@ -17,8 +17,8 @@ import json
 import copy
 import errno
 import os
-from a3d_georaster import A3DDEMRaster
-from output_tree_design import supported_OTD
+from .a3d_georaster import A3DDEMRaster
+from .output_tree_design import supported_OTD
 
 
 
@@ -121,7 +121,7 @@ def initialization_plani_opts(cfg):
         cfg['plani_opts'] = default_plani_opts
     else:
         # we keep users items and add default items he has not set
-        cfg['plani_opts'] = dict(default_plani_opts.items() + cfg['plani_opts'].items())
+        cfg['plani_opts'] = dict(list(default_plani_opts.items()) + list(cfg['plani_opts'].items()))
 
 
 def initialization_alti_opts(cfg):
@@ -132,7 +132,7 @@ def initialization_alti_opts(cfg):
         cfg['alti_opts'] = default_alti_opts
     else:
         # we keep users items and add default items he has not set
-        cfg['alti_opts'] = dict(default_alti_opts.items() + cfg['alti_opts'].items())
+        cfg['alti_opts'] = dict(list(default_alti_opts.items()) + list(cfg['alti_opts'].items()))
 
 
 def initialization_stats_opts(cfg):
@@ -150,7 +150,7 @@ def initialization_stats_opts(cfg):
         cfg['stats_opts'] = default_stats_opts
     else:
         # we keep users items and add default items he has not set
-        cfg['stats_opts'] = dict(default_stats_opts.items() + cfg['stats_opts'].items())
+        cfg['stats_opts'] = dict(list(default_stats_opts.items()) + list(cfg['stats_opts'].items()))
     try:
         # we try to evaluate what could be set to "True" (or "False) as boolean true (false)
         cfg['stats_opts']['cross_classification'] = ast.literal_eval(cfg['stats_opts']['cross_classification'])
@@ -188,7 +188,7 @@ def adjust_tile_size(image_size, tile_size):
     nty = int(np.round(float(image_size['h']) / tile_h))
     tile_h = int(np.ceil(float(image_size['h']) / nty))
 
-    print('tile size: {} {}'.format(tile_w, tile_h))
+    print(('tile size: {} {}'.format(tile_w, tile_h)))
 
     return tile_w, tile_h
 

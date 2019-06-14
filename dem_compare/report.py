@@ -14,7 +14,7 @@ import csv
 import sys
 import fnmatch
 
-from sphinx_project_generator import SphinxProjectManager
+from .sphinx_project_generator import SphinxProjectManager
 
 
 def recursive_search(directory, pattern):
@@ -201,11 +201,11 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
     try:
         SPM.build_project('html')
     except:
-        print('Error when building report as {} output (ignored)'.format('html'))
+        print(('Error when building report as {} output (ignored)'.format('html')))
         raise
     try:
         SPM.build_project('latexpdf')
     except:
-        print('Error when building report as {} output (ignored)'.format('pdf'))
+        print(('Error when building report as {} output (ignored)'.format('pdf')))
         pass
     SPM.install_project()

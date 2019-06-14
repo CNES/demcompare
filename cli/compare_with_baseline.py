@@ -15,7 +15,7 @@ import os
 from collections import OrderedDict
 
 
-from output_tree_design import get_out_dir
+from dem_compare.output_tree_design import get_out_dir
 
 def load_json(json_file):
     with open(json_file, 'r') as f:
@@ -105,7 +105,7 @@ def main(baseline_dir, output_dir, epsilon=1.e-15):
         error = 'Invalid results obtained with this version of dem_compare.py: \n{}'.format(differences)
         raise ValueError(error)
     else:
-        print('No difference between tested files : {}'.format(zip(baseline_csv_files, output_csv_files)))
+        print(('No difference between tested files : {}'.format(list(zip(baseline_csv_files, output_csv_files)))))
 
 
 def get_parser():

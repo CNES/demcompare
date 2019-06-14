@@ -11,7 +11,7 @@ dem_compare_extra contains scripts unecessary for dem_compare but which can stil
 Be aware that dem_compare_extra assumes it knows the dem_compare output files and tree. Hence, if it was somehow
 altered because of a dem_compare.py evolution, then dem_compare_extra might need an evolution as well.
 """
-from __future__ import print_function
+
 import os
 import sys
 import shutil
@@ -19,9 +19,9 @@ import json
 import argparse
 import numpy as np
 import matplotlib as mpl
-from a3d_georaster import A3DGeoRaster
-from output_tree_design import get_out_dir, get_out_file_path
-from stats import create_sets, create_masks
+from .a3d_georaster import A3DGeoRaster
+from .output_tree_design import get_out_dir, get_out_file_path
+from .stats import create_sets, create_masks
 
 DEFAULT_STEPS = []
 ALL_STEPS = ['mosaic', 'merge_stats', 'merge_plots']
@@ -41,7 +41,7 @@ def computeMosaic(tiles_path, output_dir):
     :return:
     """
 
-    import mosaic
+    from . import mosaic
 
     # Reads .json files
     # - get rid of invalid tiles (the ones without a final_config.json file)
@@ -101,7 +101,7 @@ def computeMergePlots(tiles_path, output_dir):
     :return:
     """
 
-    from stats import gaus
+    from .stats import gaus
 
     #
     # Plot init
@@ -183,14 +183,14 @@ def computeMergePlots(tiles_path, output_dir):
         stats = load_json('{}{}{}'.format(prefix, mode, suffix))
 
         # Get the max and min error values for xrange
-        max_error = max([stats[set]['max'] for set in stats.keys()])
-        min_error = min([stats[set]['min'] for set in stats.keys()])
+        max_error = max([stats[set]['max'] for set in list(stats.keys())])
+        min_error = min([stats[set]['min'] for set in list(stats.keys())])
         x_step = 0.01
         xvalues = np.arange(min_error, max_error, x_step)
 
         # The plots are done by stats set
         cumulative_percent = 0
-        for set_idx in range(len(stats.keys())):
+        for set_idx in range(len(list(stats.keys()))):
             # little workaround to make sure merge plots will present sets in same order as individual plots
             set = str(set_idx)
             # plots fitted gaussian
@@ -453,7 +453,7 @@ def _mergePercentiles(valid_tiles_path, tile_stats_list, mode='standard'):
     except:
         raise
     # For convenience, we zip the final dh img with their respective classified support img
-    the_zip = zip(list_final_dh_files, list_support_img_files)
+    the_zip = list(zip(list_final_dh_files, list_support_img_files))
 
     #
     # This part concerns the algorithm thought to compute the global percentiles.
@@ -486,7 +486,7 @@ def _mergePercentiles(valid_tiles_path, tile_stats_list, mode='standard'):
     # n we compute the medians for all stats sets of the mode required
     res = _mergePercentile(a_final_config, tile_stats_list, the_zip, None, None, kth_element, mode,
                                 func=lambda x,y:np.abs(x-y), arg=medians)
-    nmads = {key: 1.4826 * value for key, value in res.items()}
+    nmads = {key: 1.4826 * value for key, value in list(res.items())}
 
     return medians, nmads
 
@@ -501,7 +501,7 @@ def computeMergeStats(tiles_path, output_dir, compute_percentile=True):
     :return:
     """
 
-    from stats import save_results
+    from .stats import save_results
 
     #
     # First we select only the valid tiles and we get back the modes to merge stats for
@@ -657,7 +657,7 @@ def computeInitialization(config_json):
     # there must be a outputDir location specified
     try:
         outputDir = cfg['outputDir']
-        from initialization import mkdir_p
+        from .initialization import mkdir_p
         mkdir_p(outputDir)
     except:
         print("One might set a outputDir directory")

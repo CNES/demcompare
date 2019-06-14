@@ -28,7 +28,7 @@ before_script:
 test:
   script:
   - cli-dem_compare.py test_config.json --step coregistration stats
-  - python dem_compare/compare_with_baseline.py
+  - compare_with_baseline.py
 
 #pages:
 #  script:
