@@ -52,7 +52,7 @@ def getColor(nb_color=10):
     return np.array(x.colors)
 
 
-def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref):
+def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref, type):
     """
     Prepares images to classify dz errors from.
     If 'class_type' is slope, we use gdaldem. Otherwise we use user defined images but we need to rectify them.
@@ -60,24 +60,25 @@ def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref):
     :param cfg: config file
     :param coreg_dsm : A3DDEMRaster, input coregistered DSM
     :param coreg_ref : A3DDEMRaster, input coregistered REF
+    :param type: type of the stats calculate, 'slope' or 'classification'
     :return:
     """
 
     do_classification = False
     support_ref = None
     support_dsm = None
-    if cfg['stats_opts']['class_type']:
+    if cfg['stats_opts']:
         do_classification = True
-        if cfg['stats_opts']['class_type'] == 'slope':
-            # if class_type is 'slope' we must compute the slope(s) image(s)
+        if cfg['stats_opts']['slope_layer'] and type == 'slope':
+            # if slope layer we must compute the slope(s) image(s)
             support_ref, support_dsm = create_slope_image(cfg, coreg_dsm, coreg_ref,
                                                           cfg['stats_opts']['cross_classification'])
         else:
-            if cfg['stats_opts']['class_type'] == 'user':
+            if cfg['stats_opts']['classification_layer'] and type == 'classification':
                 # if class_type is 'user' we must rectify the support image(s)
                 support_ref, support_dsm = rectify_user_support_img(cfg, coreg_dsm,
                                                                     cfg['stats_opts']['cross_classification'])
-                if not support_dsm :
+                if not support_dsm:
                     # There can be no cross classification without a second support image to cross classify with
                     cfg['stats_opts']['cross_classification'] = False
             else:
@@ -87,6 +88,7 @@ def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref):
     return do_classification, cfg['stats_opts']['cross_classification'], support_ref, support_dsm
 
 
+# TODO verifier que le reproject soit faite sur les slop fourni en entrée egalement (pas que les slopes calculés)
 def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False):
     """
     Computes the slope image of coreg_ref and, optionally,of coreg_dsm
@@ -151,17 +153,17 @@ def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False)
                                                      nodata=-32768)
         slope_differences.save_geotiff(cfg['stats_results']['images']['Ref_support-DSM_support']['path'])
         return slope_ref_georaster, slope_dsm_georaster
+
     return slope_ref_georaster, None
 
 
-def rectify_user_support_img(cfg, coreg_dsm, do_cross_classification = False):
+def rectify_user_support_img(cfg, coreg_dsm):
     """
     Rectify image(s) set by the user to serve as classification support.
     It is assumed that this images metadata contain the nan value if there is one.
 
     :param cfg:
     :param coreg_dsm : A3DDEMRaster, input coregistered DSM
-    :param do_cross_classification:
     :return:
     """
 
@@ -170,14 +172,16 @@ def rectify_user_support_img(cfg, coreg_dsm, do_cross_classification = False):
     #
     rectified_support_ref = None
     rectified_support_dsm = None
-    if 'class_support_ref' in cfg['stats_opts']:
-        input_support_ref = A3DGeoRaster(str(cfg['stats_opts']['class_support_ref']), nodata=-32768)
+
+    if cfg['stats_opts']['classification_layer']['ref']:
+        input_support_ref = A3DGeoRaster(str(cfg['stats_opts']['classification_layer']['ref']), nodata=-32768)
         rectified_support_ref = input_support_ref.reproject(coreg_dsm.srs, int(coreg_dsm.nx), int(coreg_dsm.ny),
                                                             coreg_dsm.footprint[0], coreg_dsm.footprint[3],
-                                                            coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_ref.nodata)
+                                                            coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_ref.nodata,
+                                                            interp_type=gdal.GRA_NearestNeighbour)
         rectified_support_ref.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('Ref_support.tif')))
-    if 'class_support_dsm' in cfg['stats_opts'] and do_cross_classification is True:
-        input_support_dsm = A3DGeoRaster(str(cfg['stats_opts']['class_support_dsm']), nodata=-32768)
+    if cfg['stats_opts']['classification_layer']['dsm']:
+        input_support_dsm = A3DGeoRaster(str(cfg['stats_opts']['classification_layer']['dsm']), nodata=-32768)
         # Keep in mind that the DSM geo ref has been shifted, hence we need to shift the support here
         x_off = cfg['plani_results']['dx']['bias_value'] / input_support_dsm.xres
         y_off = cfg['plani_results']['dy']['bias_value'] / input_support_dsm.yres
@@ -201,42 +205,56 @@ def rectify_user_support_img(cfg, coreg_dsm, do_cross_classification = False):
     return rectified_support_ref, rectified_support_dsm
 
 
-def get_sets_labels_and_names(class_type, class_rad_range):
+def get_sets_labels_and_names(class_rad_range):
     """
     Get sets' labels and sets' names
 
-    :param class_type: 'slope' or 'user'
     :param class_rad_range: list defining class ranges such as [0 10 25 100]
     :return sets labels and names
     """
-
     sets_label_list = []
     sets_name_list = []
 
     for i in range(0, len(class_rad_range)):
         if i == len(class_rad_range) - 1:
-            if class_type == 'slope':
-                sets_label_list.append(r'$\nabla$ > {}%'.format(class_rad_range[i]))
-            else:
-                sets_label_list.append('val > {}%'.format(class_rad_range[i]))
+            sets_label_list.append(r'$\nabla$ > {}%'.format(class_rad_range[i]))
             sets_name_list.append('[{}; inf['.format(class_rad_range[i]))
         else:
-            if class_type == 'slope':
-                sets_label_list.append(r'$\nabla \in$ [{}% ; {}%['.format(class_rad_range[i], class_rad_range[i + 1]))
-            else:
-                sets_label_list.append(r'val $\in$ [{}% ; {}%['.format(class_rad_range[i], class_rad_range[i + 1]))
+            sets_label_list.append(r'$\nabla \in$ [{}% ; {}%['.format(class_rad_range[i], class_rad_range[i + 1]))
             sets_name_list.append('[{}; {}['.format(class_rad_range[i], class_rad_range[i + 1]))
 
     return sets_label_list, sets_name_list
 
 
-def create_sets(img_to_classify, sets_rad_range, tmpDir='.', output_descriptor=None):
+def get_sets_labels_and_names_for_classification(classes, support_ref, support_dsm):
+    """
+    Get sets' labels and sets' names for classification_layer part
+
+    :param classes: dict defining class labels and names
+    :param support_ref: A3DGeoRaster classification reference
+    :param support_dsm: A3DGeoRaster classification dsm
+    :return: sets labels and names and classes updated
+    """
+    if not classes:
+        labels = np.unique(support_ref.r)
+        classes = {}
+        for l in labels:
+            classes[str(l)] = l
+
+    sets_label_list = list(classes.keys())
+    sets_name_list = list(classes.keys())
+
+    return sets_label_list, sets_name_list, classes
+
+
+def create_sets(img_to_classify, sets_rad_range, type, tmpDir='.', output_descriptor=None):
     """
     Returns a list of boolean arrays. Each array defines a set. The sets partition / classify the image.
     A boolean array defines indices to kept for the associated set / class.
 
     :param img_to_classify: A3DGeoRaster
     :param sets_rad_range: list of values that defines the radiometric ranges of each set
+    :param type: type of the stats calculate, 'slope' or 'classification'
     :param tmpDir: temporary directory to which store temporary data
     :param output_descriptor: dictionary with 'path' and 'nodata' keys for the output classified img (png format)
     :return: list of boolean arrays
@@ -255,26 +273,42 @@ def create_sets(img_to_classify, sets_rad_range, tmpDir='.', output_descriptor=N
     # use radiometric ranges to classify
     sets_colors = np.multiply(getColor(len(sets_rad_range)), 255)
     output_sets_def = []
-    for idx in range(0, len(sets_rad_range)):
-        if idx == len(sets_rad_range) - 1:
-            output_sets_def.append(np.apply_along_axis(lambda x:(sets_rad_range[idx] <= x),
-                                                       0, img_to_classify.r))
-            if output_descriptor:
-                for i in range(0, 3):
-                    output_v[i][sets_rad_range[idx] <= img_to_classify.r] = sets_colors[idx][i]
-        else:
-            output_sets_def.append(np.apply_along_axis(lambda x:(sets_rad_range[idx] <= x)*(x < sets_rad_range[idx+1]),
-                                                       0, img_to_classify.r))
+    if type == 'slope':
+        for idx in range(0, len(sets_rad_range)):
+            if idx == len(sets_rad_range) - 1:
+                output_sets_def.append(np.apply_along_axis(lambda x:(sets_rad_range[idx] <= x),
+                                                           0, img_to_classify.r))
+                if output_descriptor:
+                    for i in range(0, 3):
+                        output_v[i][sets_rad_range[idx] <= img_to_classify.r] = sets_colors[idx][i]
+            else:
+                output_sets_def.append(np.apply_along_axis(lambda x:(sets_rad_range[idx] <= x)*(x < sets_rad_range[idx+1]),
+                                                           0, img_to_classify.r))
+                if output_descriptor:
+                    for i in range(0,3):
+                        output_v[i][(sets_rad_range[idx] <= img_to_classify.r) *
+                                    (img_to_classify.r < sets_rad_range[idx + 1])] = sets_colors[idx][i]
+    elif type == 'classification':
+        output_sets_def = [np.zeros(img_to_classify.r.shape) for npz in range(0, len(sets_rad_range))]
+        for idx in range(0, len(sets_rad_range)):
+            output_sets_def[idx][np.where(img_to_classify.r == sets_rad_range[idx])] = 1
+            '''
+            TODO
             if output_descriptor:
                 for i in range(0,3):
                     output_v[i][(sets_rad_range[idx] <= img_to_classify.r) *
                                 (img_to_classify.r < sets_rad_range[idx + 1])] = sets_colors[idx][i]
+            '''
 
+    '''
+    TODO
     # deals with the nan value (we choose black color for nan value since it is not part of the colormap chosen)
     if output_descriptor:
         for i in range(0,4):
             output_v[i][(np.isnan(img_to_classify.r)) + (img_to_classify.r == img_to_classify.nodata)] = \
                 output_descriptor['nodata'][i]
+    '''
+
     for idx in range(0, len(sets_rad_range)):
         output_sets_def[idx][(np.isnan(img_to_classify.r)) + (img_to_classify.r == img_to_classify.nodata)] = False
 
@@ -453,7 +487,6 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
     :param list_threshold: list, defines thresholds to be used for pixels above thresholds ratio computation
     :return: list of dictionary (set_name, nbpts, %(out_of_all_pts), max, min, mean, std, rmse, ...)
     """
-
     def nighty_percentile(array):
         """
         Compute the maximal error for the 90% smaller errors
@@ -748,7 +781,9 @@ def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=N
                 writer.writerow(csv_results[set])
 
 
-def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
+# TODO MODIFIER POUR QU'IL GERE LES DEUX : slope_layer ET classification_layer,
+#                                               actuellement seul classification_layer est calculé
+def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification'):
     """
     Computes alti error stats with graphics and tables support.
 
@@ -771,13 +806,15 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     :param ref: A3GDEMRaster, coregistered ref
     :param alti_map: A3DGeoRaster, dsm - ref
     :param display: boolean, display option (set to False to save plot on file system)
+    :param type: type of the stats calculate, 'slope' or 'classification'
     :return:
     """
 
     #
     # If we are to classify the 'z' stats then we make sure we have what it takes
     #
-    do_classify_results, do_cross_classification, support_ref, support_dsm = set_image_to_classify_from(cfg, dsm, ref)
+    do_classify_results, do_cross_classification, support_ref, support_dsm = \
+        set_image_to_classify_from(cfg, dsm, ref, type)
 
     #
     # Get back label list from sets ranges of values
@@ -785,8 +822,12 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     sets_names = None
     sets_labels = None
     if do_classify_results:
-        sets_labels, sets_names = get_sets_labels_and_names(cfg['stats_opts']['class_type'],
-                                                            cfg['stats_opts']['class_rad_range'])
+        if type == 'slope':
+            sets_labels, sets_names = get_sets_labels_and_names(cfg['stats_opts']['slope_layer']['slope_range'])
+        elif type == 'classification':
+            sets_labels, sets_names, classes = \
+                get_sets_labels_and_names_for_classification(cfg['stats_opts']['classification_layer']['classes'],
+                                                             support_ref, support_dsm)
 
     #
     # If required, create sets definitions (boolean arrays where True means the associated index is part of the set)
@@ -801,8 +842,14 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         ref_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'],
                                                              get_out_file_path('Ref_support_classified.png'))
         ref_classified_img_descriptor['nodata'] = [0, 0, 0, 0]
-        ref_sets_def, sets_color = create_sets(support_ref, cfg['stats_opts']['class_rad_range'],
-                                               tmpDir=cfg['outputDir'], output_descriptor=ref_classified_img_descriptor)
+        if type == 'slope':
+            ref_sets_def, sets_color = create_sets(support_ref, cfg['stats_opts']['slope_layer']['slope_range'], type,
+                                                   tmpDir=cfg['outputDir'],
+                                                   output_descriptor=ref_classified_img_descriptor)
+        elif type == 'classification':
+            ref_sets_def, sets_color = create_sets(support_ref, list(classes.values()), type,
+                                                   tmpDir=cfg['outputDir'],
+                                                   output_descriptor=ref_classified_img_descriptor)
 
         if do_cross_classification:
             cfg['stats_results']['images']['list'].append('DSM_support_classified')
@@ -811,7 +858,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
             dsm_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'],
                                                                  get_out_file_path('DSM_support_classified.png'))
             dsm_classified_img_descriptor['nodata'] = [0, 0, 0, 0]
-            dsm_sets_def, sets_color = create_sets(support_dsm, cfg['stats_opts']['class_rad_range'],
+            dsm_sets_def, sets_color = create_sets(support_dsm, cfg['stats_opts']['slope_layer']['slope_range'], type,
                                                    tmpDir=cfg['outputDir'], output_descriptor=dsm_classified_img_descriptor)
 
     #
@@ -836,11 +883,11 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         # Compute stats for all sets of a single mode
         #
         elevation_thresholds = None
-        if cfg['stats_opts']['elevation_thresholds']['list']:
+        if cfg['stats_opts']['slope_layer']['elevation_thresholds']['list']:
             # Convert thresholds to meter since all dem_compare elevation unit is "meter"
-            original_unit = cfg['stats_opts']['elevation_thresholds']['zunit']
+            original_unit = cfg['stats_opts']['slope_layer']['elevation_thresholds']['zunit']
             elevation_thresholds = [((threshold * u.Unit(original_unit)).to(u.meter)).value
-                                    for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
+                                    for threshold in cfg['stats_opts']['slope_layer']['elevation_thresholds']['list']]
         mode_stats = get_stats(alti_map.r,
                                to_keep_mask=to_keep_masks[mode],
                                no_outliers_mask=no_outliers_mask,
@@ -876,7 +923,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         # -> we are then ready to do some plots !
         if mode is not None:
             plot_files, plot_colors, labels_saved = plot_histograms(alti_map.r,
-                                                                    bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
+                                                                    bin_step=cfg['stats_opts']['slope_layer']['alti_error_threshold']['value'],
                                                                     to_keep_mask=(to_keep_masks[mode] * no_outliers_mask),
                                                                     sets=[np.ones((alti_map.r.shape),dtype=bool)]+ref_sets_def,
                                                                     sets_labels=['all']+sets_labels,
@@ -888,7 +935,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                                                             get_out_dir('histograms_dir')),
                                                                     save_prefix=modes[mode],
                                                                     display=display,
-                                                                    plot_real_hist=cfg['stats_opts']['plot_real_hists'])
+                                                                    plot_real_hist=cfg['stats_opts']['slope_layer']['plot_real_hists'])
         else:
             plot_files = []
             plot_colors = []

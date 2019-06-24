@@ -136,27 +136,41 @@ def initialization_alti_opts(cfg):
 
 
 def initialization_stats_opts(cfg):
-    # class_type can be 'slope' (classification is done from slope) or 'user' (classification from any kind) or None
-    # class_rad_range defines the intervals to classify the classification type image from
+    # slope_range defines the intervals to classify the classification type image from
 
-    default_stats_opts = {'class_type': 'slope',
-                          'class_rad_range': [0, 10, 25, 50, 90],
-                          'cross_classification': False,
-                          'alti_error_threshold': {'value': 0.1, 'unit': 'meter'},
-                          'elevation_thresholds' : {'list': [0.5,1,3], 'zunit': 'meter'},
-                          'plot_real_hists': False}
+    default_stats_opts = {'slope_layer': {'slope_range': [0, 10, 25, 50, 90],
+                                          'ref': None,
+                                          'dsm': None,
+                                          'alti_error_threshold': {'value': 0.1, 'unit': 'meter'},
+                                          'elevation_thresholds': {'list': [0.5, 1, 3], 'zunit': 'meter'},
+                                          'plot_real_hists': False},
+                          'classification_layer': {'ref': None,
+                                                   'dsm': None,
+                                                   'classes': {}
+                                                   }
+                          }
 
-    if 'stats_opts' not in cfg:
+    if not 'stats_opts' in cfg:
         cfg['stats_opts'] = default_stats_opts
     else:
         # we keep users items and add default items he has not set
-        cfg['stats_opts'] = dict(list(default_stats_opts.items()) + list(cfg['stats_opts'].items()))
-    try:
-        # we try to evaluate what could be set to "True" (or "False) as boolean true (false)
-        cfg['stats_opts']['cross_classification'] = ast.literal_eval(cfg['stats_opts']['cross_classification'])
-    except ValueError:
-        # we assume if previous instruction fails because of a malformed string, then we have the boolean we need
-        pass
+        # slope_layer part
+        if 'slope_layer' in cfg['stats_opts']:
+            cfg['stats_opts']['slope_layer'] = {**default_stats_opts['slope_layer'], **cfg['stats_opts']['slope_layer']}
+        else:
+            cfg['stats_opts']['slope_layer'] = default_stats_opts['slope_layer']
+        # classification_layer part
+        if 'classification_layer' in cfg['stats_opts']:
+            cfg['stats_opts']['classification_layer'] = {**default_stats_opts['classification_layer'],
+                                                         **cfg['stats_opts']['classification_layer']}
+        else:
+            cfg['stats_opts']['classification_layer'] = default_stats_opts['classification_layer']
+
+    if 'ref' in cfg['stats_opts']['slope_layer']['slope_range'] \
+            and 'dsm' in cfg['stats_opts']['slope_layer']['slope_range']:
+        cfg['stats_opts']['cross_classification'] = True
+    else:
+        cfg['stats_opts']['cross_classification'] = False
 
 
 def get_tile_dir(cfg, c, r, w, h):
