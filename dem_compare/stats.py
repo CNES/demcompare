@@ -76,8 +76,7 @@ def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref, type):
         else:
             if cfg['stats_opts']['classification_layer'] and type == 'classification':
                 # if class_type is 'user' we must rectify the support image(s)
-                support_ref, support_dsm = rectify_user_support_img(cfg, coreg_dsm,
-                                                                    cfg['stats_opts']['cross_classification'])
+                support_ref, support_dsm = rectify_user_support_img(cfg, coreg_dsm)
                 if not support_dsm:
                     # There can be no cross classification without a second support image to cross classify with
                     cfg['stats_opts']['cross_classification'] = False
