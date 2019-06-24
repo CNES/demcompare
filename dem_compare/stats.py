@@ -241,7 +241,8 @@ def get_sets_labels_and_names_for_classification(classes, support_ref, support_d
             classes[str(l)] = l
 
     sets_label_list = list(classes.keys())
-    sets_name_list = list(classes.keys())
+    sets_name_list = ['{} : {}'.format(key, value) for key, value in classes.items()]
+    sets_name_list = [name.replace(',', ';') for name in sets_name_list]
 
     return sets_label_list, sets_name_list, classes
 
@@ -290,7 +291,11 @@ def create_sets(img_to_classify, sets_rad_range, type, tmpDir='.', output_descri
     elif type == 'classification':
         output_sets_def = [np.zeros(img_to_classify.r.shape) for npz in range(0, len(sets_rad_range))]
         for idx in range(0, len(sets_rad_range)):
-            output_sets_def[idx][np.where(img_to_classify.r == sets_rad_range[idx])] = 1
+            if isinstance(sets_rad_range[idx], list):
+                for idx_list in range(0, len(sets_rad_range[idx])):
+                    output_sets_def[idx][np.where(img_to_classify.r == sets_rad_range[idx][idx_list])] = 1
+            else:
+                output_sets_def[idx][np.where(img_to_classify.r == sets_rad_range[idx])] = 1
             '''
             TODO
             if output_descriptor:
