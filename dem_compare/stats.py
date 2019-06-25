@@ -473,7 +473,7 @@ def stats_computation(array, list_threshold=None):
     return res
 
 
-def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, sets_labels=None, sets_names=None,
+def get_stats(dz_values, to_keep_mask=None, sets=None, sets_labels=None, sets_names=None,
               list_threshold=None):
     """
     Get Stats for a specific array, considering potentially subsets of it
@@ -504,11 +504,9 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
     # - if a mask is not set, we set it with True values only so that it has no effect
     if to_keep_mask is None:
         to_keep_mask = np.ones(dz_values.shape)
-    if no_outliers_mask is None:
-        no_outliers_mask = np.ones(dz_values.shape)
 
     # Computing first set of values with all pixels considered -except the ones masked or the outliers-
-    output_list.append(stats_computation(dz_values[np.where((to_keep_mask*no_outliers_mask) == True)], list_threshold))
+    output_list.append(stats_computation(dz_values[np.where(to_keep_mask == True)], list_threshold))
     # - we add standard information for later use
     output_list[0]['set_label'] = 'all'
     output_list[0]['set_name'] = 'All classes considered'
@@ -519,7 +517,7 @@ def get_stats(dz_values, to_keep_mask=None, no_outliers_mask=None, sets=None, se
     # Computing stats for all sets (sets are a partition of all values)
     if sets is not None and sets_labels is not None and sets_names is not None:
         for set_idx in range(0,len(sets)):
-            set = sets[set_idx] * to_keep_mask * no_outliers_mask
+            set = sets[set_idx] * to_keep_mask
 
             data = dz_values[np.where(set == True)]
             output_list.append(stats_computation(data, list_threshold))
@@ -810,6 +808,48 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
     """
 
     #
+    # Set future plot title with bias and % of nan values as part of it
+    #
+    title = ['MNT quality performance']
+    dx = cfg['plani_results']['dx']
+    dy = cfg['plani_results']['dy']
+    biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.xres},
+              'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.yres}}
+    title.append('(mean biases : '
+                 'dx : {:.2f}m (roughly {:.2f}pixel); '
+                 'dy : {:.2f}m (roughly {:.2f}pixel);'.format(biases['dx']['value_m'],
+                                                              biases['dx']['value_p'],
+                                                              biases['dy']['value_m'],
+                                                              biases['dy']['value_p']))
+    rect_ref_cfg = cfg['alti_results']['rectifiedRef']
+    rect_dsm_cfg = cfg['alti_results']['rectifiedDSM']
+    title.append('(holes or no data stats: '
+                 'Reference DSM  % nan values : {:.2f}%; '
+                 'DSM to compare % nan values : {:.2f}%;'.format(100 * (1 - float(rect_ref_cfg['nb_valid_points'])
+                                                                        / float(rect_ref_cfg['nb_points'])),
+                                                                 100 * (1 - float(rect_dsm_cfg['nb_valid_points'])
+                                                                        / float(rect_dsm_cfg['nb_points']))))
+
+    #
+    # Get list of altitude thresholds if required, and translate them in meters
+    #
+    list_threshold_m = None
+    if cfg['stats_opts']['elevation_thresholds']['list']:
+        # Convert thresholds to meter since all dem_compare elevation unit is "meter"
+        original_unit = cfg['stats_opts']['elevation_thresholds']['zunit']
+        list_threshold_m = [((threshold * u.Unit(original_unit)).to(u.meter)).value
+                            for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
+
+    #
+    # Stats will be expressed by sets that will partitioned the data.
+    # Hence first we need to create those sets :
+    #   -> for the range of slopes desired
+    #   -> for the labels of the classification layer(s)
+    #
+
+    # TODO recuperer et mettre au clair le travail de Marina
+    # TODO essayer de tout classer dans un dico{'slope': , 'classification': }
+    #
     # If we are to classify the 'z' stats then we make sure we have what it takes
     #
     do_classify_results, do_cross_classification, support_ref, support_dsm = \
@@ -842,7 +882,8 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
                                                              get_out_file_path('Ref_support_classified.png'))
         ref_classified_img_descriptor['nodata'] = [0, 0, 0, 0]
         if type == 'slope':
-            ref_sets_def, sets_color = create_sets(support_ref, cfg['stats_opts']['slope_layer']['slope_range'], type,
+            ref_sets_def, sets_color = create_sets(support_ref, cfg['stats_opts']['slope_layer']['slope_range'],
+                                                   type,
                                                    tmpDir=cfg['outputDir'],
                                                    output_descriptor=ref_classified_img_descriptor)
         elif type == 'classification':
@@ -855,108 +896,174 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
             cfg['stats_results']['images']['DSM_support_classified'] = {}
             dsm_classified_img_descriptor = cfg['stats_results']['images']['DSM_support_classified']
             dsm_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'],
-                                                                 get_out_file_path('DSM_support_classified.png'))
+                                                                 get_out_file_path(
+                                                                     'DSM_support_classified.png'))
             dsm_classified_img_descriptor['nodata'] = [0, 0, 0, 0]
-            dsm_sets_def, sets_color = create_sets(support_dsm, cfg['stats_opts']['slope_layer']['slope_range'], type,
-                                                   tmpDir=cfg['outputDir'], output_descriptor=dsm_classified_img_descriptor)
+            dsm_sets_def, sets_color = create_sets(support_dsm, cfg['stats_opts']['slope_layer']['slope_range'],
+                                                   type,
+                                                   tmpDir=cfg['outputDir'],
+                                                   output_descriptor=dsm_classified_img_descriptor)
 
     #
     # If cross-classification is 'on' we set the alphas bands transparent where ref and dsm support classified differ
     #
     if do_classify_results and do_cross_classification:
-        cross_class_apha_bands(ref_classified_img_descriptor, dsm_classified_img_descriptor, ref_sets_def, dsm_sets_def)
+        cross_class_apha_bands(ref_classified_img_descriptor, dsm_classified_img_descriptor, ref_sets_def,
+                               dsm_sets_def)
 
-    #
-    # Get the masks to apply to dz array for all stats configurations (we call it 'mode')
-    #
-    to_keep_masks, modes, no_outliers_mask = create_masks(alti_map, do_classify_results, support_ref,
-                                                          do_cross_classification, ref_classified_img_descriptor,
-                                                          remove_outliers=True)
 
-    #
-    # Next is done for all modes
-    #
-    cfg['stats_results']['modes'] = {}
-    for mode in range(0, len(modes)):
+    # TODO FIN de la recuperation du travail de Marina
+    # TODO boucler sur dico.keys()
+    # Get outliers free mask (array of True where value is no outlier)
+    # TODO LDS creer cette methode get_outliers_free_mask
+    outliers_free_mask = get_outliers_free_mask(alti_map.r)
+    for pkind in partition_kinds.keys():                         # keys being 'slopes' and/or 'classification_layer(s)':
         #
-        # Compute stats for all sets of a single mode
-        #
-        elevation_thresholds = None
-        if cfg['stats_opts']['slope_layer']['elevation_thresholds']['list']:
-            # Convert thresholds to meter since all dem_compare elevation unit is "meter"
-            original_unit = cfg['stats_opts']['slope_layer']['elevation_thresholds']['zunit']
-            elevation_thresholds = [((threshold * u.Unit(original_unit)).to(u.meter)).value
-                                    for threshold in cfg['stats_opts']['slope_layer']['elevation_thresholds']['list']]
-        mode_stats = get_stats(alti_map.r,
-                               to_keep_mask=to_keep_masks[mode],
-                               no_outliers_mask=no_outliers_mask,
-                               sets=ref_sets_def,
-                               sets_labels=sets_labels,
-                               sets_names=sets_names,
-                               list_threshold=elevation_thresholds)
+        # Compute stats for each mode and every sets
+        # TODO
+        # sets_masks = list des dsm_sets_def et ref_sets_def
+        # sets_labels = sets_labels mais pour les deux dsm
+        # sets_names = sets_names mais pour les deux dsm
+        # sets_colors = sets_colors mais pour les deux dsm
+        mode_stats, mode_masks, mode_names = get_stats_per_mode(alti_map,
+                                                                sets_masks=set_masks[pkind],
+                                                                sets_labels=sets_labels[pkind],
+                                                                sets_names=sets_names[pkind],
+                                                                elevation_thresholds=list_threshold_m,
+                                                                outliers_free_mask=outliers_free_mask)
 
-        # TODO (peut etre prevoir une activation optionnelle du plotage...)
+        #
+        # Save stats as plots, csv and json and do so for each mode
+        #
+        cfg['stats_results']['modes'] = save_as_graphs_and_tables(alti_map.r,
+                                                                  cfg['outputDir'],
+                                                                  mode_masks,              # contains outliers_free_mask
+                                                                  mode_names,
+                                                                  mode_stats,
+                                                                  set_masks[pkind],
+                                                                  sets_labels[pkind],
+                                                                  sets_colors[pkind],
+                                                                  plot_title=title,
+                                                                  bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
+                                                                  display=display,
+                                                                  plot_real_hist=cfg['stats_opts']['plot_real_hists'])
+
+
+def save_as_graphs_and_tables(data_array, out_dir,
+                              mode_masks, mode_names, mode_stats,
+                              sets_masks, sets_labels, sets_colors,
+                              plot_title='Title', bin_step=0.1, display=False, plot_real_hist=True):
+    """
+
+    :param data_array:
+    :param out_dir:
+    :param mode_masks:
+    :param mode_names:
+    :param mode_stats:
+    :param sets_masks:
+    :param sets_labels:
+    :param sets_colors:
+    :param plot_title:
+    :param bin_step:
+    :param display:
+    :param plot_real_hist:
+    :return:
+    """
+
+    mode_output_json_files = {}
+    for mode in range(0, len(mode_names)):
         #
         # Create plots for the actual mode and for all sets
         #
-        # -> we set the title here and we chose to print the bias and % nan values as part of this title:
-        dx = cfg['plani_results']['dx']
-        dy = cfg['plani_results']['dy']
-        biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.xres},
-                  'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.yres}}
-        rect_ref_cfg = cfg['alti_results']['rectifiedRef']
-        rect_dsm_cfg = cfg['alti_results']['rectifiedDSM']
-        title = ['MNT quality performance']
-        title.append('(mean biases : '
-                     'dx : {:.2f}m (roughly {:.2f}pixel); '
-                     'dy : {:.2f}m (roughly {:.2f}pixel);'.format(biases['dx']['value_m'],
-                                                                  biases['dx']['value_p'],
-                                                                  biases['dy']['value_m'],
-                                                                  biases['dy']['value_p']))
-        title.append('(holes or no data stats: '
-                     'Reference DSM  % nan values : {:.2f}%; '
-                     'DSM to compare % nan values : {:.2f}%;'.format(100 * (1 - float(rect_ref_cfg['nb_valid_points'])
-                                                                            / float(rect_ref_cfg['nb_points'])),
-                                                                     100 * (1 - float(rect_dsm_cfg['nb_valid_points'])
-                                                                            / float(rect_dsm_cfg['nb_points']))))
         # -> we are then ready to do some plots !
-        if mode is not None:
-            plot_files, plot_colors, labels_saved = plot_histograms(alti_map.r,
-                                                                    bin_step=cfg['stats_opts']['slope_layer']['alti_error_threshold']['value'],
-                                                                    to_keep_mask=(to_keep_masks[mode] * no_outliers_mask),
-                                                                    sets=[np.ones((alti_map.r.shape),dtype=bool)]+ref_sets_def,
-                                                                    sets_labels=['all']+sets_labels,
-                                                                    sets_colors=np.array([(0,0,0)]+list(sets_color)),
-                                                                    plot_title='\n'.join(title),
-                                                                    outplotdir=os.path.join(cfg['outputDir'],
-                                                                                            get_out_dir('snapshots_dir')),
-                                                                    outhistdir=os.path.join(cfg['outputDir'],
-                                                                                            get_out_dir('histograms_dir')),
-                                                                    save_prefix=modes[mode],
-                                                                    display=display,
-                                                                    plot_real_hist=cfg['stats_opts']['slope_layer']['plot_real_hists'])
-        else:
-            plot_files = []
-            plot_colors = []
-            labels_saved = []
+        # TODO (peut etre prevoir une activation optionnelle du plotage...)
+        sets_labels = ['all'] + sets_labels
+        sets_colors = np.array([(0, 0, 0)] + list(sets_colors))
+        plot_files = plot_histograms(data_array,
+                                     bin_step=bin_step,
+                                     to_keep_mask=mode_masks[mode],
+                                     sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks,
+                                     sets_labels=sets_labels,
+                                     sets_colors=sets_colors,
+                                     plot_title='\n'.join(plot_title),
+                                     outplotdir=os.path.join(out_dir,
+                                                             get_out_dir('snapshots_dir')),
+                                     # TODO pb dir avec slope et class
+                                     outhistdir=os.path.join(out_dir,
+                                                             get_out_dir('histograms_dir')),
+                                     save_prefix=mode_names[mode],
+                                     display=display,
+                                     plot_real_hist=plot_real_hist)
 
         #
         # Save results as .json and .csv file
         #
-        cfg['stats_results']['modes'][modes[mode]] = os.path.join(cfg['outputDir'],
-                                                                  get_out_dir('stats_dir'),
-                                                                  'stats_results_'+modes[mode]+'.json')
-        save_results(cfg['stats_results']['modes'][modes[mode]],
-                     mode_stats,
-                     labels_plotted=labels_saved,
+        mode_output_json_files[mode_names[mode]] = os.path.join(out_dir,
+                                                      get_out_dir('stats_dir'),
+                                                      'stats_results_' + mode_names[mode] + '.json')
+        save_results(mode_output_json_files[mode_names[mode]],
+                     mode_stats[mode],
+                     labels_plotted=sets_labels,
                      plot_files=plot_files,
-                     plot_colors=plot_colors,
+                     plot_colors=sets_colors,
                      to_csv=True)
 
-        #
-        # Create the stat report
-        #
-        # report_multi_tiles([cfg['stats_results']['modes'][modes[mode]]], cfg['outputDir'])
+    return mode_output_json_files
+
+
+def get_stats_per_mode(data, sets_masks=None, sets_labels=None, sets_names=None,
+                       elevation_thresholds=None, outliers_free_mask=None):
+    """
+    Generates alti error stats with graphics and csv tables.
+
+    Stats are computed based on support images which can be viewed as classification layers. The layers are represented
+    by the support_sets which partitioned the alti_map indices. Hence stats are computed on each set separately.
+
+    There can be one or two support_imgs, associated to just the same amount of supports_sets. Both arguments being
+    lists. If two such classification layers are given, then this method also produces stats based on 3 modes:
+    -standard mode,
+    -coherent mode where only alti errors values associated with coherent classes between both classified images are used
+    -and, incoherent mode (the coherent complementary one).
+
+    :param data: array to compute stats from
+    :param sets_masks: list of one or two array (sets partitioning the support_img) of size equal to data ones
+    :param sets_labels: list of sets labels
+    :param sets_names: list of sets names
+    :param elevation_thresholds: list of elevation thresholds
+    :param outliers_free_mask:
+    :return: stats, masks, names per mode
+    """
+
+    #
+    # Get the masks to apply to data array for all stats configurations (we call it 'mode')
+    # TODO
+    #to_keep_masks, modes, no_outliers_mask = create_masks(data, do_classify_results, support_ref,
+    #                                                      do_cross_classification, ref_classified_img_descriptor,
+    #                                                      remove_outliers=True)
+
+    # Get mode masks and names (sets_masks will be cross checked if len(sets_masks)==2)
+    #TODO LDS creer cette methode
+    mode_masks, mode_names = create_mode_masks(data, sets_masks) #sets_masks have False where value was nan inside class image
+
+
+    #
+    # Next is done for all modes
+    #
+    mode_stats = []
+    for mode in range(0, len(mode_names)):
+        # Remove outliers
+        if outliers_free_mask:
+            mode_masks[mode] *= outliers_free_mask
+
+        # Compute stats for all sets of a single mode
+        mode_stats[mode] = get_stats(data.r,
+                                     to_keep_mask=mode_masks[mode],
+                                     sets=sets_masks[0],
+                                     sets_labels=sets_labels[0],
+                                     sets_names=sets_names[0],
+                                     list_threshold=elevation_thresholds)
+
+    return mode_stats, mode_masks, mode_names
 
 
 def wave_detection(cfg, dh, display=False):
