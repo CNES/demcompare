@@ -259,6 +259,7 @@ def create_sets(img_to_classify, sets_rad_range, type, tmpDir='.', output_descri
     :return: list of boolean arrays
     """
 
+    #TODO pour une img_to_classify donnee et pour tous ses points a nan : penser a mettre a False les indices des sets
     # create output dataset if required
     if output_descriptor:
         driver_mem = gdal.GetDriverByName("MEM")
@@ -345,7 +346,7 @@ def cross_class_apha_bands(ref_png_desc, dsm_png_desc, ref_sets, dsm_sets, tmpDi
     # -> then for each single class / set, we know which pixels are coherent between both ref and dsm support img
     # -> combine_sets[0].shape[0] = number of sets (classes)
     # -> combine_sets[0].shape[1] = number of pixels inside a single DSM
-    combine_sets = np.array([ref_sets[i][:]==dsm_sets[i][:] for i in range(0,len(ref_sets))])
+    combine_sets = np.array([ref_sets[i][:] == dsm_sets[i][:] for i in range(0, len(ref_sets))])
 
     # Merge all combined sets together so that if a pixel's value across all sets is not always True then the alpha
     # band associated value is transparent (=0) since this pixel is not classified the same way between both support img
@@ -363,6 +364,75 @@ def cross_class_apha_bands(ref_png_desc, dsm_png_desc, ref_sets, dsm_sets, tmpDi
     # From MEM to PNG (GDAL does not seem to handle well PNG format)
     gdal.GetDriverByName('PNG').CreateCopy(ref_png_desc['path'], ref_mem_dataset)
     gdal.GetDriverByName('PNG').CreateCopy(dsm_png_desc['path'], dsm_mem_dataset)
+
+
+def get_nonan_mask(array, nan_value):
+    return np.apply_along_axis(lambda x: (~np.isnan(x))*(x != nan_value), 0, array)
+
+
+def get_outliers_free_mask(array, no_data_value=None):
+    if no_data_value:
+        no_data_free_mask = get_nonan_mask(array, no_data_value)
+    array_without_nan = array[np.where(no_data_free_mask == True)]
+    mu = np.mean(array_without_nan)
+    sigma = np.std(array_without_nan)
+    return np.apply_along_axis(lambda x: (x > mu - 3 * sigma) * (x < mu + 3 * sigma), 0, array)
+
+
+def create_mode_masks(alti_map, partitions_sets_masks=None):
+    """
+    Compute Masks for every required modes :
+    -> the 'standard' mode where the mask stands for nan values inside the error image with the nan values
+       inside the ref_support_desc when do_classification is on & it also stands for outliers free values
+    -> the 'coherent-classification' mode which is the 'standard' mode where only the pixels for which both sets (dsm
+       and reference) are coherent
+    -> the 'incoherent-classification' mode which is 'coherent-classification' complementary
+
+    Note that 'coherent-classification' and 'incoherent-classification' mode masks can only be computed if
+    len(list_of_sets_masks)==2
+
+    :param alti_map: A3DGeoRaster, alti differences
+    :param partitions_sets_masks: [] (master and/or slave dsm) of [] of boolean array (sets for each dsm)
+    :return: list of masks, associated modes, and error_img read as array
+    """
+
+    mode_names = []
+    mode_masks = []
+
+    # Starting with the 'standard' mask
+    mode_names.append('standard')
+    # -> remove alti_map nodata indices
+    mode_masks.append(get_nonan_mask(alti_map.r, alti_map.nodata))
+    # -> remove nodata indices for every partitioning image
+    if partitions_sets_masks:
+        for pImg in partitions_sets_masks:
+            # for a given partition, nan values are flagged False for all sets
+            # hence, np.where below gives us every indices where all sets are False, which are all indices where
+            # the given partition value was undefined
+            partition_nan_indices = np.where(np.all(pImg, axis=0) == False)
+            mode_masks[0][partition_nan_indices] = False
+
+    # Carrying on with potentially the cross classification (coherent & incoherent) masks
+    if len(partitions_sets_masks) == 2:     # there's a classification img to partition from for both master & slave dsm
+        mode_names.append('coherent-classification')
+        # Combine pairs of sets together (meaning first partition first set with second partition first set)
+        # -> then for each single class / set, we know which pixels are coherent between both partitions
+        # -> combine_sets[0].shape[0] = number of sets (classes)
+        # -> combine_sets[0].shape[1] = number of pixels inside a single DSM
+        pImgs = partitions_sets_masks
+        combine_sets = np.array([pImgs[0][set_idx][:] == pImgs[1][set_idx][:] for set_idx in range(0, len(pImgs[0]))])
+        # TODO verifier cette histoire peut on faire les coherents comme on fait les incoherents ?
+        coherent_indices = np.where(np.all(combine_sets, axis=0) == True)
+        incoherent_indices = np.where(np.all(combine_sets, axis=0) == False)
+        # so we get rid of what are actually 'nodata' and incoherent values as well
+        coherent_mask = get_nonan_mask(ref_support_classified_val, ref_support_classified_desc['nodata'][0])
+        mode_masks.append(mode_masks[0] * coherent_mask)
+
+        # Then the incoherent one
+        mode_names.append('incoherent-classification')
+        mode_masks.append(mode_masks[0] * ~coherent_mask)
+
+    return mode_masks, mode_names
 
 
 def create_masks(alti_map,
@@ -386,15 +456,6 @@ def create_masks(alti_map,
     :return: list of masks, associated modes, and error_img read as array
     """
 
-    def get_ouliersfree_mask(array, no_nan_mask):
-        array_without_nan = array[np.where(no_nan_mask==True)]
-        mu = np.mean(array_without_nan)
-        sigma = np.std(array_without_nan)
-        return np.apply_along_axis(lambda x: (x > mu - 3 * sigma) * (x < mu + 3 * sigma), 0, array)
-
-    def get_nonan_mask(array, nan_value):
-        return np.apply_along_axis(lambda x: (~np.isnan(x))*(x != nan_value), 0, array)
-
     modes = []
     masks = []
 
@@ -405,7 +466,7 @@ def create_masks(alti_map,
     # Create no outliers mask if required
     no_outliers = None
     if remove_outliers:
-        no_outliers = get_ouliersfree_mask(alti_map.r, masks[0])
+        no_outliers = get_outliers_free_mask(alti_map.r, alti_map.nodata)
 
     # If the classification is on then we also consider ref_support nan values
     if do_classification:
@@ -915,9 +976,10 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
     # TODO FIN de la recuperation du travail de Marina
     # TODO boucler sur dico.keys()
     # Get outliers free mask (array of True where value is no outlier)
-    # TODO LDS creer cette methode get_outliers_free_mask
-    outliers_free_mask = get_outliers_free_mask(alti_map.r)
-    for pkind in partition_kinds.keys():                         # keys being 'slopes' and/or 'classification_layer(s)':
+    outliers_free_mask = get_outliers_free_mask(alti_map.r, alti_map.nodata)
+
+    # For every partition kind ('slopes' and/or 'classification_layer(s)') get stats and save them as plots and tables
+    for pkind in partition_kinds.keys():
         #
         # Compute stats for each mode and every sets
         # TODO
@@ -943,7 +1005,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
                                                                   set_masks[pkind],
                                                                   sets_labels[pkind],
                                                                   sets_colors[pkind],
-                                                                  plot_title=title,
+                                                                  plot_title=''.join(title),
                                                                   bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
                                                                   display=display,
                                                                   plot_real_hist=cfg['stats_opts']['plot_real_hists'])
@@ -1026,9 +1088,9 @@ def get_stats_per_mode(data, sets_masks=None, sets_labels=None, sets_names=None,
     -and, incoherent mode (the coherent complementary one).
 
     :param data: array to compute stats from
-    :param sets_masks: list of one or two array (sets partitioning the support_img) of size equal to data ones
-    :param sets_labels: list of sets labels
-    :param sets_names: list of sets names
+    :param sets_masks: [] of one or two array (sets partitioning the support_img) of size equal to data ones
+    :param sets_labels: [] of sets labels
+    :param sets_names: [] of sets names
     :param elevation_thresholds: list of elevation thresholds
     :param outliers_free_mask:
     :return: stats, masks, names per mode
