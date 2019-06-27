@@ -844,40 +844,80 @@ def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts, plani
     :return: dict, with partitions information {'
     """
 
+    to_be_clayers= stats_opts['classification_layers'].copy()
+    clayers = stats_opts['to_be_classification_layers'].copy()
     # TODO no more stats_results down below, we store everything inside partition and get it back later
     # Reproject every 'to_be_classification_layer' & 'classification_layer'
-    if 'to_be_classification_layer' in stats_opts:
-        #get support_ref, support_dsm and
-    # 'name' = nom de la partition
-    # 'images' = images de la partition = cfg['stats_results']['images']
-        [reprojected_class_layer(dsm, ref, to_be_classified_dict, plani_biases)
-         for to_be_classified_dict in stats_opts['to_be_classification_layer']]
+    #TODO to_classification_layer:
+    # retourner un dico de la forme :
+    #{'ref': '/path/to/refDSM_classification_layer/',
+    # 'dsm': '/path/to/dsmDSM_classification_layer/',
+    # 'classes': {'forest': [0, 10, 3],
+    #             'urban_area': [4, -3]},
+    # 'name': 'land_cover'},
+    # UN CAS PARTICULIER
+    # si 'name' = 'slope' & 'ref' et/ou 'dsm' = None
+    # -> create_slope()
+    # -> ecrire sur disque slope()
+    # -> remplir 'ref' et 'dsm' avec les path
+    clayers.append([to_classification_layer(item) for item in  to_be_clayers])
 
 
+    # TODO
+    # boucle sur clayers et rectify_user_support_img(clayers)
+    # pour chaque clayers (un dico), on ajoute les clefs suivantes
+    # 'reproject_ref'
+    # 'reproject_dsm'
+    # ou :
+    #     reproject_x contient plusieurs clefs egalement
+    #               - "A3DGeoRaster"
+    #               - "descriptor" qui contient et toutes les clefs que l'on avait avant dans cfg['stats_results']['images']['Ref_support']
 
-    # TODO recuperer et mettre au clair le travail de Marina
-    # TODO essayer de tout classer dans un dico{'slope': , 'classification': }
-    #
-    # If we are to classify the 'z' stats then we make sure we have what it takes
-    #
-    do_classify_results, do_cross_classification, support_ref, support_dsm = \
-        set_image_to_classify_from(cfg, dsm, ref, type)
 
-    #
-    # Get back label list from sets ranges of values
-    #
-    sets_names = None
-    sets_labels = None
-    if do_classify_results:
-        if type == 'slope':
-            sets_labels, sets_names = get_sets_labels_and_names(cfg['stats_opts']['slope_layer']['slope_range'])
-        elif type == 'classification':
-            sets_labels, sets_names, classes = \
-                get_sets_labels_and_names_for_classification(cfg['stats_opts']['classification_layer']['classes'],
-                                                             support_ref, support_dsm)
+    #############################
+    # # TODO recuperer et mettre au clair le travail de Marina
+    # # TODO essayer de tout classer dans un dico{'slope': , 'classification': }
+    # #
+    # # If we are to classify the 'z' stats then we make sure we have what it takes
+    # #
+    # do_classify_results, do_cross_classification, support_ref, support_dsm = \
+    #     set_image_to_classify_from(cfg, dsm, ref, type)
+    #############################
+
+    # TODO
+    # boucle sur clayers et faire get_sets_labels_and_names(clayer)
+    # pour chaque clayers (un dico), sans classes
+    # remplir la clef 'classes'
+
+
+    # TODO
+    # boucle sur clayers et faire get_sets_labels_and_names(clayer)
+    # pour chaque clayers (un dico), on ajoute les clefs suivantes
+    # 'labels'
+    # 'names'
+    # pour le cas ou 'name':'slope' et les clefs de 'classes' sont des intervalles, on place les nablas dans les labels
+
+    # #
+    # # Get back label list from sets ranges of values
+    # #
+    # sets_names = None
+    # sets_labels = None
+    # if do_classify_results:
+    #     if type == 'slope':
+    #         sets_labels, sets_names = get_sets_labels_and_names(cfg['stats_opts']['slope_layer']['slope_range'])
+    #     elif type == 'classification':
+    #         sets_labels, sets_names, classes = \
+    #             get_sets_labels_and_names_for_classification(cfg['stats_opts']['classification_layer']['classes'],
+    #                                                          support_ref, support_dsm)
 
     #
     # If required, create sets definitions (boolean arrays where True means the associated index is part of the set)
+    #
+    # TODO
+    # boucle sur clayers et faire get_sets_labels_and_names(clayer)
+    # pour chaque clayers (un dico), on ajoute les clefs suivantes
+    # + boucle sur 'ref' et 'dsm' faire create_sets()
+    # 'sets' : [x_sets_def, y_sets_def] (on peut eventuellement forcer ref en premier si les deux sont presents)
     #
     # TODO sets_masks have False where value was nan inside class image
     ref_classified_img_descriptor = None
@@ -914,6 +954,10 @@ def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts, plani
                                                    output_descriptor=dsm_classified_img_descriptor)
 
     #
+    # TODO
+    # boucle sur clayers et faire get_sets_labels_and_names(clayer)
+    # + si len('sets') == 2
+    #
     # If cross-classification is 'on' we set the alphas bands transparent where ref and dsm support classified differ
     #
     if do_classify_results and do_cross_classification:
@@ -928,6 +972,7 @@ def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts, plani
     # 'sets_colors' = sets_colors mais pour les deux dsm
     # 'name' = nom de la partition
     # 'images' = images de la partition = cfg['stats_results']['images']
+    return clayers
 
 
 def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification'):
