@@ -834,74 +834,25 @@ def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=N
                 writer.writerow(csv_results[set])
 
 
-# TODO MODIFIER POUR QU'IL GERE LES DEUX : slope_layer ET classification_layer,
-#                                               actuellement seul classification_layer est calculé
-def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification'):
-    """
-    Computes alti error stats with graphics and tables support.
-
-    If cfg['stats_opt']['class_type'] is not None those stats can be partitioned into different sets. The sets
-    are radiometric ranges used to classify a support image. May the support image be the slope image associated
-    with the reference DSM then the sets are slopes ranges and the stats are provided by classes of slopes ranges.
-
-    Actually, if cfg['stats_opt']['class_type'] is 'slope' then computeStats first computes slope image and classify
-    stats over slopes. If cfg['stats_opt']['class_type'] is 'user' then a user support image must be given to be
-    classified over cfg['stats_opt']['class_rad_range'] intervals so it can partitioned the stats.
-
-    When cfg['stats_opt']['class_type']['class_coherent'] is set to True then two images to classify are required
-    (one associated with the reference DEM and one with the other one). The results will be presented through 3 modes:
-    -standard mode,
-    -coherent mode where only alti errors values associated with coherent classes between both classified images are used
-    -and, incoherent mode (the coherent complementary one).
-
-    :param cfg: config file
-    :param dsm: A3GDEMRaster, dsm
-    :param ref: A3GDEMRaster, coregistered ref
-    :param alti_map: A3DGeoRaster, dsm - ref
-    :param display: boolean, display option (set to False to save plot on file system)
-    :param type: type of the stats calculate, 'slope' or 'classification'
-    :return:
+def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts):
     """
 
-    def get_title(cfg):
-        # Set future plot title with bias and % of nan values as part of it
-        title = ['MNT quality performance']
-        dx = cfg['plani_results']['dx']
-        dy = cfg['plani_results']['dy']
-        biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.xres},
-                  'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.yres}}
-        title.append('(mean biases : '
-                     'dx : {:.2f}m (roughly {:.2f}pixel); '
-                     'dy : {:.2f}m (roughly {:.2f}pixel);'.format(biases['dx']['value_m'],
-                                                                  biases['dx']['value_p'],
-                                                                  biases['dy']['value_m'],
-                                                                  biases['dy']['value_p']))
-        rect_ref_cfg = cfg['alti_results']['rectifiedRef']
-        rect_dsm_cfg = cfg['alti_results']['rectifiedDSM']
-        title.append('(holes or no data stats: '
-                     'Reference DSM  % nan values : {:.2f}%; '
-                     'DSM to compare % nan values : {:.2f}%;'.format(100 * (1 - float(rect_ref_cfg['nb_valid_points'])
-                                                                            / float(rect_ref_cfg['nb_points'])),
-                                                                     100 * (1 - float(rect_dsm_cfg['nb_valid_points'])
-                                                                            / float(rect_dsm_cfg['nb_points']))))
-        return title
+    :param dsm:
+    :param ref:
+    :param outputDir:
+    :param stats_opts:
+    :return: dict, with partitions information {'
+    """
 
-    def get_thresholds_in_meters(cfg):
-        # If required, get list of altitude thresholds and adjust the unit
-        list_threshold_m = None
-        if cfg['stats_opts']['elevation_thresholds']['list']:
-            # Convert thresholds to meter since all dem_compare elevation unit is "meter"
-            original_unit = cfg['stats_opts']['elevation_thresholds']['zunit']
-            list_threshold_m = [((threshold * u.Unit(original_unit)).to(u.meter)).value
-                                for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
-        return list_threshold_m
+    # Reproject every 'to_be_classification_layer' & 'classification_layer'
 
-    #
-    # Stats will be expressed by sets that will partitioned the data.
-    # Hence first we need to create those sets :
-    #   -> for the range of slopes desired
-    #   -> for the labels of the classification layer(s)
-    #
+
+        # TODO
+        # sets_masks = list des dsm_sets_def et ref_sets_def
+        # sets_labels = sets_labels mais pour les deux dsm
+        # sets_names = sets_names mais pour les deux dsm
+        # sets_colors = sets_colors mais pour les deux dsm
+
 
     # TODO recuperer et mettre au clair le travail de Marina
     # TODO essayer de tout classer dans un dico{'slope': , 'classification': }
@@ -969,13 +920,82 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
                                dsm_sets_def)
 
 
+def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification'):
+    """
+    Computes alti error stats with graphics and tables support.
+
+    If cfg['stats_opt']['class_type'] is not None those stats can be partitioned into different sets. The sets
+    are radiometric ranges used to classify a support image. May the support image be the slope image associated
+    with the reference DSM then the sets are slopes ranges and the stats are provided by classes of slopes ranges.
+
+    Actually, if cfg['stats_opt']['class_type'] is 'slope' then computeStats first computes slope image and classify
+    stats over slopes. If cfg['stats_opt']['class_type'] is 'user' then a user support image must be given to be
+    classified over cfg['stats_opt']['class_rad_range'] intervals so it can partitioned the stats.
+
+    When cfg['stats_opt']['class_type']['class_coherent'] is set to True then two images to classify are required
+    (one associated with the reference DEM and one with the other one). The results will be presented through 3 modes:
+    -standard mode,
+    -coherent mode where only alti errors values associated with coherent classes between both classified images are used
+    -and, incoherent mode (the coherent complementary one).
+
+    :param cfg: config file
+    :param dsm: A3GDEMRaster, dsm
+    :param ref: A3GDEMRaster, coregistered ref
+    :param alti_map: A3DGeoRaster, dsm - ref
+    :param display: boolean, display option (set to False to save plot on file system)
+    :param type: type of the stats calculate, 'slope' or 'classification'
+    :return:
+    """
+
+    def get_title(cfg):
+        # Set future plot title with bias and % of nan values as part of it
+        title = ['MNT quality performance']
+        dx = cfg['plani_results']['dx']
+        dy = cfg['plani_results']['dy']
+        biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.xres},
+                  'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.yres}}
+        title.append('(mean biases : '
+                     'dx : {:.2f}m (roughly {:.2f}pixel); '
+                     'dy : {:.2f}m (roughly {:.2f}pixel);'.format(biases['dx']['value_m'],
+                                                                  biases['dx']['value_p'],
+                                                                  biases['dy']['value_m'],
+                                                                  biases['dy']['value_p']))
+        rect_ref_cfg = cfg['alti_results']['rectifiedRef']
+        rect_dsm_cfg = cfg['alti_results']['rectifiedDSM']
+        title.append('(holes or no data stats: '
+                     'Reference DSM  % nan values : {:.2f}%; '
+                     'DSM to compare % nan values : {:.2f}%;'.format(100 * (1 - float(rect_ref_cfg['nb_valid_points'])
+                                                                            / float(rect_ref_cfg['nb_points'])),
+                                                                     100 * (1 - float(rect_dsm_cfg['nb_valid_points'])
+                                                                            / float(rect_dsm_cfg['nb_points']))))
+        return title
+
+    def get_thresholds_in_meters(cfg):
+        # If required, get list of altitude thresholds and adjust the unit
+        list_threshold_m = None
+        if cfg['stats_opts']['elevation_thresholds']['list']:
+            # Convert thresholds to meter since all dem_compare elevation unit is "meter"
+            original_unit = cfg['stats_opts']['elevation_thresholds']['zunit']
+            list_threshold_m = [((threshold * u.Unit(original_unit)).to(u.meter)).value
+                                for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
+        return list_threshold_m
+
+    #
+    # Stats will be expressed by sets that will partitioned the data.
+    # First we create those sets for each kind of partition:
+    #   -> based on floating support to classify before use (either slopes or user defined)
+    #   -> based on actual classification layers
+    #
+    partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'])
+
     # TODO FIN de la recuperation du travail de Marina
     # TODO boucler sur dico.keys()
     # Get outliers free mask (array of True where value is no outlier)
     outliers_free_mask = get_outliers_free_mask(alti_map.r, alti_map.nodata)
 
     # For every partition kind ('slopes' and/or 'classification_layer(s)') get stats and save them as plots and tables
-    for pkind in partition_kinds.keys():
+    for p in partitions.keys():
+        # TODO gerer le repertoire de sortie
         #
         # Compute stats for each mode and every sets
         # TODO
@@ -984,27 +1004,27 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
         # sets_names = sets_names mais pour les deux dsm
         # sets_colors = sets_colors mais pour les deux dsm
         mode_stats, mode_masks, mode_names = get_stats_per_mode(alti_map,
-                                                                sets_masks=set_masks[pkind],
-                                                                sets_labels=sets_labels[pkind],
-                                                                sets_names=sets_names[pkind],
+                                                                sets_masks=set_masks[p],
+                                                                sets_labels=sets_labels[p],
+                                                                sets_names=sets_names[p],
                                                                 elevation_thresholds=get_thresholds_in_meters(cfg),
                                                                 outliers_free_mask=outliers_free_mask)
 
         #
         # Save stats as plots, csv and json and do so for each mode
         #
-        cfg['stats_results']['modes'] = save_as_graphs_and_tables(alti_map.r,
-                                                                  cfg['outputDir'],
-                                                                  mode_masks,              # contains outliers_free_mask
-                                                                  mode_names,
-                                                                  mode_stats,
-                                                                  set_masks[pkind],
-                                                                  sets_labels[pkind],
-                                                                  sets_colors[pkind],
-                                                                  plot_title=''.join(get_title(cfg)),
-                                                                  bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
-                                                                  display=display,
-                                                                  plot_real_hist=cfg['stats_opts']['plot_real_hists'])
+        cfg['stats_results']['modes'][p['name']] = save_as_graphs_and_tables(alti_map.r,
+                                                                             cfg['outputDir'],
+                                                                             mode_masks,              # contains outliers_free_mask
+                                                                             mode_names,
+                                                                             mode_stats,
+                                                                             set_masks[p],
+                                                                             sets_labels[p],
+                                                                             sets_colors[p],
+                                                                             plot_title=''.join(get_title(cfg)),
+                                                                             bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
+                                                                             display=display,
+                                                                             plot_real_hist=cfg['stats_opts']['plot_real_hists'])
 
 
 def save_as_graphs_and_tables(data_array, out_dir,
