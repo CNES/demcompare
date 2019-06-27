@@ -14,6 +14,7 @@ import numpy as np
 from osgeo import gdal
 from scipy import exp
 from scipy.optimize import curve_fit
+from operator import xor
 import math
 import json
 import collections
@@ -77,6 +78,7 @@ def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref, type):
             if cfg['stats_opts']['classification_layer'] and type == 'classification':
                 # if class_type is 'user' we must rectify the support image(s)
                 support_ref, support_dsm = rectify_user_support_img(cfg, coreg_dsm)
+                # TODO test if support_dsm and support_ref define
                 if not support_dsm:
                     # There can be no cross classification without a second support image to cross classify with
                     cfg['stats_opts']['cross_classification'] = False
@@ -173,14 +175,14 @@ def rectify_user_support_img(cfg, coreg_dsm):
     rectified_support_dsm = None
 
     if cfg['stats_opts']['classification_layer']['ref']:
-        input_support_ref = A3DGeoRaster(str(cfg['stats_opts']['classification_layer']['ref']), nodata=-32768)
+        input_support_ref = A3DGeoRaster(str(cfg['stats_opts']['classification_layer']['ref']))
         rectified_support_ref = input_support_ref.reproject(coreg_dsm.srs, int(coreg_dsm.nx), int(coreg_dsm.ny),
                                                             coreg_dsm.footprint[0], coreg_dsm.footprint[3],
                                                             coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_ref.nodata,
                                                             interp_type=gdal.GRA_NearestNeighbour)
         rectified_support_ref.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('Ref_support.tif')))
     if cfg['stats_opts']['classification_layer']['dsm']:
-        input_support_dsm = A3DGeoRaster(str(cfg['stats_opts']['classification_layer']['dsm']), nodata=-32768)
+        input_support_dsm = A3DGeoRaster(str(cfg['stats_opts']['classification_layer']['dsm']))
         # Keep in mind that the DSM geo ref has been shifted, hence we need to shift the support here
         x_off = cfg['plani_results']['dx']['bias_value'] / input_support_dsm.xres
         y_off = cfg['plani_results']['dy']['bias_value'] / input_support_dsm.yres
@@ -190,7 +192,6 @@ def rectify_user_support_img(cfg, coreg_dsm):
                                                             coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_dsm.nodata,
                                                             interp_type=gdal.GRA_NearestNeighbour)
         rectified_support_dsm.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('DSM_support.tif')))
-
     #
     # Save results into cfg
     #
@@ -234,15 +235,26 @@ def get_sets_labels_and_names_for_classification(classes, support_ref, support_d
     :param support_dsm: A3DGeoRaster classification dsm
     :return: sets labels and names and classes updated
     """
+    classes_user = False
     if not classes:
-        labels = np.unique(support_ref.r)
+        if support_ref:
+            labels = np.unique(support_ref.r)
+        elif support_dsm:
+            labels = np.unique(support_dsm.r)
+        labels = labels[np.isfinite(labels)]
+
         classes = {}
         for l in labels:
             classes[str(l)] = l
+    else:
+        classes_user = True
 
     sets_label_list = list(classes.keys())
-    sets_name_list = ['{} : {}'.format(key, value) for key, value in classes.items()]
-    sets_name_list = [name.replace(',', ';') for name in sets_name_list]
+    if classes_user:
+        sets_name_list = ['{} : {}'.format(key, value) for key, value in classes.items()]
+        sets_name_list = [name.replace(',', ';') for name in sets_name_list]
+    else:
+        sets_name_list = list(classes.keys())
 
     return sets_label_list, sets_name_list, classes
 
@@ -259,7 +271,6 @@ def create_sets(img_to_classify, sets_rad_range, type, tmpDir='.', output_descri
     :param output_descriptor: dictionary with 'path' and 'nodata' keys for the output classified img (png format)
     :return: list of boolean arrays
     """
-
     # create output dataset if required
     if output_descriptor:
         driver_mem = gdal.GetDriverByName("MEM")
@@ -814,7 +825,20 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
     :return:
     """
 
-    #
+    # TODO DEUX MORCEAUX
+    # Le premier prend les entrees ici et calcule pour les stats :
+    # - support_img = [ ] <- 1 ou 2 elements (ref, et/ou dsm)
+    # - support_sets = [ ] <- 1 ou 2 elements (ref_sets_def et/ou dsm_sets_def)
+    # - support_descriptor = [] ref_classified_img_descriptor et / ou dsm_classified_img_descriptor
+    # !! pour slope qd les deux ou met ref en premier
+    # !! pour classification ou s'en fiche
+    # !! les 3 listes doivent etre coherentes
+
+    # TODO plus de classify
+    # cross_classif = True si len(support_img) == 2
+
+
+    # TODO PART I
     # If we are to classify the 'z' stats then we make sure we have what it takes
     #
     do_classify_results, do_cross_classification, support_ref, support_dsm = \
@@ -825,6 +849,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
     #
     sets_names = None
     sets_labels = None
+    # TODO PART I
     if do_classify_results:
         if type == 'slope':
             sets_labels, sets_names = get_sets_labels_and_names(cfg['stats_opts']['slope_layer']['slope_range'])
@@ -839,6 +864,20 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
     ref_classified_img_descriptor = None
     dsm_classified_img_descriptor = None
     ref_sets_def = dsm_sets_def = None
+    #TODO PART I
+    # get_out_file_path('DSM_support_classified.png') -> modifier le output_tree_design pour le cas slope et class_layer
+
+    #TODO PART II cas particuleier
+    # valeur par défaut pour input list partie II à None
+    # partII (support_img= None, support_set= None, support_descriptor = None)
+    # si support_img ET support_set ET duspport_descriptor = None
+    # si len different => ERREUR
+    # -> len(support_set) = 1 tel que support_set = [array.size = final_dh.size et toutes les valeurs sont à True]
+    # TODO PART II contient bien le create sets
+    # - a faire :
+    #   - au lieu du type on va faire un peu plus generique on va dire si on a un range qui est a comprendre comme
+    #     * un intervalle (cas slope)
+    #     * ou juste des valeurs (rcas classificaiton)
     if do_classify_results:
         cfg['stats_results']['images']['list'].append('Ref_support_classified')
         cfg['stats_results']['images']['Ref_support_classified'] = {}
@@ -850,33 +889,60 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
             ref_sets_def, sets_color = create_sets(support_ref, cfg['stats_opts']['slope_layer']['slope_range'], type,
                                                    tmpDir=cfg['outputDir'],
                                                    output_descriptor=ref_classified_img_descriptor)
-        elif type == 'classification':
+        elif type == 'classification' and bool(cfg['stats_opts']['classification_layer']['ref']):
             ref_sets_def, sets_color = create_sets(support_ref, list(classes.values()), type,
                                                    tmpDir=cfg['outputDir'],
                                                    output_descriptor=ref_classified_img_descriptor)
 
-        if do_cross_classification:
+        if do_cross_classification or (type == 'classification' and (xor(bool(cfg['stats_opts']['classification_layer']['ref']), bool(cfg['stats_opts']['classification_layer']['dsm'])) and cfg['stats_opts']['classification_layer']['dsm'])):
             cfg['stats_results']['images']['list'].append('DSM_support_classified')
             cfg['stats_results']['images']['DSM_support_classified'] = {}
             dsm_classified_img_descriptor = cfg['stats_results']['images']['DSM_support_classified']
             dsm_classified_img_descriptor['path'] = os.path.join(cfg['outputDir'],
                                                                  get_out_file_path('DSM_support_classified.png'))
             dsm_classified_img_descriptor['nodata'] = [0, 0, 0, 0]
-            dsm_sets_def, sets_color = create_sets(support_dsm, cfg['stats_opts']['slope_layer']['slope_range'], type,
-                                                   tmpDir=cfg['outputDir'], output_descriptor=dsm_classified_img_descriptor)
+            if type == 'slope':
+                dsm_sets_def, sets_color = create_sets(support_dsm, cfg['stats_opts']['slope_layer']['slope_range'],
+                                                       type, tmpDir=cfg['outputDir'],
+                                                       output_descriptor=dsm_classified_img_descriptor)
+            elif type == 'classification':
+                dsm_sets_def, sets_color = create_sets(support_dsm, list(classes.values()),
+                                                       type, tmpDir=cfg['outputDir'],
+                                                       output_descriptor=dsm_classified_img_descriptor)
+
+        # sets generic
+        sets_def_x = ref_sets_def
+        # define sets for case classification ref support is not defined
+        if xor(bool(cfg['stats_opts']['classification_layer']['ref']),
+               bool(cfg['stats_opts']['classification_layer']['dsm'])) \
+                and cfg['stats_opts']['classification_layer']['dsm']:
+            sets_def_x = dsm_sets_def
 
     #
     # If cross-classification is 'on' we set the alphas bands transparent where ref and dsm support classified differ
     #
     if do_classify_results and do_cross_classification:
+    # TODO PART II
+    # - cas ou liste pleine
+    # params = (support_img, support_sets)
         cross_class_apha_bands(ref_classified_img_descriptor, dsm_classified_img_descriptor, ref_sets_def, dsm_sets_def)
 
     #
     # Get the masks to apply to dz array for all stats configurations (we call it 'mode')
     #
-    to_keep_masks, modes, no_outliers_mask = create_masks(alti_map, do_classify_results, support_ref,
-                                                          do_cross_classification, ref_classified_img_descriptor,
-                                                          remove_outliers=True)
+    # TODO PART II
+    # - create mask se fait sur support_img[0]
+    if xor(bool(cfg['stats_opts']['classification_layer']['ref']),
+           bool(cfg['stats_opts']['classification_layer']['dsm'])) and cfg['stats_opts']['classification_layer']['dsm']:
+        to_keep_masks, modes, no_outliers_mask = create_masks(alti_map, do_classify_results, support_dsm,
+                                                              do_cross_classification, dsm_classified_img_descriptor,
+                                                              remove_outliers=True)
+    else:
+        # TODO stop here sets et set_labels n'ont pas la meme taille a creuser!!! normalement on devrait pas rentrer là
+        #           car on a que dsm et pas ref
+        to_keep_masks, modes, no_outliers_mask = create_masks(alti_map, do_classify_results, support_ref,
+                                                              do_cross_classification, ref_classified_img_descriptor,
+                                                              remove_outliers=True)
 
     #
     # Next is done for all modes
@@ -895,7 +961,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
         mode_stats = get_stats(alti_map.r,
                                to_keep_mask=to_keep_masks[mode],
                                no_outliers_mask=no_outliers_mask,
-                               sets=ref_sets_def,
+                               sets=sets_def_x,
                                sets_labels=sets_labels,
                                sets_names=sets_names,
                                list_threshold=elevation_thresholds)
@@ -905,6 +971,9 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
         # Create plots for the actual mode and for all sets
         #
         # -> we set the title here and we chose to print the bias and % nan values as part of this title:
+        # TODO PART I
+        # title a creer dans la partie I et donner à partie II
+        # ne faire que une fois (meme title pour slope et classification)
         dx = cfg['plani_results']['dx']
         dy = cfg['plani_results']['dy']
         biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.xres},
@@ -929,7 +998,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
             plot_files, plot_colors, labels_saved = plot_histograms(alti_map.r,
                                                                     bin_step=cfg['stats_opts']['slope_layer']['alti_error_threshold']['value'],
                                                                     to_keep_mask=(to_keep_masks[mode] * no_outliers_mask),
-                                                                    sets=[np.ones((alti_map.r.shape),dtype=bool)]+ref_sets_def,
+                                                                    sets=[np.ones((alti_map.r.shape),dtype=bool)]+sets_def_x,
                                                                     sets_labels=['all']+sets_labels,
                                                                     sets_colors=np.array([(0,0,0)]+list(sets_color)),
                                                                     plot_title='\n'.join(title),
