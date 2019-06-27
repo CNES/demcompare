@@ -1018,47 +1018,32 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
                                 for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
         return list_threshold_m
 
-    #
-    # Stats will be expressed by sets that will partitioned the data.
-    # First we create those sets for each kind of partition:
-    #   -> based on floating support to classify before use (either slopes or user defined)
-    #   -> based on actual classification layers
-    #
+    # There can be multiple ways to partition the stats. We gather them all inside a list here:
     partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'])
 
-    # TODO FIN de la recuperation du travail de Marina
-    # TODO boucler sur dico.keys()
     # Get outliers free mask (array of True where value is no outlier)
     outliers_free_mask = get_outliers_free_mask(alti_map.r, alti_map.nodata)
 
-    # For every partition kind ('slopes' and/or 'classification_layer(s)') get stats and save them as plots and tables
-    for p in partitions.keys():
+    # For every partition get stats and save them as plots and tables
+    for p in partitions:
         # TODO gerer le repertoire de sortie
-        #
         # Compute stats for each mode and every sets
-        # TODO
-        # sets_masks = list des dsm_sets_def et ref_sets_def
-        # sets_labels = sets_labels mais pour les deux dsm
-        # sets_names = sets_names mais pour les deux dsm
-        # sets_colors = sets_colors mais pour les deux dsm
         mode_stats, mode_masks, mode_names = get_stats_per_mode(alti_map,
-                                                                sets_masks=set_masks[p],
-                                                                sets_labels=sets_labels[p],
-                                                                sets_names=sets_names[p],
+                                                                sets_masks=p['set_masks'],
+                                                                sets_labels=p['sets_labels'],
+                                                                sets_names=p['sets_names'],
                                                                 elevation_thresholds=get_thresholds_in_meters(cfg),
                                                                 outliers_free_mask=outliers_free_mask)
 
-        #
         # Save stats as plots, csv and json and do so for each mode
-        #
         cfg['stats_results']['modes'][p['name']] = save_as_graphs_and_tables(alti_map.r,
                                                                              cfg['outputDir'],
                                                                              mode_masks,              # contains outliers_free_mask
                                                                              mode_names,
                                                                              mode_stats,
-                                                                             set_masks[p],
-                                                                             sets_labels[p],
-                                                                             sets_colors[p],
+                                                                             p['set_masks'],
+                                                                             p['sets_labels'],
+                                                                             p['sets_colors'],
                                                                              plot_title=''.join(get_title(cfg)),
                                                                              bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
                                                                              display=display,
@@ -1116,8 +1101,8 @@ def save_as_graphs_and_tables(data_array, out_dir,
         # Save results as .json and .csv file
         #
         mode_output_json_files[mode_names[mode]] = os.path.join(out_dir,
-                                                      get_out_dir('stats_dir'),
-                                                      'stats_results_' + mode_names[mode] + '.json')
+                                                                get_out_dir('stats_dir'),
+                                                                'stats_results_' + mode_names[mode] + '.json')
         save_results(mode_output_json_files[mode_names[mode]],
                      mode_stats[mode],
                      labels_plotted=sets_labels,
