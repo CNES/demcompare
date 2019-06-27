@@ -834,7 +834,7 @@ def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=N
                 writer.writerow(csv_results[set])
 
 
-def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts):
+def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts, plani_biases):
     """
 
     :param dsm:
@@ -844,14 +844,15 @@ def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts):
     :return: dict, with partitions information {'
     """
 
+    # TODO no more stats_results down below, we store everything inside partition and get it back later
     # Reproject every 'to_be_classification_layer' & 'classification_layer'
+    if 'to_be_classification_layer' in stats_opts:
+        #get support_ref, support_dsm and
+    # 'name' = nom de la partition
+    # 'images' = images de la partition = cfg['stats_results']['images']
+        [reprojected_class_layer(dsm, ref, to_be_classified_dict, plani_biases)
+         for to_be_classified_dict in stats_opts['to_be_classification_layer']]
 
-
-        # TODO
-        # sets_masks = list des dsm_sets_def et ref_sets_def
-        # sets_labels = sets_labels mais pour les deux dsm
-        # sets_names = sets_names mais pour les deux dsm
-        # sets_colors = sets_colors mais pour les deux dsm
 
 
     # TODO recuperer et mettre au clair le travail de Marina
@@ -918,6 +919,15 @@ def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts):
     if do_classify_results and do_cross_classification:
         cross_class_apha_bands(ref_classified_img_descriptor, dsm_classified_img_descriptor, ref_sets_def,
                                dsm_sets_def)
+
+
+    # TODO retourner les partitions avec
+    # 'sets_masks' = list des dsm_sets_def et ref_sets_def
+    # 'sets_labels' = sets_labels mais pour les deux dsm
+    # 'sets_names' = sets_names mais pour les deux dsm
+    # 'sets_colors' = sets_colors mais pour les deux dsm
+    # 'name' = nom de la partition
+    # 'images' = images de la partition = cfg['stats_results']['images']
 
 
 def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification'):
