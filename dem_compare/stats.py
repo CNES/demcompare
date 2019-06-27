@@ -406,11 +406,10 @@ def create_mode_masks(alti_map, partitions_sets_masks=None):
     # -> remove nodata indices for every partitioning image
     if partitions_sets_masks:
         for pImg in partitions_sets_masks:
-            # for a given partition, nan values are flagged False for all sets
-            # hence, np.where below gives us every indices where all sets are False, which are all indices where
-            # the given partition value was undefined
-            partition_nan_indices = np.where(np.all(pImg, axis=0) == False)
-            mode_masks[0][partition_nan_indices] = False
+            # for a given partition, nan values are flagged False for all sets hence
+            # np.any return True for a pixel if it belongs to at least one set (=it this is not a nodata pixel)
+            partition_nonan_mask = np.any(pImg, axis=0)
+            mode_masks[0] *= partition_nonan_mask
 
     # Carrying on with potentially the cross classification (coherent & incoherent) masks
     if len(partitions_sets_masks) == 2:     # there's a classification img to partition from for both master & slave dsm
@@ -421,11 +420,7 @@ def create_mode_masks(alti_map, partitions_sets_masks=None):
         # -> combine_sets[0].shape[1] = number of pixels inside a single DSM
         pImgs = partitions_sets_masks
         combine_sets = np.array([pImgs[0][set_idx][:] == pImgs[1][set_idx][:] for set_idx in range(0, len(pImgs[0]))])
-        # TODO verifier cette histoire peut on faire les coherents comme on fait les incoherents ?
-        coherent_indices = np.where(np.all(combine_sets, axis=0) == True)
-        incoherent_indices = np.where(np.all(combine_sets, axis=0) == False)
-        # so we get rid of what are actually 'nodata' and incoherent values as well
-        coherent_mask = get_nonan_mask(ref_support_classified_val, ref_support_classified_desc['nodata'][0])
+        coherent_mask = np.all(combine_sets, axis=0)
         mode_masks.append(mode_masks[0] * coherent_mask)
 
         # Then the incoherent one
@@ -868,38 +863,38 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
     :return:
     """
 
-    #
-    # Set future plot title with bias and % of nan values as part of it
-    #
-    title = ['MNT quality performance']
-    dx = cfg['plani_results']['dx']
-    dy = cfg['plani_results']['dy']
-    biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.xres},
-              'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.yres}}
-    title.append('(mean biases : '
-                 'dx : {:.2f}m (roughly {:.2f}pixel); '
-                 'dy : {:.2f}m (roughly {:.2f}pixel);'.format(biases['dx']['value_m'],
-                                                              biases['dx']['value_p'],
-                                                              biases['dy']['value_m'],
-                                                              biases['dy']['value_p']))
-    rect_ref_cfg = cfg['alti_results']['rectifiedRef']
-    rect_dsm_cfg = cfg['alti_results']['rectifiedDSM']
-    title.append('(holes or no data stats: '
-                 'Reference DSM  % nan values : {:.2f}%; '
-                 'DSM to compare % nan values : {:.2f}%;'.format(100 * (1 - float(rect_ref_cfg['nb_valid_points'])
-                                                                        / float(rect_ref_cfg['nb_points'])),
-                                                                 100 * (1 - float(rect_dsm_cfg['nb_valid_points'])
-                                                                        / float(rect_dsm_cfg['nb_points']))))
+    def get_title(cfg):
+        # Set future plot title with bias and % of nan values as part of it
+        title = ['MNT quality performance']
+        dx = cfg['plani_results']['dx']
+        dy = cfg['plani_results']['dy']
+        biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.xres},
+                  'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.yres}}
+        title.append('(mean biases : '
+                     'dx : {:.2f}m (roughly {:.2f}pixel); '
+                     'dy : {:.2f}m (roughly {:.2f}pixel);'.format(biases['dx']['value_m'],
+                                                                  biases['dx']['value_p'],
+                                                                  biases['dy']['value_m'],
+                                                                  biases['dy']['value_p']))
+        rect_ref_cfg = cfg['alti_results']['rectifiedRef']
+        rect_dsm_cfg = cfg['alti_results']['rectifiedDSM']
+        title.append('(holes or no data stats: '
+                     'Reference DSM  % nan values : {:.2f}%; '
+                     'DSM to compare % nan values : {:.2f}%;'.format(100 * (1 - float(rect_ref_cfg['nb_valid_points'])
+                                                                            / float(rect_ref_cfg['nb_points'])),
+                                                                     100 * (1 - float(rect_dsm_cfg['nb_valid_points'])
+                                                                            / float(rect_dsm_cfg['nb_points']))))
+        return title
 
-    #
-    # Get list of altitude thresholds if required, and translate them in meters
-    #
-    list_threshold_m = None
-    if cfg['stats_opts']['elevation_thresholds']['list']:
-        # Convert thresholds to meter since all dem_compare elevation unit is "meter"
-        original_unit = cfg['stats_opts']['elevation_thresholds']['zunit']
-        list_threshold_m = [((threshold * u.Unit(original_unit)).to(u.meter)).value
-                            for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
+    def get_thresholds_in_meters(cfg):
+        # If required, get list of altitude thresholds and adjust the unit
+        list_threshold_m = None
+        if cfg['stats_opts']['elevation_thresholds']['list']:
+            # Convert thresholds to meter since all dem_compare elevation unit is "meter"
+            original_unit = cfg['stats_opts']['elevation_thresholds']['zunit']
+            list_threshold_m = [((threshold * u.Unit(original_unit)).to(u.meter)).value
+                                for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
+        return list_threshold_m
 
     #
     # Stats will be expressed by sets that will partitioned the data.
@@ -932,6 +927,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
     #
     # If required, create sets definitions (boolean arrays where True means the associated index is part of the set)
     #
+    # TODO sets_masks have False where value was nan inside class image
     ref_classified_img_descriptor = None
     dsm_classified_img_descriptor = None
     ref_sets_def = dsm_sets_def = None
@@ -991,7 +987,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
                                                                 sets_masks=set_masks[pkind],
                                                                 sets_labels=sets_labels[pkind],
                                                                 sets_names=sets_names[pkind],
-                                                                elevation_thresholds=list_threshold_m,
+                                                                elevation_thresholds=get_thresholds_in_meters(cfg),
                                                                 outliers_free_mask=outliers_free_mask)
 
         #
@@ -1005,7 +1001,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
                                                                   set_masks[pkind],
                                                                   sets_labels[pkind],
                                                                   sets_colors[pkind],
-                                                                  plot_title=''.join(title),
+                                                                  plot_title=''.join(get_title(cfg)),
                                                                   bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
                                                                   display=display,
                                                                   plot_real_hist=cfg['stats_opts']['plot_real_hists'])
@@ -1096,21 +1092,10 @@ def get_stats_per_mode(data, sets_masks=None, sets_labels=None, sets_names=None,
     :return: stats, masks, names per mode
     """
 
-    #
-    # Get the masks to apply to data array for all stats configurations (we call it 'mode')
-    # TODO
-    #to_keep_masks, modes, no_outliers_mask = create_masks(data, do_classify_results, support_ref,
-    #                                                      do_cross_classification, ref_classified_img_descriptor,
-    #                                                      remove_outliers=True)
-
     # Get mode masks and names (sets_masks will be cross checked if len(sets_masks)==2)
-    #TODO LDS creer cette methode
-    mode_masks, mode_names = create_mode_masks(data, sets_masks) #sets_masks have False where value was nan inside class image
+    mode_masks, mode_names = create_mode_masks(data, sets_masks)
 
-
-    #
     # Next is done for all modes
-    #
     mode_stats = []
     for mode in range(0, len(mode_names)):
         # Remove outliers
