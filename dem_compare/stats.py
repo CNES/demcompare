@@ -53,6 +53,151 @@ def getColor(nb_color=10):
     return np.array(x.colors)
 
 
+def to_classification_layer(name_layer, dict, coreg_ref, coreg_dsm, outputDir):
+    """
+    Remplie / calcul toutes les classifications à faire pour rendre générique les to_be_/classification_layers ('slope' key)
+
+    # si 'name' = 'slope' & 'ref' et/ou 'dsm' = None
+    # -> create_slope()
+    # -> ecrire sur disque slope()
+    # -> remplir 'ref' et 'dsm' avec les path
+
+    :param dict:
+    :return:
+    """
+    dict_updated = {}
+    dict_updated['ref'] = None
+    dict_updated['dsm'] = None
+
+    # classes part
+    # change the intervals into a list to make 'classes' generic
+    classes = {}
+    for idx in range(0, len(dict['ranges'])):
+        if idx == len(dict['ranges'])-1:
+            key = "[{};inf]".format(dict['ranges'][idx])
+        else:
+            key = "[{};{}[".format(dict['ranges'][idx], dict['ranges'][idx+1])
+        classes[key] = dict['ranges'][idx]
+
+    dict_updated['classes'] = classes
+
+    # cross_classification
+    if dict_updated['ref'] and dict_updated['dsm']:
+        dict_updated['cross_classification'] = True
+
+    dict_updated['ref'] = dict['ref']
+    dict_updated['dsm'] = dict['dsm']
+
+    # slope part
+    create_stats_results(outputDir, name_layer)
+
+    if name_layer == 'slope':
+        if (not dict['ref']) and (not dict['dsm']):
+            dict_updated['cross_classification'] = True
+            # create slope
+            support_ref, support_dsm, cfg_stats_results = create_slope(coreg_dsm, coreg_ref, outputDir, name_layer)
+            dict_updated['stats_results'] = cfg_stats_results
+            dict_updated['ref'] = dict_updated['stats_results']['Ref_support']['path']
+            dict_updated['dsm'] = dict_updated['stats_results']['DSM_support']['path']
+
+    # classify the slope map to make generic map
+    #dict_key = {'Ref_support': 'ref', 'DSM_support': 'dsm'}
+    #dict_tmp = {'Ref_support': dict_updated['ref'], 'DSM_support': dict_updated['dsm']}
+    dict_tmp = {'ref': dict_updated['ref'], 'dsm': dict_updated['dsm']}
+    for slope_name, slope_img in dict_tmp.items():
+        if slope_img:
+            map_img = create_map(slope_img, slope_name, outputDir, name_layer, dict_updated)
+            dict_updated[slope_name] = map_img
+
+    return dict_updated
+
+
+def create_stats_results(outputDir, name_layer):
+    """
+    create folder stats results
+    :param outputDir: TODO
+    :param name_layer: TODO
+    :return:
+    """
+    os.makedirs(os.path.join(outputDir, get_out_dir('stats_dir'), name_layer), exist_ok=True)
+
+
+def create_slope(coreg_dsm, coreg_ref, outputDir, name_layer):
+    """
+    TODO
+    :param coreg_dsm:
+    :param coreg_ref:
+    :param outputDir:
+    :param name_layer:
+    :return:
+    """
+    cfg = dict()
+    # Compute ref slope
+    cfg['Ref_support'] = {}
+    cfg['Ref_support']['path'] = os.path.join(outputDir, get_out_dir('stats_dir'), name_layer, 'Ref_support.tif')
+    slope_ref, aspect_ref = coreg_ref.get_slope_and_aspect(degree=False)
+    slope_ref_georaster = A3DGeoRaster.from_raster(slope_ref,
+                                                   coreg_ref.trans,
+                                                   "{}".format(coreg_ref.srs.ExportToProj4()),
+                                                   nodata=-32768)
+    slope_ref_georaster.save_geotiff(cfg['Ref_support']['path'])
+    cfg['Ref_support']['nodata'] = slope_ref_georaster.nodata
+
+    # Compute dsm slope
+    cfg['DSM_support'] = {}
+    cfg['DSM_support']['path'] = os.path.join(outputDir, get_out_dir('stats_dir'), name_layer, 'DSM_support.tif')
+    slope_dsm, aspect_dsm = coreg_dsm.get_slope_and_aspect(degree=False)
+    slope_dsm_georaster = A3DGeoRaster.from_raster(slope_dsm,
+                                                   coreg_dsm.trans,
+                                                   "{}".format(coreg_dsm.srs.ExportToProj4()),
+                                                   nodata=-32768)
+    slope_dsm_georaster.save_geotiff(cfg['DSM_support']['path'])
+    cfg['DSM_support']['nodata'] = slope_dsm_georaster.nodata
+
+    # compute differences
+    cfg['Ref_support-DSM_support'] = {}
+    cfg['Ref_support-DSM_support']['path'] = \
+        os.path.join(outputDir, get_out_dir('stats_dir'), name_layer, 'Ref_support-DSM_support.tif')
+    slope_differences = A3DGeoRaster.from_raster(slope_ref_georaster.r - slope_dsm_georaster.r,
+                                                 slope_dsm_georaster.trans,
+                                                 "{}".format(slope_dsm_georaster.srs.ExportToProj4()),
+                                                 nodata=-32768)
+    slope_differences.save_geotiff(cfg['Ref_support-DSM_support']['path'])
+    cfg['Ref_support-DSM_support']['nodata'] = slope_differences.nodata
+
+    return slope_ref_georaster, slope_dsm_georaster, cfg
+
+
+def create_map(slope_img, slope_name, outputDir, name_layer, dict_updated):
+    """
+    TODO
+    :param slope_img:
+    :param slope_name:
+    :param outputDir:
+    :param name_layer:
+    :param dict_updated:
+    :return:
+    """
+    # use radiometric ranges to classify
+    slope = A3DGeoRaster(slope_img)
+    rad_range = sorted(dict_updated['classes'].values())
+    map_img = A3DGeoRaster.from_raster(np.ones(slope.r.shape) * -32768,
+                                       slope.trans, "{}".format(slope.srs.ExportToProj4()), nodata=-32768)
+    for idx in range(0, len(rad_range)):
+
+        if idx == len(rad_range)-1:
+            map_img.r[np.where((slope.r >= rad_range[idx]))] = rad_range[idx]
+        else:
+            map_img.r[np.where((slope.r >= rad_range[idx]) & (slope.r < rad_range[idx+1]))] = rad_range[idx]
+            print(sum(sum(np.where((slope.r >= rad_range[idx]) * (slope.r < rad_range[idx + 1])))))
+
+    dict_updated['map'] = os.path.join(outputDir, get_out_dir('stats_dir'),
+                                                   name_layer, slope_name + '_support_map.tif')
+    map_img.save_geotiff(dict_updated['map'])
+
+    return map_img
+
+
 def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref, type):
     """
     Prepares images to classify dz errors from.
@@ -851,9 +996,9 @@ def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=N
                 writer.writerow(csv_results[set])
 
 
-def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts, plani_biases):
+def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
     """
-
+    TODO
     :param dsm:
     :param ref:
     :param outputDir:
@@ -861,11 +1006,10 @@ def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts, plani
     :return: dict, with partitions information {'
     """
 
-    to_be_clayers= stats_opts['classification_layers'].copy()
-    clayers = stats_opts['to_be_classification_layers'].copy()
-    # TODO no more stats_results down below, we store everything inside partition and get it back later
-    # Reproject every 'to_be_classification_layer' & 'classification_layer'
-    #TODO to_classification_layer:
+    to_be_clayers = stats_opts['to_be_classification_layers'].copy()
+    clayers = stats_opts['classification_layers'].copy()
+
+    #to_classification_layer:
     # retourner un dico de la forme :
     #{'ref': '/path/to/refDSM_classification_layer/',
     # 'dsm': '/path/to/dsmDSM_classification_layer/',
@@ -877,10 +1021,13 @@ def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts, plani
     # -> create_slope()
     # -> ecrire sur disque slope()
     # -> remplir 'ref' et 'dsm' avec les path
-    clayers.append([to_classification_layer(item) for item in  to_be_clayers])
 
+    for key, value in to_be_clayers.items():
+        clayers[key] = to_classification_layer(key, value, ref, dsm, outputDir)
 
     # TODO
+    # TODO no more stats_results down below, we store everything inside partition and get it back later
+    # Reproject every 'to_be_classification_layer' & 'classification_layer'
     # boucle sur clayers et rectify_user_support_img(clayers)
     # pour chaque clayers (un dico), on ajoute les clefs suivantes
     # 'reproject_ref'
@@ -890,6 +1037,9 @@ def create_partitions(dsm, ref, dsm_desc, ref_desc, outputDir, stats_opts, plani
     #               - "A3DGeoRaster"
     #               - "descriptor" qui contient et toutes les clefs que l'on avait avant dans cfg['stats_results']['images']['Ref_support']
 
+    # TODO boucle clayers
+    #for class_layer in clayers:
+    #    print('class_layer =====>', class_layer)
 
     #############################
     # # TODO recuperer et mettre au clair le travail de Marina
@@ -1019,7 +1169,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
         return list_threshold_m
 
     # There can be multiple ways to partition the stats. We gather them all inside a list here:
-    partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'])
+    partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'], cfg['stats_results'])
 
     # Get outliers free mask (array of True where value is no outlier)
     outliers_free_mask = get_outliers_free_mask(alti_map.r, alti_map.nodata)

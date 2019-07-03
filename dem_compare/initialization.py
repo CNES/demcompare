@@ -137,40 +137,48 @@ def initialization_alti_opts(cfg):
 
 def initialization_stats_opts(cfg):
     # slope_range defines the intervals to classify the classification type image from
-
-    default_stats_opts = {'slope_layer': {'slope_range': [0, 10, 25, 50, 90],
-                                          'ref': None,
-                                          'dsm': None,
-                                          'alti_error_threshold': {'value': 0.1, 'unit': 'meter'},
-                                          'elevation_thresholds': {'list': [0.5, 1, 3], 'zunit': 'meter'},
-                                          'plot_real_hists': False},
-                          'classification_layer': {'ref': None,
-                                                   'dsm': None,
-                                                   'classes': {}
-                                                   }
+    default_stats_opts = {'to_be_classification_layers': {},
+                          'classification_layers': {},
+                          'alti_error_threshold': {'value': 0.1, 'unit': 'meter'},
+                          'elevation_thresholds': {'list': [0.5, 1, 3], 'zunit': 'meter'},
+                          'plot_real_hists': False
                           }
+
+    default_to_be_classification_layer = {'slope': {'ranges': [0, 10, 25, 50, 90],
+                                                    'ref': None,
+                                                    'dsm': None}}
+
+    default_classification_layer = {'ref': None,
+                                    'dsm': None,
+                                    'classes': {}}
+
+    # TODO rendre plus generique chaque partie !
+    # TODO SUITE   ET mettre a a vide classification_layers si tout vide, sinon pour chaque element mettre a vide
 
     if not 'stats_opts' in cfg:
         cfg['stats_opts'] = default_stats_opts
+        cfg['stats_opts']['to_be_classification_layers'][0] = default_to_be_classification_layer
+        cfg['stats_opts']['classification_layers'][0] = default_classification_layer
+
     else:
         # we keep users items and add default items he has not set
-        # slope_layer part
-        if 'slope_layer' in cfg['stats_opts']:
-            cfg['stats_opts']['slope_layer'] = {**default_stats_opts['slope_layer'], **cfg['stats_opts']['slope_layer']}
+        # to_be_classification_layers part
+        if not 'to_be_classification_layers' in cfg['stats_opts']:
+            cfg['stats_opts']['to_be_classification_layers'] = default_to_be_classification_layer
         else:
-            cfg['stats_opts']['slope_layer'] = default_stats_opts['slope_layer']
-        # classification_layer part
-        if 'classification_layer' in cfg['stats_opts']:
-            cfg['stats_opts']['classification_layer'] = {**default_stats_opts['classification_layer'],
-                                                         **cfg['stats_opts']['classification_layer']}
-        else:
-            cfg['stats_opts']['classification_layer'] = default_stats_opts['classification_layer']
+            print('else ! ')
+            for key in cfg['stats_opts']['to_be_classification_layers'].keys():
+                print(key)
+                cfg['stats_opts']['to_be_classification_layers'][key] = \
+                    {**default_to_be_classification_layer['slope'],
+                     **cfg['stats_opts']['to_be_classification_layers'][key]}
+                print(cfg['stats_opts']['to_be_classification_layers'][key])
 
-    if 'ref' in cfg['stats_opts']['slope_layer']['slope_range'] \
-            and 'dsm' in cfg['stats_opts']['slope_layer']['slope_range']:
-        cfg['stats_opts']['cross_classification'] = True
-    else:
-        cfg['stats_opts']['cross_classification'] = False
+        # classification_layers part
+        if 'classification_layers' in cfg['stats_opts']:
+            for key in cfg['stats_opts']['classification_layers'].keys():
+                cfg['stats_opts']['classification_layers'][key] = \
+                    {**default_classification_layer, **cfg['stats_opts']['classification_layers'][key]}
 
 
 def get_tile_dir(cfg, c, r, w, h):
