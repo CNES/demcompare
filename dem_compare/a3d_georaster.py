@@ -535,7 +535,7 @@ class A3DGeoRaster(object):
         # ! As far as known gdal.ReprojectImage returns a dataset filled with '0' values instead of 'nodata' values...
         #   Hence we cannot rely on the class constructor to replace nodata by np.nan and we do it here.
         new_raster.nodata = nodata
-        new_raster.r[new_raster.r == 0] = np.nan
+        #new_raster.r[new_raster.r == 0] = np.nan
 
         return new_raster
 
