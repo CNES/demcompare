@@ -52,79 +52,7 @@ def getColor(nb_color=10):
 
     return np.array(x.colors)
 
-
-def to_classification_layer(name_layer, dict, coreg_ref, coreg_dsm, outputDir):
-    """
-    Remplie / calcul toutes les classifications à faire pour rendre générique les to_be_/classification_layers ('slope' key)
-
-    # si 'name' = 'slope' & 'ref' et/ou 'dsm' = None
-    # -> create_slope()
-    # -> ecrire sur disque slope()
-    # -> remplir 'ref' et 'dsm' avec les path
-
-    #to_classification_layer:
-    # retourner un dico de la forme :
-    #{'ref': '/path/to/refDSM_classification_layer/',
-    # 'dsm': '/path/to/dsmDSM_classification_layer/',
-    # 'classes': {'forest': [0, 10, 3],
-    #             'urban_area': [4, -3]},
-    # 'name': 'land_cover'},
-    # UN CAS PARTICULIER
-    # si 'name' = 'slope' & 'ref' et/ou 'dsm' = None
-    # -> create_slope()
-    # -> ecrire sur disque slope()
-    # -> remplir 'ref' et 'dsm' avec les path
-
-    :param dict:
-    :return:
-    """
-    dict_updated = {}
-    dict_updated['ref'] = None
-    dict_updated['dsm'] = None
-
-    # classes part
-    # change the intervals into a list to make 'classes' generic
-    classes = collections.OrderedDict()
-    for idx in range(0, len(dict['ranges'])):
-        if idx == len(dict['ranges'])-1:
-            key = "[{};inf]".format(dict['ranges'][idx])
-        else:
-            key = "[{};{}[".format(dict['ranges'][idx], dict['ranges'][idx+1])
-        classes[key] = dict['ranges'][idx]
-
-    dict_updated['classes'] = classes
-
-    dict_updated['ref'] = dict['ref']
-    dict_updated['dsm'] = dict['dsm']
-
-    if name_layer == 'slope':
-        if (not dict['ref']) and (not dict['dsm']):
-            # create slope
-            support_ref, support_dsm, cfg_stats_results = create_slope(coreg_dsm, coreg_ref, outputDir, name_layer)
-            dict_updated['stats_results'] = cfg_stats_results
-            dict_updated['ref'] = dict_updated['stats_results']['Ref_support']['path']
-            dict_updated['dsm'] = dict_updated['stats_results']['DSM_support']['path']
-
-    # classify the slope map to make generic map
-    dict_tmp = {'ref': dict_updated['ref'], 'dsm': dict_updated['dsm']}
-    for slope_name, slope_img in dict_tmp.items():
-        if slope_img:
-            map_path = create_map(slope_img, slope_name, outputDir, name_layer, dict_updated)
-            dict_updated[slope_name] = map_path
-
-    return dict_updated
-
-
-def create_stats_results(outputDir, name_layer):
-    """
-    Create folder stats results
-    :param outputDir: output directory
-    :param name_layer: layer name
-    :return:
-    """
-    os.makedirs(os.path.join(outputDir, get_out_dir('stats_dir'), name_layer), exist_ok=True)
-
-
+# TODO a supp
 def create_slope(coreg_dsm, coreg_ref, outputDir, name_layer):
     """
     Create slope if not exist
@@ -160,6 +88,7 @@ def create_slope(coreg_dsm, coreg_ref, outputDir, name_layer):
     return slope_ref_georaster, slope_dsm_georaster, cfg
 
 
+# TODO a supp
 def create_map(slope_img, slope_name, outputDir, name_layer, dict_updated):
     """
     Create the map for each slope (l'intervalle des valeurs est transforme en 1 valeur (la min de l'intervalle))
@@ -1183,6 +1112,20 @@ def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
     """
     to_be_clayers = stats_opts['to_be_classification_layers'].copy()
     clayers = stats_opts['classification_layers'].copy()
+
+    print("to_be_clayers ==> ", to_be_clayers)
+    print("clayers ==> ", clayers)
+
+    from .partition import Partition
+
+    # create obj partition
+    # partitions = {}
+    # TODO boucler sur toutes les layers et creer les partitions via la classe
+
+    import sys
+    sys.exit(1)
+
+    # TODO continuer le refactoring avec la classe
 
     # create the ouput folders : stats by layer
     [create_stats_results(outputDir, tbcl_k) for tbcl_k in to_be_clayers.keys()]
