@@ -14,7 +14,7 @@ import numpy as np
 from osgeo import gdal
 from scipy import exp
 from scipy.optimize import curve_fit
-from operator import xor
+import itertools
 import math
 import json
 import collections
@@ -62,6 +62,19 @@ def to_classification_layer(name_layer, dict, coreg_ref, coreg_dsm, outputDir):
     # -> ecrire sur disque slope()
     # -> remplir 'ref' et 'dsm' avec les path
 
+    #to_classification_layer:
+    # retourner un dico de la forme :
+    #{'ref': '/path/to/refDSM_classification_layer/',
+    # 'dsm': '/path/to/dsmDSM_classification_layer/',
+    # 'classes': {'forest': [0, 10, 3],
+    #             'urban_area': [4, -3]},
+    # 'name': 'land_cover'},
+    # UN CAS PARTICULIER
+    # si 'name' = 'slope' & 'ref' et/ou 'dsm' = None
+    # -> create_slope()
+    # -> ecrire sur disque slope()
+    # -> remplir 'ref' et 'dsm' avec les path
+
     :param dict:
     :return:
     """
@@ -71,7 +84,7 @@ def to_classification_layer(name_layer, dict, coreg_ref, coreg_dsm, outputDir):
 
     # classes part
     # change the intervals into a list to make 'classes' generic
-    classes = {}
+    classes = collections.OrderedDict()
     for idx in range(0, len(dict['ranges'])):
         if idx == len(dict['ranges'])-1:
             key = "[{};inf]".format(dict['ranges'][idx])
@@ -81,19 +94,11 @@ def to_classification_layer(name_layer, dict, coreg_ref, coreg_dsm, outputDir):
 
     dict_updated['classes'] = classes
 
-    # cross_classification
-    if dict_updated['ref'] and dict_updated['dsm']:
-        dict_updated['cross_classification'] = True
-
     dict_updated['ref'] = dict['ref']
     dict_updated['dsm'] = dict['dsm']
 
-    # slope part
-    create_stats_results(outputDir, name_layer)
-
     if name_layer == 'slope':
         if (not dict['ref']) and (not dict['dsm']):
-            dict_updated['cross_classification'] = True
             # create slope
             support_ref, support_dsm, cfg_stats_results = create_slope(coreg_dsm, coreg_ref, outputDir, name_layer)
             dict_updated['stats_results'] = cfg_stats_results
@@ -101,22 +106,20 @@ def to_classification_layer(name_layer, dict, coreg_ref, coreg_dsm, outputDir):
             dict_updated['dsm'] = dict_updated['stats_results']['DSM_support']['path']
 
     # classify the slope map to make generic map
-    #dict_key = {'Ref_support': 'ref', 'DSM_support': 'dsm'}
-    #dict_tmp = {'Ref_support': dict_updated['ref'], 'DSM_support': dict_updated['dsm']}
     dict_tmp = {'ref': dict_updated['ref'], 'dsm': dict_updated['dsm']}
     for slope_name, slope_img in dict_tmp.items():
         if slope_img:
-            map_img = create_map(slope_img, slope_name, outputDir, name_layer, dict_updated)
-            dict_updated[slope_name] = map_img
+            map_path = create_map(slope_img, slope_name, outputDir, name_layer, dict_updated)
+            dict_updated[slope_name] = map_path
 
     return dict_updated
 
 
 def create_stats_results(outputDir, name_layer):
     """
-    create folder stats results
-    :param outputDir: TODO
-    :param name_layer: TODO
+    Create folder stats results
+    :param outputDir: output directory
+    :param name_layer: layer name
     :return:
     """
     os.makedirs(os.path.join(outputDir, get_out_dir('stats_dir'), name_layer), exist_ok=True)
@@ -124,11 +127,11 @@ def create_stats_results(outputDir, name_layer):
 
 def create_slope(coreg_dsm, coreg_ref, outputDir, name_layer):
     """
-    TODO
-    :param coreg_dsm:
-    :param coreg_ref:
-    :param outputDir:
-    :param name_layer:
+    Create slope if not exist
+    :param coreg_dsm: A3DDEMRaster, input coregistered DSM
+    :param coreg_ref: A3DDEMRaster, input coregistered REF
+    :param outputDir: output directory
+    :param name_layer: layer name
     :return:
     """
     cfg = dict()
@@ -154,50 +157,204 @@ def create_slope(coreg_dsm, coreg_ref, outputDir, name_layer):
     slope_dsm_georaster.save_geotiff(cfg['DSM_support']['path'])
     cfg['DSM_support']['nodata'] = slope_dsm_georaster.nodata
 
-    # compute differences
-    cfg['Ref_support-DSM_support'] = {}
-    cfg['Ref_support-DSM_support']['path'] = \
-        os.path.join(outputDir, get_out_dir('stats_dir'), name_layer, 'Ref_support-DSM_support.tif')
-    slope_differences = A3DGeoRaster.from_raster(slope_ref_georaster.r - slope_dsm_georaster.r,
-                                                 slope_dsm_georaster.trans,
-                                                 "{}".format(slope_dsm_georaster.srs.ExportToProj4()),
-                                                 nodata=-32768)
-    slope_differences.save_geotiff(cfg['Ref_support-DSM_support']['path'])
-    cfg['Ref_support-DSM_support']['nodata'] = slope_differences.nodata
-
     return slope_ref_georaster, slope_dsm_georaster, cfg
 
 
 def create_map(slope_img, slope_name, outputDir, name_layer, dict_updated):
     """
-    TODO
-    :param slope_img:
-    :param slope_name:
-    :param outputDir:
-    :param name_layer:
-    :param dict_updated:
+    Create the map for each slope (l'intervalle des valeurs est transforme en 1 valeur (la min de l'intervalle))
+    :param slope_img: TODO
+    :param slope_name: TODO
+    :param outputDir: output directory
+    :param name_layer: layer name
+    :param dict_updated: TODO
     :return:
     """
     # use radiometric ranges to classify
     slope = A3DGeoRaster(slope_img)
     rad_range = sorted(dict_updated['classes'].values())
-    map_img = A3DGeoRaster.from_raster(np.ones(slope.r.shape) * -32768,
-                                       slope.trans, "{}".format(slope.srs.ExportToProj4()), nodata=-32768)
+    map_img = A3DGeoRaster.from_raster(np.ones(slope.r.shape) * -32768.0,
+                                       slope.trans, "{}".format(slope.srs.ExportToProj4()), nodata=-32768.0)
     for idx in range(0, len(rad_range)):
 
         if idx == len(rad_range)-1:
             map_img.r[np.where((slope.r >= rad_range[idx]))] = rad_range[idx]
         else:
             map_img.r[np.where((slope.r >= rad_range[idx]) & (slope.r < rad_range[idx+1]))] = rad_range[idx]
-            print(sum(sum(np.where((slope.r >= rad_range[idx]) * (slope.r < rad_range[idx + 1])))))
 
-    dict_updated['map'] = os.path.join(outputDir, get_out_dir('stats_dir'),
-                                                   name_layer, slope_name + '_support_map.tif')
-    map_img.save_geotiff(dict_updated['map'])
+    map_path = os.path.join(outputDir, get_out_dir('stats_dir'), name_layer, slope_name + '_support_map.tif')
+    map_img.save_geotiff(map_path)
 
-    return map_img
+    return map_path
 
 
+def rectify_map(dsm, ref, cfg_map, outputDir):
+    """
+    Rectification the maps for stats
+    :param dsm: TODO
+    :param ref: TODO
+    :param cfg_map: TODO
+    :param outputDir: output directory
+    :return: dict map
+    """
+    #
+    # Reproject image on top of coreg dsm and coreg ref (which are coregistered together)
+    #
+    dict_maps = {'ref': cfg_map['ref'], 'dsm': cfg_map['dsm']}
+    dict_coreg_imgs = {'ref': ref, 'dsm': dsm}
+
+    for map_name, map_path in dict_maps.items():
+        cfg_map[str('reproject_' + map_name)] = None
+        if map_path:
+            map_img = A3DGeoRaster(map_path)
+            coreg_dsm = dict_coreg_imgs[map_name]
+            rectified_map = map_img.reproject(coreg_dsm.srs, int(coreg_dsm.nx), int(coreg_dsm.ny),
+                                              coreg_dsm.footprint[0], coreg_dsm.footprint[3],
+                                              coreg_dsm.xres, coreg_dsm.yres,
+                                              nodata=map_img.nodata, interp_type=gdal.GRA_NearestNeighbour)
+            map_rectif_path = os.path.join(outputDir, map_name + '_support_map_rectif.tif')
+            rectified_map.save_geotiff(map_rectif_path)
+            # rectified_map, alors modifier le cfg_map !!! DANS stats_results path et rajouter 'reproject_[ref/dsm]'
+            cfg_map[str('reproject_' + map_name)] = map_rectif_path
+
+    return cfg_map
+
+
+def layers_fusion(clayers, sets, outputDir):
+    """
+    TODO Merge the layers to generate the layers fusion
+    :param clayers: dict TODO
+    :param sets: dict, mask by label for each layer
+    :param outputDir: output directory
+    :return: TODO
+    """
+    # TODO changer de nom et sortir de là
+    def variables_activate(clayers, key_find):
+        for k in clayers.keys():
+            if not clayers[k][key_find]:
+                return False
+        return True
+
+    # la fusion des layers (slope, map, ...) ne se fait que si toutes les layers sont renseignees (= 'reproject_[ref/dsm]' pas à None)
+    all_layers_ref_flag = variables_activate(clayers, 'reproject_ref')
+    all_layers_dsm_flag = variables_activate(clayers, 'reproject_dsm')
+
+    dict_fusion = {'ref': all_layers_ref_flag, 'dsm': all_layers_dsm_flag}
+    support_name = {'ref': 'Ref_support', 'dsm': 'DSM_support'}
+    dict_stats_fusion = {'ref': None, 'dsm': None, 'reproject_ref': None, 'reproject_dsm': None,
+                         'stats_results': {'Ref_support': None, 'DSM_support': None}}
+    #dict_stats_fusion['stats_results'] = {'ref': None, 'dsm': None}
+    classes_fusion = None
+    all_combi_labels = None
+
+    # create folder stats results fusion si layers_ref_flag ou layers_dsm_flag est à True
+    if all_layers_ref_flag or all_layers_dsm_flag:
+        create_stats_results(outputDir, 'fusion_layer')
+
+        # Boucle sur [ref, dsm]
+        #   Boucle sur chaque layer
+        #       S'il y a plusieurs des layers données ou calculées
+        #           ==> pour calculer les masks de chaque label
+        #           ==> calculer toutes les combinaisons (developpement des labels entre eux mais pas les listes)
+        #           ==> puis calculer les masks fusionnés (a associer avec les bons labels)
+        #           ==> generer la nouvelle image classif (fusion) avec de nouveaux labels calculés arbitrairement et liés aux labels d entrees
+        for df_k, df_v in dict_fusion.items():
+            if df_v:
+                # get les reproject_ref/dsm et faire une nouvelles map avec son dictionnaire associé
+                clayers_to_fusion_path = [(k, clayers[k][str('reproject_' + df_k)]) for k in clayers.keys()]
+                # lire les images clayers_to_fusion
+                clayers_to_fusion = [(k, A3DGeoRaster(cltfp)) for k, cltfp in clayers_to_fusion_path]
+
+                classes_to_fusion = []
+                for k, cltfp in clayers.items():
+                    classes_to_fusion.append([(k, cl_classes_label) for cl_classes_label in clayers[k]['classes'].keys()])
+
+                if not (all_combi_labels and classes_fusion):
+                    all_combi_labels, classes_fusion = create_new_classes(classes_to_fusion)
+
+                # create la layer fusionnee + les sets assossiés
+                sets_masks = sets[df_k]
+                map_fusion, sets_def_fusion, sets_colors_fusion = create_fusion(sets_masks, all_combi_labels, classes_fusion, clayers_to_fusion[0][1])
+                sets_fusion = {df_k: {'fusion_layer': {'sets_def': dict(sets_def_fusion), 'sets_colors': sets_colors_fusion}}}
+
+                # save map_fusion
+                map_fusion_path = os.path.join(outputDir, get_out_dir('stats_dir'),
+                                               'fusion_layer', '{}_fusion_layer.tif'.format(df_k))
+                map_fusion.save_geotiff(map_fusion_path)
+                # save dico de la layer
+                dict_stats_fusion['classes'] = classes_fusion
+                dict_stats_fusion[df_k] = map_fusion_path
+                dict_stats_fusion[str('reproject_{}'.format(df_k))] = map_fusion_path
+                dict_stats_fusion['stats_results'][support_name[df_k]] = {'nodata': -32768, 'path': map_fusion_path}
+
+    # ajout des stats fussionees dans le dictionnaire
+    clayers['fusion_layer'] = dict_stats_fusion
+
+    return clayers, sets_fusion
+
+
+def create_new_classes(classes_to_fusion):
+    """
+    Generate the 'classes' dictionary for merged layers
+    :param classes_to_fusion: list of classes to merge
+    :return: TODO list of combinations of labels, new classes
+    """
+    # calcul toutes les combinaisons (developpement des labels entre eux)
+    all_combi_labels = list(itertools.product(*classes_to_fusion))
+
+    new_label_value = 1
+    new_classes = {}
+    for combi in all_combi_labels:
+        # creer le new label dans le dictionnaire new_classes
+        new_label_name = '&'.join(['@'.join(elm_combi) for elm_combi in combi])
+        new_classes[new_label_name] = new_label_value
+        new_label_value += 1
+
+    return all_combi_labels, new_classes
+
+
+def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
+    """
+    TODO create la fusion de toute les maps
+    :param sets_masks: dict par layer (exemple 'slope', 'carte_occupation', ...) contentant chacun une liste de tuple,
+                        dont chaque tuple contient ('nom_label', A3DGeoRaster_mask)
+    layers_obj: une layer d'exemple pour recuperer la taille et le georef
+    :return:
+    """
+    # create map qui fusionne toutes les combinaisons de classes
+    map_fusion = np.ones(layers_obj.r.shape) * -32768.0
+    sets_fusion = []
+    sets_colors = np.multiply(getColor(len(all_combi_labels)), 255)
+    # recupere les masques associées aux tuples
+    for combi in all_combi_labels:
+        #dict_elm_to_fusion = {}
+        mask_fusion = np.ones(layers_obj.r.shape)
+        for elm_combi in combi:
+            layer_name = elm_combi[0]
+            label_name = elm_combi[1]
+            # recupere le mask associé au label_name
+            #dict_elm_to_fusion[layer_name] = {}
+            #dict_elm_to_fusion[layer_name][label_name] = sets_masks[layer_name]['sets_def'][label_name]
+            # concatene les masques des differentes labels du tuple/combi dans mask_fusion
+            mask_label = np.zeros(layers_obj.r.shape)
+            mask_label[sets_masks[layer_name]['sets_def'][label_name]] = 1
+            mask_fusion = mask_fusion * mask_label
+
+        # recupere le new label associé dans ls dictionnaire new_classes
+        new_label_name = '&'.join(['@'.join(elm_combi) for elm_combi in combi])
+        new_label_value = classes_fusion[new_label_name]
+        map_fusion[np.where(mask_fusion)] = new_label_value
+        # SAVE mask_fusion
+        sets_fusion.append((new_label_name, np.where(mask_fusion)))
+
+    # save map fusionne
+    map = A3DGeoRaster.from_raster(map_fusion,layers_obj.trans,
+                                   "{}".format(layers_obj.srs.ExportToProj4()), nodata=-32768)
+
+    return map, sets_fusion, sets_colors / 255.
+
+
+# TODO voir si utilisee
 def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref, type):
     """
     Prepares images to classify dz errors from.
@@ -234,7 +391,7 @@ def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref, type):
     return do_classification, cfg['stats_opts']['cross_classification'], support_ref, support_dsm
 
 
-# TODO verifier que le reproject soit faite sur les slop fourni en entrée egalement (pas que les slopes calculés)
+# TODO voir si utilisee
 def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False):
     """
     Computes the slope image of coreg_ref and, optionally,of coreg_dsm
@@ -303,6 +460,7 @@ def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False)
     return slope_ref_georaster, None
 
 
+# TODO voir si utilisee
 def rectify_user_support_img(cfg, coreg_dsm):
     """
     Rectify image(s) set by the user to serve as classification support.
@@ -371,7 +529,7 @@ def get_sets_labels_and_names(class_rad_range):
     return sets_label_list, sets_name_list
 
 
-def get_sets_labels_and_names_for_classification(classes, support_ref, support_dsm):
+def get_sets_labels_and_names_for_classification(classes):
     """
     Get sets' labels and sets' names for classification_layer part
 
@@ -380,35 +538,71 @@ def get_sets_labels_and_names_for_classification(classes, support_ref, support_d
     :param support_dsm: A3DGeoRaster classification dsm
     :return: sets labels and names and classes updated
     """
-    classes_user = False
-    if not classes:
-        if support_ref:
-            labels = np.unique(support_ref.r)
-        elif support_dsm:
-            labels = np.unique(support_dsm.r)
-        labels = labels[np.isfinite(labels)]
-
-        classes = {}
-        for l in labels:
-            classes[str(l)] = l
-    else:
-        classes_user = True
-
     sets_label_list = list(classes.keys())
-    if classes_user:
-        sets_name_list = ['{} : {}'.format(key, value) for key, value in classes.items()]
-        sets_name_list = [name.replace(',', ';') for name in sets_name_list]
-    else:
-        sets_name_list = list(classes.keys())
+    if sets_label_list[0].find('[') == 0:
+        sets_label_list = list()
+        for label in list(classes.keys()):
+            if label.find('inf]') > 0:
+                new_label = '$\nabla$ > ' + label.split('[')[1].split(';inf]')[0]
+            else:
+                new_label = '$\nabla \in$ ' + label
+            sets_label_list.append(new_label)
 
-    return sets_label_list, sets_name_list, classes
+    sets_name_list = ['{} : {}'.format(key, value) for key, value in classes.items()]
+    sets_name_list = [name.replace(',', ';') for name in sets_name_list]
+
+    return sets_label_list, sets_name_list
 
 
-def create_sets(img_to_classify, sets_rad_range, type, tmpDir='.', output_descriptor=None):
+# TODO a supp (plus utilisee)
+def create_set_masks(img_to_classify, classes):
+    """
+    TODO
+    :param img_to_classify:
+    :param classes:
+    :return: une liste de tuple [(), ..., ()]
+    """
+    output_sets_def = []
+    for cl_k, cl_v in classes.items():
+        output_set = np.zeros(img_to_classify.r.shape)
+        if isinstance(cl_v, list):
+            # pour le cas ou il y a plusieurs valeurs decrivant la meme classe
+            for cl_sub_v in cl_v:
+                output_set[np.where(img_to_classify.r == cl_sub_v)] = 1
+        else:
+            output_set[np.where(img_to_classify.r == cl_v)] = 1
+        output_sets_def.append((cl_k, output_set))
+
+    return output_sets_def
+
+
+def create_sets(img_to_classify, classes):
+    """
+    Returns a list of numpy.where by class. Each element defines a set. The sets partition / classify the image.
+    Each numpy.where contains the coordinates of the sets of the class.
+    :param img_to_classify: A3DGeoRaster
+    :param classes: dict containing classes
+    :return: list of coordinates arrays and colors associated (RGB colors) :
+             output_sets_def = [(label_name, np.where(...)), ... label_name, np.where(...))] ,
+             sets_colors = array([[0.12156863, 0.46666667, 0.70588235], ..., [0.7372549 , 0.74117647, 0.13333333]])
+    """
+    output_sets_def = []
+    sets_colors = np.multiply(getColor(len(classes.values())), 255)
+    for class_name, class_value in classes.items():
+        if isinstance(class_value, list):
+            elm = (class_name, np.where(np.logical_or(*[np.equal(img_to_classify.r, label_i)
+                                                         for label_i in class_value])))
+        else:
+            elm = (class_name, np.where(img_to_classify.r == class_value))
+        output_sets_def.append(elm)
+
+    return output_sets_def, sets_colors / 255
+
+
+def create_sets_slope(img_to_classify, sets_rad_range, tmpDir='.', output_descriptor=None):
     """
     Returns a list of boolean arrays. Each array defines a set. The sets partition / classify the image.
     A boolean array defines indices to kept for the associated set / class.
-
     :param img_to_classify: A3DGeoRaster
     :param sets_rad_range: list of values that defines the radiometric ranges of each set
     :param type: type of the stats calculate, 'slope' or 'classification'
@@ -417,7 +611,6 @@ def create_sets(img_to_classify, sets_rad_range, type, tmpDir='.', output_descri
     :return: list of boolean arrays
     """
 
-    #TODO pour une img_to_classify donnee et pour tous ses points a nan : penser a mettre a False les indices des sets
     # create output dataset if required
     if output_descriptor:
         driver_mem = gdal.GetDriverByName("MEM")
@@ -446,31 +639,12 @@ def create_sets(img_to_classify, sets_rad_range, type, tmpDir='.', output_descri
                     for i in range(0,3):
                         output_v[i][(sets_rad_range[idx] <= img_to_classify.r) *
                                     (img_to_classify.r < sets_rad_range[idx + 1])] = sets_colors[idx][i]
-    elif type == 'classification':
-        output_sets_def = [np.zeros(img_to_classify.r.shape) for npz in range(0, len(sets_rad_range))]
-        for idx in range(0, len(sets_rad_range)):
-            if isinstance(sets_rad_range[idx], list):
-                for idx_list in range(0, len(sets_rad_range[idx])):
-                    output_sets_def[idx][np.where(img_to_classify.r == sets_rad_range[idx][idx_list])] = 1
-            else:
-                output_sets_def[idx][np.where(img_to_classify.r == sets_rad_range[idx])] = 1
-            '''
-            TODO
-            if output_descriptor:
-                for i in range(0,3):
-                    output_v[i][(sets_rad_range[idx] <= img_to_classify.r) *
-                                (img_to_classify.r < sets_rad_range[idx + 1])] = sets_colors[idx][i]
-            '''
 
-    '''
-    TODO
     # deals with the nan value (we choose black color for nan value since it is not part of the colormap chosen)
     if output_descriptor:
         for i in range(0,4):
             output_v[i][(np.isnan(img_to_classify.r)) + (img_to_classify.r == img_to_classify.nodata)] = \
                 output_descriptor['nodata'][i]
-    '''
-
     for idx in range(0, len(sets_rad_range)):
         output_sets_def[idx][(np.isnan(img_to_classify.r)) + (img_to_classify.r == img_to_classify.nodata)] = False
 
@@ -998,34 +1172,28 @@ def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=N
 
 def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
     """
-    TODO
-    :param dsm:
-    :param ref:
-    :param outputDir:
-    :param stats_opts:
+    Create or adapt all classification supports for the stats.
+    If the support is a slope,it's transformed into a classification support.
+    :param dsm: A3GDEMRaster, dsm
+    :param ref: A3GDEMRaster, coregistered ref
+    :param outputDir: ouput directory
+    :param stats_opts: TODO
+    :param stats_results: TODO
     :return: dict, with partitions information {'
     """
-
     to_be_clayers = stats_opts['to_be_classification_layers'].copy()
     clayers = stats_opts['classification_layers'].copy()
 
-    #to_classification_layer:
-    # retourner un dico de la forme :
-    #{'ref': '/path/to/refDSM_classification_layer/',
-    # 'dsm': '/path/to/dsmDSM_classification_layer/',
-    # 'classes': {'forest': [0, 10, 3],
-    #             'urban_area': [4, -3]},
-    # 'name': 'land_cover'},
-    # UN CAS PARTICULIER
-    # si 'name' = 'slope' & 'ref' et/ou 'dsm' = None
-    # -> create_slope()
-    # -> ecrire sur disque slope()
-    # -> remplir 'ref' et 'dsm' avec les path
+    # create the ouput folders : stats by layer
+    [create_stats_results(outputDir, tbcl_k) for tbcl_k in to_be_clayers.keys()]
+    [create_stats_results(outputDir, cl_k) for cl_k in clayers.keys()]
 
+    # create the slope support(s), if it doesn't exist,and transform the slope supports into classification supports
     for key, value in to_be_clayers.items():
         clayers[key] = to_classification_layer(key, value, ref, dsm, outputDir)
 
-    # TODO
+    print("APRES to_classification_layer -------------- clayers => ", clayers)
+
     # TODO no more stats_results down below, we store everything inside partition and get it back later
     # Reproject every 'to_be_classification_layer' & 'classification_layer'
     # boucle sur clayers et rectify_user_support_img(clayers)
@@ -1036,57 +1204,49 @@ def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
     #     reproject_x contient plusieurs clefs egalement
     #               - "A3DGeoRaster"
     #               - "descriptor" qui contient et toutes les clefs que l'on avait avant dans cfg['stats_results']['images']['Ref_support']
+    for key, value in clayers.items():
+        output_stats_clayer = os.path.join(outputDir, get_out_dir('stats_dir'), key)
+        clayers[key] = rectify_map(dsm, ref, clayers[key], output_stats_clayer)
 
-    # TODO boucle clayers
-    #for class_layer in clayers:
-    #    print('class_layer =====>', class_layer)
-
-    #############################
-    # # TODO recuperer et mettre au clair le travail de Marina
-    # # TODO essayer de tout classer dans un dico{'slope': , 'classification': }
-    # #
-    # # If we are to classify the 'z' stats then we make sure we have what it takes
-    # #
-    # do_classify_results, do_cross_classification, support_ref, support_dsm = \
-    #     set_image_to_classify_from(cfg, dsm, ref, type)
-    #############################
-
-    # TODO
-    # boucle sur clayers et faire get_sets_labels_and_names(clayer)
-    # pour chaque clayers (un dico), sans classes
-    # remplir la clef 'classes'
-
-
-    # TODO
-    # boucle sur clayers et faire get_sets_labels_and_names(clayer)
-    # pour chaque clayers (un dico), on ajoute les clefs suivantes
-    # 'labels'
-    # 'names'
-    # pour le cas ou 'name':'slope' et les clefs de 'classes' sont des intervalles, on place les nablas dans les labels
-
-    # #
-    # # Get back label list from sets ranges of values
-    # #
-    # sets_names = None
-    # sets_labels = None
-    # if do_classify_results:
-    #     if type == 'slope':
-    #         sets_labels, sets_names = get_sets_labels_and_names(cfg['stats_opts']['slope_layer']['slope_range'])
-    #     elif type == 'classification':
-    #         sets_labels, sets_names, classes = \
-    #             get_sets_labels_and_names_for_classification(cfg['stats_opts']['classification_layer']['classes'],
-    #                                                          support_ref, support_dsm)
+    print("APRES rectify_map -------------- clayers => ", clayers)
 
     #
     # If required, create sets definitions (boolean arrays where True means the associated index is part of the set)
     #
-    # TODO
     # boucle sur clayers et faire create_sets(clayer)
     # pour chaque clayers (un dico), on ajoute les clefs suivantes
     # + boucle sur 'ref' et 'dsm' faire create_sets()
     # 'sets' : [x_sets_def, y_sets_def] (on peut eventuellement forcer ref en premier si les deux sont presents)
     #
-    # TODO sets_masks have False where value was nan inside class image
+    # sets_def have False where value was nan inside class image
+    sets = {'ref': {}, 'dsm': {}}
+    for key, value in clayers.items():
+        for layer_type in ['ref', 'dsm']:
+            if clayers[key][str('reproject_{}'.format(layer_type))]:
+                layer = A3DGeoRaster(clayers[key]['reproject_{}'.format(layer_type)])
+                sets_def, sets_color = create_sets(layer, clayers[key]['classes'])
+                sets[layer_type][key] = {'sets_def': dict(sets_def), 'sets_color': sets_color}
+
+    print("APRES create_sets -------------- clayers => ", clayers)
+
+    # ajoute la surcouche fusion des layers pour les stats
+    clayers, sets_fusion = layers_fusion(clayers, sets, outputDir)
+    #                                           ==> Pour la suite, on traite toutes les couches fusion et pas fusion
+    for layer_type in sets_fusion.keys():
+        for layer_name in sets_fusion[layer_type]:
+            sets[layer_type][layer_name] = sets_fusion[layer_type][layer_name]
+
+    print("APRES sets_fusion -------------- clayers => ", clayers)
+
+    # get sets_labels and sets_names : list of string of the labels for the graphs (add elements for intervals)
+    sets_labels = {}
+    sets_names = {}
+    for tbc_k, tbc_v in clayers.items():
+        set_labels, set_names = get_sets_labels_and_names_for_classification(tbc_v['classes'])
+        sets_labels[tbc_k] = set_labels
+        sets_names[tbc_k] = set_names
+
+    # TODO : refactoring stop
 
     #
     # TODO
@@ -1099,16 +1259,16 @@ def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
         cross_class_apha_bands(ref_classified_img_descriptor, dsm_classified_img_descriptor, ref_sets_def, dsm_sets_def)
 
     # TODO retourner les partitions avec
-    # 'sets_masks' = list des dsm_sets_def et ref_sets_def
-    # 'sets_labels' = sets_labels mais pour les deux dsm
-    # 'sets_names' = sets_names mais pour les deux dsm
-    # 'sets_colors' = sets_colors mais pour les deux dsm
-    # 'name' = nom de la partition
-    # 'images' = images de la partition = cfg['stats_results']['images']
+    # 'sets_masks' = list des dsm_sets_def et ref_sets_def                  => pour le moment appeler sets (contient les layers fusionnees
+    # 'sets_labels' = sets_labels mais pour les deux dsm                    => sets_labels
+    # 'sets_names' = sets_names mais pour les deux dsm                      => set_names
+    # 'sets_colors' = sets_colors mais pour les deux dsm                    =>
+    # 'name' = nom de la partition                                          =>
+    # 'images' = images de la partition = cfg['stats_results']['images']    =>
     return clayers
 
 
-def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification'):
+def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     """
     Computes alti error stats with graphics and tables support.
 
@@ -1131,7 +1291,6 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
     :param ref: A3GDEMRaster, coregistered ref
     :param alti_map: A3DGeoRaster, dsm - ref
     :param display: boolean, display option (set to False to save plot on file system)
-    :param type: type of the stats calculate, 'slope' or 'classification'
     :return:
     """
 
@@ -1169,6 +1328,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, type='classification
         return list_threshold_m
 
     # There can be multiple ways to partition the stats. We gather them all inside a list here:
+    print("cfg['stats_results'] = ", cfg['stats_results'])
     partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'], cfg['stats_results'])
 
     # Get outliers free mask (array of True where value is no outlier)
