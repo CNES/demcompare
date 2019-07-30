@@ -21,8 +21,9 @@ import collections
 import csv
 from astropy import units as u
 from .a3d_georaster import A3DGeoRaster
+from .partition import Partition, getColor
 from .output_tree_design import get_out_dir, get_out_file_path
-
+#from .tools import gaus, roundUp, getColor
 
 def gaus(x, a, x_zero, sigma):
     return a * exp(-(x - x_zero) ** 2 / (2 * sigma ** 2))
@@ -32,123 +33,66 @@ def roundUp(x, y):
     return int(math.ceil((x / float(y)))) * y
 
 
-def getColor(nb_color=10):
-    import matplotlib
-    import matplotlib.pyplot as P
-    if 10 < nb_color < 21:
-        if matplotlib.__version__ >= '2.0.1':
-            # According to matplotlib documentation the Vega colormaps are deprecated since the 2.0.1 and
-            # disabled since 2.2.0
-            x = P.cm.get_cmap('tab20')
-        else:
-            x = P.cm.get_cmap('Vega20')
-    if nb_color < 11:
-        if matplotlib.__version__ >= '2.0.1':
-            x = P.cm.get_cmap('tab10')
-        else:
-            x = P.cm.get_cmap('Vega10')
-    if nb_color > 20:
-        raise NameError("Error : Too many colors requested")
-
-    return np.array(x.colors)
-
-# TODO a supp
-def create_slope(coreg_dsm, coreg_ref, outputDir, name_layer):
+# DECREPATED (mais utilise dans dem_compare_extra)
+def create_sets_slope(img_to_classify, sets_rad_range, tmpDir='.', output_descriptor=None):
     """
-    Create slope if not exist
-    :param coreg_dsm: A3DDEMRaster, input coregistered DSM
-    :param coreg_ref: A3DDEMRaster, input coregistered REF
-    :param outputDir: output directory
-    :param name_layer: layer name
-    :return:
+    Returns a list of boolean arrays. Each array defines a set. The sets partition / classify the image.
+    A boolean array defines indices to kept for the associated set / class.
+    :param img_to_classify: A3DGeoRaster
+    :param sets_rad_range: list of values that defines the radiometric ranges of each set
+    :param type: type of the stats calculate, 'slope' or 'classification'
+    :param tmpDir: temporary directory to which store temporary data
+    :param output_descriptor: dictionary with 'path' and 'nodata' keys for the output classified img (png format)
+    :return: list of boolean arrays
     """
-    cfg = dict()
-    # Compute ref slope
-    cfg['Ref_support'] = {}
-    cfg['Ref_support']['path'] = os.path.join(outputDir, get_out_dir('stats_dir'), name_layer, 'Ref_support.tif')
-    slope_ref, aspect_ref = coreg_ref.get_slope_and_aspect(degree=False)
-    slope_ref_georaster = A3DGeoRaster.from_raster(slope_ref,
-                                                   coreg_ref.trans,
-                                                   "{}".format(coreg_ref.srs.ExportToProj4()),
-                                                   nodata=-32768)
-    slope_ref_georaster.save_geotiff(cfg['Ref_support']['path'])
-    cfg['Ref_support']['nodata'] = slope_ref_georaster.nodata
 
-    # Compute dsm slope
-    cfg['DSM_support'] = {}
-    cfg['DSM_support']['path'] = os.path.join(outputDir, get_out_dir('stats_dir'), name_layer, 'DSM_support.tif')
-    slope_dsm, aspect_dsm = coreg_dsm.get_slope_and_aspect(degree=False)
-    slope_dsm_georaster = A3DGeoRaster.from_raster(slope_dsm,
-                                                   coreg_dsm.trans,
-                                                   "{}".format(coreg_dsm.srs.ExportToProj4()),
-                                                   nodata=-32768)
-    slope_dsm_georaster.save_geotiff(cfg['DSM_support']['path'])
-    cfg['DSM_support']['nodata'] = slope_dsm_georaster.nodata
+    # create output dataset if required
+    if output_descriptor:
+        driver_mem = gdal.GetDriverByName("MEM")
+        output_tmp_name = os.path.join(tmpDir, 'tmp.mem')
+        output_dataset = driver_mem.Create(output_tmp_name,
+                                           img_to_classify.nx,
+                                           img_to_classify.ny,
+                                           4, gdal.GDT_Byte)
+        output_v = np.ones((4, img_to_classify.ny, img_to_classify.nx), dtype=np.int8) * 255
 
-    return slope_ref_georaster, slope_dsm_georaster, cfg
-
-
-# TODO a supp
-def create_map(slope_img, slope_name, outputDir, name_layer, dict_updated):
-    """
-    Create the map for each slope (l'intervalle des valeurs est transforme en 1 valeur (la min de l'intervalle))
-    :param slope_img: TODO
-    :param slope_name: TODO
-    :param outputDir: output directory
-    :param name_layer: layer name
-    :param dict_updated: TODO
-    :return:
-    """
     # use radiometric ranges to classify
-    slope = A3DGeoRaster(slope_img)
-    rad_range = sorted(dict_updated['classes'].values())
-    map_img = A3DGeoRaster.from_raster(np.ones(slope.r.shape) * -32768.0,
-                                       slope.trans, "{}".format(slope.srs.ExportToProj4()), nodata=-32768.0)
-    for idx in range(0, len(rad_range)):
+    sets_colors = np.multiply(getColor(len(sets_rad_range)), 255)
+    output_sets_def = []
+    if type == 'slope':
+        for idx in range(0, len(sets_rad_range)):
+            if idx == len(sets_rad_range) - 1:
+                output_sets_def.append(np.apply_along_axis(lambda x:(sets_rad_range[idx] <= x),
+                                                           0, img_to_classify.r))
+                if output_descriptor:
+                    for i in range(0, 3):
+                        output_v[i][sets_rad_range[idx] <= img_to_classify.r] = sets_colors[idx][i]
+            else:
+                output_sets_def.append(np.apply_along_axis(lambda x:(sets_rad_range[idx] <= x)*(x < sets_rad_range[idx+1]),
+                                                           0, img_to_classify.r))
+                if output_descriptor:
+                    for i in range(0,3):
+                        output_v[i][(sets_rad_range[idx] <= img_to_classify.r) *
+                                    (img_to_classify.r < sets_rad_range[idx + 1])] = sets_colors[idx][i]
 
-        if idx == len(rad_range)-1:
-            map_img.r[np.where((slope.r >= rad_range[idx]))] = rad_range[idx]
-        else:
-            map_img.r[np.where((slope.r >= rad_range[idx]) & (slope.r < rad_range[idx+1]))] = rad_range[idx]
+    # deals with the nan value (we choose black color for nan value since it is not part of the colormap chosen)
+    if output_descriptor:
+        for i in range(0,4):
+            output_v[i][(np.isnan(img_to_classify.r)) + (img_to_classify.r == img_to_classify.nodata)] = \
+                output_descriptor['nodata'][i]
+    for idx in range(0, len(sets_rad_range)):
+        output_sets_def[idx][(np.isnan(img_to_classify.r)) + (img_to_classify.r == img_to_classify.nodata)] = False
 
-    map_path = os.path.join(outputDir, get_out_dir('stats_dir'), name_layer, slope_name + '_support_map.tif')
-    map_img.save_geotiff(map_path)
+    # write down the result then translate from MEM to PNG
+    if output_descriptor:
+        [output_dataset.GetRasterBand(i + 1).WriteArray(output_v[i]) for i in range(0, 4)]
+        gdal.GetDriverByName('PNG').CreateCopy(output_descriptor['path'], output_dataset)
+        output_dataset = None
 
-    return map_path
+    return output_sets_def, sets_colors / 255
 
-
-def rectify_map(dsm, ref, cfg_map, outputDir):
-    """
-    Rectification the maps for stats
-    :param dsm: TODO
-    :param ref: TODO
-    :param cfg_map: TODO
-    :param outputDir: output directory
-    :return: dict map
-    """
-    #
-    # Reproject image on top of coreg dsm and coreg ref (which are coregistered together)
-    #
-    dict_maps = {'ref': cfg_map['ref'], 'dsm': cfg_map['dsm']}
-    dict_coreg_imgs = {'ref': ref, 'dsm': dsm}
-
-    for map_name, map_path in dict_maps.items():
-        cfg_map[str('reproject_' + map_name)] = None
-        if map_path:
-            map_img = A3DGeoRaster(map_path)
-            coreg_dsm = dict_coreg_imgs[map_name]
-            rectified_map = map_img.reproject(coreg_dsm.srs, int(coreg_dsm.nx), int(coreg_dsm.ny),
-                                              coreg_dsm.footprint[0], coreg_dsm.footprint[3],
-                                              coreg_dsm.xres, coreg_dsm.yres,
-                                              nodata=map_img.nodata, interp_type=gdal.GRA_NearestNeighbour)
-            map_rectif_path = os.path.join(outputDir, map_name + '_support_map_rectif.tif')
-            rectified_map.save_geotiff(map_rectif_path)
-            # rectified_map, alors modifier le cfg_map !!! DANS stats_results path et rajouter 'reproject_[ref/dsm]'
-            cfg_map[str('reproject_' + map_name)] = map_rectif_path
-
-    return cfg_map
-
-
+''''
+# TODO a supp deplacé dans partition
 def layers_fusion(clayers, sets, outputDir):
     """
     TODO Merge the layers to generate the layers fusion
@@ -220,27 +164,7 @@ def layers_fusion(clayers, sets, outputDir):
     clayers['fusion_layer'] = dict_stats_fusion
 
     return clayers, sets_fusion
-
-
-def create_new_classes(classes_to_fusion):
-    """
-    Generate the 'classes' dictionary for merged layers
-    :param classes_to_fusion: list of classes to merge
-    :return: TODO list of combinations of labels, new classes
-    """
-    # calcul toutes les combinaisons (developpement des labels entre eux)
-    all_combi_labels = list(itertools.product(*classes_to_fusion))
-
-    new_label_value = 1
-    new_classes = {}
-    for combi in all_combi_labels:
-        # creer le new label dans le dictionnaire new_classes
-        new_label_name = '&'.join(['@'.join(elm_combi) for elm_combi in combi])
-        new_classes[new_label_name] = new_label_value
-        new_label_value += 1
-
-    return all_combi_labels, new_classes
-
+'''
 
 def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
     """
@@ -283,160 +207,7 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
     return map, sets_fusion, sets_colors / 255.
 
 
-# TODO voir si utilisee
-def set_image_to_classify_from(cfg, coreg_dsm, coreg_ref, type):
-    """
-    Prepares images to classify dz errors from.
-    If 'class_type' is slope, we use gdaldem. Otherwise we use user defined images but we need to rectify them.
-
-    :param cfg: config file
-    :param coreg_dsm : A3DDEMRaster, input coregistered DSM
-    :param coreg_ref : A3DDEMRaster, input coregistered REF
-    :param type: type of the stats calculate, 'slope' or 'classification'
-    :return:
-    """
-
-    do_classification = False
-    support_ref = None
-    support_dsm = None
-    if cfg['stats_opts']:
-        do_classification = True
-        if cfg['stats_opts']['slope_layer'] and type == 'slope':
-            # if slope layer we must compute the slope(s) image(s)
-            support_ref, support_dsm = create_slope_image(cfg, coreg_dsm, coreg_ref,
-                                                          cfg['stats_opts']['cross_classification'])
-        else:
-            if cfg['stats_opts']['classification_layer'] and type == 'classification':
-                # if class_type is 'user' we must rectify the support image(s)
-                support_ref, support_dsm = rectify_user_support_img(cfg, coreg_dsm)
-                # TODO test if support_dsm and support_ref define
-                if not support_dsm:
-                    # There can be no cross classification without a second support image to cross classify with
-                    cfg['stats_opts']['cross_classification'] = False
-            else:
-                raise NameError('Only None, \'user\' and \'slope\' are supported options for '
-                                '[\'stats_opts\'][\'class_type\']')
-
-    return do_classification, cfg['stats_opts']['cross_classification'], support_ref, support_dsm
-
-
-# TODO voir si utilisee
-def create_slope_image(cfg, coreg_dsm, coreg_ref, do_cross_classification=False):
-    """
-    Computes the slope image of coreg_ref and, optionally,of coreg_dsm
-
-    One shall notice that a scale factor between plani and alti resolutions is computed via the mean of both
-    resolution dimensions. This assumes pixels are roughly squares.
-
-    :param cfg: la configuration complete du lancement de dsm_compare
-    :param coreg_dsm : A3DDEMRaster, input coregistered DSM
-    :param coreg_ref : A3DDEMRaster, input coregistered REF
-    :param do_cross_classification: activation de la cross classification
-    :return: A3DGeoRaster slope ref and slope dsm
-    """
-
-    # PROCESS THE REFERENCE SLOPED IMAGE
-    cfg['stats_results']['images']['list'].append('Ref_support')
-    cfg['stats_results']['images']['Ref_support'] = copy.deepcopy(cfg['alti_results']['rectifiedRef'])
-    if 'georef' in cfg['stats_results']['images']['Ref_support']:
-        cfg['stats_results']['images']['Ref_support'].pop('georef')
-    cfg['stats_results']['images']['Ref_support'].pop('nb_points')
-    cfg['stats_results']['images']['Ref_support'].pop('nb_valid_points')
-    cfg['stats_results']['images']['Ref_support']['path'] = os.path.join(cfg['outputDir'],
-                                                                         get_out_file_path('Ref_support.tif'))
-
-    # Compute slope
-    slope_ref, aspect_ref = coreg_ref.get_slope_and_aspect(degree=False)
-    slope_ref_georaster = A3DGeoRaster.from_raster(slope_ref,
-                                                   coreg_ref.trans,
-                                                   "{}".format(coreg_ref.srs.ExportToProj4()),
-                                                   nodata=-32768)
-    slope_ref_georaster.save_geotiff(cfg['stats_results']['images']['Ref_support']['path'])
-    cfg['stats_results']['images']['Ref_support']['nodata'] = slope_ref_georaster.nodata
-
-    if do_cross_classification:
-        # PROCESS THE SECONDARY (DSM) SLOPED IMAGE
-        cfg['stats_results']['images']['list'].append('DSM_support')
-        cfg['stats_results']['images']['DSM_support'] = copy.deepcopy(cfg['alti_results']['rectifiedDSM'])
-        if 'georef' in cfg['stats_results']['images']['DSM_support']:
-            cfg['stats_results']['images']['DSM_support'].pop('georef')
-        cfg['stats_results']['images']['DSM_support'].pop('nb_points')
-        cfg['stats_results']['images']['DSM_support'].pop('nb_valid_points')
-        cfg['stats_results']['images']['DSM_support']['path'] = os.path.join(cfg['outputDir'],
-                                                                             get_out_file_path('DSM_support.tif'))
-
-        # Compute slope
-        slope_dsm, aspect_dsm = coreg_dsm.get_slope_and_aspect(degree=False)
-        slope_dsm_georaster = A3DGeoRaster.from_raster(slope_dsm,
-                                                       coreg_dsm.trans,
-                                                       "{}".format(coreg_dsm.srs.ExportToProj4()),
-                                                       nodata=-32768)
-        slope_dsm_georaster.save_geotiff(cfg['stats_results']['images']['DSM_support']['path'])
-        cfg['stats_results']['images']['DSM_support']['nodata'] = slope_dsm_georaster.nodata
-
-        # Compute slope differences between both slope images
-        cfg['stats_results']['images']['list'].append('Ref_support-DSM_support')
-        cfg['stats_results']['images']['Ref_support-DSM_support'] = copy.deepcopy(cfg['stats_results']['images']['DSM_support'])
-        cfg['stats_results']['images']['Ref_support-DSM_support']['path'] = \
-            os.path.join(cfg['outputDir'], get_out_file_path('Ref_support-DSM_support.tif'))
-        slope_differences = A3DGeoRaster.from_raster(slope_ref_georaster.r - slope_dsm_georaster.r,
-                                                     slope_dsm_georaster.trans,
-                                                     "{}".format(slope_dsm_georaster.srs.ExportToProj4()),
-                                                     nodata=-32768)
-        slope_differences.save_geotiff(cfg['stats_results']['images']['Ref_support-DSM_support']['path'])
-        return slope_ref_georaster, slope_dsm_georaster
-
-    return slope_ref_georaster, None
-
-
-# TODO voir si utilisee
-def rectify_user_support_img(cfg, coreg_dsm):
-    """
-    Rectify image(s) set by the user to serve as classification support.
-    It is assumed that this images metadata contain the nan value if there is one.
-
-    :param cfg:
-    :param coreg_dsm : A3DDEMRaster, input coregistered DSM
-    :return:
-    """
-
-    #
-    # Reproject user support image on top of coreg dsm and coreg ref (which are coregistered together)
-    #
-    rectified_support_ref = None
-    rectified_support_dsm = None
-
-    if cfg['stats_opts']['classification_layer']['ref']:
-        input_support_ref = A3DGeoRaster(str(cfg['stats_opts']['classification_layer']['ref']))
-        rectified_support_ref = input_support_ref.reproject(coreg_dsm.srs, int(coreg_dsm.nx), int(coreg_dsm.ny),
-                                                            coreg_dsm.footprint[0], coreg_dsm.footprint[3],
-                                                            coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_ref.nodata,
-                                                            interp_type=gdal.GRA_NearestNeighbour)
-        rectified_support_ref.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('Ref_support.tif')))
-    if cfg['stats_opts']['classification_layer']['dsm']:
-        input_support_dsm = A3DGeoRaster(str(cfg['stats_opts']['classification_layer']['dsm']))
-        # Keep in mind that the DSM geo ref has been shifted, hence we need to shift the support here
-        x_off = cfg['plani_results']['dx']['bias_value'] / input_support_dsm.xres
-        y_off = cfg['plani_results']['dy']['bias_value'] / input_support_dsm.yres
-        input_support_dsm = input_support_dsm.geo_translate(x_off - 0.5, -y_off - 0.5, system='pixel')
-        rectified_support_dsm = input_support_dsm.reproject(coreg_dsm.srs, int(coreg_dsm.nx), int(coreg_dsm.ny),
-                                                            coreg_dsm.footprint[0], coreg_dsm.footprint[3],
-                                                            coreg_dsm.xres, coreg_dsm.yres, nodata=input_support_dsm.nodata,
-                                                            interp_type=gdal.GRA_NearestNeighbour)
-        rectified_support_dsm.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('DSM_support.tif')))
-    #
-    # Save results into cfg
-    #
-    if rectified_support_ref:
-        cfg['stats_results']['images']['Ref_support'] = {'path': rectified_support_ref.ds_file}
-        cfg['stats_results']['images']['Ref_support']['nodata'] = rectified_support_ref.nodata
-    if rectified_support_dsm:
-        cfg['stats_results']['images']['DSM_support'] = {'path': rectified_support_dsm.ds_file}
-        cfg['stats_results']['images']['DSM_support']['nodata'] = rectified_support_dsm.nodata
-
-    return rectified_support_ref, rectified_support_dsm
-
-
+# TODO voir si a supp !!
 def get_sets_labels_and_names(class_rad_range):
     """
     Get sets' labels and sets' names
@@ -458,6 +229,7 @@ def get_sets_labels_and_names(class_rad_range):
     return sets_label_list, sets_name_list
 
 
+# TODO voir si a supp !!
 def get_sets_labels_and_names_for_classification(classes):
     """
     Get sets' labels and sets' names for classification_layer part
@@ -483,28 +255,7 @@ def get_sets_labels_and_names_for_classification(classes):
     return sets_label_list, sets_name_list
 
 
-# TODO a supp (plus utilisee)
-def create_set_masks(img_to_classify, classes):
-    """
-    TODO
-    :param img_to_classify:
-    :param classes:
-    :return: une liste de tuple [(), ..., ()]
-    """
-    output_sets_def = []
-    for cl_k, cl_v in classes.items():
-        output_set = np.zeros(img_to_classify.r.shape)
-        if isinstance(cl_v, list):
-            # pour le cas ou il y a plusieurs valeurs decrivant la meme classe
-            for cl_sub_v in cl_v:
-                output_set[np.where(img_to_classify.r == cl_sub_v)] = 1
-        else:
-            output_set[np.where(img_to_classify.r == cl_v)] = 1
-        output_sets_def.append((cl_k, output_set))
-
-    return output_sets_def
-
-
+# TODO voir si a supp !!
 def create_sets(img_to_classify, classes):
     """
     Returns a list of numpy.where by class. Each element defines a set. The sets partition / classify the image.
@@ -524,64 +275,6 @@ def create_sets(img_to_classify, classes):
         else:
             elm = (class_name, np.where(img_to_classify.r == class_value))
         output_sets_def.append(elm)
-
-    return output_sets_def, sets_colors / 255
-
-
-def create_sets_slope(img_to_classify, sets_rad_range, tmpDir='.', output_descriptor=None):
-    """
-    Returns a list of boolean arrays. Each array defines a set. The sets partition / classify the image.
-    A boolean array defines indices to kept for the associated set / class.
-    :param img_to_classify: A3DGeoRaster
-    :param sets_rad_range: list of values that defines the radiometric ranges of each set
-    :param type: type of the stats calculate, 'slope' or 'classification'
-    :param tmpDir: temporary directory to which store temporary data
-    :param output_descriptor: dictionary with 'path' and 'nodata' keys for the output classified img (png format)
-    :return: list of boolean arrays
-    """
-
-    # create output dataset if required
-    if output_descriptor:
-        driver_mem = gdal.GetDriverByName("MEM")
-        output_tmp_name = os.path.join(tmpDir, 'tmp.mem')
-        output_dataset = driver_mem.Create(output_tmp_name,
-                                           img_to_classify.nx,
-                                           img_to_classify.ny,
-                                           4, gdal.GDT_Byte)
-        output_v = np.ones((4, img_to_classify.ny, img_to_classify.nx), dtype=np.int8) * 255
-
-    # use radiometric ranges to classify
-    sets_colors = np.multiply(getColor(len(sets_rad_range)), 255)
-    output_sets_def = []
-    if type == 'slope':
-        for idx in range(0, len(sets_rad_range)):
-            if idx == len(sets_rad_range) - 1:
-                output_sets_def.append(np.apply_along_axis(lambda x:(sets_rad_range[idx] <= x),
-                                                           0, img_to_classify.r))
-                if output_descriptor:
-                    for i in range(0, 3):
-                        output_v[i][sets_rad_range[idx] <= img_to_classify.r] = sets_colors[idx][i]
-            else:
-                output_sets_def.append(np.apply_along_axis(lambda x:(sets_rad_range[idx] <= x)*(x < sets_rad_range[idx+1]),
-                                                           0, img_to_classify.r))
-                if output_descriptor:
-                    for i in range(0,3):
-                        output_v[i][(sets_rad_range[idx] <= img_to_classify.r) *
-                                    (img_to_classify.r < sets_rad_range[idx + 1])] = sets_colors[idx][i]
-
-    # deals with the nan value (we choose black color for nan value since it is not part of the colormap chosen)
-    if output_descriptor:
-        for i in range(0,4):
-            output_v[i][(np.isnan(img_to_classify.r)) + (img_to_classify.r == img_to_classify.nodata)] = \
-                output_descriptor['nodata'][i]
-    for idx in range(0, len(sets_rad_range)):
-        output_sets_def[idx][(np.isnan(img_to_classify.r)) + (img_to_classify.r == img_to_classify.nodata)] = False
-
-    # write down the result then translate from MEM to PNG
-    if output_descriptor:
-        [output_dataset.GetRasterBand(i + 1).WriteArray(output_v[i]) for i in range(0, 4)]
-        gdal.GetDriverByName('PNG').CreateCopy(output_descriptor['path'], output_dataset)
-        output_dataset = None
 
     return output_sets_def, sets_colors / 255
 
@@ -1116,17 +809,17 @@ def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
     print("to_be_clayers ==> ", to_be_clayers)
     print("clayers ==> ", clayers)
 
-    from .partition import Partition
-
     # create obj partition
-    # partitions = {}
-    # TODO boucler sur toutes les layers et creer les partitions via la classe
+    partitions = []
+    for layer_name, tbcl in to_be_clayers.items():
+        print("layer to to_be_classification_layers = ", layer_name)
+        partitions.append(Partition(layer_name, 'to_be_classification_layers', dsm, ref, outputDir, **tbcl))
+    for layer_name, cl in clayers.items():
+        print("layer to classification_layers = ", layer_name)
+        partitions.append(Partition(layer_name, 'classification_layers', dsm, ref, outputDir, **cl))
+    # TODO faire qu'une boucle !!
 
-    import sys
-    sys.exit(1)
-
-    # TODO continuer le refactoring avec la classe
-
+    ''' REMPLACE PAR L'INIT DE LA CLASSE
     # create the ouput folders : stats by layer
     [create_stats_results(outputDir, tbcl_k) for tbcl_k in to_be_clayers.keys()]
     [create_stats_results(outputDir, cl_k) for cl_k in clayers.keys()]
@@ -1136,7 +829,7 @@ def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
         clayers[key] = to_classification_layer(key, value, ref, dsm, outputDir)
 
     print("APRES to_classification_layer -------------- clayers => ", clayers)
-
+    '''
     # TODO no more stats_results down below, we store everything inside partition and get it back later
     # Reproject every 'to_be_classification_layer' & 'classification_layer'
     # boucle sur clayers et rectify_user_support_img(clayers)
@@ -1147,11 +840,8 @@ def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
     #     reproject_x contient plusieurs clefs egalement
     #               - "A3DGeoRaster"
     #               - "descriptor" qui contient et toutes les clefs que l'on avait avant dans cfg['stats_results']['images']['Ref_support']
-    for key, value in clayers.items():
-        output_stats_clayer = os.path.join(outputDir, get_out_dir('stats_dir'), key)
-        clayers[key] = rectify_map(dsm, ref, clayers[key], output_stats_clayer)
 
-    print("APRES rectify_map -------------- clayers => ", clayers)
+    [parti.rectify_map() for parti in partitions]
 
     #
     # If required, create sets definitions (boolean arrays where True means the associated index is part of the set)
@@ -1162,24 +852,15 @@ def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
     # 'sets' : [x_sets_def, y_sets_def] (on peut eventuellement forcer ref en premier si les deux sont presents)
     #
     # sets_def have False where value was nan inside class image
-    sets = {'ref': {}, 'dsm': {}}
-    for key, value in clayers.items():
-        for layer_type in ['ref', 'dsm']:
-            if clayers[key][str('reproject_{}'.format(layer_type))]:
-                layer = A3DGeoRaster(clayers[key]['reproject_{}'.format(layer_type)])
-                sets_def, sets_color = create_sets(layer, clayers[key]['classes'])
-                sets[layer_type][key] = {'sets_def': dict(sets_def), 'sets_color': sets_color}
 
-    print("APRES create_sets -------------- clayers => ", clayers)
+    [parti.create_sets() for parti in partitions]             # ==> bizarre, ça boucle sur le meme produit
 
-    # ajoute la surcouche fusion des layers pour les stats
-    clayers, sets_fusion = layers_fusion(clayers, sets, outputDir)
+    partitions_fusion = Partition.partition_fusion(partitions)
+
     #                                           ==> Pour la suite, on traite toutes les couches fusion et pas fusion
     for layer_type in sets_fusion.keys():
         for layer_name in sets_fusion[layer_type]:
             sets[layer_type][layer_name] = sets_fusion[layer_type][layer_name]
-
-    print("APRES sets_fusion -------------- clayers => ", clayers)
 
     # get sets_labels and sets_names : list of string of the labels for the graphs (add elements for intervals)
     sets_labels = {}
