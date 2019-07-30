@@ -23,7 +23,7 @@ from astropy import units as u
 
 
 from .a3d_georaster import A3DGeoRaster
-from .partition import Partition, getColor
+from .partition import Partition, Fusion_partition, getColor
 from .output_tree_design import get_out_dir, get_out_file_path
 
 
@@ -789,9 +789,9 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     # Create obj partition
     partitions = []
     for layer_name, tbcl in to_be_clayers.items():
-        partitions.append(Partition(layer_name, 'to_be_classification_layers', outputDir, **tbcl))
+        partitions.append(Partition(layer_name, 'to_be_classification_layers', dsm, ref, outputDir, **tbcl))
     for layer_name, cl in clayers.items():
-        partitions.append(Partition(layer_name, 'classification_layers', outputDir, **cl))
+        partitions.append(Partition(layer_name, 'classification_layers', dsm, ref, outputDir, **cl))
 
     # TODO no more stats_results down below, we store everything inside partition and get it back later
     # Reproject every 'to_be_classification_layer' & 'classification_layer'
@@ -804,7 +804,7 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     #               - "A3DGeoRaster"
     #               - "descriptor" qui contient et toutes les clefs que l'on avait avant dans cfg['stats_results']['images']['Ref_support']
 
-    [parti.rectify_map(coreg_dsm=dsm, coreg_ref=ref) for parti in partitions]
+    [parti.rectify_map() for parti in partitions]
 
     #
     # If required, create sets definitions (boolean arrays where True means the associated index is part of the set)
@@ -818,7 +818,14 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
 
     [parti.create_sets() for parti in partitions]             # ==> bizarre, ça boucle sur le meme produit
 
-    partitions_fusion = Partition.partition_fusion(partitions)
+    print('=================================================')
+    for parti in partitions:
+        parti.get_attrib()
+    print('=================================================')
+
+    #partitions_fusion = Partition.partition_fusion(partitions, outputDir)
+    #partitions_fusion = Fusion_partition(partitions, dsm, ref, outputDir) # classe fille Fusion_partition de Partition
+    partitions_fusion = Fusion_partition(partitions, outputDir) # classe fille Fusion_partition de Partition
 
     #                                           ==> Pour la suite, on traite toutes les couches fusion et pas fusion
     for layer_type in sets_fusion.keys():

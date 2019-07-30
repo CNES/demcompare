@@ -24,7 +24,7 @@ class Partition:
     type = ["to_be_classification_layers", "classification_layers"]
 
     ####### initialization #######
-    def __init__(self, name, partition_kind, outputDir, **cfg_layer):
+    def __init__(self, name, partition_kind, coreg_dsm, coreg_ref, outputDir, **cfg_layer):
 
         # rectified paths
         self.reproject_path = {'ref': None, 'dsm': None}
@@ -75,6 +75,12 @@ class Partition:
                 and (self.type_layer == "to_be_classification_layers") and self.name == 'slope':
             # create slope : ref and dsm
             self.create_slope(coreg_dsm, coreg_ref)
+
+        self.coreg_path = {'ref': None, 'dsm': None}
+        if self.dsm_path:
+          self.coreg_path['dsm'] = coreg_dsm
+        if self.ref_path:
+          self.coreg_path['ref'] = coreg_ref
 
         # set path to labelled map
         self.map_path = {'ref': None, 'dsm': None}
@@ -215,27 +221,23 @@ class Partition:
         self.map_path[type_slope] = os.path.join(self._output_dir, type_slope + '_support_map.tif')
         map_img.save_geotiff(self.map_path[type_slope])
 
-    def rectify_map(self, coreg_dsm, coreg_ref):
+    def rectify_map(self):
         """
         Rectification the maps for stats
 
-        :param coreg_dsm: a3d geo_raster
-        :param coreg_ref: a3d geo_raster
         :return:
         """
         #
         # Reproject image on top of coreg dsm and coreg ref (which are coregistered together)
         #
 
-        coreg_path = {'ref': coreg_ref, 'dsm': coreg_dsm}
-
         for map_name,map_path in self.map_path.items():
             if map_path:
                 map_img = A3DGeoRaster(map_path)
-                rectified_map = map_img.reproject(coreg_path[map_name].srs, int(coreg_path[map_name].nx),
-                                                  int(coreg_path[map_name].ny), coreg_path[map_name].footprint[0],
-                                                  coreg_path[map_name].footprint[3],
-                                                  coreg_path[map_name].xres, coreg_path[map_name].yres,
+                rectified_map = map_img.reproject(self.coreg_path[map_name].srs, int(self.coreg_path[map_name].nx),
+                                                  int(self.coreg_path[map_name].ny), self.coreg_path[map_name].footprint[0],
+                                                  self.coreg_path[map_name].footprint[3],
+                                                  self.coreg_path[map_name].xres, self.coreg_path[map_name].yres,
                                                   nodata=map_img.nodata, interp_type=gdal.GRA_NearestNeighbour)
                 self.reproject_path[map_name] = os.path.join(self._output_dir,
                                                              map_name + '_support_map_rectif.tif')
@@ -244,8 +246,9 @@ class Partition:
 
 
 ############################### TODO a refac ###############################
-    @classmethod
-    def partition_fusion(cls, partitions):
+class Fusion_partition(Partition):
+
+    def __init__(self, partitions, outputDir):
         """
         TODO Merge the layers to generate the layers fusion
         :param partitions: list d objet Partition
@@ -271,67 +274,71 @@ class Partition:
         print("all_layers_ref_flag, all_layers_dsm_flag = ", all_layers_ref_flag, all_layers_dsm_flag)
 
         dict_fusion = {'ref': all_layers_ref_flag, 'dsm': all_layers_dsm_flag}
-        #support_name = {'ref': 'Ref_support', 'dsm': 'DSM_support'}
-        #dict_stats_fusion = {'ref': None, 'dsm': None, 'reproject_ref': None, 'reproject_dsm': None,
-        #                     'stats_results': {'Ref_support': None, 'DSM_support': None}}
-        #dict_stats_fusion['stats_results'] = {'ref': None, 'dsm': None}
+
         classes_fusion = None
         all_combi_labels = None
 
         # create folder stats results fusion si layers_ref_flag ou layers_dsm_flag est à True
         # =====> On ne cree pas le dossier de sortie de la couche fusionné
-        #if all_layers_ref_flag or all_layers_dsm_flag:
-        #    create_stats_results(outputDir, 'fusion_layer')
+        if all_layers_ref_flag or all_layers_dsm_flag:
+            self._name = 'fusion_layer'
+            self.output_dir = outputDir
+            self.type_layer = 'classification_layers'
+            self.create_stats_results()
 
-        # Boucle sur [ref, dsm]
-        #   Boucle sur chaque layer
-        #       S'il y a plusieurs des layers données ou calculées
-        #           ==> pour calculer les masks de chaque label
-        #           ==> calculer toutes les combinaisons (developpement des labels entre eux mais pas les listes)
-        #           ==> puis calculer les masks fusionnés (a associer avec les bons labels)
-        #           ==> generer la nouvelle image classif (fusion) avec de nouveaux labels calculés arbitrairement et liés aux labels d entrees
-        for df_k, df_v in dict_fusion.items():
-            print("@@@@@@@@@@@@@@@@@@@")
-            if df_v:
-                # get les reproject_ref/dsm et faire une nouvelles map avec son dictionnaire associé
-                clayers_to_fusion_path = [(parti.name, parti.reproject_path[df_k]) for parti in partitions]
-                print("clayers_to_fusion_path = ", clayers_to_fusion_path)
+            # Boucle sur [ref, dsm]
+            #   Boucle sur chaque layer
+            #       S'il y a plusieurs des layers données ou calculées
+            #           ==> pour calculer les masks de chaque label
+            #           ==> calculer toutes les combinaisons (developpement des labels entre eux mais pas les listes)
+            #           ==> puis calculer les masks fusionnés (a associer avec les bons labels)
+            #           ==> generer la nouvelle image classif (fusion) avec de nouveaux labels calculés arbitrairement et liés aux labels d entrees
+            for df_k, df_v in dict_fusion.items():
+                print("@@@@@@@@@@@@@@@@@@@")
+                if df_v:
+                    # get les reproject_ref/dsm et faire une nouvelles map avec son dictionnaire associé
+                    clayers_to_fusion_path = [(parti.name, parti.reproject_path[df_k]) for parti in partitions]
+                    print("clayers_to_fusion_path = ", clayers_to_fusion_path)
 
-                # lire les images clayers_to_fusion
-                clayers_to_fusion = [(k, A3DGeoRaster(cltfp)) for k, cltfp in clayers_to_fusion_path]
+                    # lire les images clayers_to_fusion
+                    clayers_to_fusion = [(k, A3DGeoRaster(cltfp)) for k, cltfp in clayers_to_fusion_path]
 
-                classes_to_fusion = []
-                for partition in partitions:
-                    classes_to_fusion.append([(partition.name, cl_classes_label) for cl_classes_label in partition.classes.keys()])
+                    classes_to_fusion = []
+                    for partition in partitions:
+                        classes_to_fusion.append([(partition.name, cl_classes_label) for cl_classes_label in partition.classes.keys()])
 
-                if not (all_combi_labels and classes_fusion):
-                    all_combi_labels, classes_fusion = create_new_classes(classes_to_fusion)
-                print("all_combi_labels, classes_fusion = ", all_combi_labels, classes_fusion)
+                    if not (all_combi_labels and classes_fusion):
+                        all_combi_labels, self.classes = create_new_classes(classes_to_fusion)
+                    print("all_combi_labels, classes_fusion = ", all_combi_labels, classes_fusion)
 
-                # stop refac ici
-                # create la layer fusionnee + les sets assossiés
-                # TODO pour savoir qu est ce que l'on sait : on sait que l'on est dans ref OU dsm et on a partition
-                # TODO          on veut sets_masks qui vaut : liste ordonnées des masks de tous les labels en FONCTION DE REF OU DSM
-                # TODO get_sets_indices['ref'] ou 'dsm'
-                sets_masks = [parti.get_sets_indices(df_k) for parti in partitions]                                         # TODO verififer que c'est ça!!!!
-                print("sets_masks = ", sets_masks)
-                map_fusion, sets_def_fusion, sets_colors_fusion = create_fusion(sets_masks, all_combi_labels, classes_fusion, clayers_to_fusion[0][1])
-                sets_fusion = {df_k: {'fusion_layer': {'sets_def': dict(sets_def_fusion), 'sets_colors': sets_colors_fusion}}}
+                    # stop refac ici
+                    # create la layer fusionnee + les sets assossiés
+                    # TODO pour savoir qu est ce que l'on sait : on sait que l'on est dans ref OU dsm et on a partition
+                    # TODO          on veut sets_masks qui vaut : liste ordonnées des masks de tous les labels en FONCTION DE REF OU DSM
+                    # TODO get_sets_indices['ref'] ou 'dsm'
+                    #sets_masks = [parti.get_sets_indices(df_k) for parti in partitions]                                         # TODO verififer que c'est ça!!!!
+                    sets_masks = {}
+                    for parti in partitions:
+                        print(parti.name)
+                        sets_masks[parti.name] = dict(parti.get_sets_indices(df_k))
+                    print("sets_masks = ", sets_masks)
+                    map_fusion, sets_def_fusion, sets_colors_fusion = create_fusion(sets_masks, all_combi_labels, classes_fusion, clayers_to_fusion[0][1])
+                    sets_fusion = {df_k: {'fusion_layer': {'sets_def': dict(sets_def_fusion), 'sets_colors': sets_colors_fusion}}}
 
-                # save map_fusion
-                map_fusion_path = os.path.join(outputDir, get_out_dir('stats_dir'),
-                                               'fusion_layer', '{}_fusion_layer.tif'.format(df_k))
-                map_fusion.save_geotiff(map_fusion_path)
-                # save dico de la layer
-                dict_stats_fusion['classes'] = classes_fusion
-                dict_stats_fusion[df_k] = map_fusion_path
-                dict_stats_fusion[str('reproject_{}'.format(df_k))] = map_fusion_path
-                dict_stats_fusion['stats_results'][support_name[df_k]] = {'nodata': -32768, 'path': map_fusion_path}
+                    # save map_fusion
+                    map_fusion_path = os.path.join(outputDir, get_out_dir('stats_dir'),
+                                                   'fusion_layer', '{}_fusion_layer.tif'.format(df_k))
+                    map_fusion.save_geotiff(map_fusion_path)
+                    # save dico de la layer
+                    dict_stats_fusion['classes'] = classes_fusion
+                    dict_stats_fusion[df_k] = map_fusion_path
+                    dict_stats_fusion[str('reproject_{}'.format(df_k))] = map_fusion_path
+                    dict_stats_fusion['stats_results'][support_name[df_k]] = {'nodata': -32768, 'path': map_fusion_path}
 
-        # ajout des stats fussionees dans le dictionnaire
-        clayers['fusion_layer'] = dict_stats_fusion
+            # ajout des stats fussionees dans le dictionnaire
+            clayers['fusion_layer'] = dict_stats_fusion
 
-        # TODO return cls(avec les param de l'init sur la nouvelle partition + rajouter un param flag dans l'init 'rectified' pour savoir si la couche est déjà rectifié)
+            # TODO return cls(avec les param de l'init sur la nouvelle partition + rajouter un param flag dans l'init 'rectified' pour savoir si la couche est déjà rectifié)
 
   # TODO sets_names, set_labels
 
@@ -404,7 +411,7 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
             #dict_elm_to_fusion[layer_name][label_name] = sets_masks[layer_name]['sets_def'][label_name]
             # concatene les masques des differentes labels du tuple/combi dans mask_fusion
             mask_label = np.zeros(layers_obj.r.shape)
-            mask_label[sets_masks[layer_name]['sets_def'][label_name]] = 1              # TODO change sets_masks[layer_name]['sets_def'][label_name] le dictionnaire n'est plus le meme => une liste mtn
+            mask_label[sets_masks[layer_name][label_name]] = 1              # TODO change sets_masks[layer_name]['sets_def'][label_name] le dictionnaire n'est plus le meme => une liste mtn
             mask_fusion = mask_fusion * mask_label
 
         # recupere le new label associé dans ls dictionnaire new_classes
