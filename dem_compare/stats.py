@@ -9,21 +9,23 @@ Stats module of dsm_compare offers routines for stats computation and plot viewi
 """
 
 import os
+import logging
 import copy
-import numpy as np
-from osgeo import gdal
-from scipy import exp
-from scipy.optimize import curve_fit
-import itertools
 import math
 import json
 import collections
 import csv
+import numpy as np
+from osgeo import gdal
+from scipy import exp
+from scipy.optimize import curve_fit
 from astropy import units as u
+
+
 from .a3d_georaster import A3DGeoRaster
 from .partition import Partition, getColor
 from .output_tree_design import get_out_dir, get_out_file_path
-#from .tools import gaus, roundUp, getColor
+
 
 def gaus(x, a, x_zero, sigma):
     return a * exp(-(x - x_zero) ** 2 / (2 * sigma ** 2))
@@ -253,30 +255,6 @@ def get_sets_labels_and_names_for_classification(classes):
     sets_name_list = [name.replace(',', ';') for name in sets_name_list]
 
     return sets_label_list, sets_name_list
-
-
-# TODO voir si a supp !!
-def create_sets(img_to_classify, classes):
-    """
-    Returns a list of numpy.where by class. Each element defines a set. The sets partition / classify the image.
-    Each numpy.where contains the coordinates of the sets of the class.
-    :param img_to_classify: A3DGeoRaster
-    :param classes: dict containing classes
-    :return: list of coordinates arrays and colors associated (RGB colors) :
-             output_sets_def = [(label_name, np.where(...)), ... label_name, np.where(...))] ,
-             sets_colors = array([[0.12156863, 0.46666667, 0.70588235], ..., [0.7372549 , 0.74117647, 0.13333333]])
-    """
-    output_sets_def = []
-    sets_colors = np.multiply(getColor(len(classes.values())), 255)
-    for class_name, class_value in classes.items():
-        if isinstance(class_value, list):
-            elm = (class_name, np.where(np.logical_or(*[np.equal(img_to_classify.r, label_i)
-                                                         for label_i in class_value])))
-        else:
-            elm = (class_name, np.where(img_to_classify.r == class_value))
-        output_sets_def.append(elm)
-
-    return output_sets_def, sets_colors / 255
 
 
 def cross_class_apha_bands(ref_png_desc, dsm_png_desc, ref_sets, dsm_sets, tmpDir='.'):
@@ -792,7 +770,7 @@ def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=N
                 writer.writerow(csv_results[set])
 
 
-def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
+def create_partitions(dsm, ref, outputDir, stats_opts):
     """
     Create or adapt all classification supports for the stats.
     If the support is a slope,it's transformed into a classification support.
@@ -800,36 +778,21 @@ def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
     :param ref: A3GDEMRaster, coregistered ref
     :param outputDir: ouput directory
     :param stats_opts: TODO
-    :param stats_results: TODO
     :return: dict, with partitions information {'
     """
     to_be_clayers = stats_opts['to_be_classification_layers'].copy()
     clayers = stats_opts['classification_layers'].copy()
 
-    print("to_be_clayers ==> ", to_be_clayers)
-    print("clayers ==> ", clayers)
+    logging.debug("list of to be classification layers: ", to_be_clayers)
+    logging.debug("list of already classification layers: ", clayers)
 
-    # create obj partition
+    # Create obj partition
     partitions = []
     for layer_name, tbcl in to_be_clayers.items():
-        print("layer to to_be_classification_layers = ", layer_name)
-        partitions.append(Partition(layer_name, 'to_be_classification_layers', dsm, ref, outputDir, **tbcl))
+        partitions.append(Partition(layer_name, 'to_be_classification_layers', outputDir, **tbcl))
     for layer_name, cl in clayers.items():
-        print("layer to classification_layers = ", layer_name)
-        partitions.append(Partition(layer_name, 'classification_layers', dsm, ref, outputDir, **cl))
-    # TODO faire qu'une boucle !!
+        partitions.append(Partition(layer_name, 'classification_layers', outputDir, **cl))
 
-    ''' REMPLACE PAR L'INIT DE LA CLASSE
-    # create the ouput folders : stats by layer
-    [create_stats_results(outputDir, tbcl_k) for tbcl_k in to_be_clayers.keys()]
-    [create_stats_results(outputDir, cl_k) for cl_k in clayers.keys()]
-
-    # create the slope support(s), if it doesn't exist,and transform the slope supports into classification supports
-    for key, value in to_be_clayers.items():
-        clayers[key] = to_classification_layer(key, value, ref, dsm, outputDir)
-
-    print("APRES to_classification_layer -------------- clayers => ", clayers)
-    '''
     # TODO no more stats_results down below, we store everything inside partition and get it back later
     # Reproject every 'to_be_classification_layer' & 'classification_layer'
     # boucle sur clayers et rectify_user_support_img(clayers)
@@ -841,7 +804,7 @@ def create_partitions(dsm, ref, outputDir, stats_opts, stats_results):
     #               - "A3DGeoRaster"
     #               - "descriptor" qui contient et toutes les clefs que l'on avait avant dans cfg['stats_results']['images']['Ref_support']
 
-    [parti.rectify_map() for parti in partitions]
+    [parti.rectify_map(coreg_dsm=dsm, coreg_ref=ref) for parti in partitions]
 
     #
     # If required, create sets definitions (boolean arrays where True means the associated index is part of the set)

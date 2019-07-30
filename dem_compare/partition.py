@@ -4,13 +4,13 @@
 # Copyright (C) 2019 Centre National d'Etudes Spatiales (CNES)
 
 """
-TODO
-partition class
+Mainly contains the Partition class. A partition defines a way to partition the DEMs alti differences.
 """
 
 import os
 import collections
 import numpy as np
+import logging
 from osgeo import gdal
 import itertools
 
@@ -20,124 +20,134 @@ from .a3d_georaster import A3DGeoRaster
 
 class Partition:
 
+    # Only kind of partition supported
+    type = ["to_be_classification_layers", "classification_layers"]
+
     ####### initialization #######
-    def __init__(self, name_layer, type_layer, coreg_dsm, coreg_ref, outputDir, **cfg_layer):
-
-        ####### attributs objet #######
-        # type
-        self.type = ["to_be_classification_layers", "classification_layers"]
-        self.type_layer = None
-
-        # output directory path
-        self.output_dir = ''
-
-        # in paths
-        self.ref_path = ''
-        self.dsm_path = ''
-        self.coreg_path = {'ref': None, 'dsm': None}
+    def __init__(self, name, partition_kind, outputDir, **cfg_layer):
 
         # rectified paths
         self.reproject_path = {'ref': None, 'dsm': None}
-        # map paths
-        self.map_path = {'ref': None, 'dsm': None}
 
         self.nodata = -32768.0
 
-        # classes (dictionary contain labels and names)
-        self.classes = {}
-
         # sets
-        self.sets_indices = {'ref': None, 'dsm': None}
-        self.sets_colors = None
+        self._sets_names = None
+        self._sets_labels = None
 
-        self.sets_names = None
-        self.sets_labels = None
+        self._name = name
 
-        ########### init ############
-        self.name = name_layer
-
-        if type_layer in self.type:
-            self.type_layer = type_layer
+        if partition_kind in self.type:
+            self._type_layer = partition_kind
         else:
-            raise('type_layer est faux! {}'.format(type_layer))
+            logging.error('Unsupported partition kind {}. Try one of the following {}'.format(partition_kind, self.type))
+            raise KeyError
 
-        self.output_dir = outputDir
+        self._output_dir = os.path.join(outputDir, get_out_dir('stats_dir'), self._name)
 
         # create stats results folder
-        self.create_stats_results()
+        self.create_output_dir()
+
+        # set classes (labels with associated values)
+        self._classes = {}
+        if 'classes' in cfg_layer:
+            self._classes = cfg_layer['classes']
+        elif 'ranges' in cfg_layer:
+            # transform 'ranges' to 'classes'
+            self._classes = self.generate_classes(cfg_layer['ranges'])
+        else:
+            logging.error('Neither classes nor ranges where given as input sets to partition the stats')
+            raise KeyError
 
         # get layer ref and/or dsm
+        self.ref_path = ''
+        self.dsm_path = ''
         if 'ref' in cfg_layer:
             self.ref_path = cfg_layer['ref']
         if 'dsm' in cfg_layer:
             self.dsm_path = cfg_layer['dsm']
-
-        if 'classes' in cfg_layer:
-            self.classes = cfg_layer['classes']
-        elif 'ranges' in cfg_layer:
-            # transform 'ranges' to 'classes'
-            self.generate_classes(cfg_layer['ranges'])
-        else:
-            raise("PBM ni de ranges ni de classes!!!")
-
-        if (not cfg_layer['ref']) and (not cfg_layer['dsm']) and (self.type_layer == "to_be_classification_layers"):
+        if (not 'ref' in cfg_layer) and (not 'dsm' in cfg_layer):
+            logging.error('At least one partition support must be provided '
+                          '(shall it be linked to the reference DSM or the slave one). '
+                          'Use the \'ref\' and/or \'dsm\' keys respectively.')
+            raise KeyError
+        if (not cfg_layer['ref']) and (not cfg_layer['dsm']) \
+                and (self.type_layer == "to_be_classification_layers") and self.name == 'slope':
             # create slope : ref and dsm
             self.create_slope(coreg_dsm, coreg_ref)
-        elif (not 'ref' in cfg_layer) and (not 'dsm' in cfg_layer):
-            raise("PBM ni de REF ni de DSM")
 
-        if self.dsm_path:
-          self.coreg_path['dsm'] = coreg_dsm
-        if self.ref_path:
-          self.coreg_path['ref'] = coreg_ref
-
-        # slope transform to map
+        # set path to labelled map
+        self.map_path = {'ref': None, 'dsm': None}
         if self.type_layer == "to_be_classification_layers":
+            # if the partition is not yet a labelled map, then make it so
             if self.ref_path:
-                # slope transform
                 self.create_map(self.ref_path, 'ref')
             if self.dsm_path:
                 self.create_map(self.dsm_path, 'dsm')
-
         elif self.type_layer == "classification_layers":
             if 'ref' in cfg_layer:
                 self.map_path['ref'] = cfg_layer['ref']
             if 'dsm' in cfg_layer:
                 self.map_path['dsm'] = cfg_layer['dsm']
 
-        print('OBJ Partition créé :', self.get_attrib())
+        logging.info('Partition created as:', self)
 
     ####### getters and setters #######
-    def get_name(self):
-        return self.name
+    @property
+    def name(self):
+        return self._name
 
-    def get_type_layer(self):
-        return self.type_layer
+    @property
+    def type_layer(self):
+        return self._type_layer
 
-    def get_sets_indices(self):
-        return self.sets_indices
+    @property
+    def classes(self):
+        return self._classes
 
-    def get_sets_indices(self, tlayer):
-        # tlayer = 'ref' or 'dsm'
-        return self.sets_indices[tlayer]
+    @property
+    def sets_names(self):
+        return self._sets_names
 
-    def get_sets_colors(self):
-        return self.sets_colors
+    @property
+    def sets_labels(self):
+        return self._sets_labels
 
-    def get_sets_names(self):
-        return self.sets_names
+    @property
+    def sets_colors(self):
+        return np.multiply(getColor(len(self.classes.values())), 255) / 255
 
-    def get_sets_labels(self):
-        return self.sets_labels
+    @property
+    def sets_indices(self):
+        """
+        Returns a list of numpy.where, by class. Each element defines a set. The sets partition / classify the image.
+        Each numpy.where contains the coordinates of the sets of the class.
+        Create list of coordinates arrays :
+            -> self.sets_indices = [(label_name, np.where(...)), ... label_name, np.where(...))] ,
+        """
+        dsm_supports = ['ref', 'dsm']
+        sets_indices = {support: None for support in dsm_supports }
+        for support in dsm_supports:
+            if self.reproject_path[support]:
+                img_to_classify = A3DGeoRaster(self.reproject_path[support])
+                sets_indices[support] = []
+                # calculate sets_indices of partition
+                for class_name, class_value in self.classes.items():
+                    if isinstance(class_value, list):
+                        elm = (class_name, np.where(np.logical_or(*[np.equal(img_to_classify.r, label_i)
+                                                                     for label_i in class_value])))
+                    else:
+                        elm = (class_name, np.where(img_to_classify.r == class_value))
+                    sets_indices[support].append(elm)
+        return sets_indices
 
-    def get_attrib(self):
-        print("self.name : {}\n, self.type_layer : {}\n, self.ref_path : {}\n, self.dsm_path : {}\n, "
-              "self.reproject_path : {}\n, self.map_path : {}\n, self.classes : {}\n, self.coreg_path : {}\n,"
-              "self.sets_indices : {}\n, self.sets_colors : {} \n".format(
-              self.name, self.type_layer, self.ref_path, self.dsm_path,
-              self.reproject_path, self.map_path, self.classes, self.coreg_path, self.sets_indices, self.sets_colors))
+    def __repr__(self):
+        return "self.name : {}\n, self.type_layer : {}\n, self.ref_path : {}\n, self.dsm_path : {}\n, " \
+               "self.reproject_path : {}\n, self.map_path : {}\n, self.classes : {}\n, self.coreg_path : {}\n," \
+               "self.sets_indices : {}\n, self.sets_colors : {} \n".format(
+            self.name, self.type_layer, self.ref_path, self.dsm_path,
+            self.reproject_path, self.map_path, self.classes, self.coreg_path, self.sets_indices, self.sets_colors)
 
-    ####### others #######
     def generate_classes(self, ranges):
         # change the intervals into a list to make 'classes' generic
         classes = collections.OrderedDict()
@@ -148,15 +158,15 @@ class Partition:
                 key = "[{};{}[".format(ranges[idx], ranges[idx + 1])
             classes[key] = ranges[idx]
 
-        self.classes = classes
+        return classes
 
-    def create_stats_results(self):
+    def create_output_dir(self):
         """
         Create folder stats results
         :param name_layer: layer name
         :return:
         """
-        os.makedirs(os.path.join(self.output_dir, get_out_dir('stats_dir'), self.name), exist_ok=True)
+        os.makedirs(self._output_dir, exist_ok=True)
 
     def create_slope(self, coreg_dsm, coreg_ref):
         """
@@ -167,7 +177,7 @@ class Partition:
         :return:
         """
         # Compute ref slope
-        self.ref_path = os.path.join(self.output_dir, get_out_dir('stats_dir'), self.name, 'Ref_support.tif')
+        self.ref_path = os.path.join(self._output_dir, 'Ref_support.tif')
         slope_ref, aspect_ref = coreg_ref.get_slope_and_aspect(degree=False)
         slope_ref_georaster = A3DGeoRaster.from_raster(slope_ref,
                                                        coreg_ref.trans,
@@ -176,7 +186,7 @@ class Partition:
         slope_ref_georaster.save_geotiff(self.ref_path)
 
         # Compute dsm slope
-        self.dsm_path = os.path.join(self.output_dir, get_out_dir('stats_dir'), self.name, 'DSM_support.tif')
+        self.dsm_path = os.path.join(self._output_dir, 'DSM_support.tif')
         slope_dsm, aspect_dsm = coreg_dsm.get_slope_and_aspect(degree=False)
         slope_dsm_georaster = A3DGeoRaster.from_raster(slope_dsm,
                                                        coreg_dsm.trans,
@@ -202,52 +212,35 @@ class Partition:
             else:
                 map_img.r[np.where((slope.r >= rad_range[idx]) & (slope.r < rad_range[idx + 1]))] = rad_range[idx]
 
-        self.map_path[type_slope] = os.path.join(self.output_dir, get_out_dir('stats_dir'),
-                                                 self.name, type_slope + '_support_map.tif')
+        self.map_path[type_slope] = os.path.join(self._output_dir, type_slope + '_support_map.tif')
         map_img.save_geotiff(self.map_path[type_slope])
 
-    def rectify_map(self):
+    def rectify_map(self, coreg_dsm, coreg_ref):
         """
         Rectification the maps for stats
+
+        :param coreg_dsm: a3d geo_raster
+        :param coreg_ref: a3d geo_raster
+        :return:
         """
         #
         # Reproject image on top of coreg dsm and coreg ref (which are coregistered together)
         #
+
+        coreg_path = {'ref': coreg_ref, 'dsm': coreg_dsm}
+
         for map_name,map_path in self.map_path.items():
             if map_path:
                 map_img = A3DGeoRaster(map_path)
-                rectified_map = map_img.reproject(self.coreg_path[map_name].srs, int(self.coreg_path[map_name].nx),
-                                                  int(self.coreg_path[map_name].ny), self.coreg_path[map_name].footprint[0],
-                                                  self.coreg_path[map_name].footprint[3],
-                                                  self.coreg_path[map_name].xres, self.coreg_path[map_name].yres,
+                rectified_map = map_img.reproject(coreg_path[map_name].srs, int(coreg_path[map_name].nx),
+                                                  int(coreg_path[map_name].ny), coreg_path[map_name].footprint[0],
+                                                  coreg_path[map_name].footprint[3],
+                                                  coreg_path[map_name].xres, coreg_path[map_name].yres,
                                                   nodata=map_img.nodata, interp_type=gdal.GRA_NearestNeighbour)
-                self.reproject_path[map_name] = os.path.join(self.output_dir, get_out_dir('stats_dir'), self.name,
+                self.reproject_path[map_name] = os.path.join(self._output_dir,
                                                              map_name + '_support_map_rectif.tif')
                 rectified_map.save_geotiff(self.reproject_path[map_name])
 
-    def create_sets(self):
-        """
-        Returns a list of numpy.where, by class. Each element defines a set. The sets partition / classify the image.
-        Each numpy.where contains the coordinates of the sets of the class.
-        Create list of coordinates arrays and colors associated (RGB colors) :
-            -> self.sets_indices = [(label_name, np.where(...)), ... label_name, np.where(...))] ,
-            -> self.sets_colors = array([[0.12156863, 0.46666667, 0.70588235], ..., [0.7372549 , 0.74117647, 0.13333333]])
-        """
-        # calculate sets_colors of partition
-        self.sets_colors = np.multiply(getColor(len(self.classes.values())), 255) / 255
-
-        for l_type in ['ref', 'dsm']:
-            if self.reproject_path[l_type]:
-                img_to_classify = A3DGeoRaster(self.reproject_path[l_type])
-                self.sets_indices[l_type] = []
-                # calculate sets_indices of partition
-                for class_name, class_value in self.classes.items():
-                    if isinstance(class_value, list):
-                        elm = (class_name, np.where(np.logical_or(*[np.equal(img_to_classify.r, label_i)
-                                                                     for label_i in class_value])))
-                    else:
-                        elm = (class_name, np.where(img_to_classify.r == class_value))
-                    self.sets_indices[l_type].append(elm)
 
 
 ############################### TODO a refac ###############################

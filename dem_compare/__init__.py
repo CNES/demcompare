@@ -10,10 +10,11 @@ dem_compare aims at coregistering and comparing two dsms
 """
 
 
+import logging
+import logging.config
 import os
 import sys
 import json
-import argparse
 import shutil
 from osgeo import gdal
 import numpy as np
@@ -27,6 +28,24 @@ from .a3d_georaster import A3DDEMRaster, A3DGeoRaster
 gdal.UseExceptions()
 DEFAULT_STEPS = ['coregistration', 'stats', 'report'] + dem_compare_extra.DEFAULT_STEPS
 ALL_STEPS = copy.deepcopy(DEFAULT_STEPS) + dem_compare_extra.ALL_STEPS
+
+
+def setup_logging(path='dem_compare/logging.json', default_level=logging.WARNING,):
+    """
+    Setup the logging configuration
+
+    :param path: path to the configuration file
+    :type path: string
+    :param default_level: default level
+    :type default_level: logging level
+    """
+    if os.path.exists(path):
+        with open(path, 'rt') as f:
+            config = json.load(f)
+        logging.config.dictConfig(config)
+    else:
+        logging.basicConfig(level=default_level)
+
 
 
 def computeReport(cfg, steps, dem, ref):
