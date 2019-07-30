@@ -793,73 +793,15 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     for layer_name, cl in clayers.items():
         partitions.append(Partition(layer_name, 'classification_layers', dsm, ref, outputDir, **cl))
 
-    # TODO no more stats_results down below, we store everything inside partition and get it back later
     # Reproject every 'to_be_classification_layer' & 'classification_layer'
-    # boucle sur clayers et rectify_user_support_img(clayers)
-    # pour chaque clayers (un dico), on ajoute les clefs suivantes
-    # 'reproject_ref'
-    # 'reproject_dsm'
-    # ou :
-    #     reproject_x contient plusieurs clefs egalement
-    #               - "A3DGeoRaster"
-    #               - "descriptor" qui contient et toutes les clefs que l'on avait avant dans cfg['stats_results']['images']['Ref_support']
-
     [parti.rectify_map() for parti in partitions]
 
-    #
-    # If required, create sets definitions (boolean arrays where True means the associated index is part of the set)
-    #
-    # boucle sur clayers et faire create_sets(clayer)
-    # pour chaque clayers (un dico), on ajoute les clefs suivantes
-    # + boucle sur 'ref' et 'dsm' faire create_sets()
-    # 'sets' : [x_sets_def, y_sets_def] (on peut eventuellement forcer ref en premier si les deux sont presents)
-    #
-    # sets_def have False where value was nan inside class image
+    # Create the fusion partition
+    partitions.append(Fusion_partition(partitions, outputDir))
 
-    [parti.create_sets() for parti in partitions]             # ==> bizarre, ça boucle sur le meme produit
+    [logging.debug("list of already classification layers: ", p) for p in partitions]
 
-    print('=================================================')
-    for parti in partitions:
-        parti.get_attrib()
-    print('=================================================')
-
-    #partitions_fusion = Partition.partition_fusion(partitions, outputDir)
-    #partitions_fusion = Fusion_partition(partitions, dsm, ref, outputDir) # classe fille Fusion_partition de Partition
-    partitions_fusion = Fusion_partition(partitions, outputDir) # classe fille Fusion_partition de Partition
-
-    #                                           ==> Pour la suite, on traite toutes les couches fusion et pas fusion
-    for layer_type in sets_fusion.keys():
-        for layer_name in sets_fusion[layer_type]:
-            sets[layer_type][layer_name] = sets_fusion[layer_type][layer_name]
-
-    # get sets_labels and sets_names : list of string of the labels for the graphs (add elements for intervals)
-    sets_labels = {}
-    sets_names = {}
-    for tbc_k, tbc_v in clayers.items():
-        set_labels, set_names = get_sets_labels_and_names_for_classification(tbc_v['classes'])
-        sets_labels[tbc_k] = set_labels
-        sets_names[tbc_k] = set_names
-
-    # TODO : refactoring stop
-
-    #
-    # TODO
-    # boucle sur clayers et faire cross_class_apha_bands()
-    # + si len('sets') == 2
-    #
-    # If cross-classification is 'on' we set the alphas bands transparent where ref and dsm support classified differ
-    #
-    if do_classify_results and do_cross_classification:
-        cross_class_apha_bands(ref_classified_img_descriptor, dsm_classified_img_descriptor, ref_sets_def, dsm_sets_def)
-
-    # TODO retourner les partitions avec
-    # 'sets_masks' = list des dsm_sets_def et ref_sets_def                  => pour le moment appeler sets (contient les layers fusionnees
-    # 'sets_labels' = sets_labels mais pour les deux dsm                    => sets_labels
-    # 'sets_names' = sets_names mais pour les deux dsm                      => set_names
-    # 'sets_colors' = sets_colors mais pour les deux dsm                    =>
-    # 'name' = nom de la partition                                          =>
-    # 'images' = images de la partition = cfg['stats_results']['images']    =>
-    return clayers
+    return partitions
 
 
 def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
@@ -921,16 +863,14 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                 for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
         return list_threshold_m
 
-    # There can be multiple ways to partition the stats. We gather them all inside a list here:
-    print("cfg['stats_results'] = ", cfg['stats_results'])
-    partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'], cfg['stats_results'])
-
     # Get outliers free mask (array of True where value is no outlier)
     outliers_free_mask = get_outliers_free_mask(alti_map.r, alti_map.nodata)
 
+    # There can be multiple ways to partition the stats. We gather them all inside a list here:
+    partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'])
+
     # For every partition get stats and save them as plots and tables
     for p in partitions:
-        # TODO gerer le repertoire de sortie
         # Compute stats for each mode and every sets
         mode_stats, mode_masks, mode_names = get_stats_per_mode(alti_map,
                                                                 sets_masks=p['set_masks'],
