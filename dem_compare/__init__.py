@@ -316,6 +316,7 @@ def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False)
     #
     # Initialization
     #
+    setup_logging()
     cfg = computeInitialization(json_file)
     if display is False:
         # if display is False we have to tell matplotlib to cancel it
