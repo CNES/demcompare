@@ -873,25 +873,25 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     for p in partitions:
         # Compute stats for each mode and every sets
         mode_stats, mode_masks, mode_names = get_stats_per_mode(alti_map,
-                                                                sets_masks=p['set_masks'],
-                                                                sets_labels=p['sets_labels'],
-                                                                sets_names=p['sets_names'],
+                                                                sets_masks=p.sets_masks,
+                                                                sets_labels=p.sets_labels,
+                                                                sets_names=p.sets_names,
                                                                 elevation_thresholds=get_thresholds_in_meters(cfg),
                                                                 outliers_free_mask=outliers_free_mask)
 
         # Save stats as plots, csv and json and do so for each mode
-        cfg['stats_results']['modes'][p['name']] = save_as_graphs_and_tables(alti_map.r,
-                                                                             cfg['outputDir'],
-                                                                             mode_masks,              # contains outliers_free_mask
-                                                                             mode_names,
-                                                                             mode_stats,
-                                                                             p['set_masks'],
-                                                                             p['sets_labels'],
-                                                                             p['sets_colors'],
-                                                                             plot_title=''.join(get_title(cfg)),
-                                                                             bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
-                                                                             display=display,
-                                                                             plot_real_hist=cfg['stats_opts']['plot_real_hists'])
+        cfg['stats_results']['modes'][p.name] = save_as_graphs_and_tables(alti_map.r,
+                                                                          p.out_dir,
+                                                                          mode_masks,     # contains outliers_free_mask
+                                                                          mode_names,
+                                                                          mode_stats,
+                                                                          p.set_masks,
+                                                                          p.sets_labels,
+                                                                          p.sets_colors,
+                                                                          plot_title=''.join(get_title(cfg)),
+                                                                          bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
+                                                                          display=display,
+                                                                          plot_real_hist=cfg['stats_opts']['plot_real_hists'])
 
 
 def save_as_graphs_and_tables(data_array, out_dir,
@@ -973,8 +973,8 @@ def get_stats_per_mode(data, sets_masks=None, sets_labels=None, sets_names=None,
 
     :param data: array to compute stats from
     :param sets_masks: [] of one or two array (sets partitioning the support_img) of size equal to data ones
-    :param sets_labels: [] of sets labels
-    :param sets_names: [] of sets names
+    :param sets_labels: sets labels
+    :param sets_names: sets names
     :param elevation_thresholds: list of elevation thresholds
     :param outliers_free_mask:
     :return: stats, masks, names per mode
@@ -994,8 +994,8 @@ def get_stats_per_mode(data, sets_masks=None, sets_labels=None, sets_names=None,
         mode_stats[mode] = get_stats(data.r,
                                      to_keep_mask=mode_masks[mode],
                                      sets=sets_masks[0],
-                                     sets_labels=sets_labels[0],
-                                     sets_names=sets_names[0],
+                                     sets_labels=sets_labels,
+                                     sets_names=sets_names,
                                      list_threshold=elevation_thresholds)
 
     return mode_stats, mode_masks, mode_names

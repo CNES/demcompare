@@ -77,6 +77,7 @@ class Partition:
             self.create_slope(coreg_dsm, coreg_ref)
 
         self.coreg_path = {'ref': None, 'dsm': None}
+        self._coreg_shape = coreg_ref.shape
         if self.dsm_path:
           self.coreg_path['dsm'] = coreg_dsm
         if self.ref_path:
@@ -96,9 +97,20 @@ class Partition:
             if 'dsm' in cfg_layer:
                 self.map_path['dsm'] = cfg_layer['dsm']
 
+        # computes indices and keep them
+        self._sets_indices = self._create_set_indices()
+
         logging.info('Partition created as:', self)
 
     ####### getters and setters #######
+    @property
+    def out_dir(self):
+        return self._output_dir
+
+    @property
+    def coreg_shape(self):
+        return self._coreg_shape
+
     @property
     def name(self):
         return self._name
@@ -112,6 +124,25 @@ class Partition:
         return self._classes
 
     @property
+    def sets_colors(self):
+        return np.multiply(getColor(len(self.classes.values())), 255) / 255
+
+    @property
+    def sets_indices_ref(self):
+        return self._sets_indices['ref']
+
+    @property
+    def sets_indices_dsm(self):
+        return self._sets_indices['dsm']
+
+    @property
+    def sets_masks(self):
+        masks = [np.ones(self.coreg_shape)*False for i in range(2)]
+        masks[0][self.sets_indices_ref] = True
+        masks[1][self.sets_indices_dsm] = True
+        return masks
+
+    @property
     def sets_names(self):
         return self._sets_names
 
@@ -119,40 +150,12 @@ class Partition:
     def sets_labels(self):
         return self._sets_labels
 
-    @property
-    def sets_colors(self):
-        return np.multiply(getColor(len(self.classes.values())), 255) / 255
-
-    @property
-    def sets_indices(self):
-        """
-        Returns a list of numpy.where, by class. Each element defines a set. The sets partition / classify the image.
-        Each numpy.where contains the coordinates of the sets of the class.
-        Create list of coordinates arrays :
-            -> self.sets_indices = [(label_name, np.where(...)), ... label_name, np.where(...))] ,
-        """
-        dsm_supports = ['ref', 'dsm']
-        sets_indices = {support: None for support in dsm_supports }
-        for support in dsm_supports:
-            if self.reproject_path[support]:
-                img_to_classify = A3DGeoRaster(self.reproject_path[support])
-                sets_indices[support] = []
-                # calculate sets_indices of partition
-                for class_name, class_value in self.classes.items():
-                    if isinstance(class_value, list):
-                        elm = (class_name, np.where(np.logical_or(*[np.equal(img_to_classify.r, label_i)
-                                                                     for label_i in class_value])))
-                    else:
-                        elm = (class_name, np.where(img_to_classify.r == class_value))
-                    sets_indices[support].append(elm)
-        return sets_indices
-
     def __repr__(self):
         return "self.name : {}\n, self.type_layer : {}\n, self.ref_path : {}\n, self.dsm_path : {}\n, " \
                "self.reproject_path : {}\n, self.map_path : {}\n, self.classes : {}\n, self.coreg_path : {}\n," \
-               "self.sets_indices : {}\n, self.sets_colors : {} \n".format(
+               "self.sets_colors : {} \n".format(
             self.name, self.type_layer, self.ref_path, self.dsm_path,
-            self.reproject_path, self.map_path, self.classes, self.coreg_path, self.sets_indices, self.sets_colors)
+            self.reproject_path, self.map_path, self.classes, self.coreg_path, self.sets_colors)
 
     def generate_classes(self, ranges):
         # change the intervals into a list to make 'classes' generic
@@ -220,6 +223,29 @@ class Partition:
 
         self.map_path[type_slope] = os.path.join(self._output_dir, type_slope + '_support_map.tif')
         map_img.save_geotiff(self.map_path[type_slope])
+
+    def _create_set_indices(self):
+        """
+        Returns a list of numpy.where, by class. Each element defines a set. The sets partition / classify the image.
+        Each numpy.where contains the coordinates of the sets of the class.
+        Create list of coordinates arrays :
+            -> self.sets_indices = [(label_name, np.where(...)), ... label_name, np.where(...))] ,
+        """
+        dsm_supports = ['ref', 'dsm']
+        sets_indices = {support: None for support in dsm_supports }
+        for support in dsm_supports:
+            if self.reproject_path[support]:
+                img_to_classify = A3DGeoRaster(self.reproject_path[support])
+                sets_indices[support] = []
+                # calculate sets_indices of partition
+                for class_name, class_value in self.classes.items():
+                    if isinstance(class_value, list):
+                        elm = (class_name, np.where(np.logical_or(*[np.equal(img_to_classify.r, label_i)
+                                                                     for label_i in class_value])))
+                    else:
+                        elm = (class_name, np.where(img_to_classify.r == class_value))
+                    sets_indices[support].append(elm)
+        return sets_indices
 
     def rectify_map(self):
         """
