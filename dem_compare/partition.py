@@ -245,7 +245,6 @@ class Partition:
                 rectified_map.save_geotiff(self.reproject_path[map_name])
 
 
-############################### TODO a refac ###############################
 class Fusion_partition(Partition):
 
     def __init__(self, partitions, outputDir):
@@ -275,7 +274,17 @@ class Fusion_partition(Partition):
 
         dict_fusion = {'ref': all_layers_ref_flag, 'dsm': all_layers_dsm_flag}
 
-        classes_fusion = None
+        self.ref_path = ''
+        self.dsm_path = ''
+        self.coreg_path = {'ref': None, 'dsm': None}
+        self.reproject_path = {'ref': None, 'dsm': None}
+        self.nodata = -32768.0
+        # sets
+        self._sets_names = None
+        self._sets_labels = None
+        self.map_path = {'ref': None, 'dsm': None}
+
+        self._classes = {}
         all_combi_labels = None
 
         # create folder stats results fusion si layers_ref_flag ou layers_dsm_flag est à True
@@ -308,38 +317,24 @@ class Fusion_partition(Partition):
                     for partition in partitions:
                         classes_to_fusion.append([(partition.name, cl_classes_label) for cl_classes_label in partition.classes.keys()])
 
-                    if not (all_combi_labels and classes_fusion):
+                    if not (all_combi_labels and self._classes):
                         all_combi_labels, self._classes = create_new_classes(classes_to_fusion)
-                    print("all_combi_labels, classes_fusion = ", all_combi_labels, classes_fusion)
+                    print("all_combi_labels, self._classes = ", all_combi_labels, self._classes)
 
-                    # stop refac ici
                     # create la layer fusionnee + les sets assossiés
-                    # TODO pour savoir qu est ce que l'on sait : on sait que l'on est dans ref OU dsm et on a partition
-                    # TODO          on veut sets_masks qui vaut : liste ordonnées des masks de tous les labels en FONCTION DE REF OU DSM
-                    # TODO get_sets_indices['ref'] ou 'dsm'
-                    #sets_masks = [parti.get_sets_indices(df_k) for parti in partitions]                                         # TODO verififer que c'est ça!!!!
                     sets_masks = {}
                     for parti in partitions:
-                        print(parti.name)
                         sets_def_indices = parti.sets_indices
-                        print(sets_def_indices(df_k))
-                        sets_masks[parti.name] = dict(sets_def_indices)
+                        sets_masks[parti.name] = dict(sets_def_indices[df_k])
                     print("sets_masks = ", sets_masks)
-                    map_fusion, sets_def_fusion, sets_colors_fusion = create_fusion(sets_masks, all_combi_labels, self.classes, clayers_to_fusion[0][1])
-                    sets_fusion = {df_k: {'fusion_layer': {'sets_def': dict(sets_def_fusion), 'sets_colors': sets_colors_fusion}}}
+                    # TODO save map_fusion, sets_def_fusion, sets_colors_fusion in Partition
+                    map_fusion, sets_def_fusion, sets_colors_fusion = create_fusion(sets_masks, all_combi_labels, self._classes, clayers_to_fusion[0][1])
 
                     # save map_fusion
-                    map_fusion_path = os.path.join(outputDir, get_out_dir('stats_dir'),
-                                                   'fusion_layer', '{}_fusion_layer.tif'.format(df_k))
-                    map_fusion.save_geotiff(map_fusion_path)
-                    # save dico de la layer
-                    #dict_stats_fusion[df_k] = map_fusion_path
-                    #dict_stats_fusion[str('reproject_{}'.format(df_k))] = map_fusion_path
-                    #dict_stats_fusion['stats_results'][support_name[df_k]] = {'nodata': -32768, 'path': map_fusion_path}
+                    self.map_path[df_k] = os.path.join(self._output_dir, '{}_fusion_layer.tif'.format(df_k))
+                    map_fusion.save_geotiff(self.map_path[df_k])
 
-            # ajout des stats fussionees dans le dictionnaire
-            #clayers['fusion_layer'] = dict_stats_fusion
-
+        logging.info('Partition FUSION created as:', self)
 
   # TODO sets_names, set_labels
 

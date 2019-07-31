@@ -800,6 +800,8 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     partitions.append(Fusion_partition(partitions, outputDir))
 
     [logging.debug("list of already classification layers: ", p) for p in partitions]
+    for p in partitions:
+        print("list of already classification layers: ", p)
 
     return partitions
 
