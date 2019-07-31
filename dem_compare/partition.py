@@ -78,7 +78,7 @@ class Partition:
             self.create_slope(coreg_dsm, coreg_ref)
 
         self.coreg_path = {'ref': None, 'dsm': None}
-        self._coreg_shape = coreg_ref.shape
+        self._coreg_shape = coreg_ref.r.shape
         if self.dsm_path:
           self.coreg_path['dsm'] = coreg_dsm
         if self.ref_path:
@@ -279,6 +279,7 @@ class Fusion_partition(Partition):
         :param partitions: list d objet Partition
         :return: TODO
         """
+        #TODO find a way to call __init__ of Partition
 
         def variables_activate(key, partitions):
             """
@@ -330,7 +331,7 @@ class Fusion_partition(Partition):
             #           ==> generer la nouvelle image classif (fusion) avec de nouveaux labels calculés arbitrairement et liés aux labels d entrees
 
             for df_k, df_v in dict_fusion.items():
-                print("@@@@@@@@@@@@@@@@@@@")
+                print("@@@@@@@@@@STOOOOOOOOOOPPPPPPPPP THAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTTTT@@@@@@@@@")
                 if df_v:
                     # get les reproject_ref/dsm et faire une nouvelles map avec son dictionnaire associé
                     clayers_to_fusion_path = [(parti.name, parti.reproject_path[df_k]) for parti in partitions]
