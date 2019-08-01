@@ -23,7 +23,7 @@ from astropy import units as u
 
 
 from .a3d_georaster import A3DGeoRaster
-from .partition import Partition, Fusion_partition, getColor
+from .partition import Partition, Fusion_partition, getColor, NotEnoughDataToPartitionError
 from .output_tree_design import get_out_dir, get_out_file_path
 
 
@@ -797,7 +797,12 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     [parti.rectify_map() for parti in partitions]
 
     # Create the fusion partition
-    partitions.append(Fusion_partition(partitions, outputDir))
+    if len(partitions) > 1:
+        try:
+            partitions.append(Fusion_partition(partitions, outputDir))
+        except NotEnoughDataToPartitionError:
+            logging.info('Partitions could ne be created')
+            pass
 
     [logging.debug("list of already classification layers: ", p) for p in partitions]
     for p in partitions:

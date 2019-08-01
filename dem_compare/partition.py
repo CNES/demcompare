@@ -271,6 +271,9 @@ class Partition:
                 rectified_map.save_geotiff(self.reproject_path[map_name])
 
 
+class NotEnoughDataToPartitionError(Exception):
+    pass
+
 class Fusion_partition(Partition):
 
     def __init__(self, partitions, outputDir):
@@ -280,26 +283,15 @@ class Fusion_partition(Partition):
         :return: TODO
         """
         #TODO find a way to call __init__ of Partition
+        if len(partitions) == 1:
+            logging.error('There must be at least 2 partitions to be merged together')
+            raise NotEnoughDataToPartitionError
 
-        def variables_activate(key, partitions):
-            """
-            TODO
-            :param key:
-            :param partitions:
-            :return:
-            """
-            # key = 'ref' ou 'dsm'
-            for partition in partitions:
-                if not partition.reproject_path[key]:
-                    return False
-            return True
-
-        # la fusion des layers (slope, map, ...) ne se fait que si toutes les layers sont renseignees (= reproject_path[ref/dsm] pas à None)
-        all_layers_ref_flag = variables_activate('ref', partitions)
-        all_layers_dsm_flag = variables_activate('dsm', partitions)
-        print("all_layers_ref_flag, all_layers_dsm_flag = ", all_layers_ref_flag, all_layers_dsm_flag)
-
-        dict_fusion = {'ref': all_layers_ref_flag, 'dsm': all_layers_dsm_flag}
+        dict_fusion = {'ref': np.all([p.reproject_path['ref'] for p in partitions]),
+                       'dsm': np.all([p.reproject_path['dsm'] for p in partitions])}
+        if ~(dict_fusion['ref'] + dict_fusion['dsm']) :
+            logging.error('For the partition to be merged, there must be at least one support (ref or dsm) provided by every partition')
+            raise NotEnoughDataToPartitionError
 
         self.ref_path = ''
         self.dsm_path = ''
