@@ -55,10 +55,8 @@ class Partition:
         # Store coreg path (TODO why?)
         self.coreg_path = {'ref': None, 'dsm': None}
         self._coreg_shape = coreg_ref.r.shape
-        if self.dsm_path:
-          self.coreg_path['dsm'] = coreg_dsm
-        if self.ref_path:
-          self.coreg_path['ref'] = coreg_ref
+        self.coreg_path['dsm'] = coreg_dsm
+        self.coreg_path['ref'] = coreg_ref
 
         # Store classes (TODO why?)
         self._classes = {}
@@ -138,7 +136,7 @@ class Partition:
 
     @property
     def sets_colors(self):
-        return np.multiply(getColor(len(self.classes.values())), 255) / 255
+        return np.multiply(getColor(len(self.sets_names)), 255) / 255
 
     @property
     def sets_indices_ref(self):
