@@ -18,64 +18,72 @@ import itertools
 from .output_tree_design import get_out_dir
 from .a3d_georaster import A3DGeoRaster
 
+class NotEnoughDataToPartitionError(Exception):
+    pass
+
 
 class Partition:
+    class LackOfPartitionDataError(Exception):
+        def __init__(self):
+            logging.error('At least one partition support must be provided '
+                          '(shall it be linked to the reference DSM or the slave one). '
+                          'Use the \'ref\' and/or \'dsm\' keys respectively.')
 
     # Only kind of partition supported
     type = ["to_be_classification_layers", "classification_layers"]
 
+    # default no data value
+    nodata = -32768.0
+
     ####### initialization #######
     def __init__(self, name, partition_kind, coreg_dsm, coreg_ref, outputDir, **cfg_layer):
-
-        # rectified paths
-        self.reproject_path = {'ref': None, 'dsm': None}
-
-        self.nodata = -32768.0
-
-        # sets
-        self._sets_names = None
-        self._sets_labels = None
-
         self._name = name
 
-        if partition_kind in self.type:
-            self._type_layer = partition_kind
-        else:
-            logging.error('Unsupported partition kind {}. Try one of the following {}'.format(partition_kind, self.type))
-            raise KeyError
-
+        # output dir (where to store partition results & data)
         self._output_dir = os.path.join(outputDir, get_out_dir('stats_dir'), self._name)
-
-        # create stats results folder
         self.create_output_dir()
 
-        # set classes (labels with associated values)
+        # rectified paths
+        # TODO shall be rectified right now
+        self.reproject_path = {'ref': None, 'dsm': None}
+
+        # set classes info
         self._classes = {}
         if 'classes' in cfg_layer:
-            self._classes = cfg_layer['classes']
+            self._classes = collections.OrderedDict(cfg_layer['classes'])
         elif 'ranges' in cfg_layer:
             # transform 'ranges' to 'classes'
             self._classes = self.generate_classes(cfg_layer['ranges'])
         else:
             logging.error('Neither classes nor ranges where given as input sets to partition the stats')
             raise KeyError
+        self._sets_names = None
+        self._sets_labels = None
+        self._sets_indices = self._create_set_indices()
 
         # get layer ref and/or dsm
         self.ref_path = ''
         self.dsm_path = ''
+        if partition_kind in self.type:
+            self._type_layer = partition_kind
+        else:
+            logging.error('Unsupported partition kind {}. Try one of the following {}'.format(partition_kind, self.type))
+            raise KeyError
         if 'ref' in cfg_layer:
             self.ref_path = cfg_layer['ref']
         if 'dsm' in cfg_layer:
             self.dsm_path = cfg_layer['dsm']
         if (not 'ref' in cfg_layer) and (not 'dsm' in cfg_layer):
-            logging.error('At least one partition support must be provided '
-                          '(shall it be linked to the reference DSM or the slave one). '
-                          'Use the \'ref\' and/or \'dsm\' keys respectively.')
-            raise KeyError
-        if (not cfg_layer['ref']) and (not cfg_layer['dsm']) \
-                and (self.type_layer == "to_be_classification_layers") and self.name == 'slope':
-            # create slope : ref and dsm
-            self.create_slope(coreg_dsm, coreg_ref)
+            raise self.LackOfPartitionDataError
+        if (not cfg_layer['ref']) and (not cfg_layer['dsm']) :
+            if self.type_layer == "classification_layers":
+                raise self.LackOfPartitionDataError
+            else:
+                if self.name != 'slope':
+                    raise self.LackOfPartitionDataError
+                else:
+                    # create slope : ref and dsm
+                    self.create_slope(coreg_dsm, coreg_ref)
 
         self.coreg_path = {'ref': None, 'dsm': None}
         self._coreg_shape = coreg_ref.r.shape
@@ -98,8 +106,6 @@ class Partition:
             if 'dsm' in cfg_layer:
                 self.map_path['dsm'] = cfg_layer['dsm']
 
-        # computes indices and keep them
-        self._sets_indices = self._create_set_indices()
 
         logging.info('Partition created as:', self)
 
@@ -271,9 +277,6 @@ class Partition:
                 rectified_map.save_geotiff(self.reproject_path[map_name])
 
 
-class NotEnoughDataToPartitionError(Exception):
-    pass
-
 class Fusion_partition(Partition):
 
     def __init__(self, partitions, outputDir):
@@ -287,8 +290,9 @@ class Fusion_partition(Partition):
             logging.error('There must be at least 2 partitions to be merged together')
             raise NotEnoughDataToPartitionError
 
-        dict_fusion = {'ref': np.all([p.reproject_path['ref'] for p in partitions]),
-                       'dsm': np.all([p.reproject_path['dsm'] for p in partitions])}
+        logging.info('{}'.format([p.reproject_path['ref'] for p in partitions]))
+        dict_fusion = {'ref': np.all([p.reproject_path['ref'] is not None for p in partitions]),
+                       'dsm': np.all([p.reproject_path['dsm'] is not None for p in partitions])}
         if ~(dict_fusion['ref'] + dict_fusion['dsm']) :
             logging.error('For the partition to be merged, there must be at least one support (ref or dsm) provided by every partition')
             raise NotEnoughDataToPartitionError
@@ -308,50 +312,49 @@ class Fusion_partition(Partition):
 
         # create folder stats results fusion si layers_ref_flag ou layers_dsm_flag est à True
         # =====> On ne cree pas le dossier de sortie de la couche fusionné
-        if all_layers_ref_flag or all_layers_dsm_flag:
-            self._name = 'fusion_layer'
-            self._output_dir = os.path.join(outputDir, get_out_dir('stats_dir'), self._name)
-            self._type_layer = 'classification_layers'
-            self.create_output_dir()
+        self._name = 'fusion_layer'
+        self._output_dir = os.path.join(outputDir, get_out_dir('stats_dir'), self._name)
+        self._type_layer = 'classification_layers'
+        self.create_output_dir()
 
-            # Boucle sur [ref, dsm]
-            #   Boucle sur chaque layer
-            #       S'il y a plusieurs des layers données ou calculées
-            #           ==> pour calculer les masks de chaque label
-            #           ==> calculer toutes les combinaisons (developpement des labels entre eux mais pas les listes)
-            #           ==> puis calculer les masks fusionnés (a associer avec les bons labels)
-            #           ==> generer la nouvelle image classif (fusion) avec de nouveaux labels calculés arbitrairement et liés aux labels d entrees
+        # Boucle sur [ref, dsm]
+        #   Boucle sur chaque layer
+        #       S'il y a plusieurs des layers données ou calculées
+        #           ==> pour calculer les masks de chaque label
+        #           ==> calculer toutes les combinaisons (developpement des labels entre eux mais pas les listes)
+        #           ==> puis calculer les masks fusionnés (a associer avec les bons labels)
+        #           ==> generer la nouvelle image classif (fusion) avec de nouveaux labels calculés arbitrairement et liés aux labels d entrees
 
-            for df_k, df_v in dict_fusion.items():
-                print("@@@@@@@@@@STOOOOOOOOOOPPPPPPPPP THAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTTTT@@@@@@@@@")
-                if df_v:
-                    # get les reproject_ref/dsm et faire une nouvelles map avec son dictionnaire associé
-                    clayers_to_fusion_path = [(parti.name, parti.reproject_path[df_k]) for parti in partitions]
-                    print("clayers_to_fusion_path = ", clayers_to_fusion_path)
+        for df_k, df_v in dict_fusion.items():
+            print("@@@@@@@@@@STOOOOOOOOOOPPPPPPPPP THAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTTTT@@@@@@@@@")
+            if df_v:
+                # get les reproject_ref/dsm et faire une nouvelles map avec son dictionnaire associé
+                clayers_to_fusion_path = [(parti.name, parti.reproject_path[df_k]) for parti in partitions]
+                print("clayers_to_fusion_path = ", clayers_to_fusion_path)
 
-                    # lire les images clayers_to_fusion
-                    clayers_to_fusion = [(k, A3DGeoRaster(cltfp)) for k, cltfp in clayers_to_fusion_path]
-                    print("clayers_to_fusion = ", clayers_to_fusion)
-                    classes_to_fusion = []
-                    for partition in partitions:
-                        classes_to_fusion.append([(partition.name, cl_classes_label) for cl_classes_label in partition.classes.keys()])
+                # lire les images clayers_to_fusion
+                clayers_to_fusion = [(k, A3DGeoRaster(cltfp)) for k, cltfp in clayers_to_fusion_path]
+                print("clayers_to_fusion = ", clayers_to_fusion)
+                classes_to_fusion = []
+                for partition in partitions:
+                    classes_to_fusion.append([(partition.name, cl_classes_label) for cl_classes_label in partition.classes.keys()])
 
-                    if not (all_combi_labels and self._classes):
-                        all_combi_labels, self._classes = create_new_classes(classes_to_fusion)
-                    print("all_combi_labels, self._classes = ", all_combi_labels, self._classes)
+                if not (all_combi_labels and self._classes):
+                    all_combi_labels, self._classes = create_new_classes(classes_to_fusion)
+                print("all_combi_labels, self._classes = ", all_combi_labels, self._classes)
 
-                    # create la layer fusionnee + les sets assossiés
-                    sets_masks = {}
-                    for parti in partitions:
-                        sets_def_indices = parti.sets_indices
-                        sets_masks[parti.name] = dict(sets_def_indices[df_k])
-                    print("sets_masks = ", sets_masks)
-                    # TODO save map_fusion, sets_def_fusion, sets_colors_fusion in Partition
-                    map_fusion, sets_def_fusion, sets_colors_fusion = create_fusion(sets_masks, all_combi_labels, self._classes, clayers_to_fusion[0][1])
+                # create la layer fusionnee + les sets assossiés
+                sets_masks = {}
+                for parti in partitions:
+                    sets_def_indices = parti.sets_indices
+                    sets_masks[parti.name] = dict(sets_def_indices[df_k])
+                print("sets_masks = ", sets_masks)
+                # TODO save map_fusion, sets_def_fusion, sets_colors_fusion in Partition
+                map_fusion, sets_def_fusion, sets_colors_fusion = create_fusion(sets_masks, all_combi_labels, self._classes, clayers_to_fusion[0][1])
 
-                    # save map_fusion
-                    self.map_path[df_k] = os.path.join(self._output_dir, '{}_fusion_layer.tif'.format(df_k))
-                    map_fusion.save_geotiff(self.map_path[df_k])
+                # save map_fusion
+                self.map_path[df_k] = os.path.join(self._output_dir, '{}_fusion_layer.tif'.format(df_k))
+                map_fusion.save_geotiff(self.map_path[df_k])
 
         logging.info('Partition FUSION created as:', self)
 

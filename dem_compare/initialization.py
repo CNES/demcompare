@@ -161,6 +161,8 @@ def initialization_stats_opts(cfg):
         cfg['stats_opts']['classification_layers'][0] = default_classification_layer
 
     else:
+        cfg['stats_opts'] = dict(list(default_stats_opts.items()) + list(cfg['stats_opts'].items()))
+
         # we keep users items and add default items he has not set
         # to_be_classification_layers part
         if not 'to_be_classification_layers' in cfg['stats_opts']:
