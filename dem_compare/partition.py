@@ -30,6 +30,7 @@ class Partition:
                           'Use the \'ref\' and/or \'dsm\' keys respectively.')
 
     # Only kind of partition supported
+    # TODO see if two classes will not be better
     type = ["to_be_classification_layers", "classification_layers"]
 
     # default no data value
@@ -37,17 +38,29 @@ class Partition:
 
     ####### initialization #######
     def __init__(self, name, partition_kind, coreg_dsm, coreg_ref, outputDir, **cfg_layer):
+        # Sanity check
+        if partition_kind in self.type:
+            self._type_layer = partition_kind
+        else:
+            logging.error('Unsupported partition kind {}. Try one of the following {}'.format(partition_kind, self.type))
+            raise KeyError
+
+        # Get partition name
         self._name = name
 
-        # output dir (where to store partition results & data)
+        # Create output dir (where to store partition results & data)
         self._output_dir = os.path.join(outputDir, get_out_dir('stats_dir'), self._name)
         self.create_output_dir()
 
-        # rectified paths
-        # TODO shall be rectified right now
-        self.reproject_path = {'ref': None, 'dsm': None}
+        # Store coreg path (TODO why?)
+        self.coreg_path = {'ref': None, 'dsm': None}
+        self._coreg_shape = coreg_ref.r.shape
+        if self.dsm_path:
+          self.coreg_path['dsm'] = coreg_dsm
+        if self.ref_path:
+          self.coreg_path['ref'] = coreg_ref
 
-        # set classes info
+        # Store classes (TODO why?)
         self._classes = {}
         if 'classes' in cfg_layer:
             self._classes = collections.OrderedDict(cfg_layer['classes'])
@@ -57,25 +70,17 @@ class Partition:
         else:
             logging.error('Neither classes nor ranges where given as input sets to partition the stats')
             raise KeyError
-        self._sets_names = None
-        self._sets_labels = None
-        self._sets_indices = self._create_set_indices()
 
-        # get layer ref and/or dsm
+        # Store path to initial layer
         self.ref_path = ''
         self.dsm_path = ''
-        if partition_kind in self.type:
-            self._type_layer = partition_kind
-        else:
-            logging.error('Unsupported partition kind {}. Try one of the following {}'.format(partition_kind, self.type))
-            raise KeyError
         if 'ref' in cfg_layer:
             self.ref_path = cfg_layer['ref']
         if 'dsm' in cfg_layer:
             self.dsm_path = cfg_layer['dsm']
         if (not 'ref' in cfg_layer) and (not 'dsm' in cfg_layer):
             raise self.LackOfPartitionDataError
-        if (not cfg_layer['ref']) and (not cfg_layer['dsm']) :
+        if (not cfg_layer['ref']) and (not cfg_layer['dsm']):
             if self.type_layer == "classification_layers":
                 raise self.LackOfPartitionDataError
             else:
@@ -85,14 +90,7 @@ class Partition:
                     # create slope : ref and dsm
                     self.create_slope(coreg_dsm, coreg_ref)
 
-        self.coreg_path = {'ref': None, 'dsm': None}
-        self._coreg_shape = coreg_ref.r.shape
-        if self.dsm_path:
-          self.coreg_path['dsm'] = coreg_dsm
-        if self.ref_path:
-          self.coreg_path['ref'] = coreg_ref
-
-        # set path to labelled map
+        # Create the layer map
         self.map_path = {'ref': None, 'dsm': None}
         if self.type_layer == "to_be_classification_layers":
             # if the partition is not yet a labelled map, then make it so
@@ -106,6 +104,14 @@ class Partition:
             if 'dsm' in cfg_layer:
                 self.map_path['dsm'] = cfg_layer['dsm']
 
+        # Reproj the layer map
+        self.reproject_path = {'ref': None, 'dsm': None}
+        self.rectify_map()
+
+        # Create the sets based on the layer map
+        self._sets_names = None
+        self._sets_labels = None
+        self._sets_indices = self._create_set_indices()
 
         logging.info('Partition created as:', self)
 
@@ -256,15 +262,11 @@ class Partition:
 
     def rectify_map(self):
         """
-        Rectification the maps for stats
+        Reproject  the layer maps on top of coreg dsm and coreg ref (which are coregistered together)
 
         :return:
         """
-        #
-        # Reproject image on top of coreg dsm and coreg ref (which are coregistered together)
-        #
-
-        for map_name,map_path in self.map_path.items():
+        for map_name, map_path in self.map_path.items():
             if map_path:
                 map_img = A3DGeoRaster(map_path)
                 rectified_map = map_img.reproject(self.coreg_path[map_name].srs, int(self.coreg_path[map_name].nx),

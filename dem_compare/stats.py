@@ -793,9 +793,6 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     for layer_name, cl in clayers.items():
         partitions.append(Partition(layer_name, 'classification_layers', dsm, ref, outputDir, **cl))
 
-    # Reproject every 'to_be_classification_layer' & 'classification_layer'
-    [parti.rectify_map() for parti in partitions]
-
     # Create the fusion partition
     if len(partitions) > 1:
         try:
