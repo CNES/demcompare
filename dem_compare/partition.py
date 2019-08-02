@@ -155,10 +155,19 @@ class Partition:
 
     @property
     def sets_names(self):
+        sets_name_list = ['{} : {}'.format(key, value) for key, value in self.classes.items()]
+        self._sets_names = [name.replace(',', ';') for name in sets_name_list]
         return self._sets_names
 
     @property
     def sets_labels(self):
+        self._sets_labels = list()
+        for label in list(self._classes.keys()):
+            if label.find('inf]') > 0:
+                new_label = '$\nabla$ > ' + label.split('[')[1].split(';inf]')[0]
+            else:
+                new_label = '$\nabla \in$ ' + label
+                self._sets_labels.append(new_label)
         return self._sets_labels
 
     def __repr__(self):
@@ -357,8 +366,6 @@ class Fusion_partition(Partition):
                 map_fusion.save_geotiff(self.map_path[df_k])
 
         logging.info('Partition FUSION created as:', self)
-
-  # TODO sets_names, set_labels
 
 
 #####################################################
