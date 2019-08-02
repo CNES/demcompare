@@ -134,19 +134,10 @@ class Partition:
 
     @property
     def sets_names(self):
-        sets_name_list = ['{} : {}'.format(key, value) for key, value in self.classes.items()]
-        self._sets_names = [name.replace(',', ';') for name in sets_name_list]
         return self._sets_names
 
     @property
     def sets_labels(self):
-        self._sets_labels = list()
-        for label in list(self._classes.keys()):
-            if label.find('inf]') > 0:
-                new_label = '$\nabla$ > ' + label.split('[')[1].split(';inf]')[0]
-            else:
-                new_label = '$\nabla \in$ ' + label
-                self._sets_labels.append(new_label)
         return self._sets_labels
 
     @property
@@ -181,9 +172,15 @@ class Partition:
         classes = collections.OrderedDict()
         for idx in range(0, len(ranges)):
             if idx == len(ranges) - 1:
-                key = "[{};inf]".format(ranges[idx])
+                if self.name == 'slope':
+                    key = "[{}%;inf[".format(ranges[idx])
+                else:
+                    key = "[{};inf[".format(ranges[idx])
             else:
-                key = "[{};{}[".format(ranges[idx], ranges[idx + 1])
+                if self.name == 'slope':
+                    key = "[{}%;{}%[".format(ranges[idx], ranges[idx + 1])
+                else:
+                    key = "[{};{}[".format(ranges[idx], ranges[idx + 1])
             classes[key] = ranges[idx]
 
         return classes
@@ -280,13 +277,13 @@ class Partition:
         if self.name == 'slope':
             self._sets_names = self.classes.keys()
             # Slope labels are historically customized
-            self._sets_labels = [r'$\nabla$ > {}%'.format(classes[set_name])
+            self._sets_labels = [r'$\nabla$ > {}%'.format(self.classes[set_name])
                                  if set_name.endswith('inf[') else r'$\nabla \in$ {}'.format(set_name)
                                  for set_name in self._sets_names]
         else:
             self._sets_labels = self.classes.keys()
             self._sets_names = ['{}:{}'.format(key, value) for key, value in self.classes.items()]
-            self._sets_names = [name.replace(',', ';') for name in self._sets_names]
+            #self._sets_names = [name.replace(',', ';') for name in self._sets_names]
 
         # fill sets_colors
         self._sets_colors = np.multiply(getColor(len(self.sets_names)), 255) / 255
@@ -294,7 +291,7 @@ class Partition:
         # fill sets_indexes
         tuples_of_labels_and_indexes = self._create_set_indices()
         self._sets_indexes = {'ref': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8)),
-                        'dsm': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8))}
+                              'dsm': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8))}
         if tuples_of_labels_and_indexes['ref']:
             self._sets_indexes['ref'] = [item[1] for item in tuples_of_labels_and_indexes['ref']]
         if tuples_of_labels_and_indexes['dsm']:
@@ -336,7 +333,8 @@ class Fusion_partition(Partition):
         dict_fusion = {'ref': np.all([p.reproject_path['ref'] is not None for p in partitions]),
                        'dsm': np.all([p.reproject_path['dsm'] is not None for p in partitions])}
         if ~(dict_fusion['ref'] + dict_fusion['dsm']) :
-            logging.error('For the partition to be merged, there must be at least one support (ref or dsm) provided by every partition')
+            logging.error('For the partition to be merged, there must be at least one support (ref or dsm) '
+                          'provided by every partition')
             raise NotEnoughDataToPartitionError
 
         self.ref_path = ''
@@ -344,7 +342,7 @@ class Fusion_partition(Partition):
         self.coreg_path = {'ref': None, 'dsm': None}
         self.reproject_path = {'ref': None, 'dsm': None}
         self.nodata = -32768.0
-        # sets
+        # sets ==> TODO utiliser _fill_sets_attributs
         self._sets_indexes = {'ref': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8)),
                               'dsm': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8))}
         self._sets_names = None
