@@ -107,9 +107,7 @@ class Partition:
         self.rectify_map()
 
         # Create the sets based on the layer map
-        self._sets_names = None
-        self._sets_labels = None
-        self._sets_indices = self._create_set_indices()
+        self._fill_sets_attributes(self.classes)
 
         logging.info('Partition created as:', self)
 
@@ -135,31 +133,32 @@ class Partition:
         return self._classes
 
     @property
-    def sets_colors(self):
-        return np.multiply(getColor(len(self.sets_names)), 255) / 255
-
-    @property
-    def sets_indices_ref(self):
-        return self._sets_indices['ref']
-
-    @property
-    def sets_indices_dsm(self):
-        return self._sets_indices['dsm']
-
-    @property
-    def sets_masks(self):
-        masks = [np.ones(self.coreg_shape)*False for i in range(2)]
-        masks[0][self.sets_indices_ref] = True
-        masks[1][self.sets_indices_dsm] = True
-        return masks
-
-    @property
     def sets_names(self):
         return self._sets_names
 
     @property
     def sets_labels(self):
         return self._sets_labels
+
+    @property
+    def sets_colors(self):
+        return self._sets_colors
+
+    @property
+    def sets_indexes_ref(self):
+        return self._sets_indexes['ref']
+
+    @property
+    def sets_indexes_dsm(self):
+        return self._sets_indexes['dsm']
+
+    @property
+    def sets_masks(self):
+        masks = [np.ones(self.coreg_shape)*False for i in range(2)]
+        #TODO [0] = ref then we need to iter over labels
+        masks[0][self.sets_indexes_ref] = True
+        masks[1][self.sets_indexes_dsm] = True
+        return masks
 
     def __repr__(self):
         return "self.name : {}\n, self.type_layer : {}\n, self.ref_path : {}\n, self.dsm_path : {}\n, " \
@@ -235,12 +234,15 @@ class Partition:
         self.map_path[type_slope] = os.path.join(self._output_dir, type_slope + '_support_map.tif')
         map_img.save_geotiff(self.map_path[type_slope])
 
-    def _create_set_indices(self):
+    def _create_set_indices(self, classes):
         """
         Returns a list of numpy.where, by class. Each element defines a set. The sets partition / classify the image.
         Each numpy.where contains the coordinates of the sets of the class.
         Create list of coordinates arrays :
             -> self.sets_indices = [(label_name, np.where(...)), ... label_name, np.where(...))] ,
+
+        :param classes: ordered dict of labels and associated values
+        :return:
         """
         dsm_supports = ['ref', 'dsm']
         sets_indices = {support: None for support in dsm_supports }
@@ -249,7 +251,7 @@ class Partition:
                 img_to_classify = A3DGeoRaster(self.reproject_path[support])
                 sets_indices[support] = []
                 # calculate sets_indices of partition
-                for class_name, class_value in self.classes.items():
+                for class_name, class_value in classes.items():
                     if isinstance(class_value, list):
                         elm = (class_name, np.where(np.logical_or(*[np.equal(img_to_classify.r, label_i)
                                                                      for label_i in class_value])))
@@ -257,6 +259,37 @@ class Partition:
                         elm = (class_name, np.where(img_to_classify.r == class_value))
                     sets_indices[support].append(elm)
         return sets_indices
+
+    def _fill_sets_attributes(self, classes):
+        """
+
+        :param classes: ordered dict of labels and associated values
+        :return:
+        """
+
+        # fill sets_labels & sets_names
+        if self.name == 'slope':
+            self._sets_names = classes.keys()
+            # Slope labels are historically customized
+            self._sets_labels = [r'$\nabla$ > {}%'.format(classes[set_name])
+                                 if set_name.endswith('inf[') else r'$\nabla \in$ {}'.format(set_name)
+                                 for set_name in self._sets_names]
+        else:
+            self._sets_labels = classes.keys()
+            self._sets_names = ['{}:{}'.format(key, value) for key, value in classes.items()]
+            self._sets_names = [name.replace(',', ';') for name in self._sets_names]
+
+        # fill sets_colors
+        self._sets_colors = np.multiply(getColor(len(self.sets_names)), 255) / 255
+
+        # fill sets_indexes
+        tuples_of_labels_and_indexes = self._create_set_indices(classes)
+        self._sets_indexes = {'ref': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8)),
+                        'dsm': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8))}
+        if tuples_of_labels_and_indexes['ref']:
+            self._sets_indexes['ref'] = [item[1] for item in tuples_of_labels_and_indexes['ref']]
+        if tuples_of_labels_and_indexes['dsm']:
+            self._sets_indexes['dsm'] = [item[1] for item in tuples_of_labels_and_indexes['dsm']]
 
     def rectify_map(self):
         """
