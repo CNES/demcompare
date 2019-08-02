@@ -107,9 +107,7 @@ class Partition:
         self.rectify_map()
 
         # Create the sets based on the layer map
-        self._sets_names = None
-        self._sets_labels = None
-        self._sets_indices = self._create_set_indices()
+        self._fill_sets_attributes()
 
         logging.info('Partition created as:', self)
 
@@ -135,25 +133,6 @@ class Partition:
         return self._classes
 
     @property
-    def sets_colors(self):
-        return np.multiply(getColor(len(self.sets_names)), 255) / 255
-
-    @property
-    def sets_indices_ref(self):
-        return self._sets_indices['ref']
-
-    @property
-    def sets_indices_dsm(self):
-        return self._sets_indices['dsm']
-
-    @property
-    def sets_masks(self):
-        masks = [np.ones(self.coreg_shape)*False for i in range(2)]
-        masks[0][self.sets_indices_ref] = True
-        masks[1][self.sets_indices_dsm] = True
-        return masks
-
-    @property
     def sets_names(self):
         sets_name_list = ['{} : {}'.format(key, value) for key, value in self.classes.items()]
         self._sets_names = [name.replace(',', ';') for name in sets_name_list]
@@ -169,6 +148,26 @@ class Partition:
                 new_label = '$\nabla \in$ ' + label
                 self._sets_labels.append(new_label)
         return self._sets_labels
+
+    @property
+    def sets_colors(self):
+        return self._sets_colors
+
+    @property
+    def sets_indexes_ref(self):
+        return self._sets_indexes['ref']
+
+    @property
+    def sets_indexes_dsm(self):
+        return self._sets_indexes['dsm']
+
+    @property
+    def sets_masks(self):
+        masks = [np.ones(self.coreg_shape)*False for i in range(2)]
+        #TODO [0] = ref then we need to iter over labels
+        masks[0][self.sets_indexes_ref] = True
+        masks[1][self.sets_indexes_dsm] = True
+        return masks
 
     def __repr__(self):
         return "self.name : {}\n, self.type_layer : {}\n, self.ref_path : {}\n, self.dsm_path : {}\n, " \
@@ -250,6 +249,9 @@ class Partition:
         Each numpy.where contains the coordinates of the sets of the class.
         Create list of coordinates arrays :
             -> self.sets_indices = [(label_name, np.where(...)), ... label_name, np.where(...))] ,
+
+        :param classes: ordered dict of labels and associated values
+        :return:
         """
         dsm_supports = ['ref', 'dsm']
         sets_indices = {support: None for support in dsm_supports }
@@ -266,6 +268,37 @@ class Partition:
                         elm = (class_name, np.where(img_to_classify.r == class_value))
                     sets_indices[support].append(elm)
         return sets_indices
+
+    def _fill_sets_attributes(self):
+        """
+
+        :param classes: ordered dict of labels and associated values
+        :return:
+        """
+
+        # fill sets_labels & sets_names
+        if self.name == 'slope':
+            self._sets_names = self.classes.keys()
+            # Slope labels are historically customized
+            self._sets_labels = [r'$\nabla$ > {}%'.format(classes[set_name])
+                                 if set_name.endswith('inf[') else r'$\nabla \in$ {}'.format(set_name)
+                                 for set_name in self._sets_names]
+        else:
+            self._sets_labels = self.classes.keys()
+            self._sets_names = ['{}:{}'.format(key, value) for key, value in self.classes.items()]
+            self._sets_names = [name.replace(',', ';') for name in self._sets_names]
+
+        # fill sets_colors
+        self._sets_colors = np.multiply(getColor(len(self.sets_names)), 255) / 255
+
+        # fill sets_indexes
+        tuples_of_labels_and_indexes = self._create_set_indices()
+        self._sets_indexes = {'ref': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8)),
+                        'dsm': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8))}
+        if tuples_of_labels_and_indexes['ref']:
+            self._sets_indexes['ref'] = [item[1] for item in tuples_of_labels_and_indexes['ref']]
+        if tuples_of_labels_and_indexes['dsm']:
+            self._sets_indexes['dsm'] = [item[1] for item in tuples_of_labels_and_indexes['dsm']]
 
     def rectify_map(self):
         """
@@ -312,6 +345,8 @@ class Fusion_partition(Partition):
         self.reproject_path = {'ref': None, 'dsm': None}
         self.nodata = -32768.0
         # sets
+        self._sets_indexes = {'ref': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8)),
+                              'dsm': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8))}
         self._sets_names = None
         self._sets_labels = None
         self.map_path = {'ref': None, 'dsm': None}
@@ -335,31 +370,27 @@ class Fusion_partition(Partition):
         #           ==> generer la nouvelle image classif (fusion) avec de nouveaux labels calculés arbitrairement et liés aux labels d entrees
 
         for df_k, df_v in dict_fusion.items():
-            print("@@@@@@@@@@STOOOOOOOOOOPPPPPPPPP THAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTTTT@@@@@@@@@")
             if df_v:
                 # get les reproject_ref/dsm et faire une nouvelles map avec son dictionnaire associé
                 clayers_to_fusion_path = [(parti.name, parti.reproject_path[df_k]) for parti in partitions]
-                print("clayers_to_fusion_path = ", clayers_to_fusion_path)
 
                 # lire les images clayers_to_fusion
                 clayers_to_fusion = [(k, A3DGeoRaster(cltfp)) for k, cltfp in clayers_to_fusion_path]
-                print("clayers_to_fusion = ", clayers_to_fusion)
                 classes_to_fusion = []
                 for partition in partitions:
                     classes_to_fusion.append([(partition.name, cl_classes_label) for cl_classes_label in partition.classes.keys()])
 
                 if not (all_combi_labels and self._classes):
                     all_combi_labels, self._classes = create_new_classes(classes_to_fusion)
-                print("all_combi_labels, self._classes = ", all_combi_labels, self._classes)
 
                 # create la layer fusionnee + les sets assossiés
                 sets_masks = {}
                 for parti in partitions:
-                    sets_def_indices = parti.sets_indices
+                    sets_def_indices = parti._create_set_indices()
                     sets_masks[parti.name] = dict(sets_def_indices[df_k])
-                print("sets_masks = ", sets_masks)
-                # TODO save map_fusion, sets_def_fusion, sets_colors_fusion in Partition
-                map_fusion, sets_def_fusion, sets_colors_fusion = create_fusion(sets_masks, all_combi_labels, self._classes, clayers_to_fusion[0][1])
+
+                map_fusion, self._sets_indexes[df_k], self._sets_colors = \
+                    create_fusion(sets_masks, all_combi_labels, self._classes, clayers_to_fusion[0][1])
 
                 # save map_fusion
                 self.map_path[df_k] = os.path.join(self._output_dir, '{}_fusion_layer.tif'.format(df_k))
