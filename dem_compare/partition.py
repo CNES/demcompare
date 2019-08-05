@@ -163,9 +163,11 @@ class Partition:
     def __repr__(self):
         return "self.name : {}\n, self.type_layer : {}\n, self.ref_path : {}\n, self.dsm_path : {}\n, " \
                "self.reproject_path : {}\n, self.map_path : {}\n, self.classes : {}\n, self.coreg_path : {}\n," \
-               "self.sets_colors : {} \n".format(
-            self.name, self.type_layer, self.ref_path, self.dsm_path,
-            self.reproject_path, self.map_path, self.classes, self.coreg_path, self.sets_colors)
+               "self.sets_colors : {}\n, sets_names : {},\n sets_labels : {},\n " \
+               "sets_indexes_ref : {}\n, sets_indexes_dsm : {} \n".format(
+                self.name, self.type_layer, self.ref_path, self.dsm_path,
+                self.reproject_path, self.map_path, self.classes, self.coreg_path, self.sets_colors,
+                self.sets_names, self.sets_labels, self.sets_indexes_ref, self.sets_indexes_dsm)
 
     def generate_classes(self, ranges):
         # change the intervals into a list to make 'classes' generic
@@ -266,13 +268,11 @@ class Partition:
                     sets_indices[support].append(elm)
         return sets_indices
 
-    def _fill_sets_attributes(self):
+    def _fill_sets_names_labels(self):
         """
 
-        :param classes: ordered dict of labels and associated values
         :return:
         """
-
         # fill sets_labels & sets_names
         if self.name == 'slope':
             self._sets_names = self.classes.keys()
@@ -283,7 +283,14 @@ class Partition:
         else:
             self._sets_labels = self.classes.keys()
             self._sets_names = ['{}:{}'.format(key, value) for key, value in self.classes.items()]
-            #self._sets_names = [name.replace(',', ';') for name in self._sets_names]
+
+
+    def _fill_sets_attributes(self):
+        """
+
+        :return:
+        """
+        self._fill_sets_names_labels()
 
         # fill sets_colors
         self._sets_colors = np.multiply(getColor(len(self.sets_names)), 255) / 255
@@ -343,8 +350,7 @@ class Fusion_partition(Partition):
         self.reproject_path = {'ref': None, 'dsm': None}
         self.nodata = -32768.0
         # sets ==> TODO utiliser _fill_sets_attributs
-        self._sets_indexes = {'ref': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8)),
-                              'dsm': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8))}
+        self._sets_indexes = {'ref': None, 'dsm': None}
         self._sets_names = None
         self._sets_labels = None
         self.map_path = {'ref': None, 'dsm': None}
@@ -393,6 +399,9 @@ class Fusion_partition(Partition):
                 # save map_fusion
                 self.map_path[df_k] = os.path.join(self._output_dir, '{}_fusion_layer.tif'.format(df_k))
                 map_fusion.save_geotiff(self.map_path[df_k])
+
+        # fill sets names and labels
+        self._fill_sets_names_labels()
 
         logging.info('Partition FUSION created as:', self)
 
@@ -455,14 +464,10 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
     sets_colors = np.multiply(getColor(len(all_combi_labels)), 255)
     # recupere les masques associées aux tuples
     for combi in all_combi_labels:
-        #dict_elm_to_fusion = {}
         mask_fusion = np.ones(layers_obj.r.shape)
         for elm_combi in combi:
             layer_name = elm_combi[0]
             label_name = elm_combi[1]
-            # recupere le mask associé au label_name
-            #dict_elm_to_fusion[layer_name] = {}
-            #dict_elm_to_fusion[layer_name][label_name] = sets_masks[layer_name]['sets_def'][label_name]
             # concatene les masques des differentes labels du tuple/combi dans mask_fusion
             mask_label = np.zeros(layers_obj.r.shape)
             mask_label[sets_masks[layer_name][label_name]] = 1              # TODO change sets_masks[layer_name]['sets_def'][label_name] le dictionnaire n'est plus le meme => une liste mtn
@@ -472,7 +477,7 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
         new_label_name = '&'.join(['@'.join(elm_combi) for elm_combi in combi])
         new_label_value = classes_fusion[new_label_name]
         map_fusion[np.where(mask_fusion)] = new_label_value
-        # SAVE mask_fusion
+        # save mask_fusion
         sets_fusion.append((new_label_name, np.where(mask_fusion)))
 
     # save map fusionne
