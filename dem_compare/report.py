@@ -65,6 +65,8 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
                                                              'which input DSMs classifications are coherent.'}
     modes_information['incoherent-classification'] = {'pitch': 'This mode is the \'coherent-classification\' '
                                                                'complementary.'}
+
+    # TODO perso
     for mode in modes_information:
         # find both graph and csv stats associated with the mode
         # - histograms
@@ -95,6 +97,7 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
         else:
             modes_information[mode]['csv'] = None
 
+    # TODO commun
     # Find DSMs differences
     dem_diff_without_coreg = recursive_search(workingDir, 'initial_dem_diff.png')[0]
     result = recursive_search(workingDir, 'final_dem_diff.png')
@@ -104,6 +107,7 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
         dem_diff_with_coreg = None
 
     # Create source
+    # TODO CMN
     # -> header part
     src = '\n'.join([
         '.. _DSM_COMPARE_REPORT:',
@@ -118,6 +122,7 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
         '* **The Reference DSM**  : {}'.format(refName),
         ''
     ])
+    # TODO CMN
     # -> DSM differences
     src = '\n'.join([
         src,
@@ -136,6 +141,7 @@ def generate_report(workingDir, dsmName, refName, modeNames=None, docDir='.', pr
             '.. image:: /{}'.format(dem_diff_with_coreg),
             ''
         ])
+    # TODO Perso
     # -> table of contents
     src = '\n'.join([
         src,

@@ -49,7 +49,7 @@ class Partition:
         self._name = name
 
         # Create output dir (where to store partition results & data)
-        self._output_dir = os.path.join(outputDir, get_out_dir('stats_dir'), self._name)
+        self._output_dir = outputDir
         self.create_output_dir()
 
         # Store coreg path (TODO why?)
@@ -117,12 +117,27 @@ class Partition:
         return self._output_dir
 
     @property
+    def stats_dir(self):
+        return os.path.join(self.out_dir, get_out_dir('stats_dir'), self._name)
+
+    @property
     def histograms_dir(self):
         return os.path.join(self.out_dir, get_out_dir('histograms_dir'), self._name)
 
     @property
     def plots_dir(self):
         return os.path.join(self.out_dir, get_out_dir('snapshots_dir'), self._name)
+
+    @property
+    def stats_mode_json(self):
+        # {'standard': 'chemin_stats_standard.json',
+        #  'coherent' etc.}
+        return self._stats_mode_json_dict
+
+    # TODO faire le set du property stats_mode_json
+    @stats_mode_json.setter
+    def stats_mode_json(self, mode_json_dict):
+        self._stats_mode_json_dict = mode_json_dict
 
     @property
     def coreg_shape(self):
@@ -161,14 +176,23 @@ class Partition:
         return self._sets_indexes['dsm']
 
     @property
+    def stats_results(self):
+        #TODO !
+        stats_results = {}
+        return stats_results
+
+    @property
     def sets_masks(self):
-        masks = [[] for i in range(2)]
+        masks_ref = []
+        masks_dsm = []
         for label_idx in range(len(self._sets_labels)):
-            masks[0].append(np.ones(self.coreg_shape) * False)
-            masks[0][label_idx][self.sets_indexes_ref[label_idx]] = True
-            masks[1].append(np.ones(self.coreg_shape) * False)
-            masks[1][label_idx][self.sets_indexes_dsm[label_idx]] = True
-        return masks
+            if self.sets_indexes_ref:
+                masks_ref.append(np.ones(self.coreg_shape) * False)
+                masks_ref[label_idx][self.sets_indexes_ref[label_idx]] = True
+            if self.sets_indexes_dsm:
+                masks_dsm.append(np.ones(self.coreg_shape) * False)
+                masks_dsm[label_idx][self.sets_indexes_dsm[label_idx]] = True
+        return [item for item in (masks_ref, masks_dsm) if len(item)]
 
     def __repr__(self):
         return "self.name : {}\n, self.type_layer : {}\n, self.ref_path : {}\n, self.dsm_path : {}\n, " \
@@ -203,7 +227,7 @@ class Partition:
         :param name_layer: layer name
         :return:
         """
-        os.makedirs(self._output_dir, exist_ok=True)
+        os.makedirs(self.stats_dir, exist_ok=True)
         os.makedirs(self.histograms_dir, exist_ok=True)
         os.makedirs(self.plots_dir, exist_ok=True)
 
@@ -216,7 +240,7 @@ class Partition:
         :return:
         """
         # Compute ref slope
-        self.ref_path = os.path.join(self._output_dir, 'Ref_support.tif')
+        self.ref_path = os.path.join(self.stats_dir, 'Ref_support.tif')
         slope_ref, aspect_ref = coreg_ref.get_slope_and_aspect(degree=False)
         slope_ref_georaster = A3DGeoRaster.from_raster(slope_ref,
                                                        coreg_ref.trans,
@@ -225,7 +249,7 @@ class Partition:
         slope_ref_georaster.save_geotiff(self.ref_path)
 
         # Compute dsm slope
-        self.dsm_path = os.path.join(self._output_dir, 'DSM_support.tif')
+        self.dsm_path = os.path.join(self.stats_dir, 'DSM_support.tif')
         slope_dsm, aspect_dsm = coreg_dsm.get_slope_and_aspect(degree=False)
         slope_dsm_georaster = A3DGeoRaster.from_raster(slope_dsm,
                                                        coreg_dsm.trans,
@@ -251,7 +275,7 @@ class Partition:
             else:
                 map_img.r[np.where((slope.r >= rad_range[idx]) & (slope.r < rad_range[idx + 1]))] = rad_range[idx]
 
-        self.map_path[type_slope] = os.path.join(self._output_dir, type_slope + '_support_map.tif')
+        self.map_path[type_slope] = os.path.join(self.stats_dir, type_slope + '_support_map.tif')
         map_img.save_geotiff(self.map_path[type_slope])
 
     def _create_set_indices(self):
@@ -309,8 +333,8 @@ class Partition:
 
         # fill sets_indexes
         tuples_of_labels_and_indexes = self._create_set_indices()
-        self._sets_indexes = {'ref': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8)),
-                              'dsm': (np.array([], dtype=np.uint8), np.array([], dtype=np.uint8))}
+        self._sets_indexes = {'ref': None,
+                              'dsm': None}
         if tuples_of_labels_and_indexes['ref']:
             self._sets_indexes['ref'] = [item[1] for item in tuples_of_labels_and_indexes['ref']]
         if tuples_of_labels_and_indexes['dsm']:
@@ -330,7 +354,7 @@ class Partition:
                                                   self.coreg_path[map_name].footprint[3],
                                                   self.coreg_path[map_name].xres, self.coreg_path[map_name].yres,
                                                   nodata=map_img.nodata, interp_type=gdal.GRA_NearestNeighbour)
-                self.reproject_path[map_name] = os.path.join(self._output_dir,
+                self.reproject_path[map_name] = os.path.join(self.stats_dir,
                                                              map_name + '_support_map_rectif.tif')
                 rectified_map.save_geotiff(self.reproject_path[map_name])
 
@@ -359,6 +383,7 @@ class Fusion_partition(Partition):
         self.ref_path = ''
         self.dsm_path = ''
         self.coreg_path = {'ref': None, 'dsm': None}
+        self._coreg_shape = partitions[0].coreg_shape
         self.reproject_path = {'ref': None, 'dsm': None}
         self.nodata = -32768.0
         # sets ==> TODO utiliser _fill_sets_attributs
@@ -367,13 +392,14 @@ class Fusion_partition(Partition):
         self._sets_labels = None
         self.map_path = {'ref': None, 'dsm': None}
 
+
         self._classes = {}
         all_combi_labels = None
 
         # create folder stats results fusion si layers_ref_flag ou layers_dsm_flag est à True
         # =====> On ne cree pas le dossier de sortie de la couche fusionné
         self._name = 'fusion_layer'
-        self._output_dir = os.path.join(outputDir, get_out_dir('stats_dir'), self._name)
+        self._output_dir = outputDir
         self._type_layer = 'classification_layers'
         self.create_output_dir()
 
@@ -409,7 +435,7 @@ class Fusion_partition(Partition):
                     create_fusion(sets_masks, all_combi_labels, self._classes, clayers_to_fusion[0][1])
 
                 # save map_fusion
-                self.map_path[df_k] = os.path.join(self._output_dir, '{}_fusion_layer.tif'.format(df_k))
+                self.map_path[df_k] = os.path.join(self.stats_dir, '{}_fusion_layer.tif'.format(df_k))
                 map_fusion.save_geotiff(self.map_path[df_k])
 
         # fill sets names and labels

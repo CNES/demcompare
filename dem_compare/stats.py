@@ -738,7 +738,6 @@ def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=N
                     print('Error: plot_files and plot_colors should have same dimension as labels_plotted')
                     raise
 
-    print('results = {}'.format(results))
     with open(output_json_file, 'w') as outfile:
         json.dump(results, outfile, indent=4)
 
@@ -892,22 +891,23 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                                 outliers_free_mask=outliers_free_mask)
 
         # Save stats as plots, csv and json and do so for each mode
-        # TODO stats results
-        #cfg['stats_results']['modes'][p.name] = \
-        save_as_graphs_and_tables(alti_map.r,
-                                                                          p.out_dir,
-                                                                          p.histograms_dir,
-                                                                          p.plots_dir,
-                                                                          mode_masks,     # contains outliers_free_mask
-                                                                          mode_names,
-                                                                          mode_stats,
-                                                                          p.sets_masks[0], # do not need 'ref' and 'dsm' only one of them
-                                                                          p.sets_labels,
-                                                                          p.sets_colors,
-                                                                          plot_title=''.join(get_title(cfg)),
-                                                                          bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
-                                                                          display=display,
-                                                                          plot_real_hist=cfg['stats_opts']['plot_real_hists'])
+        p.stats_mode_json = save_as_graphs_and_tables(alti_map.r,
+                                                      p.stats_dir,
+                                                      p.plots_dir,
+                                                      p.histograms_dir,
+                                                      mode_masks,     # contains outliers_free_mask
+                                                      mode_names,
+                                                      mode_stats,
+                                                      p.sets_masks[0], # do not need 'ref' and 'dsm' only one of them
+                                                      p.sets_labels,
+                                                      p.sets_colors,
+                                                      plot_title=''.join(get_title(cfg)),
+                                                      bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
+                                                      display=display,
+                                                      plot_real_hist=cfg['stats_opts']['plot_real_hists'])
+
+        # get partition stats results
+        cfg['stats_results'][p.name] = p.stats_results
 
 
 def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
