@@ -117,6 +117,14 @@ class Partition:
         return self._output_dir
 
     @property
+    def histograms_dir(self):
+        return os.path.join(self.out_dir, get_out_dir('histograms_dir'), self._name)
+
+    @property
+    def plots_dir(self):
+        return os.path.join(self.out_dir, get_out_dir('snapshots_dir'), self._name)
+
+    @property
     def coreg_shape(self):
         return self._coreg_shape
 
@@ -154,10 +162,12 @@ class Partition:
 
     @property
     def sets_masks(self):
-        masks = [np.ones(self.coreg_shape)*False for i in range(2)]
-        #TODO [0] = ref then we need to iter over labels
-        masks[0][self.sets_indexes_ref] = True
-        masks[1][self.sets_indexes_dsm] = True
+        masks = [[] for i in range(2)]
+        for label_idx in range(len(self._sets_labels)):
+            masks[0].append(np.ones(self.coreg_shape) * False)
+            masks[0][label_idx][self.sets_indexes_ref[label_idx]] = True
+            masks[1].append(np.ones(self.coreg_shape) * False)
+            masks[1][label_idx][self.sets_indexes_dsm[label_idx]] = True
         return masks
 
     def __repr__(self):
@@ -192,6 +202,8 @@ class Partition:
         :return:
         """
         os.makedirs(self._output_dir, exist_ok=True)
+        os.makedirs(self.histograms_dir, exist_ok=True)
+        os.makedirs(self.plots_dir, exist_ok=True)
 
     def create_slope(self, coreg_dsm, coreg_ref):
         """
@@ -275,13 +287,13 @@ class Partition:
 
         # fill sets_labels & sets_names
         if self.name == 'slope':
-            self._sets_names = self.classes.keys()
+            self._sets_names = list(self.classes.keys())
             # Slope labels are historically customized
             self._sets_labels = [r'$\nabla$ > {}%'.format(self.classes[set_name])
                                  if set_name.endswith('inf[') else r'$\nabla \in$ {}'.format(set_name)
                                  for set_name in self._sets_names]
         else:
-            self._sets_labels = self.classes.keys()
+            self._sets_labels = list(self.classes.keys())
             self._sets_names = ['{}:{}'.format(key, value) for key, value in self.classes.items()]
             #self._sets_names = [name.replace(',', ';') for name in self._sets_names]
 
