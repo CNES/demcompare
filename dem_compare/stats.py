@@ -710,7 +710,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     P.figure(2)
     P.close()
 
-    return saved_files, saved_colors, saved_labels
+    return saved_files, saved_labels, saved_colors
 
 
 def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=None, plot_colors=None, to_csv=False):
@@ -738,6 +738,7 @@ def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=N
                     print('Error: plot_files and plot_colors should have same dimension as labels_plotted')
                     raise
 
+    print('results = {}'.format(results))
     with open(output_json_file, 'w') as outfile:
         json.dump(results, outfile, indent=4)
 
@@ -789,9 +790,15 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     # Create obj partition
     partitions = []
     for layer_name, tbcl in to_be_clayers.items():
-        partitions.append(Partition(layer_name, 'to_be_classification_layers', dsm, ref, outputDir, **tbcl))
+        try:
+            partitions.append(Partition(layer_name, 'to_be_classification_layers', dsm, ref, outputDir, **tbcl))
+        except:
+            raise ValueError('Cannot create partition for {}:{}'.format(layer_name, tbcl))
     for layer_name, cl in clayers.items():
-        partitions.append(Partition(layer_name, 'classification_layers', dsm, ref, outputDir, **cl))
+        try:
+            partitions.append(Partition(layer_name, 'classification_layers', dsm, ref, outputDir, **cl))
+        except:
+            raise ValueError('Cannot create partition for {}:{}'.format(layer_name, cl))
 
     # Create the fusion partition
     if len(partitions) > 1:
@@ -876,6 +883,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     # For every partition get stats and save them as plots and tables
     for p in partitions:
         # Compute stats for each mode and every sets
+        logging.info('get_stats_per_mode : partition {}'.format(p))
         mode_stats, mode_masks, mode_names = get_stats_per_mode(alti_map,
                                                                 sets_masks=p.sets_masks,
                                                                 sets_labels=p.sets_labels,
@@ -884,12 +892,16 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                                 outliers_free_mask=outliers_free_mask)
 
         # Save stats as plots, csv and json and do so for each mode
-        cfg['stats_results']['modes'][p.name] = save_as_graphs_and_tables(alti_map.r,
+        # TODO stats results
+        #cfg['stats_results']['modes'][p.name] = \
+        save_as_graphs_and_tables(alti_map.r,
                                                                           p.out_dir,
+                                                                          p.histograms_dir,
+                                                                          p.plots_dir,
                                                                           mode_masks,     # contains outliers_free_mask
                                                                           mode_names,
                                                                           mode_stats,
-                                                                          p.set_masks,
+                                                                          p.sets_masks[0], # do not need 'ref' and 'dsm' only one of them
                                                                           p.sets_labels,
                                                                           p.sets_colors,
                                                                           plot_title=''.join(get_title(cfg)),
@@ -898,7 +910,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                                           plot_real_hist=cfg['stats_opts']['plot_real_hists'])
 
 
-def save_as_graphs_and_tables(data_array, out_dir,
+def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
                               mode_masks, mode_names, mode_stats,
                               sets_masks, sets_labels, sets_colors,
                               plot_title='Title', bin_step=0.1, display=False, plot_real_hist=True):
@@ -929,33 +941,28 @@ def save_as_graphs_and_tables(data_array, out_dir,
         # TODO (peut etre prevoir une activation optionnelle du plotage...)
         sets_labels = ['all'] + sets_labels
         sets_colors = np.array([(0, 0, 0)] + list(sets_colors))
-        plot_files = plot_histograms(data_array,
-                                     bin_step=bin_step,
-                                     to_keep_mask=mode_masks[mode],
-                                     sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks,
-                                     sets_labels=sets_labels,
-                                     sets_colors=sets_colors,
-                                     plot_title='\n'.join(plot_title),
-                                     outplotdir=os.path.join(out_dir,
-                                                             get_out_dir('snapshots_dir')),
-                                     # TODO pb dir avec slope et class
-                                     outhistdir=os.path.join(out_dir,
-                                                             get_out_dir('histograms_dir')),
-                                     save_prefix=mode_names[mode],
-                                     display=display,
-                                     plot_real_hist=plot_real_hist)
+        plot_files, labels, colors = plot_histograms(data_array,
+                                                     bin_step=bin_step,
+                                                     to_keep_mask=mode_masks[mode],
+                                                     sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks[0],
+                                                     sets_labels=sets_labels,
+                                                     sets_colors=sets_colors,
+                                                     plot_title='\n'.join(plot_title),
+                                                     outplotdir=outplotdir,
+                                                     outhistdir=outhistdir,
+                                                     save_prefix=mode_names[mode],
+                                                     display=display,
+                                                     plot_real_hist=plot_real_hist)
 
         #
         # Save results as .json and .csv file
         #
-        mode_output_json_files[mode_names[mode]] = os.path.join(out_dir,
-                                                                get_out_dir('stats_dir'),
-                                                                'stats_results_' + mode_names[mode] + '.json')
+        mode_output_json_files[mode_names[mode]] = os.path.join(stats_dir, 'stats_results_' + mode_names[mode] + '.json')
         save_results(mode_output_json_files[mode_names[mode]],
                      mode_stats[mode],
-                     labels_plotted=sets_labels,
+                     labels_plotted=labels,
                      plot_files=plot_files,
-                     plot_colors=sets_colors,
+                     plot_colors=colors,
                      to_csv=True)
 
     return mode_output_json_files
@@ -991,16 +998,17 @@ def get_stats_per_mode(data, sets_masks=None, sets_labels=None, sets_names=None,
     mode_stats = []
     for mode in range(0, len(mode_names)):
         # Remove outliers
-        if outliers_free_mask:
+        if outliers_free_mask is not None:
             mode_masks[mode] *= outliers_free_mask
 
+
         # Compute stats for all sets of a single mode
-        mode_stats[mode] = get_stats(data.r,
-                                     to_keep_mask=mode_masks[mode],
-                                     sets=sets_masks[0],
-                                     sets_labels=sets_labels,
-                                     sets_names=sets_names,
-                                     list_threshold=elevation_thresholds)
+        mode_stats.append(get_stats(data.r,
+                                    to_keep_mask=mode_masks[mode],
+                                    sets=sets_masks[0],     # do not need ref and dsm but only one of them
+                                    sets_labels=sets_labels,
+                                    sets_names=sets_names,
+                                    list_threshold=elevation_thresholds))
 
     return mode_stats, mode_masks, mode_names
 
