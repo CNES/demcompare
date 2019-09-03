@@ -59,6 +59,8 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
     # Initialize the sphinx project
     SPM = SphinxProjectManager(projectDir, docDir, 'dem_compare_report', 'DEM Compare Report')
 
+    # TODO modes_information[mode] ecrasé, il faut un par partition => modes_information[partition_name][mode]
+
     # Initialize mode informations
     modes_information = collections.OrderedDict()
     modes_information['standard'] = {'pitch': 'This mode results simply relies only on valid values. This means nan '
@@ -72,7 +74,6 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
     modes = ['standard', 'coherent-classification', 'incoherent-classification']
     # TODO perso
     # TODO workingDir en fct de la layer
-    #partitionsList = partitionsList['slope']
     for partition_name, stats_results_d in partitionsList.items():
         print('------- partition_name = {}, stats_results_d = {} -------', partition_name, stats_results_d)
         for mode in modes:

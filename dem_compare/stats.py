@@ -915,6 +915,8 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
 
         # get partition stats results
         cfg['stats_results']['partitions'][p.name] = p.stats_results
+        # TODO soit c'est lui qui appel generate_report
+        #      soit Partition genere lui meme sa page HTML (cree un string) et generate_report() concatene les pages générées [SOLUTION PLUS ELEGANTE]
 
 
 def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
