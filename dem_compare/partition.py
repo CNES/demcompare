@@ -177,21 +177,40 @@ class Partition:
 
     @property
     def stats_results(self):
-        #TODO !
+        print("================================ set stats_results de {} ================================".format(self.name))
         stats_results = {}
+        # TODO par modes : les paths, nodata
+        # modes = ['standard', 'coherent', 'incoherent']
+        # stats_results[self.name] = {}
+        #### mode standard ####
+        stats_results['standard'] = {'Ref_support': None, 'DSM_support': None}
+        print("self.ref_path, self.dsm_path : ", self.ref_path, self.dsm_path)
+        if self.ref_path or self.map_path['ref']:
+            stats_results['standard']['Ref_support'] = {'nodata': self.nodata, 'path': self.map_path['ref']}
+        if self.dsm_path or self.map_path['dsm']:
+            stats_results['standard']['DSM_support'] = {'nodata': self.nodata, 'path': self.map_path['dsm']}
+        if (self.ref_path or self.map_path['ref']) and (self.dsm_path or self.map_path['dsm']):
+            ##### mode coherent ######
+            stats_results['coherent-classification'] = {'Ref_support': None, 'DSM_support': None}
+            # TODO replire le coherent avec les map correspondante
+            ##### mode incoherent ######
+            stats_results['incoherent-classification'] = {'Ref_support': None, 'DSM_support': None}
+            # TODO replire le coherent avec les map correspondante
+        print("=====> stats_results : ", stats_results)
         return stats_results
 
     @property
     def sets_masks(self):
         masks_ref = []
         masks_dsm = []
+        # print("----- def sets_masks() ------")
         for label_idx in range(len(self._sets_labels)):
             if self.sets_indexes_ref:
                 masks_ref.append(np.ones(self.coreg_shape) * False)
-                masks_ref[label_idx][self.sets_indexes_ref[label_idx]] = True
+                masks_ref[label_idx][self.sets_indexes_ref[label_idx][1]] = True
             if self.sets_indexes_dsm:
                 masks_dsm.append(np.ones(self.coreg_shape) * False)
-                masks_dsm[label_idx][self.sets_indexes_dsm[label_idx]] = True
+                masks_dsm[label_idx][self.sets_indexes_dsm[label_idx][1]] = True
         return [item for item in (masks_ref, masks_dsm) if len(item)]
 
     def __repr__(self):
@@ -386,12 +405,10 @@ class Fusion_partition(Partition):
         self._coreg_shape = partitions[0].coreg_shape
         self.reproject_path = {'ref': None, 'dsm': None}
         self.nodata = -32768.0
-        # sets ==> TODO utiliser _fill_sets_attributs
         self._sets_indexes = {'ref': None, 'dsm': None}
         self._sets_names = None
         self._sets_labels = None
         self.map_path = {'ref': None, 'dsm': None}
-
 
         self._classes = {}
         all_combi_labels = None
@@ -437,6 +454,7 @@ class Fusion_partition(Partition):
                 # save map_fusion
                 self.map_path[df_k] = os.path.join(self.stats_dir, '{}_fusion_layer.tif'.format(df_k))
                 map_fusion.save_geotiff(self.map_path[df_k])
+        # Si ref ou dsm renseigner self.ref_path et self.dsm_path !!!
 
         # fill sets names and labels
         self._fill_sets_names_labels()

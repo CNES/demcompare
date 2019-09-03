@@ -168,6 +168,7 @@ def layers_fusion(clayers, sets, outputDir):
     return clayers, sets_fusion
 '''
 
+'''
 def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
     """
     TODO create la fusion de toute les maps
@@ -192,6 +193,7 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
             #dict_elm_to_fusion[layer_name][label_name] = sets_masks[layer_name]['sets_def'][label_name]
             # concatene les masques des differentes labels du tuple/combi dans mask_fusion
             mask_label = np.zeros(layers_obj.r.shape)
+            print(sets_masks[layer_name]['sets_def'][label_name])
             mask_label[sets_masks[layer_name]['sets_def'][label_name]] = 1
             mask_fusion = mask_fusion * mask_label
 
@@ -207,6 +209,7 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
                                    "{}".format(layers_obj.srs.ExportToProj4()), nodata=-32768)
 
     return map, sets_fusion, sets_colors / 255.
+'''
 
 
 # TODO voir si a supp !!
@@ -586,11 +589,11 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     :param plot_real_hist: plot or save (see display param) real histrograms
     :return: list saved files
     """
-
+    print("_________________ plot_histograms() _________________")
     saved_files=[]
     saved_labels=[]
     saved_colors=[]
-
+    print("sets = ", sets)
     #
     # Plot initialization
     #
@@ -622,6 +625,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
             # -> restricts to input data
             if to_keep_mask is not None:
                 sets[set_idx] = sets[set_idx] * to_keep_mask
+            print('}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} plot_histograms() : ', np.where(sets[set_idx] == True))
             data.append(input_array[np.where(sets[set_idx] == True)])
             full_color.append(sets_colors[set_idx])
         P.hist(data, density=True, label=sets_labels, histtype='step', color=full_color)
@@ -880,7 +884,9 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'])
 
     # For every partition get stats and save them as plots and tables
+    cfg['stats_results']['partitions'] = {}
     for p in partitions:
+        print("********** CALCULATE STATS/GRAPHS, ... de {} **********".format(p.name))
         # Compute stats for each mode and every sets
         logging.info('get_stats_per_mode : partition {}'.format(p))
         mode_stats, mode_masks, mode_names = get_stats_per_mode(alti_map,
@@ -905,9 +911,10 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                       bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
                                                       display=display,
                                                       plot_real_hist=cfg['stats_opts']['plot_real_hists'])
+        print("===========> p.stats_mode_json = ", p.stats_mode_json)
 
         # get partition stats results
-        cfg['stats_results'][p.name] = p.stats_results
+        cfg['stats_results']['partitions'][p.name] = p.stats_results
 
 
 def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
@@ -930,6 +937,9 @@ def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
     :param plot_real_hist:
     :return:
     """
+    print('################ save_as_graphs_and_tables #################')
+    print(data_array, stats_dir, outplotdir, outhistdir, mode_masks, mode_names, mode_stats,
+          sets_masks, sets_labels, sets_colors,)
 
     mode_output_json_files = {}
     for mode in range(0, len(mode_names)):

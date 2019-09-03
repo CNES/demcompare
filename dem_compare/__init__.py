@@ -47,7 +47,6 @@ def setup_logging(path='dem_compare/logging.json', default_level=logging.WARNING
         logging.basicConfig(level=default_level)
 
 
-
 def computeReport(cfg, steps, dem, ref):
     """
     Create html and pdf report
@@ -61,7 +60,7 @@ def computeReport(cfg, steps, dem, ref):
         report.generate_report(cfg['outputDir'],
                                dem.ds_file,
                                ref.ds_file,
-                               [modename for modename, modefile in list(cfg['stats_results']['modes'].items())],
+                               cfg['stats_results']['partitions'],
                                os.path.join(cfg['outputDir'], get_out_dir('sphinx_built_doc')),
                                os.path.join(cfg['outputDir'], get_out_dir('sphinx_src_doc')))
 
