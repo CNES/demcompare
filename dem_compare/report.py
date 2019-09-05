@@ -63,18 +63,24 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
 
     # Initialize mode informations
     modes_information = collections.OrderedDict()
-    modes_information['standard'] = {'pitch': 'This mode results simply relies only on valid values. This means nan '
-                                              'values (whether they are from the error image or the reference support '
-                                              'image when do_classification is on), but also ouliers and masked ones '
-                                              'has been discarded.'}
-    modes_information['coherent-classification'] = {'pitch': 'This is the standard mode where only the pixels for '
-                                                             'which input DSMs classifications are coherent.'}
-    modes_information['incoherent-classification'] = {'pitch': 'This mode is the \'coherent-classification\' '
-                                                               'complementary.'}
-    modes = ['standard', 'coherent-classification', 'incoherent-classification']
+
+
     # TODO perso
     # TODO workingDir en fct de la layer
     for partition_name, stats_results_d in partitionsList.items():
+        # Initialize mode informations for partition
+        modes_information[partition_name] = collections.OrderedDict()
+        modes_information[partition_name]['standard'] = {
+            'pitch': 'This mode results simply relies only on valid values. This means nan '
+                     'values (whether they are from the error image or the reference support '
+                     'image when do_classification is on), but also ouliers and masked ones '
+                     'has been discarded.'}
+        modes_information[partition_name]['coherent-classification'] = {'pitch': 'This is the standard mode where only the pixels for '
+                                                                 'which input DSMs classifications are coherent.'}
+        modes_information[partition_name]['incoherent-classification'] = {'pitch': 'This mode is the \'coherent-classification\' '
+                                                                   'complementary.'}
+        modes = ['standard', 'coherent-classification', 'incoherent-classification']
+
         print('------- partition_name = {}, stats_results_d = {} -------', partition_name, stats_results_d)
         for mode in modes:
             #for mode in modes_information:
@@ -83,17 +89,17 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
             result = recursive_search(os.path.join(workingDir, '*', partition_name), '*Real*_{}*.png'.format(mode))
             print("--> result pour *Real* = ", result)
             if len(result):
-                modes_information[mode]['histo'] = result[0]
+                modes_information[partition_name][mode]['histo'] = result[0]
             else:
-                modes_information[mode]['histo'] = None
+                modes_information[partition_name][mode]['histo'] = None
 
             # - graph
             result = recursive_search(os.path.join(workingDir, '*', partition_name), '*Fitted*_{}*.png'.format(mode))
             print("--> result *Fitted* = ", result)
             if len(result):
-                modes_information[mode]['fitted_histo'] = result[0]
+                modes_information[partition_name][mode]['fitted_histo'] = result[0]
             else:
-                modes_information[mode]['fitted_histo'] = None
+                modes_information[partition_name][mode]['fitted_histo'] = None
             # - csv
             result = recursive_search(os.path.join(workingDir, '*', partition_name), '*_{}*.csv'.format(mode))
             print("--> result CSV = ", result)
@@ -104,11 +110,11 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
                         csv_lines_reader = csv.reader(csv_file, quoting=csv.QUOTE_NONNUMERIC)
                         for row in csv_lines_reader:
                             csv_data.append(','.join([item if type(item) is str else format(item, '.2f') for item in row]))
-                    modes_information[mode]['csv'] = '\n'.join(['    '+csv_single_data for csv_single_data in csv_data])
+                    modes_information[partition_name][mode]['csv'] = '\n'.join(['    '+csv_single_data for csv_single_data in csv_data])
                 else:
-                    modes_information[mode]['csv'] = None
+                    modes_information[partition_name][mode]['csv'] = None
             else:
-                modes_information[mode]['csv'] = None
+                modes_information[partition_name][mode]['csv'] = None
 
     # TODO commun
     # Find DSMs differences
@@ -177,10 +183,10 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
         for mode in modes:
             if mode in stats_results_d:
                 print("mode = ", mode)
-                the_mode_pitch = modes_information[mode]['pitch']
-                the_mode_histo = modes_information[mode]['histo']
-                the_mode_fitted_histo = modes_information[mode]['fitted_histo']
-                the_mode_csv = modes_information[mode]['csv']
+                the_mode_pitch = modes_information[partition_name][mode]['pitch']
+                the_mode_histo = modes_information[partition_name][mode]['histo']
+                the_mode_fitted_histo = modes_information[partition_name][mode]['fitted_histo']
+                the_mode_csv = modes_information[partition_name][mode]['csv']
             else:
                 continue
             src = '\n'.join([
@@ -221,6 +227,7 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
                     ''
                 ])
     print("++++++ src = ", src)
+    print("//////////////// modes_information = ", modes_information)
     # Add source to the project
     SPM.write_body(src)
 

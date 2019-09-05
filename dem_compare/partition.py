@@ -338,7 +338,7 @@ class Partition:
         else:
             self._sets_labels = list(self.classes.keys())
             self._sets_names = ['{}:{}'.format(key, value) for key, value in self.classes.items()]
-
+            self._sets_names = [name.replace(',', ';') for name in self._sets_names]
 
     def _fill_sets_attributes(self):
         """
