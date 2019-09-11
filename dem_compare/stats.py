@@ -93,217 +93,6 @@ def create_sets_slope(img_to_classify, sets_rad_range, tmpDir='.', output_descri
 
     return output_sets_def, sets_colors / 255
 
-''''
-# TODO a supp deplacé dans partition
-def layers_fusion(clayers, sets, outputDir):
-    """
-    TODO Merge the layers to generate the layers fusion
-    :param clayers: dict TODO
-    :param sets: dict, mask by label for each layer
-    :param outputDir: output directory
-    :return: TODO
-    """
-    # TODO changer de nom et sortir de là
-    def variables_activate(clayers, key_find):
-        for k in clayers.keys():
-            if not clayers[k][key_find]:
-                return False
-        return True
-
-    # la fusion des layers (slope, map, ...) ne se fait que si toutes les layers sont renseignees (= 'reproject_[ref/dsm]' pas à None)
-    all_layers_ref_flag = variables_activate(clayers, 'reproject_ref')
-    all_layers_dsm_flag = variables_activate(clayers, 'reproject_dsm')
-
-    dict_fusion = {'ref': all_layers_ref_flag, 'dsm': all_layers_dsm_flag}
-    support_name = {'ref': 'Ref_support', 'dsm': 'DSM_support'}
-    dict_stats_fusion = {'ref': None, 'dsm': None, 'reproject_ref': None, 'reproject_dsm': None,
-                         'stats_results': {'Ref_support': None, 'DSM_support': None}}
-    #dict_stats_fusion['stats_results'] = {'ref': None, 'dsm': None}
-    classes_fusion = None
-    all_combi_labels = None
-
-    # create folder stats results fusion si layers_ref_flag ou layers_dsm_flag est à True
-    if all_layers_ref_flag or all_layers_dsm_flag:
-        create_stats_results(outputDir, 'fusion_layer')
-
-        # Boucle sur [ref, dsm]
-        #   Boucle sur chaque layer
-        #       S'il y a plusieurs des layers données ou calculées
-        #           ==> pour calculer les masks de chaque label
-        #           ==> calculer toutes les combinaisons (developpement des labels entre eux mais pas les listes)
-        #           ==> puis calculer les masks fusionnés (a associer avec les bons labels)
-        #           ==> generer la nouvelle image classif (fusion) avec de nouveaux labels calculés arbitrairement et liés aux labels d entrees
-        for df_k, df_v in dict_fusion.items():
-            if df_v:
-                # get les reproject_ref/dsm et faire une nouvelles map avec son dictionnaire associé
-                clayers_to_fusion_path = [(k, clayers[k][str('reproject_' + df_k)]) for k in clayers.keys()]
-                # lire les images clayers_to_fusion
-                clayers_to_fusion = [(k, A3DGeoRaster(cltfp)) for k, cltfp in clayers_to_fusion_path]
-
-                classes_to_fusion = []
-                for k, cltfp in clayers.items():
-                    classes_to_fusion.append([(k, cl_classes_label) for cl_classes_label in clayers[k]['classes'].keys()])
-
-                if not (all_combi_labels and classes_fusion):
-                    all_combi_labels, classes_fusion = create_new_classes(classes_to_fusion)
-
-                # create la layer fusionnee + les sets assossiés
-                sets_masks = sets[df_k]
-                map_fusion, sets_def_fusion, sets_colors_fusion = create_fusion(sets_masks, all_combi_labels, classes_fusion, clayers_to_fusion[0][1])
-                sets_fusion = {df_k: {'fusion_layer': {'sets_def': dict(sets_def_fusion), 'sets_colors': sets_colors_fusion}}}
-
-                # save map_fusion
-                map_fusion_path = os.path.join(outputDir, get_out_dir('stats_dir'),
-                                               'fusion_layer', '{}_fusion_layer.tif'.format(df_k))
-                map_fusion.save_geotiff(map_fusion_path)
-                # save dico de la layer
-                dict_stats_fusion['classes'] = classes_fusion
-                dict_stats_fusion[df_k] = map_fusion_path
-                dict_stats_fusion[str('reproject_{}'.format(df_k))] = map_fusion_path
-                dict_stats_fusion['stats_results'][support_name[df_k]] = {'nodata': -32768, 'path': map_fusion_path}
-
-    # ajout des stats fussionees dans le dictionnaire
-    clayers['fusion_layer'] = dict_stats_fusion
-
-    return clayers, sets_fusion
-'''
-
-'''
-def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
-    """
-    TODO create la fusion de toute les maps
-    :param sets_masks: dict par layer (exemple 'slope', 'carte_occupation', ...) contentant chacun une liste de tuple,
-                        dont chaque tuple contient ('nom_label', A3DGeoRaster_mask)
-    layers_obj: une layer d'exemple pour recuperer la taille et le georef
-    :return:
-    """
-    # create map qui fusionne toutes les combinaisons de classes
-    map_fusion = np.ones(layers_obj.r.shape) * -32768.0
-    sets_fusion = []
-    sets_colors = np.multiply(getColor(len(all_combi_labels)), 255)
-    # recupere les masques associées aux tuples
-    for combi in all_combi_labels:
-        #dict_elm_to_fusion = {}
-        mask_fusion = np.ones(layers_obj.r.shape)
-        for elm_combi in combi:
-            layer_name = elm_combi[0]
-            label_name = elm_combi[1]
-            # recupere le mask associé au label_name
-            #dict_elm_to_fusion[layer_name] = {}
-            #dict_elm_to_fusion[layer_name][label_name] = sets_masks[layer_name]['sets_def'][label_name]
-            # concatene les masques des differentes labels du tuple/combi dans mask_fusion
-            mask_label = np.zeros(layers_obj.r.shape)
-            print(sets_masks[layer_name]['sets_def'][label_name])
-            mask_label[sets_masks[layer_name]['sets_def'][label_name]] = 1
-            mask_fusion = mask_fusion * mask_label
-
-        # recupere le new label associé dans ls dictionnaire new_classes
-        new_label_name = '&'.join(['@'.join(elm_combi) for elm_combi in combi])
-        new_label_value = classes_fusion[new_label_name]
-        map_fusion[np.where(mask_fusion)] = new_label_value
-        # SAVE mask_fusion
-        sets_fusion.append((new_label_name, np.where(mask_fusion)))
-
-    # save map fusionne
-    map = A3DGeoRaster.from_raster(map_fusion,layers_obj.trans,
-                                   "{}".format(layers_obj.srs.ExportToProj4()), nodata=-32768)
-
-    return map, sets_fusion, sets_colors / 255.
-'''
-
-
-# TODO voir si a supp !!
-def get_sets_labels_and_names(class_rad_range):
-    """
-    Get sets' labels and sets' names
-
-    :param class_rad_range: list defining class ranges such as [0 10 25 100]
-    :return sets labels and names
-    """
-    sets_label_list = []
-    sets_name_list = []
-
-    for i in range(0, len(class_rad_range)):
-        if i == len(class_rad_range) - 1:
-            sets_label_list.append(r'$\nabla$ > {}%'.format(class_rad_range[i]))
-            sets_name_list.append('[{}; inf['.format(class_rad_range[i]))
-        else:
-            sets_label_list.append(r'$\nabla \in$ [{}% ; {}%['.format(class_rad_range[i], class_rad_range[i + 1]))
-            sets_name_list.append('[{}; {}['.format(class_rad_range[i], class_rad_range[i + 1]))
-
-    return sets_label_list, sets_name_list
-
-
-# TODO voir si a supp !!
-def get_sets_labels_and_names_for_classification(classes):
-    """
-    Get sets' labels and sets' names for classification_layer part
-
-    :param classes: dict defining class labels and names
-    :param support_ref: A3DGeoRaster classification reference
-    :param support_dsm: A3DGeoRaster classification dsm
-    :return: sets labels and names and classes updated
-    """
-    sets_label_list = list(classes.keys())
-    if sets_label_list[0].find('[') == 0:
-        sets_label_list = list()
-        for label in list(classes.keys()):
-            if label.find('inf]') > 0:
-                new_label = '$\nabla$ > ' + label.split('[')[1].split(';inf]')[0]
-            else:
-                new_label = '$\nabla \in$ ' + label
-            sets_label_list.append(new_label)
-
-    sets_name_list = ['{} : {}'.format(key, value) for key, value in classes.items()]
-    sets_name_list = [name.replace(',', ';') for name in sets_name_list]
-
-    return sets_label_list, sets_name_list
-
-
-def cross_class_apha_bands(ref_png_desc, dsm_png_desc, ref_sets, dsm_sets, tmpDir='.'):
-    """
-    Set accordingly the alpha bands of both png : for pixels where classification differs, alpha band is transparent
-
-    :param ref_png_desc: dictionary with 'path' and 'nodata' keys for the ref support classified img (png format)
-    :param dsm_png_desc: dictionary with 'path' and 'nodata' keys for the ref support classified img (png format)
-    :param ref_sets: list of ref sets (ref_png class)
-    :param dsm_sets: list of dsm sets (dsm_png class)
-    :param tmpDir: where to store temporary data
-    :return:
-    """
-
-    ref_dataset = gdal.Open(ref_png_desc['path'])
-    dsm_dataset = gdal.Open(dsm_png_desc['path'])
-    ref_mem_dataset = gdal.GetDriverByName('MEM').CreateCopy(os.path.join(tmpDir, 'tmp_ref.mem'), ref_dataset)
-    dsm_mem_dataset = gdal.GetDriverByName('MEM').CreateCopy(os.path.join(tmpDir, 'tmp_sec.mem'), dsm_dataset)
-    ref_aplha_v = ref_dataset.GetRasterBand(4).ReadAsArray()
-    dsm_aplha_v = dsm_dataset.GetRasterBand(4).ReadAsArray()
-    ref_dataset = None
-    dsm_dataset = None
-
-    # Combine pairs of sets together (meaning first ref set with first dsm set)
-    # -> then for each single class / set, we know which pixels are coherent between both ref and dsm support img
-    # -> combine_sets[0].shape[0] = number of sets (classes)
-    # -> combine_sets[0].shape[1] = number of pixels inside a single DSM
-    combine_sets = np.array([ref_sets[i][:] == dsm_sets[i][:] for i in range(0, len(ref_sets))])
-
-    # Merge all combined sets together so that if a pixel's value across all sets is not always True then the alpha
-    # band associated value is transparent (=0) since this pixel is not classified the same way between both support img
-    # -> np.all gives True when the pixel has been coherently classified since its bool val were sets pairwise identical
-    # -> np.where(...) gives indices of pixels for which cross classification is incoherent (np.all(...)==False)
-    # -> those pixels as set transparent (=0) in chanel 4
-    incoherent_indices=np.where(np.all(combine_sets,axis=0)==False)
-    ref_aplha_v[incoherent_indices] = 0
-    dsm_aplha_v[incoherent_indices] = 0
-
-    # Write down the results
-    ref_mem_dataset.GetRasterBand(4).WriteArray(ref_aplha_v)
-    dsm_mem_dataset.GetRasterBand(4).WriteArray(dsm_aplha_v)
-
-    # From MEM to PNG (GDAL does not seem to handle well PNG format)
-    gdal.GetDriverByName('PNG').CreateCopy(ref_png_desc['path'], ref_mem_dataset)
-    gdal.GetDriverByName('PNG').CreateCopy(dsm_png_desc['path'], dsm_mem_dataset)
-
 
 def get_nonan_mask(array, nan_value):
     return np.apply_along_axis(lambda x: (~np.isnan(x))*(x != nan_value), 0, array)
@@ -593,7 +382,6 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     saved_files=[]
     saved_labels=[]
     saved_colors=[]
-    print("sets = ", sets)
     #
     # Plot initialization
     #
@@ -888,7 +676,6 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     for p in partitions:
         print("********** CALCULATE STATS/GRAPHS, ... de {} **********".format(p.name))
         # Compute stats for each mode and every sets
-        logging.info('get_stats_per_mode : partition {}'.format(p))
         mode_stats, mode_masks, mode_names = get_stats_per_mode(alti_map,
                                                                 sets_masks=p.sets_masks,
                                                                 sets_labels=p.sets_labels,
@@ -911,7 +698,6 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                       bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
                                                       display=display,
                                                       plot_real_hist=cfg['stats_opts']['plot_real_hists'])
-        print("===========> p.stats_mode_json = ", p.stats_mode_json)
 
         # get partition stats results
         cfg['stats_results']['partitions'][p.name] = p.stats_results
@@ -940,8 +726,7 @@ def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
     :return:
     """
     print('################ save_as_graphs_and_tables #################')
-    print(data_array, stats_dir, outplotdir, outhistdir, mode_masks, mode_names, mode_stats,
-          sets_masks, sets_labels, sets_colors,)
+    print('mode_names = {}'.format(mode_names))
 
     mode_output_json_files = {}
     for mode in range(0, len(mode_names)):
