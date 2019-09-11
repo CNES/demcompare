@@ -639,7 +639,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                   'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.yres}}
         title.append('(mean biases : '
                      'dx : {:.2f}m (roughly {:.2f}pixel); '
-                     'dy : {:.2f}m (roughly {:.2f}pixel);'.format(biases['dx']['value_m'],
+                     'dy : {:.2f}m (roughly {:.2f}pixel);)'.format(biases['dx']['value_m'],
                                                                   biases['dx']['value_p'],
                                                                   biases['dy']['value_m'],
                                                                   biases['dy']['value_p']))
@@ -647,7 +647,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         rect_dsm_cfg = cfg['alti_results']['rectifiedDSM']
         title.append('(holes or no data stats: '
                      'Reference DSM  % nan values : {:.2f}%; '
-                     'DSM to compare % nan values : {:.2f}%;'.format(100 * (1 - float(rect_ref_cfg['nb_valid_points'])
+                     'DSM to compare % nan values : {:.2f}%;)'.format(100 * (1 - float(rect_ref_cfg['nb_valid_points'])
                                                                             / float(rect_ref_cfg['nb_points'])),
                                                                      100 * (1 - float(rect_dsm_cfg['nb_valid_points'])
                                                                             / float(rect_dsm_cfg['nb_points']))))
@@ -692,7 +692,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                       p.sets_masks[0], # do not need 'ref' and 'dsm' only one of them
                                                       p.sets_labels,
                                                       p.sets_colors,
-                                                      plot_title=''.join(get_title(cfg)),
+                                                      plot_title='\n'.join(get_title(cfg)),
                                                       bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
                                                       display=display,
                                                       plot_real_hist=cfg['stats_opts']['plot_real_hists'])
@@ -727,15 +727,16 @@ def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
     print('mode_names = {}'.format(mode_names))
 
     mode_output_json_files = {}
+    # TODO (peut etre prevoir une activation optionnelle du plotage...)
+    sets_labels = ['all'] + sets_labels
+    sets_colors = np.array([(0, 0, 0)] + list(sets_colors))
+
     for mode in range(0, len(mode_names)):
         #
         # Create plots for the actual mode and for all sets
         #
         # -> we are then ready to do some plots !
 
-        # TODO (peut etre prevoir une activation optionnelle du plotage...)
-        sets_labels = ['all'] + sets_labels
-        sets_colors = np.array([(0, 0, 0)] + list(sets_colors))
 
         plot_files, labels, colors = plot_histograms(data_array,
                                                      bin_step=bin_step,
@@ -743,7 +744,7 @@ def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
                                                      sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks,
                                                      sets_labels=sets_labels,
                                                      sets_colors=sets_colors,
-                                                     plot_title='\n'.join(plot_title),
+                                                     plot_title=plot_title,
                                                      outplotdir=outplotdir,
                                                      outhistdir=outhistdir,
                                                      save_prefix=mode_names[mode],
