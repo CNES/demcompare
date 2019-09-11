@@ -510,7 +510,7 @@ def getColor(nb_color=10):
     if nb_color > 20:
         raise NameError("Error : Too many colors requested")
 
-    return np.array(x.colors)
+    return np.array(x.colors[0:nb_color])
 
 
 def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
