@@ -201,17 +201,23 @@ class Partition:
 
     @property
     def sets_masks(self):
-        masks_ref = []
-        masks_dsm = []
-        # print("----- def sets_masks() ------")
-        for label_idx in range(len(self._sets_labels)):
+        if self._sets_masks is None:
+            all_masks = []
+            ref_masks = []
+            dsm_masks = []
             if self.sets_indexes_ref:
-                masks_ref.append(np.ones(self.coreg_shape) * False)
-                masks_ref[label_idx][self.sets_indexes_ref[label_idx][1]] = True
+                for label_idx in range(len(self.sets_labels)):
+                    ref_masks.append(np.ones(self.coreg_shape) * False)
+                    ref_masks[label_idx][self.sets_indexes_ref[label_idx]] = True
+                all_masks.append(ref_masks)
             if self.sets_indexes_dsm:
-                masks_dsm.append(np.ones(self.coreg_shape) * False)
-                masks_dsm[label_idx][self.sets_indexes_dsm[label_idx][1]] = True
-        return [item for item in (masks_ref, masks_dsm) if len(item)]
+                for label_idx in range(len(self.sets_labels)):
+                    dsm_masks.append(np.ones(self.coreg_shape) * False)
+                    dsm_masks[label_idx][self.sets_indexes_ref[label_idx]] = True
+                all_masks.append(dsm_masks)
+            self._sets_masks = all_masks
+
+        return self._sets_masks
 
     def __repr__(self):
         return "self.name : {}\n, self.type_layer : {}\n, self.ref_path : {}\n, self.dsm_path : {}\n, " \
@@ -358,6 +364,7 @@ class Partition:
             self._sets_indexes['ref'] = [item[1] for item in tuples_of_labels_and_indexes['ref']]
         if tuples_of_labels_and_indexes['dsm']:
             self._sets_indexes['dsm'] = [item[1] for item in tuples_of_labels_and_indexes['dsm']]
+        self._sets_masks = None
 
     def rectify_map(self):
         """

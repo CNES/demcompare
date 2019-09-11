@@ -738,10 +738,11 @@ def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
         # TODO (peut etre prevoir une activation optionnelle du plotage...)
         sets_labels = ['all'] + sets_labels
         sets_colors = np.array([(0, 0, 0)] + list(sets_colors))
+
         plot_files, labels, colors = plot_histograms(data_array,
                                                      bin_step=bin_step,
                                                      to_keep_mask=mode_masks[mode],
-                                                     sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks[0],
+                                                     sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks,
                                                      sets_labels=sets_labels,
                                                      sets_colors=sets_colors,
                                                      plot_title='\n'.join(plot_title),
