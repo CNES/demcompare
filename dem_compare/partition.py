@@ -213,7 +213,7 @@ class Partition:
             if self.sets_indexes_dsm:
                 for label_idx in range(len(self.sets_labels)):
                     dsm_masks.append(np.ones(self.coreg_shape) * False)
-                    dsm_masks[label_idx][self.sets_indexes_ref[label_idx]] = True
+                    dsm_masks[label_idx][self.sets_indexes_dsm[label_idx]] = True
                 all_masks.append(dsm_masks)
             self._sets_masks = all_masks
 
