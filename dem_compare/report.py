@@ -49,9 +49,6 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
     :param projectDir:
     :return:
     """
-    print("--------------------- generate_report ---------------------")
-    print('workingDir = ', workingDir)
-    print("partitionsList = ", partitionsList)
 
     if partitionsList is None:
         partitionsList = ['standard']
@@ -81,13 +78,11 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
                                                                    'complementary.'}
         modes = ['standard', 'coherent-classification', 'incoherent-classification']
 
-        print('------- partition_name = {}, stats_results_d = {} -------', partition_name, stats_results_d)
         for mode in modes:
             #for mode in modes_information:
             # find both graph and csv stats associated with the mode
             # - histograms
             result = recursive_search(os.path.join(workingDir, '*', partition_name), '*Real*_{}*.png'.format(mode))
-            print("--> result pour *Real* = ", result)
             if len(result):
                 modes_information[partition_name][mode]['histo'] = result[0]
             else:
@@ -95,14 +90,12 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
 
             # - graph
             result = recursive_search(os.path.join(workingDir, '*', partition_name), '*Fitted*_{}*.png'.format(mode))
-            print("--> result *Fitted* = ", result)
             if len(result):
                 modes_information[partition_name][mode]['fitted_histo'] = result[0]
             else:
                 modes_information[partition_name][mode]['fitted_histo'] = None
             # - csv
             result = recursive_search(os.path.join(workingDir, '*', partition_name), '*_{}*.csv'.format(mode))
-            print("--> result CSV = ", result)
             if len(result):
                 if os.path.exists(result[0]):
                     csv_data = []
@@ -177,7 +170,6 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
         ])
     # print("++++++ src = ", src)
     # -> the results
-    print(">>>>>>>>>>>>>>>>>>> the results <<<<<<<<<<<<<<<<<<<<<<<<<<<<")
     for partition_name, stats_results_d in partitionsList.items():
         print("partition_name = ", partition_name)
         for mode in modes:
@@ -226,8 +218,6 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
                     '{}'.format(the_mode_csv),
                     ''
                 ])
-    print("++++++ src = ", src)
-    print("//////////////// modes_information = ", modes_information)
     # Add source to the project
     SPM.write_body(src)
 
