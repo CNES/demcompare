@@ -83,7 +83,7 @@ def main(baseline_dir, output_dir, epsilon=1.e-15):
                                      get_out_dir('stats_dir', design=(baseline_fjson['otd'] if 'otd' in baseline_fjson
                                                                       else 'raw_OTD'))
                                      )
-    output_statsdir = os.path.join(output_dir, get_out_dir('stats_dir', design=output_fjson['otd']))
+    output_statsdir = os.path.join(output_dir, get_out_dir('stats_dir', design=output_fjson['otd']),'slope')
 
     # check csv files consistency
     ext = '.csv'
