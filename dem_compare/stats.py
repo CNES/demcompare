@@ -258,7 +258,7 @@ def stats_computation(array, list_threshold=None):
 
 
 def get_stats(dz_values, to_keep_mask=None, sets=None, sets_labels=None, sets_names=None,
-              list_threshold=None):
+              list_threshold=None, outliers_free_mask=None):
     """
     Get Stats for a specific array, considering potentially subsets of it
 
@@ -288,9 +288,11 @@ def get_stats(dz_values, to_keep_mask=None, sets=None, sets_labels=None, sets_na
     # - if a mask is not set, we set it with True values only so that it has no effect
     if to_keep_mask is None:
         to_keep_mask = np.ones(dz_values.shape)
+    if outliers_free_mask is None:
+        outliers_free_mask = np.ones(dz_values.shape)
 
     # Computing first set of values with all pixels considered -except the ones masked or the outliers-
-    output_list.append(stats_computation(dz_values[np.where(to_keep_mask == True)], list_threshold))
+    output_list.append(stats_computation(dz_values[np.where(to_keep_mask*outliers_free_mask == True)], list_threshold))
     # - we add standard information for later use
     output_list[0]['set_label'] = 'all'
     output_list[0]['set_name'] = 'All classes considered'
@@ -301,7 +303,7 @@ def get_stats(dz_values, to_keep_mask=None, sets=None, sets_labels=None, sets_na
     # Computing stats for all sets (sets are a partition of all values)
     if sets is not None and sets_labels is not None and sets_names is not None:
         for set_idx in range(0,len(sets)):
-            set = sets[set_idx] * to_keep_mask
+            set = sets[set_idx] * to_keep_mask * outliers_free_mask
 
             data = dz_values[np.where(set == True)]
             output_list.append(stats_computation(data, list_threshold))
@@ -686,7 +688,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
                                                       p.stats_dir,
                                                       p.plots_dir,
                                                       p.histograms_dir,
-                                                      mode_masks,     # contains outliers_free_mask
+                                                      [mode_mask * outliers_free_mask for mode_mask in mode_masks],
                                                       mode_names,
                                                       mode_stats,
                                                       p.sets_masks[0], # do not need 'ref' and 'dsm' only one of them
@@ -723,9 +725,6 @@ def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
     :param plot_real_hist:
     :return:
     """
-    print('################ save_as_graphs_and_tables #################')
-    print('mode_names = {}'.format(mode_names))
-
     mode_output_json_files = {}
     # TODO (peut etre prevoir une activation optionnelle du plotage...)
     sets_labels = ['all'] + sets_labels
@@ -794,14 +793,11 @@ def get_stats_per_mode(data, sets_masks=None, sets_labels=None, sets_names=None,
     # Next is done for all modes
     mode_stats = []
     for mode in range(0, len(mode_names)):
-        # Remove outliers
-        if outliers_free_mask is not None:
-            mode_masks[mode] *= outliers_free_mask
-
 
         # Compute stats for all sets of a single mode
         mode_stats.append(get_stats(data.r,
                                     to_keep_mask=mode_masks[mode],
+                                    outliers_free_mask=outliers_free_mask,
                                     sets=sets_masks[0],     # do not need ref and dsm but only one of them
                                     sets_labels=sets_labels,
                                     sets_names=sets_names,
