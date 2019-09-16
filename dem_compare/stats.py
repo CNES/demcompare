@@ -585,13 +585,19 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     for layer_name, tbcl in to_be_clayers.items():
         try:
             partitions.append(Partition(layer_name, 'to_be_classification_layers', dsm, ref, outputDir, **tbcl))
-        except:
-            raise ValueError('Cannot create partition for {}:{}'.format(layer_name, tbcl))
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(('Cannot create partition for {}:{} -> {}'.format(layer_name, tbcl, e)))
+            pass
     for layer_name, cl in clayers.items():
         try:
             partitions.append(Partition(layer_name, 'classification_layers', dsm, ref, outputDir, **cl))
-        except:
-            raise ValueError('Cannot create partition for {}:{}'.format(layer_name, cl))
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(('Cannot create partition for {}:{} -> {}'.format(layer_name, cl, e)))
+            pass
 
     # Create the fusion partition
     if len(partitions) > 1:
@@ -674,7 +680,6 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     # For every partition get stats and save them as plots and tables
     cfg['stats_results']['partitions'] = {}
     for p in partitions:
-        print("********** CALCULATE STATS/GRAPHS, ... de {} **********".format(p.name))
         # Compute stats for each mode and every sets
         mode_stats, mode_masks, mode_names = get_stats_per_mode(alti_map,
                                                                 sets_masks=p.sets_masks,
