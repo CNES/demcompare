@@ -109,7 +109,7 @@ class Partition:
         # Create the sets based on the layer map
         self._fill_sets_attributes()
 
-        logging.info('Partition created as:', self)
+        logging.info('Partition created as: {}'.format(self))
 
     ####### getters and setters #######
     @property
@@ -134,7 +134,6 @@ class Partition:
         #  'coherent' etc.}
         return self._stats_mode_json_dict
 
-    # TODO faire le set du property stats_mode_json
     @stats_mode_json.setter
     def stats_mode_json(self, mode_json_dict):
         self._stats_mode_json_dict = mode_json_dict
@@ -220,13 +219,18 @@ class Partition:
         return self._sets_masks
 
     def __repr__(self):
-        return "self.name : {}\n, self.type_layer : {}\n, self.ref_path : {}\n, self.dsm_path : {}\n, " \
-               "self.reproject_path : {}\n, self.map_path : {}\n, self.classes : {}\n, self.coreg_path : {}\n," \
-               "self.sets_colors : {}\n, sets_names : {},\n sets_labels : {},\n " \
-               "sets_indexes_ref : {}\n, sets_indexes_dsm : {} \n".format(
-                self.name, self.type_layer, self.ref_path, self.dsm_path,
-                self.reproject_path, self.map_path, self.classes, self.coreg_path, self.sets_colors,
-                self.sets_names, self.sets_labels, self.sets_indexes_ref, self.sets_indexes_dsm)
+        return '\n'.join(["",
+                          "----",
+                          "| Partition {} of type : {}".format(self.name, self.type_layer),
+                          "| - path to REF input: ",
+                          "|\t{}".format(self.ref_path),
+                          "|   whose labeled & coregistered version is ",
+                          "|\t{}".format(self.map_path['ref']),
+                          "| - path to DSM input:",
+                          "|\t{}".format(self.dsm_path),
+                          "|   whose labeled & coregistered version is ",
+                          "|\t{}".format(self.map_path['dsm']),
+                          "----"])
 
     def generate_classes(self, ranges):
         # change the intervals into a list to make 'classes' generic
