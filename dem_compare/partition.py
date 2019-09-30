@@ -12,17 +12,18 @@ import os
 import collections
 import numpy as np
 import logging
+from functools import reduce
 from osgeo import gdal
 import itertools
 
 from .output_tree_design import get_out_dir
-from .a3d_georaster import A3DGeoRaster
+from .a3d_georaster import A3DGeoRaster, write_geotiff
 
 class NotEnoughDataToPartitionError(Exception):
     pass
 
 
-class Partition:
+class Partition(object):
     class LackOfPartitionDataError(Exception):
         def __init__(self):
             logging.error('At least one partition support must be provided '
@@ -38,6 +39,7 @@ class Partition:
 
     ####### initialization #######
     def __init__(self, name, partition_kind, coreg_dsm, coreg_ref, outputDir, **cfg_layer):
+
         # Sanity check
         if partition_kind in self.type:
             self._type_layer = partition_kind
@@ -58,58 +60,37 @@ class Partition:
         self.coreg_path['dsm'] = coreg_dsm
         self.coreg_path['ref'] = coreg_ref
 
-        # Store classes (TODO why?)
-        self._classes = {}
-        if 'classes' in cfg_layer:
-            self._classes = collections.OrderedDict(cfg_layer['classes'])
-        elif 'ranges' in cfg_layer:
-            # transform 'ranges' to 'classes'
-            self._classes = self.generate_classes(cfg_layer['ranges'])
-        else:
-            logging.error('Neither classes nor ranges where given as input sets to partition the stats')
-            raise KeyError
-
-        # Store path to initial layer
+        # Init input data path
         self.ref_path = ''
         self.dsm_path = ''
-        if 'ref' in cfg_layer:
-            self.ref_path = cfg_layer['ref']
-        if 'dsm' in cfg_layer:
-            self.dsm_path = cfg_layer['dsm']
-        if (not 'ref' in cfg_layer) and (not 'dsm' in cfg_layer):
-            raise self.LackOfPartitionDataError
-        if (not cfg_layer['ref']) and (not cfg_layer['dsm']):
-            if self.type_layer == "classification_layers":
-                raise self.LackOfPartitionDataError
-            else:
-                if self.name != 'slope':
-                    raise self.LackOfPartitionDataError
-                else:
-                    # create slope : ref and dsm
-                    self.create_slope(coreg_dsm, coreg_ref)
 
-        # Create the layer map
-        self.map_path = {'ref': None, 'dsm': None}
-        if self.type_layer == "to_be_classification_layers":
-            # if the partition is not yet a labelled map, then make it so
-            if self.ref_path:
-                self.create_map(self.ref_path, 'ref')
-            if self.dsm_path:
-                self.create_map(self.dsm_path, 'dsm')
-        elif self.type_layer == "classification_layers":
-            if 'ref' in cfg_layer:
-                self.map_path['ref'] = cfg_layer['ref']
-            if 'dsm' in cfg_layer:
-                self.map_path['dsm'] = cfg_layer['dsm']
-
-        # Reproj the layer map
+        # Init labelled map data
         self.reproject_path = {'ref': None, 'dsm': None}
-        self.rectify_map()
+        self.map_path = {'ref': None, 'dsm': None}
 
-        # Create the sets based on the layer map
-        self._fill_sets_attributes()
+        # Init sets attributes
+        self._sets_indexes = {'ref': None, 'dsm': None}
+        self._sets_names = None
+        self._sets_labels = None
+        self._sets_masks = None
+
+        # Create partition (labelled map with associated sets)
+        self._create_patition_sets(**cfg_layer)
 
         logging.info('Partition created as: {}'.format(self))
+
+
+    def _create_patition_sets(self, **cfg_layer):
+        """
+
+        :param cfg_layer:
+        :return:
+        """
+        # create labelled map to partition from
+        self._create_labelled_map(**cfg_layer)
+
+        # fill sets
+        self._fill_sets_attributes()
 
     ####### getters and setters #######
     @property
@@ -221,7 +202,7 @@ class Partition:
     def __repr__(self):
         return '\n'.join(["",
                           "----",
-                          "| Partition {} of type : {}".format(self.name, self.type_layer),
+                          "| Partition `{}` of type : {}".format(self.name, self.type_layer),
                           "| - path to REF input: ",
                           "|\t{}".format(self.ref_path),
                           "|   whose labeled & coregistered version is ",
@@ -362,13 +343,56 @@ class Partition:
 
         # fill sets_indexes
         tuples_of_labels_and_indexes = self._create_set_indices()
-        self._sets_indexes = {'ref': None,
-                              'dsm': None}
         if tuples_of_labels_and_indexes['ref']:
             self._sets_indexes['ref'] = [item[1] for item in tuples_of_labels_and_indexes['ref']]
         if tuples_of_labels_and_indexes['dsm']:
             self._sets_indexes['dsm'] = [item[1] for item in tuples_of_labels_and_indexes['dsm']]
-        self._sets_masks = None
+
+    def _create_labelled_map(self, **cfg_layer):
+
+        # Store classes (TODO why?)
+        self._classes = {}
+        if 'classes' in cfg_layer:
+            self._classes = collections.OrderedDict(cfg_layer['classes'])
+        elif 'ranges' in cfg_layer:
+            # transform 'ranges' to 'classes'
+            self._classes = self.generate_classes(cfg_layer['ranges'])
+        else:
+            logging.error('Neither classes nor ranges where given as input sets to partition the stats')
+            raise KeyError
+
+        # Store path to initial layer
+        if 'ref' in cfg_layer:
+            self.ref_path = cfg_layer['ref']
+        if 'dsm' in cfg_layer:
+            self.dsm_path = cfg_layer['dsm']
+        if (not 'ref' in cfg_layer) and (not 'dsm' in cfg_layer):
+            raise self.LackOfPartitionDataError
+        if (not cfg_layer['ref']) and (not cfg_layer['dsm']):
+            if self.type_layer == "classification_layers":
+                raise self.LackOfPartitionDataError
+            else:
+                if self.name != 'slope':
+                    raise self.LackOfPartitionDataError
+                else:
+                    # create slope : ref and dsm
+                    self.create_slope(self.coreg_path['dsm'], self.coreg_path['ref'])
+
+        # Create the layer map
+        if self.type_layer == "to_be_classification_layers":
+            # if the partition is not yet a labelled map, then make it so
+            if self.ref_path:
+                self.create_map(self.ref_path, 'ref')
+            if self.dsm_path:
+                self.create_map(self.dsm_path, 'dsm')
+        elif self.type_layer == "classification_layers":
+            if 'ref' in cfg_layer:
+                self.map_path['ref'] = cfg_layer['ref']
+            if 'dsm' in cfg_layer:
+                self.map_path['dsm'] = cfg_layer['dsm']
+
+        # Reproj the layer map
+        self.rectify_map()
 
     def rectify_map(self):
         """
@@ -397,103 +421,104 @@ class Fusion_partition(Partition):
         :param partitions: list d objet Partition
         :return: TODO
         """
-        #TODO find a way to call __init__ of Partition
+
+        # Sanity check
         if len(partitions) == 1:
             logging.error('There must be at least 2 partitions to be merged together')
             raise NotEnoughDataToPartitionError
 
-        logging.info('{}'.format([p.reproject_path['ref'] for p in partitions]))
-        dict_fusion = {'ref': np.all([p.reproject_path['ref'] is not None for p in partitions]),
-                       'dsm': np.all([p.reproject_path['dsm'] is not None for p in partitions])}
-        if ~(dict_fusion['ref'] + dict_fusion['dsm']) :
+        self.partitions = partitions
+
+        self.dict_fusion = {'ref': np.all([p.reproject_path['ref'] is not None for p in self.partitions]),
+                       'dsm': np.all([p.reproject_path['dsm'] is not None for p in self.partitions])}
+        if ~(self.dict_fusion['ref'] + self.dict_fusion['dsm']) :
             logging.error('For the partition to be merged, there must be at least one support (ref or dsm) '
                           'provided by every partition')
             raise NotEnoughDataToPartitionError
 
-        self.ref_path = ''
-        self.dsm_path = ''
-        self.coreg_path = {'ref': None, 'dsm': None}
-        self._coreg_shape = partitions[0].coreg_shape
-        self.reproject_path = {'ref': None, 'dsm': None}
-        self.nodata = -32768.0
-        self._sets_indexes = {'ref': None, 'dsm': None}
-        self._sets_names = None
-        self._sets_labels = None
-        self.map_path = {'ref': None, 'dsm': None}
+        super(Fusion_partition, self).__init__('fusion_layer',
+                                               'classification_layers',
+                                               coreg_dsm=partitions[0].coreg_path['dsm'],
+                                               coreg_ref=partitions[0].coreg_path['ref'],
+                                               outputDir=outputDir)
 
-        self._classes = {}
-        all_combi_labels = None
+    def _create_patition_sets(self, **kwargs):
+        """
 
-        # create folder stats results fusion si layers_ref_flag ou layers_dsm_flag est à True
-        # =====> On ne cree pas le dossier de sortie de la couche fusionné
-        self._name = 'fusion_layer'
-        self._output_dir = outputDir
-        self._type_layer = 'classification_layers'
-        self.create_output_dir()
+        :param kwargs:
+        :return:
+        """
+        self._fill_sets_attributes()
+        self._set_labelled_map()
 
-        # Boucle sur [ref, dsm]
-        #   Boucle sur chaque layer
-        #       S'il y a plusieurs des layers données ou calculées
-        #           ==> pour calculer les masks de chaque label
-        #           ==> calculer toutes les combinaisons (developpement des labels entre eux mais pas les listes)
-        #           ==> puis calculer les masks fusionnés (a associer avec les bons labels)
-        #           ==> generer la nouvelle image classif (fusion) avec de nouveaux labels calculés arbitrairement et liés aux labels d entrees
-
-        for df_k, df_v in dict_fusion.items():
+    def _set_labelled_map(self):
+        for df_k, df_v in self.dict_fusion.items():  #df_k is 'ref' or 'dsm' and df_v is 'True' or 'False'
             if df_v:
-                # get les reproject_ref/dsm et faire une nouvelles map avec son dictionnaire associé
-                clayers_to_fusion_path = [(parti.name, parti.reproject_path[df_k]) for parti in partitions]
+                map_fusion = np.ones(self._coreg_shape) * -32768.0
+                for label_idx, label_name in enumerate(self.sets_labels):
+                    map_fusion[self._sets_indexes[df_k][label_idx]] = self._classes[label_name]
 
-                # lire les images clayers_to_fusion
-                clayers_to_fusion = [(k, A3DGeoRaster(cltfp)) for k, cltfp in clayers_to_fusion_path]
-                classes_to_fusion = []
-                for partition in partitions:
-                    classes_to_fusion.append([(partition.name, cl_classes_label) for cl_classes_label in partition.classes.keys()])
-
-                if not (all_combi_labels and self._classes):
-                    all_combi_labels, self._classes = create_new_classes(classes_to_fusion)
-
-                # create la layer fusionnee + les sets assossiés
-                sets_masks = {}
-                for parti in partitions:
-                    sets_def_indices = parti._create_set_indices()
-                    sets_masks[parti.name] = dict(sets_def_indices[df_k])
-
-                map_fusion, self._sets_indexes[df_k], self._sets_colors = \
-                    create_fusion(sets_masks, all_combi_labels, self._classes, clayers_to_fusion[0][1])
-
-                # save map_fusion
                 self.map_path[df_k] = os.path.join(self.stats_dir, '{}_fusion_layer.tif'.format(df_k))
-                map_fusion.save_geotiff(self.map_path[df_k])
-        # Si ref ou dsm renseigner self.ref_path et self.dsm_path !!!
+                write_geotiff(self.map_path[df_k], map_fusion,
+                              self.partitions[0].coreg_path['ref'].trans,
+                              wkt=self.partitions[0].coreg_path['ref'].srs.ExportToWkt(),
+                              nodata=-32768.0)
 
-        # fill sets names and labels
+    def _fill_sets_attributes(self):
+        all_combi_labels, self._classes = self._create_merged_classes(self.partitions)
+
+        # create sets names and labels from classes
         self._fill_sets_names_labels()
 
-        logging.info('Partition FUSION created as:', self)
+        # create colors for every label
+        self._sets_colors = np.multiply(getColor(len(self.sets_names)), 255) / 255
 
 
-#####################################################
-######  fonction n'appartenant pas à la classe ######
-#####################################################
-def create_new_classes(classes_to_fusion):
-    """
-    Generate the 'classes' dictionary for merged layers
-    :param classes_to_fusion: list of classes to merge
-    :return: TODO list of combinations of labels, new classes
-    """
-    # calcul toutes les combinaisons (developpement des labels entre eux)
-    all_combi_labels = list(itertools.product(*classes_to_fusion))
+        # find out indexes for every label
+        dict_partitions = {p.name: p for p in self.partitions}
+        for df_k, df_v in self.dict_fusion.items():  #df_k is 'ref' or 'dsm' and df_v is 'True' or 'False'
+            if df_v:
+                self._sets_indexes[df_k] = []
+                for combi in all_combi_labels:
+                    # following list will contain indexes for couple (partition layer, label index) for this merged label
+                    all_indexes = []
+                    for elm in combi:
+                        layer_name = elm[0]
+                        label_idx = elm[1]
+                        all_indexes.append(dict_partitions[layer_name]._sets_indexes[df_k][label_idx])
 
-    new_label_value = 1
-    new_classes = {}
-    for combi in all_combi_labels:
-        # creer le new label dans le dictionnaire new_classes
-        new_label_name = '&'.join(['@'.join(elm_combi) for elm_combi in combi])
-        new_classes[new_label_name] = new_label_value
-        new_label_value += 1
+                    # ravel indexes so we can merge them
+                    all_indexes = [np.ravel_multi_index(indexes2D, self._coreg_shape) for indexes2D in all_indexes]
 
-    return all_combi_labels, new_classes
+                    # merge indexes and unravel them
+                    merged_indexes = reduce(np.intersect1d, all_indexes)
+                    self._sets_indexes[df_k].append(np.unravel_index(merged_indexes, self._coreg_shape))
+
+
+    def _create_merged_classes(self, partitions):
+        """
+        Generate the 'classes' dictionary for merged layers
+        :param classes_to_fusion: list of classes to merge
+        :return: TODO list of combinations of labels, new classes
+        """
+
+        classes_to_merge = []
+        for partition in partitions:
+            classes_to_merge.append(
+                [(partition.name, label_idx) for label_idx in range(len(partition._sets_names))])
+
+        # calcul toutes les combinaisons (developpement des labels entre eux)
+        all_combi_labels = list(itertools.product(*classes_to_merge))
+
+        new_label_value = 1
+        new_classes = collections.OrderedDict()
+        for combi in all_combi_labels:
+            # creer le new label dans le dictionnaire new_classes
+            new_label_name = '&'.join(['@'.join(str(elm_combi)) for elm_combi in combi])
+            new_classes[new_label_name] = new_label_value
+            new_label_value += 1
+
+        return all_combi_labels, new_classes
 
 
 def getColor(nb_color=10):
