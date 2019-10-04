@@ -161,6 +161,12 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
 
     # -> the results
     for partition_name, stats_results_d in partitionsList.items():
+        src = '\n'.join([
+            src,
+            '*{} classification layer*'.format(partition_name),
+            '{}'.format('#'*len(partition_name))
+        ])
+
         for mode in modes:
             if mode in stats_results_d:
                 the_mode_pitch = modes_information[partition_name][mode]['pitch']
