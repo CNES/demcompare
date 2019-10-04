@@ -514,7 +514,8 @@ class Fusion_partition(Partition):
         new_classes = collections.OrderedDict()
         for combi in all_combi_labels:
             # creer le new label dans le dictionnaire new_classes
-            new_label_name = '&'.join(['@'.join(str(elm_combi)) for elm_combi in combi])
+            new_label_name = '+'.join(['_'.join([name, str(value)]) for name, value in combi])
+
             new_classes[new_label_name] = new_label_value
             new_label_value += 1
 
