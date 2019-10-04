@@ -157,14 +157,9 @@ class Partition(object):
 
     @property
     def stats_results(self):
-        print("================================ set stats_results de {} ================================".format(self.name))
         stats_results = {}
-        # TODO par modes : les paths, nodata
-        # modes = ['standard', 'coherent', 'incoherent']
-        # stats_results[self.name] = {}
         #### mode standard ####
         stats_results['standard'] = {'Ref_support': None, 'DSM_support': None}
-        print("self.ref_path, self.dsm_path : ", self.ref_path, self.dsm_path)
         if self.ref_path or self.map_path['ref']:
             stats_results['standard']['Ref_support'] = {'nodata': self.nodata, 'path': self.map_path['ref']}
         if self.dsm_path or self.map_path['dsm']:
@@ -176,7 +171,6 @@ class Partition(object):
             ##### mode incoherent ######
             stats_results['incoherent-classification'] = {'Ref_support': None, 'DSM_support': None}
             # TODO replire le coherent avec les map correspondante
-        print("=====> stats_results : ", stats_results)
         return stats_results
 
     @property

@@ -61,9 +61,6 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
     # Initialize mode informations
     modes_information = collections.OrderedDict()
 
-
-    # TODO perso
-    # TODO workingDir en fct de la layer
     for partition_name, stats_results_d in partitionsList.items():
         # Initialize mode informations for partition
         modes_information[partition_name] = collections.OrderedDict()
@@ -109,7 +106,6 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
             else:
                 modes_information[partition_name][mode]['csv'] = None
 
-    # TODO commun
     # Find DSMs differences
     dem_diff_without_coreg = recursive_search(workingDir, 'initial_dem_diff.png')[0]
     result = recursive_search(workingDir, 'final_dem_diff.png')
@@ -119,7 +115,6 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
         dem_diff_with_coreg = None
 
     # Create source
-    # TODO CMN
     # -> header part
     src = '\n'.join([
         '.. _DSM_COMPARE_REPORT:',
@@ -134,8 +129,6 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
         '* **The Reference DSM**  : {}'.format(refName),
         ''
     ])
-    # print("++++++ src = ", src)
-    # TODO CMN
     # -> DSM differences
     src = '\n'.join([
         src,
@@ -146,7 +139,6 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
         '.. image:: /{}'.format(dem_diff_without_coreg),
         ''
     ])
-    #print("++++++ src = ", src)
     if dem_diff_with_coreg:
         src = '\n'.join([
             src,
@@ -155,8 +147,6 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
             '.. image:: /{}'.format(dem_diff_with_coreg),
             ''
         ])
-    # print("++++++ src = ", src)
-    # TODO Perso
     # -> table of contents
     src = '\n'.join([
         src,
@@ -168,13 +158,11 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
             src,
             '* The :ref:`{} <{}>` mode'.format(mode, mode)
         ])
-    # print("++++++ src = ", src)
+
     # -> the results
     for partition_name, stats_results_d in partitionsList.items():
-        print("partition_name = ", partition_name)
         for mode in modes:
             if mode in stats_results_d:
-                print("mode = ", mode)
                 the_mode_pitch = modes_information[partition_name][mode]['pitch']
                 the_mode_histo = modes_information[partition_name][mode]['histo']
                 the_mode_fitted_histo = modes_information[partition_name][mode]['fitted_histo']

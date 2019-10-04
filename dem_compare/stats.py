@@ -380,7 +380,6 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     :param plot_real_hist: plot or save (see display param) real histrograms
     :return: list saved files
     """
-    print("_________________ plot_histograms() _________________")
     saved_files=[]
     saved_labels=[]
     saved_colors=[]
