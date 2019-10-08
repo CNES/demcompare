@@ -362,7 +362,7 @@ class Partition(object):
             self.dsm_path = cfg_layer['dsm']
         if (not 'ref' in cfg_layer) and (not 'dsm' in cfg_layer):
             raise self.LackOfPartitionDataError
-        if (not cfg_layer['ref']) and (not cfg_layer['dsm']):
+        if (not self.ref_path) and (not self.dsm_path):
             if self.type_layer == "classification_layers":
                 raise self.LackOfPartitionDataError
             else:
