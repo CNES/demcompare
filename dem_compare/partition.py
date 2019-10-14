@@ -275,9 +275,9 @@ class Partition(object):
                                            slope.trans, "{}".format(slope.srs.ExportToProj4()), nodata=self.nodata)
         for idx in range(0, len(rad_range)):
             if idx == len(rad_range) - 1:
-                map_img.r[np.where((slope.r >= rad_range[idx]))] = rad_range[idx]
+                map_img.r[np.where((~np.isnan(slope.r))*(slope.r >= rad_range[idx]))] = rad_range[idx]
             else:
-                map_img.r[np.where((slope.r >= rad_range[idx]) & (slope.r < rad_range[idx + 1]))] = rad_range[idx]
+                map_img.r[np.where((~np.isnan(slope.r))*(slope.r >= rad_range[idx]) & (slope.r < rad_range[idx + 1]))] = rad_range[idx]
 
         self.map_path[type_slope] = os.path.join(self.stats_dir, type_slope + '_support_map.tif')
         map_img.save_geotiff(self.map_path[type_slope])
@@ -532,9 +532,10 @@ def getColor(nb_color=10):
         else:
             x = P.cm.get_cmap('Vega10')
     if nb_color > 20:
-        raise NameError("Error : Too many colors requested")
-
-    return np.array(x.colors[0:nb_color])
+        clr = P.cm.get_cmap('gist_earth')
+        return np.array([clr(c/float(nb_color))[0:3] for c in np.linspace(0, nb_color)])
+    else:
+        return np.array(x.colors[0:nb_color])
 
 
 def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):

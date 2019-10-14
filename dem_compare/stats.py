@@ -26,6 +26,8 @@ from .a3d_georaster import A3DGeoRaster
 from .partition import Partition, Fusion_partition, getColor, NotEnoughDataToPartitionError
 from .output_tree_design import get_out_dir, get_out_file_path
 
+class NoPointsToPlot(Exception):
+    pass
 
 def gaus(x, a, x_zero, sigma):
     return a * exp(-(x - x_zero) ** 2 / (2 * sigma ** 2))
@@ -394,8 +396,11 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
 
     # -> bins should rely on [-A;A],A being the higher absolute error value (all histograms rely on the same bins range)
     if to_keep_mask is not None:
-        borne = np.max([abs(np.nanmin(input_array[np.where(to_keep_mask==True)])),
-                        abs(np.nanmax(input_array[np.where(to_keep_mask==True)]))])
+        if input_array[np.where(to_keep_mask==True)].size !=0 :
+            borne = np.max([abs(np.nanmin(input_array[np.where(to_keep_mask==True)])),
+                            abs(np.nanmax(input_array[np.where(to_keep_mask==True)]))])
+        else:
+            raise NoPointsToPlot
     else:
         borne = np.max([abs(np.nanmin(input_array)), abs(np.nanmax(input_array))])
     bins = np.arange(-roundUp(borne, bin_step), roundUp(borne, bin_step)+bin_step, bin_step)
@@ -740,19 +745,22 @@ def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
         #
         # -> we are then ready to do some plots !
 
-
-        plot_files, labels, colors = plot_histograms(data_array,
-                                                     bin_step=bin_step,
-                                                     to_keep_mask=mode_masks[mode],
-                                                     sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks,
-                                                     sets_labels=sets_labels,
-                                                     sets_colors=sets_colors,
-                                                     plot_title=plot_title,
-                                                     outplotdir=outplotdir,
-                                                     outhistdir=outhistdir,
-                                                     save_prefix=mode_names[mode],
-                                                     display=display,
-                                                     plot_real_hist=plot_real_hist)
+        try:
+            plot_files, labels, colors = plot_histograms(data_array,
+                                                         bin_step=bin_step,
+                                                         to_keep_mask=mode_masks[mode],
+                                                         sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks,
+                                                         sets_labels=sets_labels,
+                                                         sets_colors=sets_colors,
+                                                         plot_title=plot_title,
+                                                         outplotdir=outplotdir,
+                                                         outhistdir=outhistdir,
+                                                         save_prefix=mode_names[mode],
+                                                         display=display,
+                                                         plot_real_hist=plot_real_hist)
+        except NoPointsToPlot as e:
+            print(('Nothing to plot for mode {} '.format(mode_names[mode])))
+            continue
 
         #
         # Save results as .json and .csv file
