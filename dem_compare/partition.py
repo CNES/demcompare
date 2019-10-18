@@ -533,7 +533,7 @@ def getColor(nb_color=10):
             x = P.cm.get_cmap('Vega10')
     if nb_color > 20:
         clr = P.cm.get_cmap('gist_earth')
-        return np.array([clr(c/float(nb_color))[0:3] for c in np.linspace(0, nb_color)])
+        return np.array([clr(c/float(nb_color))[0:3] for c in np.arange(nb_color)])
     else:
         return np.array(x.colors[0:nb_color])
 
