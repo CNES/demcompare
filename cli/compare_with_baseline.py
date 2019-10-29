@@ -64,7 +64,7 @@ def check_csv(csv_ref, csv_test, csv_file, epsilon):
     return csv_differences
 
 
-def main(baseline_dir, output_dir, epsilon=1.e-15):
+def main(baseline_dir, output_dir, epsilon=1.e-6):
     """
     Compare output_dir results to baseline_dir ones
 
