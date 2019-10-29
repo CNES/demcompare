@@ -18,7 +18,8 @@ def readme():
 
 
 setup(name='dem_compare',
-      version='0.1',
+      version='{sha}',
+      setup_requires=['very-good-setuptools-git-version'], 
       description='A tool to compare Digital Elevation Models',
       long_description=readme(),
       url='https://framagit.org/jmichel-otb/dem_compare',
