@@ -18,7 +18,7 @@ def readme():
 
 
 setup(name='dem_compare',
-      version='{sha}',
+      version_format='{sha}',
       setup_requires=['very-good-setuptools-git-version'], 
       description='A tool to compare Digital Elevation Models',
       long_description=readme(),
