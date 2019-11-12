@@ -467,7 +467,6 @@ class Fusion_partition(Partition):
         # create colors for every label
         self._sets_colors = np.multiply(getColor(len(self.sets_names)), 255) / 255
 
-
         # find out indexes for every label
         dict_partitions = {p.name: p for p in self.partitions}
         for df_k, df_v in self.dict_fusion.items():  #df_k is 'ref' or 'dsm' and df_v is 'True' or 'False'
@@ -499,7 +498,7 @@ class Fusion_partition(Partition):
         classes_to_merge = []
         for partition in partitions:
             classes_to_merge.append(
-                [(partition.name, label_idx) for label_idx in range(len(partition._sets_names))])
+                [(partition.name, label_idx, partition._sets_names[label_idx]) for label_idx in range(len(partition._sets_names))])
 
         # calcul toutes les combinaisons (developpement des labels entre eux)
         all_combi_labels = list(itertools.product(*classes_to_merge))
@@ -508,7 +507,7 @@ class Fusion_partition(Partition):
         new_classes = collections.OrderedDict()
         for combi in all_combi_labels:
             # creer le new label dans le dictionnaire new_classes
-            new_label_name = '+'.join(['_'.join([name, str(value)]) for name, value in combi])
+            new_label_name = '_&_'.join(['_'.join([name, str(label).split(':')[0]]) for name, value, label in combi])
 
             new_classes[new_label_name] = new_label_value
             new_label_value += 1
