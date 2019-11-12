@@ -616,7 +616,7 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     return partitions
 
 
-def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
+def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=False):
     """
     Computes alti error stats with graphics and tables support.
 
@@ -639,6 +639,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
     :param ref: A3GDEMRaster, coregistered ref
     :param alti_map: A3DGeoRaster, dsm - ref
     :param display: boolean, display option (set to False to save plot on file system)
+    :param remove_outliers: boolean, set to True to remove outliers ( x < mu - 3sigma ; x > mu + 3sigma)
     :return:
     """
 
@@ -676,7 +677,10 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False):
         return list_threshold_m
 
     # Get outliers free mask (array of True where value is no outlier)
-    outliers_free_mask = get_outliers_free_mask(alti_map.r, alti_map.nodata)
+    if remove_outliers:
+        outliers_free_mask = get_outliers_free_mask(alti_map.r, alti_map.nodata)
+    else:
+        outliers_free_mask = 1
 
     # There can be multiple ways to partition the stats. We gather them all inside a list here:
     partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'])

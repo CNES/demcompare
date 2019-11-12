@@ -84,7 +84,7 @@ def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
 
     stats.wave_detection(cfg, final_dh, display=display)
 
-    stats.alti_diff_stats(cfg, dem, ref, final_dh, display=display)
+    stats.alti_diff_stats(cfg, dem, ref, final_dh, display=display, remove_outliers=cfg['stats_opts']['remove_outliers'])
     # save results
     with open(final_json_file, 'w') as outfile:
         json.dump(cfg, outfile, indent=2)

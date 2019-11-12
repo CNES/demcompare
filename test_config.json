@@ -14,6 +14,7 @@
 	"plani_opts": {	"coregistration_method": "nuth_kaab",
 			"disp_init": {"x": 0, "y": 0} },
 	"stats_opts": {
-		"to_be_classification_layers": {"slope": {"ranges": [0, 5, 10, 25, 45]}}
+		"to_be_classification_layers": {"slope": {"ranges": [0, 5, 10, 25, 45]}},
+                "remove_outliers": true
 	}
 }
