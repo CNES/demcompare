@@ -21,7 +21,7 @@ import numpy as np
 import matplotlib as mpl
 from .a3d_georaster import A3DGeoRaster
 from .output_tree_design import get_out_dir, get_out_file_path
-from .stats import create_sets, create_masks
+from .stats import create_sets_slope, create_masks
 
 DEFAULT_STEPS = []
 ALL_STEPS = ['mosaic', 'merge_stats', 'merge_plots']
@@ -275,7 +275,7 @@ def _mergePercentile(a_final_config, tile_stats_list, the_zip, infimum, supremum
             support_img = A3DGeoRaster(str(support_img_name),
                                        nodata=a_final_config['stats_results']['images']['Ref_support']['nodata'])
             # get the sets' indexes
-            sets_idx, sets_color = create_sets(support_img, a_final_config['stats_opts']['class_rad_range'])
+            sets_idx, sets_color = create_sets_slope(support_img, a_final_config['stats_opts']['class_rad_range'])
             all_sets = all_sets + sets_idx
 
         # get the mode mask

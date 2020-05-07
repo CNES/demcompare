@@ -67,6 +67,19 @@ class SphinxProjectManager(object):
         self._confpy = os.path.join(self._srcDir, 'conf.py')
         self._create_confpy()
 
+        # clean old doc
+        cur_dir = os.curdir
+        try:
+            os.chdir(self._workingDir)
+            subprocess.check_call(['make', 'clean'], stderr=subprocess.STDOUT, env=os.environ)
+            os.chdir(cur_dir)
+        except:
+            os.chdir(cur_dir)
+            raise
+        else:
+            print('Sphinx clean succeeded ')
+
+
     def _create_makefile(self):
         if self._makefile:
             make_contents = '\n'.join(

@@ -58,11 +58,8 @@ If no ROI definition is provided then DEMs raster are fully processed.
 
 #### Tile processing
 
-Note that a `tile_size` parameter can be set to compute dem comparison by tile. As dem_compare can load the full size
-DEMs (if no ROI is provided) it can sometimes run out of memory and fail. To prevent this from happening one can set a
-`tile_size` (in pixel) where a tile is assumed to be squared. Then dem_compare will divide DEMs according to `tile_size`
-and process each tile independently. To merge every tile results into one, some optional post-processing steps are
-provided by dem_compare (see next chapter).
+Tile processing is not available anymore. A future version might provide a better way to deal with very large data. In
+the meantime one can deal with heavy DSMs by setting a ROI (see previous chapter).
 
 #### step by step process (and the possibility to avoid the coregistration step)
 
@@ -71,7 +68,7 @@ provided. It accepts values from `{coregistration,stats,report}` :
 
     [user@machine] $ cli-dem_compare.py
     usage: cli-dem_compare.py [-h]
-                              [--step {coregistration,stats,report,mosaic,merge_stats,merge_plots} [{coregistration,stats,report,mosaic,merge_stats,merge_plots} ...]]
+                              [--step {coregistration,stats,report,mosaic} [{coregistration,stats,report,mosaic} ...]]
                               [--debug] [--display]
                               config.json
 
@@ -98,11 +95,22 @@ Here is the list of the parameters and the associated default value when it exis
                         "nodata" : }}
         "plani_opts" : {    "coregistration_method" : "nuth_kaab",
                             "disp_init" : {"x": 0, "y": 0}},
-        "stats_opts" : {    "class_type": "slope",
-                            "class_rad_range": [0, 10, 25, 50, 90],
-                            "cross_classification": False,
-                            "elevation_thresholds" : {"list": [0.5,1,3], "zunit": "meter"}
+        "stats_opts" : {    "elevation_thresholds" : {"list": [0.5,1,3], "zunit": "meter"},
+                            "remove_outliers": False,
+                            "to_be_classification_layers": {"slope": {"ranges": [0, 10, 25, 50, 90],
+                                                                      "ref": None,
+                                                                      "dsm": None}},
+                            "classification_layers": {}
     }
+
+Where a valid `classification_layers` value could be:
+
+``` 
+                            "classification_layers": {"land_cover": {"ref": 'None_or_path_to_land_cover_associated_with_the_ref',
+                                                                     "dsm": 'None_or_path_to_land_cover_associated_with_the_dsm',
+                                                                     "classes": {"forest": [31, 32], "urbain": [42]}}}
+    }
+```
 
 ## Processing the outputs
 
@@ -120,46 +128,41 @@ Those stats are actually displayed by stats set (see next section).
 
 #### The stats sets
 
-Using dem_compare one can get a closer look on particular areas compared together. It is by setting the `class_type` value
-and the `class_rad_range` of the stats options (`stats_opts`) that one can set how the stats shall be classified if at
+Using dem_compare one can get a closer look on particular areas compared together. It is by setting the `to_be_classification_layers`
+and / or the `classification_layers` parameters of the stats options (`stats_opts`) that one can set how the stats shall be classified if at
 all.
 
-The default behavior is `class_type`: `slope` which means the stats are going to be classified by slope range. The slope
-range can be set with the `class_rad_range` argument. Hence, the statistics will be displayed overall, and by stats set,
+The default behavior is to use the `slope` of both DEMs to classify the stats, which means the stats are going to be classified by slope range. The slope
+range can be set with the `ranges` argument. Hence, the statistics will be displayed overall, and by stats set,
 each set containing all the pixels for whom the inputRef slope is contained inside the associated slope range. Hence,
-there is a stats set for each slope range, and all the stats set form a partition of the altitude differences image.
+there is a stats set for each slope range, and all the stats set form a partition of the altitude differences image (`final_dh.tif`).
 
 Now, one can decide not to classify the stats by slope range but to use instead any other exogenous data he posses. For
-that purpose, one might set `class_type`: `user` and add a file path as value to the `class_support_ref` key. Still,
-the `class_rad_range` argument is to be set.
+that purpose, one might use `to_be_classification_layers` and / or the `classification_layers` parameters as stated earlier:
+- `to_be_classification_layers` are layers (exogenous rasters) that could be use as classification layers by the use of a `ranges` list. Hence, the slope layer dem_compare computes itself belongs to this category. 
+- `classification_layers` are layers (exogenous raster) such as segmentation or semantic segmentation for which pixels are gathered inside superpixels whose values are shared by every pixels in a superpixel and called a label value.
 
-The `class_rad_range` key requires a list as : `[0, 5, 10]`. Set like this, three sets will partitioned the stats :
-(1) the `class_support_ref` pixels with radiometry inside [0, 5[, (2) the one with radiometry inside [5, 10[, and (3),
-the ones inside [10, inf[. Note that if `class_type` is set to `slope` (default value), then no `class_support_ref` is
-required and the slope image to classify stats from will be computed by dem_compare on the inputRef DEM.
+For every exogenous layer, the user ought to specify ontop of which DEM it is superimposable: `ref` and `dsm` keywords are designed to 
+register the path of the exogenous layer, respectively superimposable to the `ref` or the `dsm`. 
+
+The user can set as many exogenous layers to classify the stats from: land cover map, validity masks, etc. 
+All of them will be used seperatly to classify the stats, and then merge into a full classification layer that will also be used to classify the stats
+(in that cas dem_compare could display the results for 'elevated roads' for which pixels are 'valid pixels').
 
 #### The cross classification and the modes
 
 Along with classifying the statistics, dem_compare can display those stats in three different modes where a mode is
 actually a set of all the pixels of the altitude differences image.
 
-By default, the `cross_classification` is set to `False`. Hence only the standard mode will be displayed. If, the
-`cross_classification` was to be set to `True`, then the coherent and the incoherent (both forming a partition of the
-standard one) modes would also be displayed.
-
-The cross classification activation allows dem_compare to classify not only the pixels of the inputRef (which is performed
-when `class_type` is not `None`) but also the pixels of the inputDSM. This will be done the same way, which means this
-will be done considering the same `class_rad_range`. Plus, if `class_type` is `slope` (default), then the classification
-of the inputDSM pixels rely on its slope values (computed by dem_compare itself). And if `class_type` is set to `user`,
-then one has to set a full file path to the `class_support_dsm` key.
+As written before, dem_compare will classify stats according to classification layers that can be dem_compare computed slopes, or exogenous data provided by the user.
+For each classification layer, dem_compare knows if it is superimposable to the `ref` or the `dsm` to be evaluated. Now one could actually provided two land cover classification layers to dem_compare.
+One that would come with the `ref` DEM. And one that would come with the `dsm`. When that happens, dem_compare provides a three modes stats display.
 
 Now here is how the modes are defined :
-1. the standard mode results simply on all on valid pixels. This means nan values but also ouliers and masked ones are
-discarded. Note that the nan values can be originated from the altitude differences image and / or the reference support
-image. The last one being the slope image or the image given by the user as value to the class_support_ref` key and
-`class_type` is not None.
+1. the standard mode results simply on all valid pixels. This means nan values but also ouliers (if `remove_outliers` was set to True) and masked ones are
+discarded. Note that the nan values can be originated from the altitude differences image and / or the exogenous classification layers themselves.
 
-2. the coherent mode which is the standard mode where only the pixels for which input DEMs classifications are coherent.
+2. the coherent mode which is the standard mode where only the pixels sharing the same label for both DEMs classification layers are kept. Say after a coregistration, a pixel P is associated to a 'grass land' inside a `ref` classification layer named `land_cover` and a `road` inside the `dsm` classification layer also named `land_cover`, then P is not coherent for dem_compare.
 
 3. the incoherent mode which is the coherent one complementary.
 
@@ -188,16 +191,6 @@ the `final_dh.tif` average col (row) to `final_dh.tif` itself. It helps to detec
 
 
 - the `coreg_DSM.tif` and `coreg_Ref.tif` are the coregistered DEMS.
-
-- the `Ref_support.tif` and `DSM_support.tif` are the images from which the stats have been classified. Depending on the
-values given to the parameters those images might not be there. With default behavior only the `Ref_support.tif` is computed
-and it is the `coreg_Ref.tif` slope. When `cross_classification` is on, and `class_type` is `slope` (default), then
-`Ref_support.tif` and `DSM_support.tif` and both slope images. Plus, in this case, the `Ref_support-DSM_support.tif`
-(which the slope differences between both slope images) is also computed and stored.
-
-- the `Ref_support_classified.png` and the `DSM_support_classified.png` are the classified version of the images listed
-previously. The alpha band is used to mask the pixels for whom both classification do not match. This could be because
-one pixel has a slope between [0; 20[ for one DEM and between [45; 100[ for the other one.
 
 - the images whose names start with 'AltiErrors-' are the plots saved by dem_compare. They show histograms by stats
 set and same histograms fitted by gaussian.

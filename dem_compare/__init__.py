@@ -10,10 +10,11 @@ dem_compare aims at coregistering and comparing two dsms
 """
 
 
+import logging
+import logging.config
 import os
 import sys
 import json
-import argparse
 import shutil
 from osgeo import gdal
 import numpy as np
@@ -29,6 +30,23 @@ DEFAULT_STEPS = ['coregistration', 'stats', 'report'] + dem_compare_extra.DEFAUL
 ALL_STEPS = copy.deepcopy(DEFAULT_STEPS) + dem_compare_extra.ALL_STEPS
 
 
+def setup_logging(path='dem_compare/logging.json', default_level=logging.WARNING,):
+    """
+    Setup the logging configuration
+
+    :param path: path to the configuration file
+    :type path: string
+    :param default_level: default level
+    :type default_level: logging level
+    """
+    if os.path.exists(path):
+        with open(path, 'rt') as f:
+            config = json.load(f)
+        logging.config.dictConfig(config)
+    else:
+        logging.basicConfig(level=default_level)
+
+
 def computeReport(cfg, steps, dem, ref):
     """
     Create html and pdf report
@@ -42,7 +60,7 @@ def computeReport(cfg, steps, dem, ref):
         report.generate_report(cfg['outputDir'],
                                dem.ds_file,
                                ref.ds_file,
-                               [modename for modename, modefile in list(cfg['stats_results']['modes'].items())],
+                               cfg['stats_results']['partitions'],
                                os.path.join(cfg['outputDir'], get_out_dir('sphinx_built_doc')),
                                os.path.join(cfg['outputDir'], get_out_dir('sphinx_src_doc')))
 
@@ -66,7 +84,7 @@ def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
 
     stats.wave_detection(cfg, final_dh, display=display)
 
-    stats.alti_diff_stats(cfg, dem, ref, final_dh, display=display)
+    stats.alti_diff_stats(cfg, dem, ref, final_dh, display=display, remove_outliers=cfg['stats_opts']['remove_outliers'])
     # save results
     with open(final_json_file, 'w') as outfile:
         json.dump(cfg, outfile, indent=2)
@@ -297,6 +315,7 @@ def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False)
     #
     # Initialization
     #
+    setup_logging()
     cfg = computeInitialization(json_file)
     if display is False:
         # if display is False we have to tell matplotlib to cancel it

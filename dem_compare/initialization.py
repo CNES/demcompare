@@ -136,27 +136,61 @@ def initialization_alti_opts(cfg):
 
 
 def initialization_stats_opts(cfg):
-    # class_type can be 'slope' (classification is done from slope) or 'user' (classification from any kind) or None
-    # class_rad_range defines the intervals to classify the classification type image from
-
-    default_stats_opts = {'class_type': 'slope',
-                          'class_rad_range': [0, 10, 25, 50, 90],
-                          'cross_classification': False,
+    # slope_range defines the intervals to classify the classification type image from
+    default_stats_opts = {'to_be_classification_layers': {'slope': {'ranges': [0, 10, 25, 50, 90],
+                                                                    'ref': None,
+                                                                    'dsm': None}},
+                          'classification_layers': {},
                           'alti_error_threshold': {'value': 0.1, 'unit': 'meter'},
-                          'elevation_thresholds' : {'list': [0.5,1,3], 'zunit': 'meter'},
-                          'plot_real_hists': False}
+                          'elevation_thresholds': {'list': [0.5, 1, 3], 'zunit': 'meter'},
+                          'plot_real_hists': False,
+                          'remove_outliers': False
+                          }
 
-    if 'stats_opts' not in cfg:
+    default_to_be_classification_layer = {'slope': {'ranges': [0, 10, 25, 50, 90],
+                                                    'ref': None,
+                                                    'dsm': None}}
+
+    default_classification_layer = {'ref': None,
+                                    'dsm': None,
+                                    'classes': {}}      # {}
+
+    # TODO rendre plus generique chaque partie !
+    # TODO SUITE   ET mettre a a vide classification_layers si tout vide, sinon pour chaque element mettre a vide
+
+    if not 'stats_opts' in cfg:
         cfg['stats_opts'] = default_stats_opts
     else:
-        # we keep users items and add default items he has not set
         cfg['stats_opts'] = dict(list(default_stats_opts.items()) + list(cfg['stats_opts'].items()))
-    try:
-        # we try to evaluate what could be set to "True" (or "False) as boolean true (false)
-        cfg['stats_opts']['cross_classification'] = ast.literal_eval(cfg['stats_opts']['cross_classification'])
-    except ValueError:
-        # we assume if previous instruction fails because of a malformed string, then we have the boolean we need
-        pass
+
+        # check for None values
+        if cfg['stats_opts']['to_be_classification_layers'] is None:
+            cfg['stats_opts']['to_be_classification_layers'] = default_to_be_classification_layer
+        if cfg['stats_opts']['classification_layers'] is None:
+            cfg['stats_opts']['classification_layers'] = default_to_be_classification_layer
+
+        # in case slope has been erased by a user defined 'to_be_classification_layers'
+        if 'slope' not in cfg['stats_opts']['to_be_classification_layers'] or cfg['stats_opts']['to_be_classification_layers']['slope'] is None:
+            cfg['stats_opts']['to_be_classification_layers']['slope'] = default_to_be_classification_layer['slope']
+
+        # in case ref and dsm support for slope have been erased by a user defined 'to_be_classification_layers'
+        if 'ref' not in cfg['stats_opts']['to_be_classification_layers']['slope'] and 'dsm' not in cfg['stats_opts']['to_be_classification_layers']['slope']:
+            cfg['stats_opts']['to_be_classification_layers']['slope']['ref'] = None
+            cfg['stats_opts']['to_be_classification_layers']['slope']['dsm'] = None
+
+        if 'ranges' not in cfg['stats_opts']['to_be_classification_layers']['slope'] or cfg['stats_opts']['to_be_classification_layers']['slope']['ranges'] is None:
+            cfg['stats_opts']['to_be_classification_layers']['slope']['ranges'] = default_to_be_classification_layer['slope']['ranges']
+
+        # for key in cfg['stats_opts']['to_be_classification_layers'].keys():
+        #     cfg['stats_opts']['to_be_classification_layers'][key] = \
+        #         {**default_to_be_classification_layer['slope'],
+        #          **cfg['stats_opts']['to_be_classification_layers'][key]}
+        #
+        # # classification_layers part
+        # if 'classification_layers' in cfg['stats_opts']:
+        #     for key in cfg['stats_opts']['classification_layers'].keys():
+        #         cfg['stats_opts']['classification_layers'][key] = \
+        #             {**default_classification_layer, **cfg['stats_opts']['classification_layers'][key]}
 
 
 def get_tile_dir(cfg, c, r, w, h):

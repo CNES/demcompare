@@ -522,20 +522,38 @@ class A3DGeoRaster(object):
                 inBand = self.ds.GetRasterBand(b)
                 inBand.SetNoDataValue(nodata)
 
+        # ! As far as known, gdal.ReprojectImage returns a dataset filled with '0' values instead of 'nodata' values
+        # we could set output 0 values to nodata having this knowledge but we shall not dot it because:
+        # - initial raster might have had 0 values initially and we cannot "follow" them through the reproject algorithm
+        # unless we assume or compute the reproject algorithm response for a simple dirac signal
+        # - some 0 values created by the reproject algorithm might actually be valid
+        # Hence, what we do is "elevate" the original data by an offset factor designed to remove initial 0 values
+        offset = 0
+        if np.nanmin(self.r) <= 0 :
+            offset = np.nanmin(self.r) + 1
+            offseted_data = self.r + offset
+            offseted_geo_raster = A3DGeoRaster.from_raster(offseted_data,
+                                                           self.trans,
+                                                           "{}".format(self.srs.ExportToProj4()),
+                                                           nodata=nodata)
+            ds = offseted_geo_raster.ds
+        else:
+            ds = self.ds
+
+
         # Perform the projection / resampling
         if progress is True:
-            res = gdal.ReprojectImage(self.ds, target_ds, None, None,
+            res = gdal.ReprojectImage(ds, target_ds, None, None,
                                       interp_type, 0.0, 0.0, gdal.TermProgress)
         else:
-            res = gdal.ReprojectImage(self.ds, target_ds, None, None,
+            res = gdal.ReprojectImage(ds, target_ds, None, None,
                                       interp_type, 0.0, 0.0, None)
 
-        # Load data
+        # Load data ourselves so we set to nan the 0 values
         new_raster = self.__class__(target_ds, nodata=self.nodata, rpc=self.rpc, band=self.band)
-        # ! As far as known gdal.ReprojectImage returns a dataset filled with '0' values instead of 'nodata' values...
-        #   Hence we cannot rely on the class constructor to replace nodata by np.nan and we do it here.
         new_raster.nodata = nodata
         new_raster.r[new_raster.r == 0] = np.nan
+        new_raster.r -= offset
 
         return new_raster
 
