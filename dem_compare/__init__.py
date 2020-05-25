@@ -141,6 +141,11 @@ def computeCoregistration(cfg, steps, dem, ref, initial_dh, final_cfg=None, fina
             cfg['alti_results']['rectifiedRef']['nb_points'] = coreg_ref.r.size
             cfg['alti_results']['rectifiedDSM']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_dem.r))
             cfg['alti_results']['rectifiedRef']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_ref.r))
+            cfg['alti_results']['dzMap'] = {'path': final_dh.ds_file,
+                                            'zunit': coreg_ref.zunit.name,
+                                            'nodata': final_dh.nodata,
+                                            'nb_points': final_dh.r.size,
+                                            'nb_valid_points': np.count_nonzero(~np.isnan(final_dh.r))}
 
     return coreg_dem, coreg_ref, final_dh
 
