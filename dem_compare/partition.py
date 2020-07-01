@@ -301,6 +301,10 @@ class Partition(object):
                 # calculate sets_indices of partition
                 for class_name, class_value in self.classes.items():
                     if isinstance(class_value, list):
+                        if len(class_value) == 1:
+                            # transform it to value
+                            class_value = class_value[0]
+                    if isinstance(class_value, list):
                         elm = (class_name, np.where(np.logical_or(*[np.equal(img_to_classify.r, label_i)
                                                                      for label_i in class_value])))
                     else:
