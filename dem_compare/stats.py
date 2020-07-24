@@ -378,7 +378,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     :param outplotdir: directory where histograms are to be saved
     :param outhistdir: directory where histograms (as numpy files) are to be saved
     :param save_prefix: prefix to the histogram files saved by this method
-    :param dsplay: set to False to save plot instead of actually plotting them
+    :param display: set to False to save plot instead of actually plotting them
     :param plot_real_hist: plot or save (see display param) real histrograms
     :return: list saved files
     """
@@ -391,6 +391,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     # -> import what is necessary for plot purpose
     import matplotlib as mpl
     mpl.rc('font', size=6)
+    mpl.use('TkAgg')
     import matplotlib.pyplot as P
     from matplotlib import gridspec
 
@@ -406,13 +407,14 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     bins = np.arange(-roundUp(borne, bin_step), roundUp(borne, bin_step)+bin_step, bin_step)
     np.savetxt(os.path.join(outhistdir, save_prefix+'bins'+'.txt'), [bins[0],bins[len(bins)-1], bin_step])
 
+    # Figure 1 : One plot of Normalized Histograms
     # -> set figures shape, titles and axes
-    #    -> first figure is just one plot of normalized histograms
     if plot_real_hist:
-        P.figure(1, figsize=(7.0, 8.0))
-        P.suptitle(plot_title)
-        P.title('Data shown as normalized histograms')
-        P.xlabel('Errors (meter)')
+        fig1=P.figure(1, figsize=(7.0, 8.0))
+        fig1.suptitle(plot_title)
+        fig1_ax=fig1.add_subplot(111)
+        fig1_ax.set_title('Data shown as normalized histograms')
+        fig1_ax.set_xlabel('Errors (meter)')
         data = []
         full_color = []
         for set_idx in range(0, len(sets)):
@@ -422,12 +424,18 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
             print('}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} plot_histograms() : ', np.where(sets[set_idx] == True))
             data.append(input_array[np.where(sets[set_idx] == True)])
             full_color.append(sets_colors[set_idx])
-        P.hist(data, density=True, label=sets_labels, histtype='step', color=full_color)
-        P.legend()
+        fig1_ax.hist(data, density=True, label=sets_labels, histtype='step', color=full_color)
+        fig1_ax.legend()
         if display is False:
-            P.savefig(os.path.join(outplotdir,'AltiErrors_RealHistrograms_'+save_prefix+'.png'),
+            fig1.savefig(os.path.join(outplotdir,'AltiErrors_RealHistrograms_'+save_prefix+'.png'),
                           dpi=100, bbox_inches='tight')
+        else:
+            P.show()
+
+        P.figure(1)
         P.close()
+	    # TODO : add in saved_files return ?
+
     #    -> second one is two plots : fitted by gaussian histograms & classes contributions
     P.figure(2, figsize=(7.0, 8.0))
     gs = gridspec.GridSpec(1,2, width_ratios=[10,1])
