@@ -391,7 +391,8 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
     # -> import what is necessary for plot purpose
     import matplotlib as mpl
     mpl.rc('font', size=6)
-    mpl.use('TkAgg')
+    if display:
+        mpl.use('TkAgg')
     import matplotlib.pyplot as P
     from matplotlib import gridspec
 
@@ -430,26 +431,29 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
             fig1.savefig(os.path.join(outplotdir,'AltiErrors_RealHistrograms_'+save_prefix+'.png'),
                           dpi=100, bbox_inches='tight')
         else:
+            P.figure(1)
             P.show()
 
+        # Check fig1 to close
         P.figure(1)
         P.close()
-	    # TODO : add in saved_files return ?
+        # TODO : add in saved_files return ?
 
-    #    -> second one is two plots : fitted by gaussian histograms & classes contributions
-    P.figure(2, figsize=(7.0, 8.0))
-    gs = gridspec.GridSpec(1,2, width_ratios=[10,1])
-    P.subplot(gs[0])
-    P.suptitle(plot_title)
-    P.title('Errors fitted by a gaussian')
-    P.xlabel('Errors (in meter)')
-    P.subplot(gs[1])
-    P.title('Classes contributions')
-    P.xticks(np.arange(1), '')
+    # Figure 2 : Two plots fitted by gaussian histograms & classes contributions
+    #    -> set figure shape, titles and axes
+    fig2=P.figure(2, figsize=(7.0, 8.0))
+    fig2.suptitle(plot_title)
+    gs = gridspec.GridSpec(1,2, width_ratios=[10,1]) # Specifies the geometry of the grid that a subplot will be placed
+    # Create gaussian histograms errors axe
+    fig2_ax_errors=fig2.add_subplot(gs[0])
+    fig2_ax_errors.set_title('Errors fitted by a gaussian')
+    fig2_ax_errors.set_xlabel('Errors (in meter)')
+    # Create classes contributions axe
+    fig2_ax_classes=fig2.add_subplot(gs[1])
+    fig2_ax_classes.set_title('Classes contributions')
+    fig2_ax_classes.set_xticks(np.arange(1), minor=False)
 
-    #
-    # Plot creation
-    #
+    # Generate plots axes with data
     cumulative_percent = 0
     set_zero_size = 0
     if sets is not None and sets_labels is not None and sets_colors is not None:
@@ -474,9 +478,7 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                     n, bins = np.histogram(data, bins=bins, density=True)
                     popt, pcov = curve_fit(gaus, bins[0:bins.shape[0] - 1] + int(bin_step / 2), n,
                                            p0=[1, mean, std])
-                    P.figure(2)
-                    P.subplot(gs[0])
-                    l = P.plot(np.arange(bins[0], bins[bins.shape[0] - 1], bin_step / 10),
+                    fig2_ax_errors.plot(np.arange(bins[0], bins[bins.shape[0] - 1], bin_step / 10),
                                gaus(np.arange(bins[0], bins[bins.shape[0] - 1], bin_step / 10), *popt),
                                color=sets_colors[set_idx], linewidth=1,
                                label=' '.join([sets_labels[set_idx],
@@ -484,11 +486,10 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                                                r'$\sigma$ {0:.2f}m'.format(std),
                                                '{0:.2f}% points'.format(nb_points_as_percent)]))
                     if set_idx != 0:
-                        P.subplot(gs[1])
-                        P.bar(1, set_contribution, 0.05, color=sets_colors[set_idx],
+                        fig2_ax_classes.bar(1, set_contribution, 0.05, color=sets_colors[set_idx],
                               bottom=cumulative_percent - set_contribution,
                               label='test')  # 1 is the x location and 0.05 is the width (label is not printed)
-                        P.text(1, cumulative_percent - 0.5 * set_contribution, '{0:.2f}'.format(set_contribution),
+                        fig2_ax_classes.text(1, cumulative_percent - 0.5 * set_contribution, '{0:.2f}'.format(set_contribution),
                                weight='bold', horizontalalignment='left')
                 except RuntimeError:
                     print('No fitted gaussian plot created as curve_fit failed to converge')
@@ -501,18 +502,18 @@ def plot_histograms(input_array, bin_step=0.1, to_keep_mask=None,
                 saved_files.append(saved_file)
                 np.save(saved_file, n)
 
-    #
-    # Plot save or show
-    #
-    P.figure(2)
-    P.subplot(gs[0])
-    P.legend(loc="upper left")
+    # Set aggregated legend
+    fig2_ax_errors.legend(loc="upper left")
+
+    # Figure 2 Plot save or show
     if display is False:
-        P.savefig(os.path.join(outplotdir,'AltiErrors-Histograms_FittedWithGaussians_'+save_prefix+'.png'),
+        fig2.savefig(os.path.join(outplotdir,'AltiErrors-Histograms_FittedWithGaussians_'+save_prefix+'.png'),
                   dpi=100, bbox_inches='tight')
     else:
+        P.figure(2)
         P.show()
 
+    # Check figure2 to close
     P.figure(2)
     P.close()
 
