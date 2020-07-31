@@ -23,11 +23,73 @@ from astropy import units as u
 
 
 from .a3d_georaster import A3DGeoRaster
+from .a3d_raster_basic import A3DRasterBasic
 from .partition import Partition, Fusion_partition, getColor, NotEnoughDataToPartitionError
 from .output_tree_design import get_out_dir, get_out_file_path
 
 class NoPointsToPlot(Exception):
     pass
+
+
+def compute_stats_array(cfg, dem, ref, dem_nodata=None, ref_nodata=None,
+                        display=False, final_json_file=None):
+    """
+    Compute Stats from numpy arrays
+
+    :param cfg: configuration dictionary
+    :param dem: numpy array, dem raster
+    :param ref: numpy array,reference dem raster to be coregistered to dem raster
+    :param dem_nodata: int/float, nodata value in dem
+    :param ref_nodata: int/float, nodata value in ref
+    :param display: boolean, choose between plot show and plot save
+    :param final_json_file: filename of final_cfg
+    :return:
+    """
+
+    if 'stats_opts' not in cfg:
+        cfg['stats_opts'] = {}
+
+    if 'to_be_classification_layers' not in cfg['stats_opts']:
+        cfg['stats_opts']['to_be_classification_layers'] = {}
+
+    if 'classification_layers' not in cfg['stats_opts']:
+        cfg['stats_opts']['classification_layers'] = {}
+
+    if 'stats_results' not in cfg:
+        cfg['stats_results'] = {}
+
+    # default config
+    cfg['plani_results'] = {}
+    cfg['plani_results']['dx'] = 1
+    cfg['plani_results']['dy'] = 1
+
+    cfg['alti_results'] = {}
+    cfg['alti_results']['rectifiedRef'] = {}
+    cfg['alti_results']['rectifiedRef']['nb_valid_points'] = 10
+    cfg['alti_results']['rectifiedRef']['nb_points'] = 10
+    cfg['alti_results']['rectifiedDEM'] = {}
+    cfg['alti_results']['rectifiedDEM']['nb_valid_points'] = 10
+    cfg['alti_results']['rectifiedDEM']['nb_points'] = 10
+
+    cfg['stats_opts']['alti_error_threshold'] = {}
+    cfg['stats_opts']['alti_error_threshold']['value'] = 0
+    cfg['stats_opts']['plot_real_hists'] = False
+    cfg['stats_opts']['remove_outliers'] = False
+
+    dem_a3d = A3DRasterBasic(dem, nodata=dem_nodata)
+    ref_a3d = A3DRasterBasic(ref, nodata=ref_nodata)
+
+    final_dh = dem_a3d.r - ref_a3d.r
+    final_dh_a3d = A3DRasterBasic(final_dh)
+
+    if final_json_file is None:
+        final_json_file = cfg['outputDir'] + '/final_stats.json'
+
+    alti_diff_stats(cfg, dem_a3d, ref_a3d, final_dh_a3d, display=display,
+                    remove_outliers=cfg['stats_opts']['remove_outliers'], geo_ref=False)
+    # save results
+    with open(final_json_file, 'w') as outfile:
+        json.dump(cfg, outfile, indent=2)
 
 def gaus(x, a, x_zero, sigma):
     return a * exp(-(x - x_zero) ** 2 / (2 * sigma ** 2))
@@ -577,7 +639,7 @@ def save_results(output_json_file, stats_list, labels_plotted=None, plot_files=N
                 writer.writerow(csv_results[set])
 
 
-def create_partitions(dsm, ref, outputDir, stats_opts):
+def create_partitions(dsm, ref, outputDir, stats_opts, geo_ref=True):
     """
     Create or adapt all classification supports for the stats.
     If the support is a slope,it's transformed into a classification support.
@@ -585,6 +647,7 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     :param ref: A3GDEMRaster, coregistered ref
     :param outputDir: ouput directory
     :param stats_opts: TODO
+    :param geo_ref: boolean, set to False if images are not georeferenced
     :return: dict, with partitions information {'
     """
     to_be_clayers = stats_opts['to_be_classification_layers'].copy()
@@ -597,7 +660,7 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     partitions = []
     for layer_name, tbcl in to_be_clayers.items():
         try:
-            partitions.append(Partition(layer_name, 'to_be_classification_layers', dsm, ref, outputDir, **tbcl))
+            partitions.append(Partition(layer_name, 'to_be_classification_layers', dsm, ref, outputDir, geo_ref=geo_ref, **tbcl))
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -605,7 +668,7 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
             pass
     for layer_name, cl in clayers.items():
         try:
-            partitions.append(Partition(layer_name, 'classification_layers', dsm, ref, outputDir, **cl))
+            partitions.append(Partition(layer_name, 'classification_layers', dsm, ref, outputDir, geo_ref=geo_ref, **cl))
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -615,7 +678,15 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     # Create the fusion partition
     if len(partitions) > 1:
         try:
-            partitions.append(Fusion_partition(partitions, outputDir))
+            partitions.append(Fusion_partition(partitions, outputDir, geo_ref=geo_ref))
+        except NotEnoughDataToPartitionError:
+            logging.info('Partitions could ne be created')
+            pass
+
+    if len(partitions) == 0:
+        try:
+            cl = {}
+            partitions.append(Partition('global', 'classification_layers', dsm, ref, outputDir, geo_ref=geo_ref, **cl))
         except NotEnoughDataToPartitionError:
             logging.info('Partitions could ne be created')
             pass
@@ -625,7 +696,7 @@ def create_partitions(dsm, ref, outputDir, stats_opts):
     return partitions
 
 
-def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=False):
+def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=False, geo_ref=True):
     """
     Computes alti error stats with graphics and tables support.
 
@@ -649,30 +720,34 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
     :param alti_map: A3DGeoRaster, dsm - ref
     :param display: boolean, display option (set to False to save plot on file system)
     :param remove_outliers: boolean, set to True to remove outliers ( x < mu - 3sigma ; x > mu + 3sigma)
+    :param geo_ref: boolean, set to False if images are not georeferenced
     :return:
     """
 
     def get_title(cfg):
-        # Set future plot title with bias and % of nan values as part of it
-        title = ['MNT quality performance']
-        dx = cfg['plani_results']['dx']
-        dy = cfg['plani_results']['dy']
-        biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.xres},
-                  'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.yres}}
-        title.append('(mean biases : '
-                     'dx : {:.2f}m (roughly {:.2f}pixel); '
-                     'dy : {:.2f}m (roughly {:.2f}pixel);)'.format(biases['dx']['value_m'],
-                                                                  biases['dx']['value_p'],
-                                                                  biases['dy']['value_m'],
-                                                                  biases['dy']['value_p']))
-        rect_ref_cfg = cfg['alti_results']['rectifiedRef']
-        rect_dsm_cfg = cfg['alti_results']['rectifiedDSM']
-        title.append('(holes or no data stats: '
-                     'Reference DSM  % nan values : {:.2f}%; '
-                     'DSM to compare % nan values : {:.2f}%;)'.format(100 * (1 - float(rect_ref_cfg['nb_valid_points'])
-                                                                            / float(rect_ref_cfg['nb_points'])),
-                                                                     100 * (1 - float(rect_dsm_cfg['nb_valid_points'])
-                                                                            / float(rect_dsm_cfg['nb_points']))))
+        if geo_ref:
+            # Set future plot title with bias and % of nan values as part of it
+            title = ['MNT quality performance']
+            dx = cfg['plani_results']['dx']
+            dy = cfg['plani_results']['dy']
+            biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.xres},
+                      'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.yres}}
+            title.append('(mean biases : '
+                         'dx : {:.2f}m (roughly {:.2f}pixel); '
+                         'dy : {:.2f}m (roughly {:.2f}pixel);)'.format(biases['dx']['value_m'],
+                                                                      biases['dx']['value_p'],
+                                                                      biases['dy']['value_m'],
+                                                                      biases['dy']['value_p']))
+            rect_ref_cfg = cfg['alti_results']['rectifiedRef']
+            rect_dsm_cfg = cfg['alti_results']['rectifiedDSM']
+            title.append('(holes or no data stats: '
+                         'Reference DSM  % nan values : {:.2f}%; '
+                         'DSM to compare % nan values : {:.2f}%;)'.format(100 * (1 - float(rect_ref_cfg['nb_valid_points'])
+                                                                                / float(rect_ref_cfg['nb_points'])),
+                                                                         100 * (1 - float(rect_dsm_cfg['nb_valid_points'])
+                                                                                / float(rect_dsm_cfg['nb_points']))))
+        else:
+            title = "title"
         return title
 
     def get_thresholds_in_meters(cfg):
@@ -692,7 +767,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
         outliers_free_mask = 1
 
     # There can be multiple ways to partition the stats. We gather them all inside a list here:
-    partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'])
+    partitions = create_partitions(dsm, ref, cfg['outputDir'], cfg['stats_opts'], geo_ref=geo_ref)
 
     # For every partition get stats and save them as plots and tables
     cfg['stats_results']['partitions'] = {}
@@ -719,7 +794,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
                                                       plot_title='\n'.join(get_title(cfg)),
                                                       bin_step=cfg['stats_opts']['alti_error_threshold']['value'],
                                                       display=display,
-                                                      plot_real_hist=cfg['stats_opts']['plot_real_hists'])
+                                                      plot_real_hist=cfg['stats_opts']['plot_real_hists'], geo_ref=geo_ref)
 
         # get partition stats results
         cfg['stats_results']['partitions'][p.name] = p.stats_results
@@ -730,7 +805,8 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
 def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
                               mode_masks, mode_names, mode_stats,
                               sets_masks, sets_labels, sets_colors,
-                              plot_title='Title', bin_step=0.1, display=False, plot_real_hist=True):
+                              plot_title='Title', bin_step=0.1, display=False, plot_real_hist=True,
+                              geo_ref=True):
     """
 
     :param data_array:
@@ -745,12 +821,17 @@ def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
     :param bin_step:
     :param display:
     :param plot_real_hist:
+    :param geo_ref: boolean, set to False if images are not georeferenced
     :return:
     """
     mode_output_json_files = {}
     # TODO (peut etre prevoir une activation optionnelle du plotage...)
-    sets_labels = ['all'] + sets_labels
-    sets_colors = np.array([(0, 0, 0)] + list(sets_colors))
+    if sets_labels is not None:
+        sets_labels = ['all'] + sets_labels
+    if sets_colors is not None:
+        sets_colors = np.array([(0, 0, 0)] + list(sets_colors))
+    else:
+        sets_colors = np.array([(0, 0, 0)])
 
     for mode in range(0, len(mode_names)):
         #
@@ -758,33 +839,38 @@ def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
         #
         # -> we are then ready to do some plots !
 
-        try:
-            plot_files, labels, colors = plot_histograms(data_array,
-                                                         bin_step=bin_step,
-                                                         to_keep_mask=mode_masks[mode],
-                                                         sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks,
-                                                         sets_labels=sets_labels,
-                                                         sets_colors=sets_colors,
-                                                         plot_title=plot_title,
-                                                         outplotdir=outplotdir,
-                                                         outhistdir=outhistdir,
-                                                         save_prefix=mode_names[mode],
-                                                         display=display,
-                                                         plot_real_hist=plot_real_hist)
-        except NoPointsToPlot as e:
-            print(('Nothing to plot for mode {} '.format(mode_names[mode])))
-            continue
+        if geo_ref:
+            try:
+                plot_files, labels, colors = plot_histograms(data_array,
+                                                             bin_step=bin_step,
+                                                             to_keep_mask=mode_masks[mode],
+                                                             sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks,
+                                                             sets_labels=sets_labels,
+                                                             sets_colors=sets_colors,
+                                                             plot_title=plot_title,
+                                                             outplotdir=outplotdir,
+                                                             outhistdir=outhistdir,
+                                                             save_prefix=mode_names[mode],
+                                                             display=display,
+                                                             plot_real_hist=plot_real_hist)
+            except NoPointsToPlot as e:
+                print(('Nothing to plot for mode {} '.format(mode_names[mode])))
+                continue
 
         #
         # Save results as .json and .csv file
         #
         mode_output_json_files[mode_names[mode]] = os.path.join(stats_dir, 'stats_results_' + mode_names[mode] + '.json')
-        save_results(mode_output_json_files[mode_names[mode]],
-                     mode_stats[mode],
-                     labels_plotted=labels,
-                     plot_files=plot_files,
-                     plot_colors=colors,
-                     to_csv=True)
+        if geo_ref:
+            save_results(mode_output_json_files[mode_names[mode]],
+                         mode_stats[mode],
+                         labels_plotted=labels,
+                         plot_files=plot_files,
+                         plot_colors=colors,
+                         to_csv=True)
+        else:
+            save_results(mode_output_json_files[mode_names[mode]],
+                         mode_stats[mode], to_csv=True)
 
     return mode_output_json_files
 
