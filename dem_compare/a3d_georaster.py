@@ -809,7 +809,10 @@ class _A3DEGM96Manager(object):
         # Set up coords
         y = -1.0 * y_new
         x = x_new.copy()
-        x[x<0] += 360.0
+        
+        # Lons > 179.625 (our egm96 upperbound) are modulo moved the other side of the Earth, with 180° longitudes == -180° longitudes
+        # this is the fix tightened with our egm96 data
+        x[x > self._x_egm[self._nx - 1]] -= 360.0
 
         # link x,y to coords
         xr = (self._nx - 1) * (x - self._x_egm[0]) / (self._x_egm[-1] - self._x_egm[0])
