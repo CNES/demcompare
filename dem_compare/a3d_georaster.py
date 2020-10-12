@@ -784,7 +784,15 @@ class _A3DEGM96Manager(object):
     Deal with EGM96 Geoid superimposition
     """
     def __init__(self):
-        egm_ds = gdal.Open('/work/logiciels/atelier3D/Data/egm/egm96_15.gtx')
+        
+        import os
+        venv_path = os.environ['VIRTUAL_ENV']
+        if venv_path is not None:
+            geoid_path= venv_path + '/usr/local/dem_compare/geoid/egm96_15.gtx'
+        else:
+            geoid_path='/usr/local/dem_compare/geoid/egm96_15.gtx'
+        
+        egm_ds = gdal.Open(geoid_path)
 
         (x_start, x_step, dontcare0, y_start, dontcare1, y_step) = egm_ds.GetGeoTransform()
         self._nx = egm_ds.RasterXSize

@@ -28,4 +28,5 @@ setup(name='dem_compare',
       license='GNU LGPLv3',
       packages=['dem_compare'],
       scripts=['cli/cli-dem_compare.py', 'cli/compare_with_baseline.py'],
+      data_files=[('usr/local/dem_compare/geoid', ['geoid/egm96_15.gtx'])],
       install_requires=requirements)
