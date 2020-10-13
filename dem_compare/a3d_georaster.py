@@ -785,13 +785,18 @@ class _A3DEGM96Manager(object):
     """
     def __init__(self):
         
-        import os
-        venv_path = os.environ['VIRTUAL_ENV']
-        if venv_path is not None:
-            geoid_path= venv_path + '/usr/local/dem_compare/geoid/egm96_15.gtx'
-        else:
-            geoid_path='/usr/local/dem_compare/geoid/egm96_15.gtx'
-        
+        ## Specific local method to get geoid path
+        ## To update with Geoid evolution issue
+        import lib_programname, os
+        # this returns the fully resolved path to the launched python program
+        prog_path = lib_programname.get_path_executed_script()
+        # Get python installation root path (works with VENV, pip --user and bare)
+        root_path = os.path.abspath(os.path.join(prog_path,"../.."))
+        # Geoid relative Path as installed in setup.py
+        geoid_path='dem_compare/geoid/egm96_15.gtx'
+        # Create full path
+        geoid_path= os.path.join(root_path, geoid_path)
+
         egm_ds = gdal.Open(geoid_path)
 
         (x_start, x_step, dontcare0, y_start, dontcare1, y_step) = egm_ds.GetGeoTransform()
