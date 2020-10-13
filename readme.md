@@ -10,6 +10,8 @@ classifies the stats by slope ranges but one can provide any other data to class
 
 A comparison report can be compiled as html or pdf documentation with statistics printed as tables and plots.
 
+Only Linux Plaforms are supported (virtualenv or bare machine) with Python 3 installed. 
+
 ## Install
 
 This package can be install through the following commands:
