@@ -20,6 +20,7 @@ def readme():
 
 setup(name='dem_compare',
       version_format='{sha}',
+      include_package_data = True,
       setup_requires=['very-good-setuptools-git-version'], 
       description='A tool to compare Digital Elevation Models',
       long_description=readme(),
@@ -29,5 +30,4 @@ setup(name='dem_compare',
       license='GNU LGPLv3',
       packages=['dem_compare'],
       scripts=['cli/cli-dem_compare.py', 'cli/compare_with_baseline.py'],
-      data_files=[('dem_compare/geoid/', ['geoid/egm96_15.gtx'])],
       install_requires=requirements)
