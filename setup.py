@@ -9,7 +9,8 @@ requirements = ['numpy',
                 'pyproj',
                 'matplotlib',
                 'astropy',
-                'sphinx']
+                'sphinx', 
+                'lib_programname']
 
 
 def readme():
@@ -19,6 +20,7 @@ def readme():
 
 setup(name='dem_compare',
       version_format='{sha}',
+      include_package_data = True,
       setup_requires=['very-good-setuptools-git-version'], 
       description='A tool to compare Digital Elevation Models',
       long_description=readme(),

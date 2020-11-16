@@ -784,7 +784,18 @@ class _A3DEGM96Manager(object):
     Deal with EGM96 Geoid superimposition
     """
     def __init__(self):
-        egm_ds = gdal.Open('/work/logiciels/atelier3D/Data/egm/egm96_15.gtx')
+        
+        ## Specific local method to get geoid path works with (VENV, pip --user and bare)
+        ## To update with Geoid evolution issue
+        import os
+        # this returns the fully resolved path to the python installed module
+        module_path=os.path.dirname(__file__)
+        # Geoid relative Path as installed in setup.py
+        geoid_path='geoid/egm96_15.gtx'
+        # Create full geoid path
+        geoid_path= os.path.join(module_path, geoid_path)
+
+        egm_ds = gdal.Open(geoid_path)
 
         (x_start, x_step, dontcare0, y_start, dontcare1, y_step) = egm_ds.GetGeoTransform()
         self._nx = egm_ds.RasterXSize
@@ -809,7 +820,10 @@ class _A3DEGM96Manager(object):
         # Set up coords
         y = -1.0 * y_new
         x = x_new.copy()
-        x[x<0] += 360.0
+        
+        # Lons > 179.625 (our egm96 upperbound) are modulo moved the other side of the Earth, with 180° longitudes == -180° longitudes
+        # this is the fix tightened with our egm96 data
+        x[x > self._x_egm[self._nx - 1]] -= 360.0
 
         # link x,y to coords
         xr = (self._nx - 1) * (x - self._x_egm[0]) / (self._x_egm[-1] - self._x_egm[0])
