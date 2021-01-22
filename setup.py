@@ -19,8 +19,9 @@ REQUIRES_PYTHON = '>=3.6.0'
 EMAIL = 'julien.michel@cnes.fr'
 LICENSE = 'Apache License 2.0'
 REQUIREMENTS = ['numpy',
+                'xarray>=0.13.*',
                 'scipy',
-                'pygdal=={}.*'.format(check_output(['gdal-config', '--version']).rstrip().decode("utf-8")),
+                'rasterio',
                 'pyproj',
                 'matplotlib',
                 'astropy',

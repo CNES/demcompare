@@ -17,8 +17,8 @@ import json
 import copy
 import errno
 import os
-from .a3d_georaster import A3DDEMRaster
 from .output_tree_design import supported_OTD
+from .img_tools import read_img
 
 
 
@@ -250,13 +250,12 @@ def divide_images(cfg):
     """
 
     # compute biggest roi
-    dem = A3DDEMRaster(cfg['inputDSM']['path'],
-                       load_data=(cfg['roi'] if 'roi' in cfg else False))
+    dem = read_img(cfg['inputDSM']['path'], load_data=(cfg['roi'] if 'roi' in cfg else False))
 
-    sizes = {'w': dem.nx, 'h': dem.ny}
+    sizes = {'w': dem['im'].data.shape[1], 'h': dem['im'].data.shape[0]}
     roi = {'x': cfg['roi']['x'] if 'roi' in cfg else 0,
            'y': cfg['roi']['y'] if 'roi' in cfg else 0,
-           'w': dem.nx, 'h': dem.ny}
+           'w': dem['im'].data.shape[1], 'h': dem['im'].data.shape[0]}
 
     # list tiles coordinates
     tile_size_w, tile_size_h = adjust_tile_size(sizes, cfg['tile_size'])

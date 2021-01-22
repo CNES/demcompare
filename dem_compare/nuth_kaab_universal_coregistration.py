@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as pl
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
-from .a3d_georaster import A3DDEMRaster, A3DGeoRaster
+from .img_tools import read_img_from_array, load_dems, save_tif
 
 
 def grad2d(dem):
@@ -120,7 +120,7 @@ def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
     return east, north, c
 
 
-def a3D_libAPI(dsm_dem3Draster, ref_dem3Draster, outdirPlot=None, nb_iters=6):
+def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
     """
     This is the lib api of nuth and kaab universal coregistration.
     It offers quite the same services as the classic main api but uses A3DDEMRaster as input instead of raster files
@@ -131,24 +131,24 @@ def a3D_libAPI(dsm_dem3Draster, ref_dem3Draster, outdirPlot=None, nb_iters=6):
 
     NB : it is assumed that both dem3Draster have np.nan values inside the '.r' field as masked values
 
-    :param dsm_dem3Draster: A3DDEMRaster
+    :param dsm_dataset: xarray Dataset
     :param dsm_from: path to dsm to coregister from
     :param nb_iters:
     :param outputDirPlot: path to output Plot directory (plots are printed if set to None)
     :param keep_georef: keep georef for the output coreg dsm
-    :return: x and y shifts (as 'dsm_dem3Draster + (x,y) = ref_dem3Draster')
+    :return: x and y shifts (as 'dsm_dataset + (x,y) = ref_dataset')
     """
 
     # Set target dsm grid for interpolation purpose
-    xgrid = np.arange(dsm_dem3Draster.nx)
-    ygrid = np.arange(dsm_dem3Draster.ny)
+    xgrid = np.arange(dsm_dataset['im'].data.shape[1])
+    ygrid = np.arange(dsm_dataset['im'].data.shape[0])
     Xpixels, Ypixels = np.meshgrid(xgrid, ygrid)
-    trans = dsm_dem3Draster.trans
+    trans = dsm_dataset['trans'].data
     Xgeo = trans[0] + (Xpixels + 0.5) * trans[1] + (Ypixels + 0.5) * trans[2]
     Ygeo = trans[3] + (Xpixels + 0.5) * trans[4] + (Ypixels + 0.5) * trans[5]
 
-    initial_dh = ref_dem3Draster.r - dsm_dem3Draster.r
-    coreg_ref = ref_dem3Draster.r
+    initial_dh = ref_dataset['im'].data - dsm_dataset['im'].data
+    coreg_ref = ref_dataset['im'].data
 
     # Display
     median = np.median(initial_dh[np.isfinite(initial_dh)])
@@ -175,7 +175,7 @@ def a3D_libAPI(dsm_dem3Draster, ref_dem3Draster, outdirPlot=None, nb_iters=6):
     xoff, yoff, zoff = 0, 0, 0
 
     print("Nuth & Kaab iterations...")
-    coreg_dsm = dsm_dem3Draster.r
+    coreg_dsm = dsm_dataset['im'].data
     for i in range(nb_iters):
         # remove bias
         coreg_ref -= median
@@ -207,16 +207,16 @@ def a3D_libAPI(dsm_dem3Draster, ref_dem3Draster, outdirPlot=None, nb_iters=6):
         # update DEM
         if xoff >= 0:
             coreg_ref = znew[:, 0:znew.shape[1] - int(np.ceil(xoff))]
-            coreg_dsm = dsm_dem3Draster.r[:, 0:dsm_dem3Draster.r.shape[1] - int(np.ceil(xoff))]
+            coreg_dsm = dsm_dataset['im'].data[:, 0:dsm_dataset['im'].data.shape[1] - int(np.ceil(xoff))]
         else:
             coreg_ref = znew[:, int(np.floor(-xoff)):znew.shape[1]]
-            coreg_dsm = dsm_dem3Draster.r[:, int(np.floor(-xoff)):dsm_dem3Draster.r.shape[1]]
+            coreg_dsm = dsm_dataset['im'].data[:, int(np.floor(-xoff)):dsm_dataset['im'].data.shape[1]]
         if -yoff >= 0:
             coreg_ref = coreg_ref[0:znew.shape[0] - int(np.ceil(-yoff)), :]
-            coreg_dsm = coreg_dsm[0:dsm_dem3Draster.r.shape[0] - int(np.ceil(-yoff)), :]
+            coreg_dsm = coreg_dsm[0:dsm_dataset['im'].data.shape[0] - int(np.ceil(-yoff)), :]
         else:
             coreg_ref = coreg_ref[int(np.floor(yoff)):znew.shape[0], :]
-            coreg_dsm = coreg_dsm[int(np.floor(yoff)):dsm_dem3Draster.r.shape[0], :]
+            coreg_dsm = coreg_dsm[int(np.floor(yoff)):dsm_dataset['im'].data.shape[0], :]
 
         # print some statistics
         diff = coreg_ref - coreg_dsm
@@ -232,24 +232,12 @@ def a3D_libAPI(dsm_dem3Draster, ref_dem3Draster, outdirPlot=None, nb_iters=6):
     #
     # Get geo raster from coreg_ref array
     #
-    coreg_dsm_dem3Draster = A3DDEMRaster.from_raster(coreg_dsm,
-                                                     dsm_dem3Draster.trans,
-                                                     "{}".format(dsm_dem3Draster.srs.ExportToProj4()),
-                                                     nodata=-32768)
-    coreg_ref_dem3Draster = A3DDEMRaster.from_raster(coreg_ref,
-                                                     dsm_dem3Draster.trans,
-                                                     "{}".format(dsm_dem3Draster.srs.ExportToProj4()),
-                                                     nodata=-32768)
-    initial_dh_3DRaster = A3DGeoRaster.from_raster(initial_dh,
-                                                   dsm_dem3Draster.trans,
-                                                   "{}".format(dsm_dem3Draster.srs.ExportToProj4()),
-                                                   nodata=-32768)
-    final_dh_3DRaster = A3DGeoRaster.from_raster(coreg_ref - coreg_dsm,
-                                                 dsm_dem3Draster.trans,
-                                                 "{}".format(dsm_dem3Draster.srs.ExportToProj4()),
-                                                 nodata=-32768)
+    coreg_dsm_dataset = read_img_from_array(coreg_dsm, from_dataset=dsm_dataset, no_data=-32768)
+    coreg_ref_dataset = read_img_from_array(coreg_ref, from_dataset=dsm_dataset, no_data=-32768)
+    initial_dh_dataset = read_img_from_array(initial_dh, from_dataset=dsm_dataset, no_data=-32768)
+    final_dh_dataset = read_img_from_array(coreg_ref - coreg_dsm, from_dataset=dsm_dataset, no_data=-32768)
 
-    return xoff, yoff, zoff, coreg_dsm_dem3Draster, coreg_ref_dem3Draster, initial_dh_3DRaster, final_dh_3DRaster
+    return xoff, yoff, zoff, coreg_dsm_dataset, coreg_ref_dataset, initial_dh_dataset, final_dh_dataset
 
 
 def main(dsm_to, dsm_from, outfile=None, nb_iters=6, outputDirPlot=None, nan_dsm_to=None, nan_dsm_from=None, save_diff=False):
@@ -277,45 +265,31 @@ def main(dsm_to, dsm_from, outfile=None, nb_iters=6, outputDirPlot=None, nan_dsm
     """
 
     #
-    # Create A3DDEMRaster
+    # Create datasets
     #
-    dem = A3DDEMRaster(dsm_to, nodata=nan_dsm_to)
-    ref = A3DDEMRaster(dsm_from, nodata=nan_dsm_from)
-    nodata1 = dem.ds.GetRasterBand(1).GetNoDataValue()
-    nodata2 = ref.ds.GetRasterBand(1).GetNoDataValue()
 
-    #
-    # Reproject DSMs
-    #
-    biggest_common_grid = dem.biggest_common_footprint(ref.ds_file)
-    nx = (biggest_common_grid[1] - biggest_common_grid[0]) / dem.xres
-    ny = (biggest_common_grid[2] - biggest_common_grid[3]) / dem.yres
-    reproj_dem = dem.reproject(dem.srs, int(nx), int(ny), biggest_common_grid[0], biggest_common_grid[3],
-                               dem.xres, dem.yres, nodata=nodata1)
-    reproj_ref = ref.reproject(dem.srs, int(nx), int(ny), biggest_common_grid[0], biggest_common_grid[3],
-                               dem.xres, dem.yres, nodata=nodata2)
-    reproj_dem.r[reproj_dem.r == nodata1] = np.nan
-    reproj_ref.r[reproj_ref.r == nodata2] = np.nan
+    reproj_dem, reproj_ref = load_dems(dsm_to, dsm_from, ref_nodata=nan_dsm_from, dem_nodata=nan_dsm_to,
+                                       load_data=False)
 
     #
     # Coregister and compute diff
     #
-    xoff, yoff, zoff, coreg_dsm_dem3Draster, coreg_ref_dem3Draster, init_dh_georaster, final_dh_georaster = \
+    xoff, yoff, zoff, coreg_dsm_dataset, coreg_ref_dataset, init_dh_dataset, final_dh_dataset = \
         a3D_libAPI(reproj_dem, reproj_ref, nb_iters=nb_iters, outdirPlot=outputDirPlot)
 
     #
     # Save coreg dem
     #
     if outfile:
-        coreg_dsm_dem3Draster.save_geotiff('./coreg_dsm.tif')
-        coreg_ref_dem3Draster.save_geotiff('./coreg_ref.tif')
+        save_tif(coreg_dsm_dataset, './coreg_dsm.tif')
+        save_tif(coreg_ref_dataset, './coreg_ref.tif')
 
     #
     # Save diffs
     #
     if save_diff:
-        init_dh_georaster.save_geotiff('./initial_dh.tiff')
-        final_dh_georaster.save_geotiff('./final_dh.tiff')
+        save_tif(init_dh_dataset, './initial_dh.tif')
+        save_tif(final_dh_dataset, './final_dh.tif')
 
     return xoff, yoff, zoff
 

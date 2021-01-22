@@ -15,8 +15,8 @@ import copy
 
 import dem_compare
 
-DEFAULT_STEPS = ['coregistration', 'stats', 'report'] + dem_compare.dem_compare_extra.DEFAULT_STEPS
-ALL_STEPS = copy.deepcopy(DEFAULT_STEPS) + dem_compare.dem_compare_extra.ALL_STEPS
+DEFAULT_STEPS = ['coregistration', 'stats', 'report']
+ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
 
 
 def get_parser():

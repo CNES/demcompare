@@ -17,8 +17,8 @@ from osgeo import gdal
 import itertools
 
 from .output_tree_design import get_out_dir
-from .a3d_georaster import A3DGeoRaster, write_geotiff
-from .a3d_raster_basic import A3DRasterBasic, write_tiff
+from .img_tools import read_img_from_array, save_tif, read_img, reproject_dataset, get_slope
+
 
 class NotEnoughDataToPartitionError(Exception):
     pass
@@ -57,7 +57,7 @@ class Partition(object):
 
         # Store coreg path (TODO why?)
         self.coreg_path = {'ref': None, 'dsm': None}
-        self._coreg_shape = coreg_ref.r.shape
+        self._coreg_shape = coreg_ref['im'].data.shape
         self.coreg_path['dsm'] = coreg_dsm
         self.coreg_path['ref'] = coreg_ref
 
@@ -103,7 +103,7 @@ class Partition(object):
             self._fill_sets_attributes()
 
     def _create_default_partition(self):
-        self._sets_masks = [~ (np.isnan(self.coreg_path['dsm'].r) * np.isnan(self.coreg_path['ref'].r))]
+        self._sets_masks = [~ (np.isnan(self.coreg_path['dsm']['im'].data) * np.isnan(self.coreg_path['ref']['im'].data))]
         self._sets_colors = None
 
     ####### getters and setters #######
@@ -253,36 +253,22 @@ class Partition(object):
     def create_slope(self, coreg_dsm, coreg_ref):
         """
         Create slope if not exist
-        :param coreg_dsm: A3DDEMRaster, input coregistered DSM
-        :param coreg_ref: A3DDEMRaster, input coregistered REF
+        :param coreg_dsm: xarray dataset, input coregistered DSM
+        :param coreg_ref: xarray dataset, input coregistered REF
         :param name_layer: layer name
         :return:
         """
         # Compute ref slope
         self.ref_path = os.path.join(self.stats_dir, 'Ref_support.tif')
-        slope_ref, aspect_ref = coreg_ref.get_slope_and_aspect(degree=False)
-        if self.geo_ref:
-            slope_ref_georaster = A3DGeoRaster.from_raster(slope_ref,
-                                                           coreg_ref.trans,
-                                                           "{}".format(coreg_ref.srs.ExportToProj4()),
-                                                           nodata=self.nodata)
-            slope_ref_georaster.save_geotiff(self.ref_path)
-        else:
-            slope_ref_georaster = A3DRasterBasic(slope_ref, nodata=self.nodata)
-            slope_ref_georaster.save_tiff(self.ref_path)
+        slope_ref = get_slope(coreg_ref, degree=False)
+        slope_ref_dataset = read_img_from_array(slope_ref, from_dataset=coreg_ref, no_data=self.nodata)
+        save_tif(slope_ref_dataset, self.ref_path)
 
         # Compute dsm slope
         self.dsm_path = os.path.join(self.stats_dir, 'DSM_support.tif')
-        slope_dsm, aspect_dsm = coreg_dsm.get_slope_and_aspect(degree=False)
-        if self.geo_ref:
-            slope_dsm_georaster = A3DGeoRaster.from_raster(slope_dsm,
-                                                           coreg_dsm.trans,
-                                                           "{}".format(coreg_dsm.srs.ExportToProj4()),
-                                                           nodata=self.nodata)
-            slope_dsm_georaster.save_geotiff(self.dsm_path)
-        else:
-            slope_dsm_georaster = A3DRasterBasic(slope_dsm, nodata=self.nodata)
-            slope_dsm_georaster.save_tiff(self.dsm_path)
+        slope_dsm = get_slope(coreg_dsm, degree=False)
+        slope_dsm_georaster = read_img_from_array(slope_dsm, from_dataset=coreg_dsm, no_data=self.nodata)
+        save_tif(slope_dsm_georaster, self.dsm_path)
 
     def create_map(self, slope_img, type_slope):
         """
@@ -292,24 +278,19 @@ class Partition(object):
         :return:
         """
         # use radiometric ranges to classify
-        slope = A3DGeoRaster(slope_img)
+        slope = read_img(slope_img, load_data=False)
         rad_range = list(self.classes.values())
-        if self.geo_ref:
-            map_img = A3DGeoRaster.from_raster(np.ones(slope.r.shape) * self.nodata,
-                                               slope.trans, "{}".format(slope.srs.ExportToProj4()), nodata=self.nodata)
-        else:
-            map_img = A3DRasterBasic(np.ones(slope.r.shape) * self.nodata)
+        map_img = read_img_from_array(np.ones(slope['im'].data.shape) * self.nodata, from_dataset=slope, no_data=self.nodata)
+        map_img = save_tif(map_img, self.ref_path)
+
         for idx in range(0, len(rad_range)):
             if idx == len(rad_range) - 1:
-                map_img.r[np.where((~np.isnan(slope.r))*(slope.r >= rad_range[idx]))] = rad_range[idx]
+                map_img['im'].data[np.where((~np.isnan(slope['im'].data))*(slope['im'].data >= rad_range[idx]))] = rad_range[idx]
             else:
-                map_img.r[np.where((~np.isnan(slope.r))*(slope.r >= rad_range[idx]) & (slope.r < rad_range[idx + 1]))] = rad_range[idx]
+                map_img['im'].data[np.where((~np.isnan(slope['im'].data))*(slope['im'].data >= rad_range[idx]) & (slope['im'].data < rad_range[idx + 1]))] = rad_range[idx]
 
         self.map_path[type_slope] = os.path.join(self.stats_dir, type_slope + '_support_map.tif')
-        if self.geo_ref:
-            map_img.save_geotiff(self.map_path[type_slope])
-        else:
-            map_img.save_tiff(self.map_path[type_slope])
+        save_tif(map_img, self.map_path[type_slope])
 
     def _create_set_indices(self):
         """
@@ -325,16 +306,9 @@ class Partition(object):
         sets_indices = {support: None for support in dsm_supports }
         for support in dsm_supports:
             sets_indices[support] = []
-            bool_set_ind = False
-            if self.geo_ref:
-                if self.reproject_path[support]:
-                    img_to_classify = A3DGeoRaster(self.reproject_path[support]).r
-                    bool_set_ind = True
-            else:
-                if self.map_path[support]:
-                    img_to_classify = A3DRasterBasic.from_path(str(self.map_path[support])).r
-                bool_set_ind = True
-            if bool_set_ind:
+            if self.reproject_path[support]:
+                img_to_classify = read_img(self.reproject_path[support], load_data=False)['im'].data
+
                 # calculate sets_indices of partition
                 for class_name, class_value in self.classes.items():
                     if isinstance(class_value, list):
@@ -439,16 +413,11 @@ class Partition(object):
         for map_name, map_path in self.map_path.items():
             if map_path:
                 if self.geo_ref:
-                    map_img = A3DGeoRaster(map_path)
-                    rectified_map = map_img.reproject(self.coreg_path[map_name].srs, int(self.coreg_path[map_name].nx),
-                                                      int(self.coreg_path[map_name].ny), self.coreg_path[map_name].footprint[0],
-                                                      self.coreg_path[map_name].footprint[3],
-                                                      self.coreg_path[map_name].xres, self.coreg_path[map_name].yres,
-                                                      nodata=map_img.nodata, interp_type=gdal.GRA_NearestNeighbour)
-
+                    map_img = read_img(map_path, load_data=False)
+                    rectified_map = reproject_dataset(map_img, self.coreg_path[map_name], interp='nearest')
                     self.reproject_path[map_name] = os.path.join(self.stats_dir,
                                                                  map_name + '_support_map_rectif.tif')
-                    rectified_map.save_geotiff(self.reproject_path[map_name])
+                    save_tif(rectified_map, self.reproject_path[map_name])
                 else:
                     self.reproject_path[map_name] = map_path
 
@@ -499,14 +468,9 @@ class Fusion_partition(Partition):
                     map_fusion[self._sets_indexes[df_k][label_idx]] = self._classes[label_name]
 
                 self.map_path[df_k] = os.path.join(self.stats_dir, '{}_fusion_layer.tif'.format(df_k))
-                if self.geo_ref:
-                    write_geotiff(self.map_path[df_k], map_fusion,
-                                  self.partitions[0].coreg_path['ref'].trans,
-                                  wkt=self.partitions[0].coreg_path['ref'].srs.ExportToWkt(),
-                                  nodata=-32768.0)
-                else:
-                    write_tiff(self.map_path[df_k], map_fusion,
-                                  nodata=-32768.0)
+
+                save_tif(self.partitions[0].coreg_path['ref'], self.map_path[df_k], new_array=map_fusion,
+                         no_data=-32768)
 
     def _fill_sets_attributes(self):
         all_combi_labels, self._classes = self._create_merged_classes(self.partitions)
@@ -618,7 +582,6 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
         sets_fusion.append((new_label_name, np.where(mask_fusion)))
 
     # save map fusionne
-    map = A3DGeoRaster.from_raster(map_fusion,layers_obj.trans,
-                                   "{}".format(layers_obj.srs.ExportToProj4()), nodata=-32768)
+    map = read_img_from_array(map_fusion, from_dataset=layers_obj, no_data=-32768)
 
     return map, sets_fusion, sets_colors / 255.
