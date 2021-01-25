@@ -16,7 +16,6 @@ import os
 import sys
 import json
 import shutil
-from osgeo import gdal
 import numpy as np
 import copy
 import matplotlib as mpl
@@ -25,7 +24,6 @@ from .output_tree_design import get_out_dir, get_out_file_path, get_otd_dirs
 from .img_tools import read_img, save_tif, load_dems, read_img_from_array
 
 
-gdal.UseExceptions()
 DEFAULT_STEPS = ['coregistration', 'stats', 'report']
 ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
 
