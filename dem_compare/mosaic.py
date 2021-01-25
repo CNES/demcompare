@@ -6,7 +6,6 @@
 import argparse, json, os, datetime, subprocess, sys
 
 import numpy as np
-from osgeo import gdal
 
 
 def shellquote(s):
@@ -260,65 +259,6 @@ def write_main_vrt(vrt_row, vrt_name, min_x, max_x, min_y, max_y, nbBands=1, dat
             if band != nbBands:
                 main_vrt_file.write(vrt_bandfooter())
         main_vrt_file.write(vrt_footer())
-
-
-def write_vrt_from_a_list(vrt_outfile, tiles_list):
-    """
-    Write a vrt file from a list of tiles as tuples
-
-    Args:
-    tiles_tiles: list of tiles as tuples: [(fname, dst_x, dst_y), ...]
-    vrt_outfile: vrt output file
-    """
-
-    dst_list = list()
-    vrt_content = list()
-    rastercount_sav = None
-    bandtype_sav = None
-
-    for tile in tiles_list:
-        fname, dst_x, dst_y = tile
-        dataset = gdal.Open(fname)
-        dst_w = dataset.RasterXSize
-        dst_h = dataset.RasterYSize
-        dst_list.append([dst_x, dst_y, dst_w, dst_h])
-
-        rastercount = dataset.RasterCount
-        bandtype = gdal.GetDataTypeName(dataset.GetRasterBand(1).DataType)
-
-        rastercount_sav = rastercount if rastercount_sav is None else rastercount_sav
-        bandtype_sav = bandtype if bandtype_sav is None else bandtype_sav
-
-        assert rastercount_sav == rastercount
-        assert bandtype_sav == bandtype
-
-        while len(vrt_content) < rastercount:
-            if vrt_content:
-                vrt_content.append([vrt_bandheader(band=len(vrt_content)+1,
-                                                   dataType=bandtype)])
-            else:
-                vrt_content.append([])
-
-        for band in range(rastercount):
-            vrt_content[band].append(vrt_body_source(fname, band+1, 0, 0, dst_w, dst_h,
-                                                     dst_x, dst_y, dst_w, dst_h))
-
-    for band in range(rastercount-1):
-        vrt_content[band].append(vrt_bandfooter())
-
-    vrt_content = [item for sublist in vrt_content for item in sublist]
-
-    dst_numpy = np.array(dst_list)
-    vrt_sizex = np.amax(dst_numpy[:, 2] + dst_numpy[:, 0])
-    vrt_sizey = np.amax(dst_numpy[:, 3] + dst_numpy[:, 1])
-
-    vrt_content.insert(0, vrt_header(vrt_sizex, vrt_sizey,
-                                     dataType=bandtype))
-
-    vrt_content.append(vrt_footer())
-
-    with open(vrt_outfile, 'w') as vrt_file:
-        vrt_file.write(' '.join((vrt_content)))
 
 
 def main(tiles_file, outfile, sub_img, nbBands=1, dataType='Float32', color=False):

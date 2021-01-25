@@ -16,7 +16,6 @@ import json
 import collections
 import csv
 import numpy as np
-from osgeo import gdal
 from scipy import exp
 from scipy.optimize import curve_fit
 from astropy import units as u

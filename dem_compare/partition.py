@@ -13,7 +13,6 @@ import collections
 import numpy as np
 import logging
 from functools import reduce
-from osgeo import gdal
 import itertools
 
 from .output_tree_design import get_out_dir

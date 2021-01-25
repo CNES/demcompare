@@ -57,11 +57,6 @@ def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpD
     coreg_dem2 = translate(coreg_dem2, x_off - 0.5, -y_off - 0.5)
     final_dh = translate(final_dh, x_off - 0.5, -y_off - 0.5)
 
-    # TODO remove
-    # coreg_dem1 = coreg_dem1.geo_translate(x_off - 0.5, -y_off - 0.5, system='pixel')
-    # coreg_dem2 = coreg_dem2.geo_translate(x_off - 0.5, -y_off - 0.5, system='pixel')
-    # final_dh = final_dh.geo_translate(x_off - 0.5, -y_off - 0.5, system='pixel')
-
     # Eventually we return nuth and kaab results :
     #  NB : -y_off because y_off from nk is north oriented
     #       we take into account initial disparity
