@@ -9,7 +9,6 @@ This is where high level parameters are checked and default options are set
 
 """
 
-from osgeo import gdal
 from astropy import units as u
 import ast
 import numpy as np
