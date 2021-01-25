@@ -1,127 +1,140 @@
 {
-  "plani_results": {
-    "dx": {
-      "unit": "deg", 
-      "bias_value": 0.0025000009362819344
-    }, 
-    "dy": {
-      "unit": "deg", 
-      "bias_value": 0.0041666665946305118
-    }
-  }, 
+  "outputDir": "TO/PATH/dem_compare/test_output",
   "inputRef": {
-    "georef": "WGS84", 
-    "path": "./test_data/srtm_ref.tif", 
-    "zunit": "meter"
-  }, 
+    "path": "TO/PATH/dem_compare/test_data/srtm_ref.tif",
+    "zunit": "meter",
+    "georef": "WGS84"
+  },
   "inputDSM": {
-    "georef": "WGS84", 
-    "path": "./test_data/srtm_blurred_and_shifted.tif", 
-    "nodata": -32768, 
-    "zunit": "meter"
-  }, 
-  "alti_results": {
-    "dzMap": {
-      "nb_valid_points": 980099, 
-      "path": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/final_dh.tif", 
-      "nodata": -32768.0, 
-      "zunit": "m", 
-      "nb_points": 980099
-    }, 
-    "dz": {
-      "percent": 100, 
-      "unit": "m", 
-      "bias_value": -0.017627475783228874
-    }, 
-    "rectifiedDSM": {
-      "nb_points": 980099, 
-      "zunit": "meter", 
-      "nb_valid_points": 980099, 
-      "georef": "WGS84", 
-      "path": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/coreg_DEM.tif", 
-      "nodata": -32768.0
-    }, 
-    "rectifiedRef": {
-      "nb_points": 980099, 
-      "zunit": "meter", 
-      "nb_valid_points": 980099, 
-      "georef": "WGS84", 
-      "path": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/coreg_REF.tif", 
-      "nodata": -32768.0
-    }
-  }, 
+    "path": "TO/PATH/dem_compare/test_data/srtm_blurred_and_shifted.tif",
+    "zunit": "meter",
+    "georef": "WGS84",
+    "nodata": -32768
+  },
   "plani_opts": {
-    "coregistration_method": "nuth_kaab", 
+    "coregistration_method": "nuth_kaab",
     "disp_init": {
-      "y": 0, 
-      "x": 0
+      "x": 0,
+      "y": 0
     }
-  }, 
-  "stats_results": {
-    "images": {
-      "Ref_support": {
-        "nodata": -32768.0, 
-        "zunit": "meter", 
-        "path": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/Ref_support.tif"
-      }, 
-      "DSM_support": {
-        "nodata": -32768.0, 
-        "zunit": "meter", 
-        "path": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/DSM_support.tif"
-      }, 
-      "list": [
-        "Ref_support", 
-        "DSM_support", 
-        "Ref_support_classified", 
-        "DSM_support_classified"
-      ], 
-      "Ref_support_classified": {
-        "path": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/Ref_support_classified.png", 
-        "nodata": [
-          0, 
-          0, 
-          0, 
-          0
-        ]
-      }, 
-      "DSM_support_classified": {
-        "path": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/DSM_support_classified.png", 
-        "nodata": [
-          0, 
-          0, 
-          0, 
-          0
-        ]
+  },
+  "stats_opts": {
+    "to_be_classification_layers": {
+      "slope": {
+        "ranges": [
+          0,
+          5,
+          10,
+          25,
+          45
+        ],
+        "ref": null,
+        "dsm": null
       }
-    }, 
-    "modes": {
-      "coherent-classification": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/stats_results_coherent-classification.json", 
-      "incoherent-classification": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/stats_results_incoherent-classification.json", 
-      "standard": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/stats_results_standard.json"
-    }
-  }, 
+    },
+    "classification_layers": {},
+    "alti_error_threshold": {
+      "value": 0.1,
+      "unit": "meter"
+    },
+    "elevation_thresholds": {
+      "list": [
+        0.5,
+        1,
+        3
+      ],
+      "zunit": "meter"
+    },
+    "plot_real_hists": false,
+    "remove_outliers": true
+  },
   "alti_opts": {
     "egm96-15": {
-      "path": "/work/logiciels/atelier3D/Data/egm/egm96_15.gtx", 
+      "path": "TO/PATH/dem_compare/geoid/egm96_15.gtx",
       "zunit": "meter"
-    }, 
+    },
     "deramping": false
-  }, 
-  "stats_opts": {
-    "class_rad_range": [
-      0, 
-      5, 
-      10, 
-      25, 
-      45
-    ], 
-    "cross_classification": true, 
-    "class_type": "slope", 
-    "alti_error_threshold": {
-      "unit": "meter", 
-      "value": 0.1
+  },
+  "plani_results": {
+    "dx": {
+      "bias_value": 0.0025000009439781934,
+      "unit": "plani_unit"
+    },
+    "dy": {
+      "bias_value": 0.0041666665985536176,
+      "unit": "plani_unit"
     }
-  }, 
-  "outputDir": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output", 
-  "tmpDir": "/work/OT/siqi/Atelier3D/Development/dumasl/dem_compare_framagit/dem_compare/test_output/tmp"
+  },
+  "alti_results": {
+    "rectifiedDSM": {
+      "path": "TO/PATH/dem_compare/test_output/./coregistration/coreg_DEM.tif",
+      "zunit": "meter",
+      "georef": "WGS84",
+      "nodata": -32768,
+      "nb_points": 983070,
+      "nb_valid_points": 983070
+    },
+    "rectifiedRef": {
+      "path": "TO/PATHdem_compare/test_output/./coregistration/coreg_REF.tif",
+      "zunit": "meter",
+      "georef": "WGS84",
+      "nodata": -32768,
+      "nb_points": 983070,
+      "nb_valid_points": 983070
+    },
+    "dz": {
+      "bias_value": -0.017645403742790222,
+      "unit": "zunit",
+      "percent": 100.0
+    },
+    "dzMap": {
+      "path": "TO/PATH/dem_compare/test_output/./final_dh.tif",
+      "zunit": "zunit",
+      "nodata": -32768,
+      "nb_points": 983070,
+      "nb_valid_points": 983070
+    }
+  },
+  "stats_results": {
+    "images": {
+      "list": [
+        "row_wise",
+        "col_wise"
+      ],
+      "row_wise": {
+        "path": "TO/PATH/dem_compare/test_output/./dh_row_wise_wave_detection.tif",
+        "zunit": "zunit",
+        "nodata": -32768,
+        "nb_valid_points": 983070
+      },
+      "col_wise": {
+        "path": "TO/PATH/dem_compare/test_output/./dh_col_wise_wave_detection.tif",
+        "zunit": "zunit",
+        "nodata": -32768,
+        "nb_valid_points": 983070
+      }
+    },
+    "partitions": {
+      "slope": {
+        "standard": {
+          "Ref_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/dem_compare/test_output/./stats/slope/ref_support_map.tif"
+          },
+          "DSM_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/dem_compare/test_output/./stats/slope/dsm_support_map.tif"
+          }
+        },
+        "coherent-classification": {
+          "Ref_support": null,
+          "DSM_support": null
+        },
+        "incoherent-classification": {
+          "Ref_support": null,
+          "DSM_support": null
+        }
+      }
+    }
+  }
 }
