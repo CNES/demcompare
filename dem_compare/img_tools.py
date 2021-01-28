@@ -445,8 +445,7 @@ def translate(dataset, x_offset, y_offset):
     return dataset_translated
 
 
-def save_tif(dataset: xr.Dataset, filename: str, new_array=None,
-             dtype: rasterio.dtypes = rasterio.dtypes.float32, no_data=-32768) -> xr.Dataset:
+def save_tif(dataset: xr.Dataset, filename: str, new_array=None, no_data=-32768) -> xr.Dataset:
     """
     Write a xarray.Dataset in a tiff file
 
@@ -456,8 +455,6 @@ def save_tif(dataset: xr.Dataset, filename: str, new_array=None,
     :type filename: string
     :param new_array:  new array to write
     :type new_array: np.nadarray
-    :param dtype: band types
-    :type dtype: GDALDataType
     :param no_data:  value of nodata to use
     :type no_data: float
     :return: None
@@ -481,9 +478,10 @@ def save_tif(dataset: xr.Dataset, filename: str, new_array=None,
                            width=col,
                            height=row,
                            count=1,
-                           dtype=dtype,
+                           dtype=data.dtype,
                            crs=previous_profile['crs'],
                            transform=previous_profile['transform']) as source_ds:
+            source_ds.nodata = no_data
             source_ds.write(data, 1)
 
     else:
