@@ -25,10 +25,7 @@ REQUIREMENTS = ['numpy',
                 'matplotlib',
                 'astropy',
                 'sphinx',
-                'lib_programname',
-                'setuptools-scm']
-
-SETUP_REQUIREMENTS = ['setuptools-scm']
+                'lib_programname']
 
 def readme():
     with copen('readme.md', "r", "utf-8") as fstream:
@@ -47,6 +44,5 @@ setup(
     long_description=readme(),
     install_requires=REQUIREMENTS,
     python_requires=REQUIRES_PYTHON,
-    setup_requires=SETUP_REQUIREMENTS,
     scripts=['cli/cli-dem_compare.py', 'cli/compare_with_baseline.py']
 )
