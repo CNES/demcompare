@@ -70,7 +70,7 @@ def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     :param cfg: configuration dictionary
     :param dem: A3DDEMRaster, dem raster
     :param ref: A3DDEMRaster,reference dem raster to be coregistered to dem raster
-    :param final_dh: xarray.Dataset, inital alti diff
+    :param final_dh: xarray.Dataset, initial alti diff
     :param display: boolean, choose between plot show and plot save
     :param final_json_file: filename of final_cfg
     :return:
