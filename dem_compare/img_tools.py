@@ -342,11 +342,10 @@ def load_dems(ref_path, dem_path, ref_nodata=None, dem_nodata=None,
     dem_trans = src_dem.transform
     bounds_dem = src_dem.bounds
 
-    if not load_data:
+    if load_data is not True:
         # Use ROI
-        if isinstance(load_data, tuple):
-            (left, bottom, right, top) = load_data
-            bounds_dem = rasterio.windows.Window(left, bottom, right, top)
+        if isinstance(load_data, tuple) or isinstance(load_data, list):
+            bounds_dem = load_data
 
         elif isinstance(load_data, dict):
             if "left" in load_data and "bottom" in load_data and "right" in load_data and "top" in load_data:
@@ -354,9 +353,9 @@ def load_dems(ref_path, dem_path, ref_nodata=None, dem_nodata=None,
                 bounds_dem = (load_data["left"], load_data["bottom"], load_data["right"], load_data["top"])
             elif "x" in load_data and "y" in load_data and "w" in load_data and "h" in load_data:
                 # coordinates
-                window_dem = (load_data["x"], load_data["y"], load_data["x"] + load_data["w"],
-                              load_data["y"] + load_data["h"])
+                window_dem = rasterio.windows.Window(load_data["x"], load_data["y"], load_data["w"], load_data["h"])
                 bounds_dem = rasterio.windows.bounds(window_dem, dem_trans)
+                print(bounds_dem)
 
             else:
                 print("Not he right conventions for ROI")
