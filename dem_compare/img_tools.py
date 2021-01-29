@@ -23,6 +23,7 @@
 This module contains functions associated to raster images.
 """
 
+import logging
 import numpy as np
 import rasterio
 import rasterio.warp
@@ -86,7 +87,7 @@ def pix_to_coord(transform_array, row: int, col: int):
     return x, y
 
 
-def reproject_dataset(dataset, from_dataset, from_epsg96=False, interp='nearest'):
+def reproject_dataset(dataset, from_dataset, interp='nearest'):
     """
     Reproject dataset, and return the corresponding xarray.DataSet
 
@@ -94,8 +95,6 @@ def reproject_dataset(dataset, from_dataset, from_epsg96=False, interp='nearest'
     :type dataset: xarray.DataSet
     :type from_dataset: Dataset to get projection from
     :type from_dataset: xarray.DataSet
-    :param from_epsg96: True if on geoid
-    :type from_epsg96: bool
     :param interp: interpolation method
     :type interp: string
     :return: xarray.DataSet
@@ -106,6 +105,8 @@ def reproject_dataset(dataset, from_dataset, from_epsg96=False, interp='nearest'
     reprojected_dataset = copy.copy(from_dataset)
 
     interpolation_method = Resampling.nearest
+    if interp != 'nearest':
+        logging.warning("Interpolation method not available, use default 'nearest'")
 
     src_transform = Affine.from_gdal(dataset['trans'].data[0], dataset['trans'].data[1], dataset['trans'].data[2],
                                      dataset['trans'].data[3], dataset['trans'].data[4], dataset['trans'].data[5])
@@ -138,7 +139,8 @@ def reproject_dataset(dataset, from_dataset, from_epsg96=False, interp='nearest'
     return reprojected_dataset
 
 
-def read_img(img: str, no_data: float = None, ref:  str = 'WGS84', zunit : str = 'm', load_data: bool = False) -> xr.Dataset:
+def read_img(img: str, no_data: float = None, ref: str = 'WGS84', zunit: str = 'm',
+             load_data: bool = False) -> xr.Dataset:
     """
     Read image and trasform and return the corresponding xarray.DataSet
 
@@ -491,7 +493,7 @@ def save_tif(dataset: xr.Dataset, filename: str, new_array=None, no_data=-32768)
                            driver='GTiff',
                            width=col, height=row,
                            count=depth,
-                           dtype=dtype,
+                           dtype=data.dtype,
                            crs=previous_profile['crs'],
                            transform=previous_profile['transform']) as source_ds:
             for dsp in range(1, depth + 1):
@@ -606,8 +608,8 @@ def interpolate_geoid(geoid_filename, coords, interpol_method='linear'):
     # lat must be in ascending order,
     y = np.arange(ori_y, last_y, step_y)
     geoid_grid_coordinates = (x, y)
-    interp_geoid = interpolate.interpn(geoid_grid_coordinates, geoid_values, coords, method=interpol_method, bounds_error=False,
-                                       fill_value=None)
+    interp_geoid = interpolate.interpn(geoid_grid_coordinates, geoid_values, coords, method=interpol_method,
+                                       bounds_error=False, fill_value=None)
     return interp_geoid
 
 
