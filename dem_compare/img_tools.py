@@ -385,7 +385,8 @@ def load_dems(ref_path, dem_path, ref_nodata=None, dem_nodata=None,
     geom_like_polygon = {"type": "Polygon", "coordinates": [polygon_roi]}
 
     # crop dem
-    new_cropped_dem, new_cropped_dem_transform = rasterio.mask.mask(src_dem, [geom_like_polygon], crop=True)
+    new_cropped_dem, new_cropped_dem_transform = rasterio.mask.mask(src_dem, [geom_like_polygon], all_touched=True,
+                                                                    crop=True)
 
     # create datasets
 
