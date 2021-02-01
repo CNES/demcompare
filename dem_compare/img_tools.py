@@ -24,6 +24,7 @@ This module contains functions associated to raster images.
 """
 
 import logging
+from typing import List, Union, Tuple
 import numpy as np
 import rasterio
 import rasterio.warp
@@ -34,46 +35,35 @@ import xarray as xr
 import copy
 import os
 from astropy import units as u
-from affine import Affine
+from rasterio import Affine
 from scipy.ndimage import filters
 from rasterio.warp import reproject, Resampling
 from scipy import interpolate
-try:
-    import pyproj
-except ImportError:
-    import mpl_toolkits.basemap.pyproj as pyproj
+import pyproj
 
 
-def read_image(path, band=1):
+def read_image(path: str, band: int = 1) -> np.ndarray:
     """
     Read image as array
 
     :param path: path
-    :type path: str
-    :type band: numero of band to extract
-    :type band: int
-    :param col: column
-    :type col: int
-    :return: band
-    :rtype: np.ndarray
+    :param band: numero of band to extract
+    :return: band array
     """
     img_ds = rasterio.open(path)
     data = img_ds.read(band)
     return data
 
 
-def pix_to_coord(transform_array, row: int, col: int):
+def pix_to_coord(transform_array: Union[List, np.ndarray], row: Union[int, np.ndarray],
+                     col: Union[List, np.ndarray]) -> Union[Tuple[Tuple[np.ndarray, np.ndarray], float, float]]:
     """
     Transform pixels to coordinates
 
     :param transform_array: Transform
-    :type transform_array: List or np.ndarray
-    :type row: row
-    :type row: int or np.ndarray
+    :param row: row
     :param col: column
-    :type col: int or np.ndarray
     :return: x,y
-    :rtype: Tuple(float, float)
     """
     transform = Affine.from_gdal(transform_array[0], transform_array[1], transform_array[2],
                                  transform_array[3], transform_array[4], transform_array[5])
@@ -87,18 +77,14 @@ def pix_to_coord(transform_array, row: int, col: int):
     return x, y
 
 
-def reproject_dataset(dataset, from_dataset, interp='bilinear'):
+def reproject_dataset(dataset: xr.Dataset, from_dataset: xr.Dataset, interp: str = 'bilinear') -> xr.Dataset:
     """
     Reproject dataset, and return the corresponding xarray.DataSet
 
     :param dataset: Dataset to reproject
-    :type dataset: xarray.DataSet
     :type from_dataset: Dataset to get projection from
-    :type from_dataset: xarray.DataSet
     :param interp: interpolation method
-    :type interp: string
     :return: xarray.DataSet
-    :rtype: xarray.DataSet
     """
 
     # Copy dataset
@@ -149,18 +135,11 @@ def read_img(img: str, no_data: float = None, ref: str = 'WGS84', zunit: str = '
     Read image and trasform and return the corresponding xarray.DataSet
 
     :param img: Path to the image
-    :type img: string
     :param no_data: no_data value in the image
-    :type no_data: float
     :param ref: WGS84 or egm96
-    :type ref: str
     :param zunit: unit
-    :type zunit: str
     :param load_data: load as dem
-    :type load_data: bool
-    :return: xarray.DataSet
-    :rtype:
-        xarray.DataSet containing the variables :
+    :return: dataset containing the variables :
             - im : 2D (row, col) xarray.DataArray float32
             - trans 1D xarray.DataArray float32
     """
@@ -179,23 +158,13 @@ def create_dataset(data: np.ndarray, transform: np.ndarray, img: str,  no_data: 
     Create dataset from array and transform, and return the corresponding xarray.DataSet
 
     :param data: image data
-    :type data: np.ndarray
     :param transform: image data
-    :type transform: np.ndarray
     :type img: image path
-    :type img: str
     :type no_data: no_data value in the image
-    :type no_data: float
     :param ref: WGS84 or egm96
-    :type ref: str
     :type zunit: unit
-    :type zunit: str
     :param load_data: load as dem
-    :type load_data: bool
-    :return: xarray.DataSet
-    :return: xarray.DataSet
-    :rtype:
-        xarray.DataSet containing the variables :
+    :return: xarray.DataSet containing the variables :
             - im : 2D (row, col) xarray.DataArray float32
     """
 
@@ -269,15 +238,9 @@ def read_img_from_array(img_array: np.ndarray, from_dataset: xr.Dataset = None, 
     Read image and mask, and return the corresponding xarray.DataSet
 
     :param img_array: array
-    :type img_array: np.ndarray
-    :type no_data: no_data value in the image
-    :type no_data: float
-    :type from_dataset: dataset to copy
-    :type from_dataset: xarray.DataSet
-    :return: xarray.DataSet
-    :return: xarray.DataSet
-    :rtype:
-        xarray.DataSet containing the variables :
+    :param no_data: no_data value in the image
+    :param from_dataset: dataset to copy
+    :return: xarray.DataSet containing the variables :
             - im : 2D (row, col) xarray.DataArray float32
     """
 
@@ -311,31 +274,22 @@ def read_img_from_array(img_array: np.ndarray, from_dataset: xr.Dataset = None, 
     return dataset
 
 
-def load_dems(ref_path, dem_path, ref_nodata=None, dem_nodata=None,
-              ref_georef='WGS84', dem_georef='WGS84', ref_zunit='m', dem_zunit='m', load_data=True):
+def load_dems(ref_path: str, dem_path: str, ref_nodata: float = None, dem_nodata: float = None,
+              ref_georef: str = 'WGS84', dem_georef: str = 'WGS84', ref_zunit: str = 'm', dem_zunit: str = 'm',
+              load_data: Union[bool, dict, Tuple] = True) -> Tuple[xr.Dataset, xr.Dataset]:
     """
     Loads both DEMs
 
     :param ref_path:  path to ref dem
-    :type ref_path: str
     :param dem_path:path to sec dem
-    :type ref_path: str
     :param ref_nodata: ref no data value (None by default and if set inside metadata)
-    :type ref_path: float
     :param dem_nodata: dem no data value (None by default and if set inside metadata)
-    :type ref_path: float
     :param ref_georef: ref georef (either WGS84 -default- or EGM96)
-    :type ref_path: str
     :param dem_georef: dem georef (either WGS84 -default- or EGM96)
-    :type ref_path: str
     :param ref_zunit: ref z unit
-    :type ref_path: unit
     :param dem_zunit: dem z unit
-    :type ref_path: unit
     :param load_data: True if dem are to be fully loaded, other options are False or a dict roi
-    :type ref_path: bool, dict
     :return: ref and dem datasets
-    :rtype: Tuple(xarray.Dataset, xarray.Dataset)
     """
 
     # Get roi of dem
@@ -406,20 +360,15 @@ def load_dems(ref_path, dem_path, ref_nodata=None, dem_nodata=None,
     return ref, dem
 
 
-def bounding_box_to_polygone(left, bottom, right, top):
+def bounding_box_to_polygone(left: float, bottom: float, right: float, top: float) -> List[List[float]]:
     """
     Transform bounding box to polygon
 
     :param left: left bound
-    :type left: float
     :param bottom: bottom bound
-    :type bottom: float
     :param right: right bound
-    :type right: float
     :param top: top bound
-    :type top: float
     :return: polygon
-    :rtype: List
     """
 
     polygon = [[left, bottom],
@@ -431,16 +380,12 @@ def bounding_box_to_polygone(left, bottom, right, top):
     return polygon
 
 
-def translate(dataset, x_offset, y_offset):
+def translate(dataset: xr.Dataset, x_offset: float, y_offset: float) -> xr.Dataset:
     """
     Modify transform from dataset
     :param dataset:
-    :type dataset: xarray Dataset
     :param x_offset: x offset
-    :type x_offset: float
     :param y_offset: y offset
-    :type y_offset: float
-    :return: xarray Dataset
     """
     dataset_translated = copy.copy(dataset)
 
@@ -451,19 +396,15 @@ def translate(dataset, x_offset, y_offset):
     return dataset_translated
 
 
-def save_tif(dataset: xr.Dataset, filename: str, new_array=None, no_data=-32768) -> xr.Dataset:
+def save_tif(dataset: xr.Dataset, filename: str, new_array=None, no_data: float = -32768) -> xr.Dataset:
     """
-    Write a xarray.Dataset in a tiff file
+    Write a Dataset in a tiff file
 
     :param dataset: dataset
-    :type dataset: xarray.Dataset
     :param filename:  output filename
-    :type filename: string
     :param new_array:  new array to write
-    :type new_array: np.nadarray
     :param no_data:  value of nodata to use
-    :type no_data: float
-    :return: None
+    :return: dataset
     """
 
     # update from dataset
@@ -509,21 +450,18 @@ def save_tif(dataset: xr.Dataset, filename: str, new_array=None, no_data=-32768)
     return new_dataset
 
 
-def get_slope(dataset, degree=False):
+def get_slope(dataset: xr.Dataset, degree: bool = False) -> np.ndarray:
     """
     Compute slope from dataset
     Slope is presented here :
     http://pro.arcgis.com/fr/pro-app/tool-reference/spatial-analyst/how-aspect-works.htm
 
     :param dataset: dataset
-    :type dataset: xarray.Dataset
     :param degree:  True if is in degree
-    :type degree: bool
     :return: slope
-    :rtype: np.ndarray
     """
 
-    def get_orthodromic_distance(lon1, lat1, lon2, lat2):
+    def get_orthodromic_distance(lon1: float, lat1: float, lon2: float, lat2: float):
         """
         Get Orthodromic distance from two (lat,lon) coordinates
 
@@ -581,16 +519,13 @@ def get_slope(dataset, degree=False):
     return slope
 
 
-def interpolate_geoid(geoid_filename, coords, interpol_method='linear'):
+def interpolate_geoid(geoid_filename: str, coords: np.ndarray, interpol_method: str = 'linear') -> np.ndarray:
     """
     Bilinear interpolation of geoid
 
     :param geoid_filename :  coord geoid_filename
-    :type geoid_filename : str
-    :param coords :  coords
-    :type coords : np array 2xN [lon,lat]
+    :param coords :  coords matrix 2xN [lon,lat]
     :param interpol_method  :  interpolation type
-    :type interpol_method : str
     :return interpolated position  : [lon,lat,estimate geoid] (3D np.array)
     """
     dataset = rasterio.open(geoid_filename)
@@ -617,14 +552,12 @@ def interpolate_geoid(geoid_filename, coords, interpol_method='linear'):
     return interp_geoid
 
 
-def get_egm96_offset(dataset):
+def get_egm96_offset(dataset: xr.Dataset) -> np.ndarray:
     """
     Get offset from geoid to ellipsoid
 
     :param dataset :  dataset
-    :type dataset : xarray.Dataset
     :return offset as array
-    :rtype np.ndarray
     """
 
     # Get Geoid path
