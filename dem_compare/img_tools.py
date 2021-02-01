@@ -132,7 +132,7 @@ def reproject_dataset(dataset: xr.Dataset, from_dataset: xr.Dataset, interp: str
 def read_img(img: str, no_data: float = None, ref: str = 'WGS84', zunit: str = 'm',
              load_data: bool = False) -> xr.Dataset:
     """
-    Read image and trasform and return the corresponding xarray.DataSet
+    Read image and transform and return the corresponding xarray.DataSet
 
     :param img: Path to the image
     :param no_data: no_data value in the image
