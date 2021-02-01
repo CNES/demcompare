@@ -87,7 +87,7 @@ def pix_to_coord(transform_array, row: int, col: int):
     return x, y
 
 
-def reproject_dataset(dataset, from_dataset):
+def reproject_dataset(dataset, from_dataset, interp='bilinear'):
     """
     Reproject dataset, and return the corresponding xarray.DataSet
 
@@ -95,6 +95,8 @@ def reproject_dataset(dataset, from_dataset):
     :type dataset: xarray.DataSet
     :type from_dataset: Dataset to get projection from
     :type from_dataset: xarray.DataSet
+    :param interp: interpolation method
+    :type interp: string
     :return: xarray.DataSet
     :rtype: xarray.DataSet
     """
@@ -103,6 +105,12 @@ def reproject_dataset(dataset, from_dataset):
     reprojected_dataset = copy.copy(from_dataset)
 
     interpolation_method = Resampling.bilinear
+    if interp == 'bilinear':
+        interpolation_method = Resampling.bilinear
+    elif interp == 'nearest':
+        interpolation_method = Resampling.nearest
+    else:
+        logging.warning("Interpolation method not available, use default 'bilinear'")
 
     src_transform = Affine.from_gdal(dataset['trans'].data[0], dataset['trans'].data[1], dataset['trans'].data[2],
                                      dataset['trans'].data[3], dataset['trans'].data[4], dataset['trans'].data[5])
@@ -393,7 +401,7 @@ def load_dems(ref_path, dem_path, ref_nodata=None, dem_nodata=None,
                               zunit=ref_zunit, load_data=load_data)
 
     # reproject, crop, resample
-    ref = reproject_dataset(full_ref, dem)
+    ref = reproject_dataset(full_ref, dem, interp='bilinear')
 
     return ref, dem
 
