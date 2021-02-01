@@ -386,6 +386,7 @@ def translate(dataset: xr.Dataset, x_offset: float, y_offset: float) -> xr.Datas
     :param dataset:
     :param x_offset: x offset
     :param y_offset: y offset
+    :return translated dataset
     """
     dataset_translated = copy.copy(dataset)
 
