@@ -87,7 +87,7 @@ def pix_to_coord(transform_array, row: int, col: int):
     return x, y
 
 
-def reproject_dataset(dataset, from_dataset, interp='nearest'):
+def reproject_dataset(dataset, from_dataset):
     """
     Reproject dataset, and return the corresponding xarray.DataSet
 
@@ -95,8 +95,6 @@ def reproject_dataset(dataset, from_dataset, interp='nearest'):
     :type dataset: xarray.DataSet
     :type from_dataset: Dataset to get projection from
     :type from_dataset: xarray.DataSet
-    :param interp: interpolation method
-    :type interp: string
     :return: xarray.DataSet
     :rtype: xarray.DataSet
     """
@@ -104,9 +102,7 @@ def reproject_dataset(dataset, from_dataset, interp='nearest'):
     # Copy dataset
     reprojected_dataset = copy.copy(from_dataset)
 
-    interpolation_method = Resampling.nearest
-    if interp != 'nearest':
-        logging.warning("Interpolation method not available, use default 'nearest'")
+    interpolation_method = Resampling.bilinear
 
     src_transform = Affine.from_gdal(dataset['trans'].data[0], dataset['trans'].data[1], dataset['trans'].data[2],
                                      dataset['trans'].data[3], dataset['trans'].data[4], dataset['trans'].data[5])
