@@ -397,6 +397,84 @@ def translate(dataset: xr.Dataset, x_offset: float, y_offset: float) -> xr.Datas
     return dataset_translated
 
 
+def translate_to_coregistered_geometry(dem1: xr.Dataset, dem2: xr.Dataset, dx: int, dy: int,
+                                       interpolator: str = 'bilinear') -> Tuple[xr.Dataset,xr.Dataset]:
+    """
+    Translate both DSMs to their coregistered geometry.
+
+    Note that :
+         a) The dem2 georef is assumed to be the reference
+         b) The dem2 shall be the one resampled as it supposedly is the cleaner one.
+    Hence, dem1 is only cropped, dem2 is the only one that might be resampled.
+    However, as dem2 is the ref, dem1 georef is translated to dem2 georef.
+
+    :param dem1: dataset, master dem
+    :param dem2: dataset, slave dem
+    :param dx: f, dx value in pixels
+    :param dy: f, dy value in pixels
+    :param interpolator: gdal interpolator
+    :return: coregistered DEM as datasets
+    """
+
+    #
+    # Translate the georef of dem1 based on dx and dy values
+    #   -> this makes dem1 coregistered on dem2
+    #
+    # note the -0.5 since the (0,0) pixel coord is pixel centered
+    dem1 = translate(dem1, dx - 0.5, dy - 0.5)
+
+    #
+    # Intersect and reproject both dsms.
+    #   -> intersect them to the biggest common grid now that they have been shifted
+    #   -> dem1 is then cropped with intersect so that it lies within intersect but is not resampled in the process
+    #   -> reproject dem2 to dem1 grid, the intersection grid sampled on dem1 grid
+    #
+
+    transform_dem1 = Affine.from_gdal(dem1['trans'].data[0], dem1['trans'].data[1],
+                                      dem1['trans'].data[2], dem1['trans'].data[3],
+                                      dem1['trans'].data[4], dem1['trans'].data[5])
+    bounds_dem1 = rasterio.transform.array_bounds(dem1['im'].data.shape[1], dem1['im'].data.shape[0], transform_dem1)
+
+    transform_dem2 = Affine.from_gdal(dem2['trans'].data[0], dem2['trans'].data[1],
+                                      dem2['trans'].data[2], dem2['trans'].data[3],
+                                      dem2['trans'].data[4], dem2['trans'].data[5])
+    bounds_dem2 = rasterio.transform.array_bounds(dem2['im'].data.shape[1], dem2['im'].data.shape[0], transform_dem2)
+
+    intersection_roi = (max(bounds_dem1[0], bounds_dem2[0]),
+                        max(bounds_dem1[1], bounds_dem2[1]),
+                        min(bounds_dem1[2], bounds_dem2[2]),
+                        min(bounds_dem1[3], bounds_dem2[3]))
+
+    # get  crop
+    polygon_roi = bounding_box_to_polygone(intersection_roi[0], intersection_roi[1], intersection_roi[2],
+                                           intersection_roi[3])
+    geom_like_polygon = {"type": "Polygon", "coordinates": [polygon_roi]}
+
+    # crop dem
+    srs_dem1 = rasterio.open(' ', mode='w+',
+                             driver='GTiff',
+                             width=dem1['im'].data.shape[1],
+                             height=dem1['im'].data.shape[0],
+                             count=1,
+                             dtype=dem1['im'].data.dtype,
+                             crs=dem1.attrs['georef'],
+                             transform=transform_dem1)
+    srs_dem1.write(dem1['im'].data, 1)
+    new_cropped_dem1, new_cropped_dem1_transform = rasterio.mask.mask(srs_dem1, [geom_like_polygon],
+                                                                      all_touched=True, crop=True)
+
+    # create datasets
+    reproj_dem1 = copy.copy(dem1)
+    reproj_dem1['trans'].data = np.array(new_cropped_dem1_transform.to_gdal())
+    reproj_dem1 = read_img_from_array(new_cropped_dem1[0, :, :], from_dataset=reproj_dem1,
+                                      no_data=dem1.coords['no_data'].data)
+
+    # reproject, crop, resample
+    reproj_dem2 = reproject_dataset(dem2, reproj_dem1, interp=interpolator)
+
+    return reproj_dem1, reproj_dem2
+
+
 def save_tif(dataset: xr.Dataset, filename: str, new_array=None, no_data: float = -32768) -> xr.Dataset:
     """
     Write a Dataset in a tiff file

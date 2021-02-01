@@ -33,7 +33,7 @@ def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpD
 
     # Resample images to pre-coregistered geometry according to the initial disp
     if init_disp_x != 0 or init_disp_y != 0:
-        from .translation import translate_to_coregistered_geometry
+        from .img_tools import translate_to_coregistered_geometry
         dem1, dem2 = translate_to_coregistered_geometry(dem1, dem2, init_disp_x, init_disp_y)
 
 
