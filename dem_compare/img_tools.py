@@ -82,9 +82,9 @@ def reproject_dataset(dataset: xr.Dataset, from_dataset: xr.Dataset, interp: str
     Reproject dataset, and return the corresponding xarray.DataSet
 
     :param dataset: Dataset to reproject
-    :type from_dataset: Dataset to get projection from
+    :param from_dataset: Dataset to get projection from
     :param interp: interpolation method
-    :return: xarray.DataSet
+    :return: reprojected dataset
     """
 
     # Copy dataset
@@ -159,10 +159,10 @@ def create_dataset(data: np.ndarray, transform: np.ndarray, img: str,  no_data: 
 
     :param data: image data
     :param transform: image data
-    :type img: image path
-    :type no_data: no_data value in the image
+    :param img: image path
+    :param no_data: no_data value in the image
     :param ref: WGS84 or egm96
-    :type zunit: unit
+    :param zunit: unit
     :param load_data: load as dem
     :return: xarray.DataSet containing the variables :
             - im : 2D (row, col) xarray.DataArray float32
