@@ -229,7 +229,7 @@ def create_dataset(data: np.ndarray, transform: np.ndarray, img: str,  no_data: 
 
 def read_img_from_array(img_array: np.ndarray, from_dataset: xr.Dataset = None, no_data: float = None) -> xr.Dataset:
     """
-    Read image and mask, and return the corresponding xarray.DataSet
+    Read image, and return the corresponding xarray.DataSet. If from_dataset is None defaults attributes are set.
 
     :param img_array: array
     :param no_data: no_data value in the image
@@ -260,9 +260,9 @@ def read_img_from_array(img_array: np.ndarray, from_dataset: xr.Dataset = None, 
     else:
         dataset = copy.deepcopy(from_dataset)
         dataset['im'] = None
-        dataset.coords['row'] = np.arange(img_array.shape[0])
-        dataset.coords['col'] = np.arange(img_array.shape[1])
-        dataset['im'] = xr.DataArray(data=img_array.astype(np.float32), dims=['row', 'col'])
+        dataset.coords['row'] = np.arange(data.shape[0])
+        dataset.coords['col'] = np.arange(data.shape[1])
+        dataset['im'] = xr.DataArray(data=data.astype(np.float32), dims=['row', 'col'])
 
     return dataset
 
