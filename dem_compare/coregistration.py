@@ -95,10 +95,10 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     # Update cfg
     # -> for plani_results
     cfg['plani_results'] = {}
-    cfg['plani_results']['dx'] = {'bias_value': x_bias * coreg_dem1.coords["xres"].data,
-                                  'unit': coreg_dem1.coords["plani_unit"].name}
-    cfg['plani_results']['dy'] = {'bias_value': y_bias * abs(coreg_dem1.coords["yres"].data),
-                                  'unit': coreg_dem1.coords["plani_unit"].name}
+    cfg['plani_results']['dx'] = {'bias_value': x_bias * coreg_dem1.attrs["xres"],
+                                  'unit': coreg_dem1.attrs["plani_unit"].name}
+    cfg['plani_results']['dy'] = {'bias_value': y_bias * abs(coreg_dem1.attrs["yres"]),
+                                  'unit': coreg_dem1.attrs["plani_unit"].name}
     # -> for alti_results
     cfg['alti_results'] = {}
     cfg['alti_results']['rectifiedDSM'] = copy.deepcopy(cfg['inputDSM'])
@@ -108,10 +108,10 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     cfg['alti_results']['rectifiedDSM']['nodata'] = coreg_dem1.attrs['no_data']
     cfg['alti_results']['rectifiedRef']['nodata'] = coreg_dem2.attrs['no_data']
     cfg['alti_results']['dz'] = {'bias_value': float(z_bias),
-                                 'unit': coreg_dem1.coords["zunit"].name,
+                                 'unit': coreg_dem1.attrs["zunit"].name,
                                  'percent': 100 * np.count_nonzero(~np.isnan(final_dh['im'].data)) / final_dh['im'].data.size}
     cfg['alti_results']['dzMap'] = {'path': final_dh.attrs['ds_file'],
-                                    'zunit': coreg_dem1.coords["zunit"].name,
+                                    'zunit': coreg_dem1.attrs["zunit"].name,
                                     'nodata': final_dh.attrs['no_data'],
                                     'nb_points': final_dh['im'].data.size,
                                     'nb_valid_points': np.count_nonzero(~np.isnan(final_dh['im'].data))}
@@ -123,11 +123,11 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     # Print report
     print(("Plani 2D shift between input dsm ({}) and input ref ({}) is".format(cfg['inputDSM']['path'],
                                                                                cfg['inputRef']['path'])))
-    print((" -> row : {}".format(cfg['plani_results']['dy']['bias_value'] * coreg_dem1.coords["plani_unit"].data)))
-    print((" -> col : {}".format(cfg['plani_results']['dx']['bias_value'] * coreg_dem1.coords["plani_unit"].data)))
+    print((" -> row : {}".format(cfg['plani_results']['dy']['bias_value'] * coreg_dem1.attrs["plani_unit"])))
+    print((" -> col : {}".format(cfg['plani_results']['dx']['bias_value'] * coreg_dem1.attrs["plani_unit"])))
     print('')
     print(("Alti shift between coreg dsm ({}) and coreg ref ({}) is".format(cfg['alti_results']['rectifiedDSM']['path'],
                                                                            cfg['alti_results']['rectifiedRef']['path'])))
-    print((" -> alti : {}".format(z_bias * coreg_dem1.coords["zunit"].data)))
+    print((" -> alti : {}".format(z_bias * coreg_dem1.attrs["zunit"])))
 
     return coreg_dem1, coreg_dem2, final_dh

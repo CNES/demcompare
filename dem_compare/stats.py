@@ -133,7 +133,7 @@ def create_mode_masks(alti_map, partitions_sets_masks=None):
     # Starting with the 'standard' mask
     mode_names.append('standard')
     # -> remove alti_map nodata indices
-    mode_masks.append(get_nonan_mask(alti_map['im'].data, alti_map.coords['no_data'].data))
+    mode_masks.append(get_nonan_mask(alti_map['im'].data, alti_map.attrs['no_data']))
     # -> remove nodata indices for every partitioning image
     if partitions_sets_masks:
         for pImg in partitions_sets_masks:
@@ -187,16 +187,16 @@ def create_masks(alti_map,
 
     # Starting with the 'standard' mask with no nan values
     modes.append('standard')
-    masks.append(get_nonan_mask(alti_map['im'].data, alti_map.coords['no_data'].data))
+    masks.append(get_nonan_mask(alti_map['im'].data, alti_map.attrs['no_data']))
 
     # Create no outliers mask if required
     no_outliers = None
     if remove_outliers:
-        no_outliers = get_outliers_free_mask(alti_map['im'].data, alti_map.coords['no_data'].data)
+        no_outliers = get_outliers_free_mask(alti_map['im'].data, alti_map.attrs['no_data'])
 
     # If the classification is on then we also consider ref_support nan values
     if do_classification:
-        masks[0] *= get_nonan_mask(ref_support['im'].data, ref_support.coords['no_data'].data)
+        masks[0] *= get_nonan_mask(ref_support['im'].data, ref_support.attrs['no_data'])
 
     # Carrying on with potentially the cross classification masks
     if do_classification and do_cross_classification:
@@ -669,8 +669,8 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
             title = ['MNT quality performance']
             dx = cfg['plani_results']['dx']
             dy = cfg['plani_results']['dy']
-            biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.coords["xres"].data},
-                      'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.coords["yres"].data}}
+            biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.attrs["xres"]},
+                      'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.attrs["yres"]}}
             title.append('(mean biases : '
                          'dx : {:.2f}m (roughly {:.2f}pixel); '
                          'dy : {:.2f}m (roughly {:.2f}pixel);)'.format(biases['dx']['value_m'],
@@ -701,7 +701,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
 
     # Get outliers free mask (array of True where value is no outlier)
     if remove_outliers:
-        outliers_free_mask = get_outliers_free_mask(alti_map['im'].data, alti_map.coords["no_data"].data)
+        outliers_free_mask = get_outliers_free_mask(alti_map['im'].data, alti_map.attrs["no_data"])
     else:
         outliers_free_mask = 1
 

@@ -124,7 +124,6 @@ def reproject_dataset(dataset: xr.Dataset, from_dataset: xr.Dataset, interp: str
     # change output dataset
     reprojected_dataset['im'].data = dest_array
     reprojected_dataset.attrs['no_data'] = dataset.attrs['no_data']
-    reprojected_dataset.coords['no_data'].data = dataset.coords['no_data'].data
 
     return reprojected_dataset
 
@@ -203,26 +202,21 @@ def create_dataset(data: np.ndarray, transform: np.ndarray, img: str,  no_data: 
     dataset.coords["trans_len"] = trans_len
     dataset['trans'] = xr.DataArray(data=transform, dims=['trans_len'])
 
-    # add nodata
-    dataset.coords["no_data"] = no_data
-    # add zunit
-    dataset.coords["zunit"] = new_zunit
-
-    # add plani unit
+    # get plani unit
     if georef.is_geographic:
         plani_unit = u.deg
     else:
         plani_unit = u.m
-    dataset.coords["plani_unit"] = plani_unit
-
-    # add resolution
-    dataset.coords["xres"] = transform[1]
-    dataset.coords["yres"] = transform[5]
 
     # Add image conf to the image dataset
+    # Add resolution, and units
     dataset.attrs = {'no_data': no_data,
                      'input_img': img,
-                     'georef': georef}
+                     'georef': georef,
+                     'xres': transform[1],
+                     'yres': transform[5],
+                     'plani_unit': plani_unit,
+                     'zunit': new_zunit}
 
     if load_data is not False:
         if ref == 'EGM96':
@@ -258,12 +252,11 @@ def read_img_from_array(img_array: np.ndarray, from_dataset: xr.Dataset = None, 
                                      'col': np.arange(data.shape[1])})
 
         # add random resolution
-        dataset.coords["xres"] = 1
-        dataset.coords["yres"] = 1
+        dataset.attrs["xres"] = 1
+        dataset.attrs["yres"] = 1
 
         # add nodata
-        dataset.coords["no_data"] = no_data
-        dataset.attrs = {'no_data': no_data}
+        dataset.attrs["no_data"] = no_data
     else:
         dataset = copy.deepcopy(from_dataset)
         dataset['im'] = None
@@ -337,8 +330,8 @@ def load_dems(ref_path: str, dem_path: str, ref_nodata: float = None, dem_nodata
                         min(bounds_dem[3], transformed_ref_bounds[3]))
 
     # get  crop
-    polygon_roi = bounding_box_to_polygone(intersection_roi[0], intersection_roi[1], intersection_roi[2],
-                                           intersection_roi[3])
+    polygon_roi = bounding_box_to_polygon(intersection_roi[0], intersection_roi[1], intersection_roi[2],
+                                          intersection_roi[3])
     geom_like_polygon = {"type": "Polygon", "coordinates": [polygon_roi]}
 
     # crop dem
@@ -360,7 +353,7 @@ def load_dems(ref_path: str, dem_path: str, ref_nodata: float = None, dem_nodata
     return ref, dem
 
 
-def bounding_box_to_polygone(left: float, bottom: float, right: float, top: float) -> List[List[float]]:
+def bounding_box_to_polygon(left: float, bottom: float, right: float, top: float) -> List[List[float]]:
     """
     Transform bounding box to polygon
 
@@ -446,8 +439,8 @@ def translate_to_coregistered_geometry(dem1: xr.Dataset, dem2: xr.Dataset, dx: i
                         min(bounds_dem1[3], bounds_dem2[3]))
 
     # get  crop
-    polygon_roi = bounding_box_to_polygone(intersection_roi[0], intersection_roi[1], intersection_roi[2],
-                                           intersection_roi[3])
+    polygon_roi = bounding_box_to_polygon(intersection_roi[0], intersection_roi[1], intersection_roi[2],
+                                          intersection_roi[3])
     geom_like_polygon = {"type": "Polygon", "coordinates": [polygon_roi]}
 
     # crop dem
@@ -467,7 +460,7 @@ def translate_to_coregistered_geometry(dem1: xr.Dataset, dem2: xr.Dataset, dx: i
     reproj_dem1 = copy.copy(dem1)
     reproj_dem1['trans'].data = np.array(new_cropped_dem1_transform.to_gdal())
     reproj_dem1 = read_img_from_array(new_cropped_dem1[0, :, :], from_dataset=reproj_dem1,
-                                      no_data=dem1.coords['no_data'].data)
+                                      no_data=dem1.attrs['no_data'])
 
     # reproject, crop, resample
     reproj_dem2 = reproject_dataset(dem2, reproj_dem1, interp=interpolator)
@@ -575,8 +568,8 @@ def get_slope(dataset: xr.Dataset, degree: bool = False) -> np.ndarray:
         distx[:, 0] = distx[:, 1]
         disty[0] = disty[1]
     else:
-        distx = np.abs(dataset.coords["xres"].data)
-        disty = np.abs(dataset.coords["yres"].data)
+        distx = np.abs(dataset.attrs["xres"])
+        disty = np.abs(dataset.attrs["yres"])
 
     conv_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
     conv_y = conv_x.transpose()
