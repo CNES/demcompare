@@ -67,7 +67,7 @@
   },
   "alti_results": {
     "rectifiedDSM": {
-      "path": "TO/PATH/dem_compare/test_output/./coregistration/coreg_DEM.tif",
+      "path": "TO/PATH/dem_compare/test_output/coregistration/coreg_DEM.tif",
       "zunit": "meter",
       "georef": "WGS84",
       "nodata": -32768,
@@ -75,7 +75,7 @@
       "nb_valid_points": 983070
     },
     "rectifiedRef": {
-      "path": "TO/PATHdem_compare/test_output/./coregistration/coreg_REF.tif",
+      "path": "TO/PATHdem_compare/test_output/coregistration/coreg_REF.tif",
       "zunit": "meter",
       "georef": "WGS84",
       "nodata": -32768,
@@ -88,7 +88,7 @@
       "percent": 100.0
     },
     "dzMap": {
-      "path": "TO/PATH/dem_compare/test_output/./final_dh.tif",
+      "path": "TO/PATH/dem_compare/test_output/final_dh.tif",
       "zunit": "zunit",
       "nodata": -32768,
       "nb_points": 983070,
@@ -102,13 +102,13 @@
         "col_wise"
       ],
       "row_wise": {
-        "path": "TO/PATH/dem_compare/test_output/./dh_row_wise_wave_detection.tif",
+        "path": "TO/PATH/dem_compare/test_output/dh_row_wise_wave_detection.tif",
         "zunit": "zunit",
         "nodata": -32768,
         "nb_valid_points": 983070
       },
       "col_wise": {
-        "path": "TO/PATH/dem_compare/test_output/./dh_col_wise_wave_detection.tif",
+        "path": "TO/PATH/dem_compare/test_output/dh_col_wise_wave_detection.tif",
         "zunit": "zunit",
         "nodata": -32768,
         "nb_valid_points": 983070
@@ -119,11 +119,11 @@
         "standard": {
           "Ref_support": {
             "nodata": -32768.0,
-            "path": "TO/PATH/dem_compare/test_output/./stats/slope/ref_support_map.tif"
+            "path": "TO/PATH/dem_compare/test_output/stats/slope/ref_support_map.tif"
           },
           "DSM_support": {
             "nodata": -32768.0,
-            "path": "TO/PATH/dem_compare/test_output/./stats/slope/dsm_support_map.tif"
+            "path": "TO/PATH/dem_compare/test_output/stats/slope/dsm_support_map.tif"
           }
         },
         "coherent-classification": {
