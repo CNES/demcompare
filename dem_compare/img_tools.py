@@ -470,7 +470,7 @@ def translate_to_coregistered_geometry(dem1: xr.Dataset, dem2: xr.Dataset, dx: i
 
 def save_tif(dataset: xr.Dataset, filename: str, new_array=None, no_data: float = -32768) -> xr.Dataset:
     """
-    Write a Dataset in a tiff file
+    Write a Dataset in a tiff file. If new_array is set, new_array is used as data.
 
     :param dataset: dataset
     :param filename:  output filename
