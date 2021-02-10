@@ -106,6 +106,7 @@ def reproject_dataset(dataset: xr.Dataset, from_dataset: xr.Dataset, interp: str
 
     source_array = dataset['im'].data
     dest_array = np.zeros_like(from_dataset['im'].data)
+    dest_array[:, :] = -9999
 
     src_crs = rasterio.crs.CRS.from_dict(dataset.attrs['georef'])
     dst_crs = rasterio.crs.CRS.from_dict(from_dataset.attrs['georef'])
@@ -118,10 +119,13 @@ def reproject_dataset(dataset: xr.Dataset, from_dataset: xr.Dataset, interp: str
         src_crs=src_crs,
         dst_transform=dst_transform,
         dst_crs=dst_crs,
-        resampling=interpolation_method
+        resampling=interpolation_method,
+        src_nodata=dataset.attrs['no_data'],
+        dst_nodata=-9999
     )
 
     # change output dataset
+    dest_array[dest_array == -9999] = np.nan
     reprojected_dataset['im'].data = dest_array
     reprojected_dataset.attrs['no_data'] = dataset.attrs['no_data']
 
