@@ -50,7 +50,7 @@ unit.
 
 The processed Region of interest (ROI) is either defined by (1) either the image coordinates (x,y) of its top-left corner,
 and its dimensions (w, h) in pixels as a python dictionary with 'x', 'y', 'w' and 'h' keys or (2) the geographical
-coordinates of the projected image as tuple with (left, right, bottom, top) coordinates
+coordinates of the projected image as tuple with (left, bottom, right, top) coordinates
 
 In anyway, this is four numbers that ought to be given in the `json` configuration file.
 

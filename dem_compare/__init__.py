@@ -16,18 +16,16 @@ import os
 import sys
 import json
 import shutil
-from osgeo import gdal
 import numpy as np
 import copy
 import matplotlib as mpl
-from . import initialization, coregistration, stats, report, dem_compare_extra
+from . import initialization, coregistration, stats, report
 from .output_tree_design import get_out_dir, get_out_file_path, get_otd_dirs
-from .a3d_georaster import A3DDEMRaster, A3DGeoRaster
+from .img_tools import read_img, save_tif, load_dems, read_img_from_array
 
 
-gdal.UseExceptions()
-DEFAULT_STEPS = ['coregistration', 'stats', 'report'] + dem_compare_extra.DEFAULT_STEPS
-ALL_STEPS = copy.deepcopy(DEFAULT_STEPS) + dem_compare_extra.ALL_STEPS
+DEFAULT_STEPS = ['coregistration', 'stats', 'report']
+ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
 
 
 def setup_logging(path='dem_compare/logging.json', default_level=logging.WARNING,):
@@ -72,7 +70,7 @@ def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     :param cfg: configuration dictionary
     :param dem: A3DDEMRaster, dem raster
     :param ref: A3DDEMRaster,reference dem raster to be coregistered to dem raster
-    :param final_dh: A3DGeoRaster, inital alti diff
+    :param final_dh: xarray.Dataset, initial alti diff
     :param display: boolean, choose between plot show and plot save
     :param final_json_file: filename of final_cfg
     :return:
@@ -99,9 +97,9 @@ def computeCoregistration(cfg, steps, dem, ref, initial_dh, final_cfg=None, fina
     - alti differences computation
 
     :param cfg: configuration dictionary
-    :param dem: A3DDEMRaster, dem raster
-    :param ref: A3DDEMRaster,reference dem raster to be coregistered to dem raster
-    :param initial_dh: A3DGeoRaster, inital alti diff
+    :param dem: xarray.Dataset, dem raster
+    :param ref: xarray.Dataset,reference dem raster to be coregistered to dem raster
+    :param initial_dh: xarray.Dataset, inital alti diff
     :param final_cfg: cfg from a previous run
     :param final_json_file: filename of final_cfg
     :return: coregistered dem and ref A3DEMRAster + final alti differences as A3DGeoRaster
@@ -117,9 +115,15 @@ def computeCoregistration(cfg, steps, dem, ref, initial_dh, final_cfg=None, fina
         if final_cfg and 'plani_results' and 'alti_results' in final_cfg:
             cfg['plani_results'] = final_cfg['plani_results']
             cfg['alti_results'] = final_cfg['alti_results']
-            coreg_dem = A3DDEMRaster(str(cfg['alti_results']['rectifiedDSM']['path']), nodata=(cfg['alti_results']['rectifiedDSM']['nodata'] if 'nodata' in cfg['alti_results']['rectifiedDSM'] else None))
-            coreg_ref = A3DDEMRaster(str(cfg['alti_results']['rectifiedRef']['path']), nodata=(cfg['alti_results']['rectifiedRef']['nodata'] if 'nodata' in cfg['alti_results']['rectifiedRef'] else None))
-            final_dh = A3DGeoRaster(str(cfg['alti_results']['dzMap']['path']), nodata=cfg['alti_results']['dzMap']['nodata'])
+            coreg_dem = read_img(str(cfg['alti_results']['rectifiedDSM']['path']), no_data=(
+                cfg['alti_results']['rectifiedDSM']['nodata'] if 'nodata' in cfg['alti_results'][
+                    'rectifiedDSM'] else None))
+            coreg_ref = read_img(str(cfg['alti_results']['rectifiedRef']['path']), no_data=(
+                cfg['alti_results']['rectifiedRef']['nodata'] if 'nodata' in cfg['alti_results'][
+                    'rectifiedRef'] else None))
+            final_dh = read_img(str(cfg['alti_results']['dzMap']['path']),
+                                    no_data=cfg['alti_results']['dzMap']['nodata'])
+
         else:
             coreg_ref = ref
             coreg_dem = dem
@@ -132,80 +136,23 @@ def computeCoregistration(cfg, steps, dem, ref, initial_dh, final_cfg=None, fina
             cfg['alti_results'] = {}
             cfg['alti_results']['rectifiedDSM'] = copy.deepcopy(cfg['inputDSM'])
             cfg['alti_results']['rectifiedRef'] = copy.deepcopy(cfg['inputRef'])
-            coreg_dem.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('coreg_DEM.tif')))
-            coreg_ref.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('coreg_REF.tif')))
-            final_dh.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('final_dh.tif')))
-            cfg['alti_results']['rectifiedDSM']['path'] = coreg_dem.ds_file
-            cfg['alti_results']['rectifiedRef']['path'] = coreg_ref.ds_file
-            cfg['alti_results']['rectifiedDSM']['nb_points'] = coreg_dem.r.size
-            cfg['alti_results']['rectifiedRef']['nb_points'] = coreg_ref.r.size
-            cfg['alti_results']['rectifiedDSM']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_dem.r))
-            cfg['alti_results']['rectifiedRef']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_ref.r))
-            cfg['alti_results']['dzMap'] = {'path': final_dh.ds_file,
-                                            'zunit': coreg_ref.zunit.name,
-                                            'nodata': final_dh.nodata,
-                                            'nb_points': final_dh.r.size,
-                                            'nb_valid_points': np.count_nonzero(~np.isnan(final_dh.r))}
+
+            coreg_dem = save_tif(coreg_dem, os.path.join(cfg['outputDir'], get_out_file_path('coreg_DEM.tif')))
+            coreg_ref = save_tif(coreg_ref, os.path.join(cfg['outputDir'], get_out_file_path('coreg_REF.tif')))
+            final_dh = save_tif(final_dh, os.path.join(cfg['outputDir'], get_out_file_path('final_dh.tif')))
+            cfg['alti_results']['rectifiedDSM']['path'] = coreg_dem.attrs['ds_file']
+            cfg['alti_results']['rectifiedRef']['path'] = coreg_ref.attrs['ds_file']
+            cfg['alti_results']['rectifiedDSM']['nb_points'] = coreg_dem['im'].data.size
+            cfg['alti_results']['rectifiedRef']['nb_points'] = coreg_ref['im'].data.size
+            cfg['alti_results']['rectifiedDSM']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_dem['im'].data))
+            cfg['alti_results']['rectifiedRef']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_ref['im'].data))
+            cfg['alti_results']['dzMap'] = {'path': final_dh.attrs['ds_file'],
+                                            'zunit': coreg_ref.attrs['zunit'].name,
+                                            'nodata': final_dh.coords["no_data"],
+                                            'nb_points': final_dh['im'].data.size,
+                                            'nb_valid_points': np.count_nonzero(~np.isnan(final_dh['im'].data.size))}
 
     return coreg_dem, coreg_ref, final_dh
-
-
-def load_dems(ref_path, dem_path, ref_nodata=None, dem_nodata=None,
-              ref_georef='WGS84', dem_georef='WGS84', ref_zunit='m', dem_zunit='m', load_data=True):
-    """
-    Loads both DEMs
-
-    :param ref_path: str, path to ref dem
-    :param dem_path: str, path to sec dem
-    :param ref_nodata: float, ref no data value (None by default and if set inside metadata)
-    :param dem_nodata: float, dem no data value (None by default and if set inside metadata)
-    :param ref_georef: str, ref georef (either WGS84 -default- or EGM96)
-    :param dem_georef: str, dem georef (either WGS84 -default- or EGM96)
-    :param ref_zunit: unit, ref z unit
-    :param dem_zunit: unit, dem z unit
-    :param load_data: True if dem are to be fully loaded, other options are False or a dict roi
-    :return: ref and dem A3DDEMRaster
-    """
-
-    #
-    # Create A3DDEMRaster
-    #
-    dem = A3DDEMRaster(dem_path, nodata=dem_nodata, load_data=load_data, ref=dem_georef, zunit=dem_zunit)
-    # the ref dem is read according to the tested dem roi
-    # -> this means first we get back ref footprint by only reading metadata (load_data is False)
-    ref = A3DDEMRaster(ref_path,
-                       load_data=False)
-    # -> then we compute the common footprint between dem roi and ref
-    ref_matching_footprint = ref.biggest_common_footprint(dem)
-    # -> finally we add a marge to this footprint because data will be loaded from image indexes
-    #    and there is no bijection from pixels indexes to footprint
-    ref_matching_roi = ref.footprint_to_roi(ref_matching_footprint)
-    ref_matching_roi['x'] -= 1
-    ref_matching_roi['y'] -= 1
-    ref_matching_roi['w'] += 1
-    ref_matching_roi['h'] += 1
-    ref = A3DDEMRaster(ref_path, nodata=ref_nodata, load_data=ref_matching_roi, ref=ref_georef, zunit=ref_zunit)
-    # test if roi is invalid
-    if (np.count_nonzero(np.isnan(ref.r)) == ref.r.size) or (np.count_nonzero(np.isnan(dem.r)) == dem.r.size):
-        raise Exception("The ROI covers nodata pixels only. Please change ROI description then try again.")
-
-    nodata1 = dem.nodata
-    nodata2 = ref.nodata
-
-    #
-    # Reproject DSMs
-    #
-    biggest_common_grid = dem.biggest_common_footprint(ref)
-    nx = (biggest_common_grid[1] - biggest_common_grid[0]) / dem.xres
-    ny = (biggest_common_grid[2] - biggest_common_grid[3]) / dem.yres
-    reproj_dem = dem.reproject(dem.srs, int(nx), int(ny), biggest_common_grid[0], biggest_common_grid[3],
-                               dem.xres, dem.yres, nodata=nodata1)
-    reproj_ref = ref.reproject(dem.srs, int(nx), int(ny), biggest_common_grid[0], biggest_common_grid[3],
-                               dem.xres, dem.yres, nodata=nodata2)
-    reproj_dem.r[reproj_dem.r == nodata1] = np.nan
-    reproj_ref.r[reproj_ref.r == nodata2] = np.nan
-
-    return reproj_ref, reproj_dem
 
 
 def computeInitialization(config_json):
@@ -252,8 +199,6 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=F
     :param force:
     :return:
     """
-    if all(step in dem_compare_extra.ALL_STEPS for step in steps):
-        return
 
     #
     # Initialization
@@ -273,24 +218,23 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=F
             final_cfg = json.load(f)
 
     #
-    # Create A3DDEMRaster
+    # Create datasets
     #
     ref, dem = load_dems(cfg['inputRef']['path'], cfg['inputDSM']['path'],
-                         ref_nodata=(cfg['inputRef']['nodata'] if 'nodata' in cfg['inputRef'] else None),
-                         dem_nodata=(cfg['inputDSM']['nodata'] if 'nodata' in cfg['inputDSM'] else None),
-                         ref_georef=cfg['inputRef']['georef'], dem_georef=cfg['inputDSM']['georef'],
-                         ref_zunit=(cfg['inputRef']['zunit'] if 'zunit' in cfg['inputRef'] else 'm'),
-                         dem_zunit=(cfg['inputDSM']['zunit'] if 'zunit' in cfg['inputDSM'] else 'm'),
-                         load_data=(cfg['roi'] if 'roi' in cfg else True))
+                             ref_nodata=(cfg['inputRef']['nodata'] if 'nodata' in cfg['inputRef'] else None),
+                             dem_nodata=(cfg['inputDSM']['nodata'] if 'nodata' in cfg['inputDSM'] else None),
+                             ref_georef=cfg['inputRef']['georef'], dem_georef=cfg['inputDSM']['georef'],
+                             ref_zunit=(cfg['inputRef']['zunit'] if 'zunit' in cfg['inputRef'] else 'm'),
+                             dem_zunit=(cfg['inputDSM']['zunit'] if 'zunit' in cfg['inputDSM'] else 'm'),
+                             load_data=(cfg['roi'] if 'roi' in cfg else True))
 
     #
     # Compute initial dh and save it
     #
-    initial_dh = A3DGeoRaster.from_raster(ref.r - dem.r,
-                                          dem.trans,
-                                          "{}".format(dem.srs.ExportToProj4()),
-                                          nodata=-32768)
-    initial_dh.save_geotiff(os.path.join(cfg['outputDir'], get_out_file_path('initial_dh.tif')))
+
+    initial_dh = read_img_from_array(ref['im'].data - dem['im'].data, from_dataset=dem, no_data=-32768)
+    initial_dh = save_tif(initial_dh, os.path.join(cfg['outputDir'], get_out_file_path('initial_dh.tif')))
+
     stats.dem_diff_plot(initial_dh, title='DSMs diff without coregistration (REF - DSM)',
                         plot_file=os.path.join(cfg['outputDir'], get_out_file_path('initial_dem_diff.png')),
                         display=False)
@@ -345,10 +289,3 @@ def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False)
             traceback.print_exc()
             print(('Error encountered for tile: {} -> {}'.format(tile, e)))
             pass
-
-    #
-    # Run merge steps
-    #
-    if len(tiles) > 1:
-        cfg['tiles_list_file'] = os.path.join(cfg['outputDir'], 'tiles.txt')
-        dem_compare_extra.merge_tiles(cfg, steps, debug=debug, force=force)

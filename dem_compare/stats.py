@@ -16,16 +16,14 @@ import json
 import collections
 import csv
 import numpy as np
-from osgeo import gdal
 from scipy import exp
 from scipy.optimize import curve_fit
 from astropy import units as u
 
 
-from .a3d_georaster import A3DGeoRaster
-from .a3d_raster_basic import A3DRasterBasic
 from .partition import Partition, Fusion_partition, getColor, NotEnoughDataToPartitionError
 from .output_tree_design import get_out_dir, get_out_file_path
+from .img_tools import read_img_from_array, read_image, save_tif
 
 class NoPointsToPlot(Exception):
     pass
@@ -76,11 +74,11 @@ def compute_stats_array(cfg, dem, ref, dem_nodata=None, ref_nodata=None,
     cfg['stats_opts']['plot_real_hists'] = False
     cfg['stats_opts']['remove_outliers'] = False
 
-    dem_a3d = A3DRasterBasic(dem, nodata=dem_nodata)
-    ref_a3d = A3DRasterBasic(ref, nodata=ref_nodata)
+    dem_a3d = read_img_from_array(dem, no_data=dem_nodata)
+    ref_a3d = read_img_from_array(ref, no_data=ref_nodata)
 
-    final_dh = dem_a3d.r - ref_a3d.r
-    final_dh_a3d = A3DRasterBasic(final_dh)
+    final_dh = dem_a3d['im'].data - ref_a3d['im'].data
+    final_dh_a3d = read_img_from_array(final_dh)
 
     if final_json_file is None:
         final_json_file = cfg['outputDir'] + '/final_stats.json'
@@ -97,65 +95,6 @@ def gaus(x, a, x_zero, sigma):
 
 def roundUp(x, y):
     return int(math.ceil((x / float(y)))) * y
-
-
-# DECREPATED (mais utilise dans dem_compare_extra)
-def create_sets_slope(img_to_classify, sets_rad_range, tmpDir='.', output_descriptor=None):
-    """
-    Returns a list of boolean arrays. Each array defines a set. The sets partition / classify the image.
-    A boolean array defines indices to kept for the associated set / class.
-    :param img_to_classify: A3DGeoRaster
-    :param sets_rad_range: list of values that defines the radiometric ranges of each set
-    :param type: type of the stats calculate, 'slope' or 'classification'
-    :param tmpDir: temporary directory to which store temporary data
-    :param output_descriptor: dictionary with 'path' and 'nodata' keys for the output classified img (png format)
-    :return: list of boolean arrays
-    """
-
-    # create output dataset if required
-    if output_descriptor:
-        driver_mem = gdal.GetDriverByName("MEM")
-        output_tmp_name = os.path.join(tmpDir, 'tmp.mem')
-        output_dataset = driver_mem.Create(output_tmp_name,
-                                           img_to_classify.nx,
-                                           img_to_classify.ny,
-                                           4, gdal.GDT_Byte)
-        output_v = np.ones((4, img_to_classify.ny, img_to_classify.nx), dtype=np.int8) * 255
-
-    # use radiometric ranges to classify
-    sets_colors = np.multiply(getColor(len(sets_rad_range)), 255)
-    output_sets_def = []
-    if type == 'slope':
-        for idx in range(0, len(sets_rad_range)):
-            if idx == len(sets_rad_range) - 1:
-                output_sets_def.append(np.apply_along_axis(lambda x:(sets_rad_range[idx] <= x),
-                                                           0, img_to_classify.r))
-                if output_descriptor:
-                    for i in range(0, 3):
-                        output_v[i][sets_rad_range[idx] <= img_to_classify.r] = sets_colors[idx][i]
-            else:
-                output_sets_def.append(np.apply_along_axis(lambda x:(sets_rad_range[idx] <= x)*(x < sets_rad_range[idx+1]),
-                                                           0, img_to_classify.r))
-                if output_descriptor:
-                    for i in range(0,3):
-                        output_v[i][(sets_rad_range[idx] <= img_to_classify.r) *
-                                    (img_to_classify.r < sets_rad_range[idx + 1])] = sets_colors[idx][i]
-
-    # deals with the nan value (we choose black color for nan value since it is not part of the colormap chosen)
-    if output_descriptor:
-        for i in range(0,4):
-            output_v[i][(np.isnan(img_to_classify.r)) + (img_to_classify.r == img_to_classify.nodata)] = \
-                output_descriptor['nodata'][i]
-    for idx in range(0, len(sets_rad_range)):
-        output_sets_def[idx][(np.isnan(img_to_classify.r)) + (img_to_classify.r == img_to_classify.nodata)] = False
-
-    # write down the result then translate from MEM to PNG
-    if output_descriptor:
-        [output_dataset.GetRasterBand(i + 1).WriteArray(output_v[i]) for i in range(0, 4)]
-        gdal.GetDriverByName('PNG').CreateCopy(output_descriptor['path'], output_dataset)
-        output_dataset = None
-
-    return output_sets_def, sets_colors / 255
 
 
 def get_nonan_mask(array, nan_value):
@@ -183,7 +122,7 @@ def create_mode_masks(alti_map, partitions_sets_masks=None):
     Note that 'coherent-classification' and 'incoherent-classification' mode masks can only be computed if
     len(list_of_sets_masks)==2
 
-    :param alti_map: A3DGeoRaster, alti differences
+    :param alti_map: xarray Dataset, alti differences
     :param partitions_sets_masks: [] (master and/or slave dsm) of [] of boolean array (sets for each dsm)
     :return: list of masks, associated modes, and error_img read as array
     """
@@ -194,7 +133,7 @@ def create_mode_masks(alti_map, partitions_sets_masks=None):
     # Starting with the 'standard' mask
     mode_names.append('standard')
     # -> remove alti_map nodata indices
-    mode_masks.append(get_nonan_mask(alti_map.r, alti_map.nodata))
+    mode_masks.append(get_nonan_mask(alti_map['im'].data, alti_map.attrs['no_data']))
     # -> remove nodata indices for every partitioning image
     if partitions_sets_masks:
         for pImg in partitions_sets_masks:
@@ -234,9 +173,9 @@ def create_masks(alti_map,
        and reference) are coherent
     -> the 'incoherent-classification' mode which is 'coherent-classification' complementary
 
-    :param alti_map: A3DGeoRaster, alti differences
+    :param alti_map: xarray Dataset, alti differences
     :param do_classification: boolean indicated wether or not the classification is activated
-    :param ref_support: A3DGeoRaster
+    :param ref_support: xarray Dataset
     :param do_cross_classification: boolean indicated wether or not the cross classification is activated
     :param ref_support_classified_desc: dict with 'path' and 'nodata' keys for the ref support image classified
     :param remove_outliers: boolean, set to True (default) to return a no_outliers mask
@@ -248,22 +187,22 @@ def create_masks(alti_map,
 
     # Starting with the 'standard' mask with no nan values
     modes.append('standard')
-    masks.append(get_nonan_mask(alti_map.r, alti_map.nodata))
+    masks.append(get_nonan_mask(alti_map['im'].data, alti_map.attrs['no_data']))
 
     # Create no outliers mask if required
     no_outliers = None
     if remove_outliers:
-        no_outliers = get_outliers_free_mask(alti_map.r, alti_map.nodata)
+        no_outliers = get_outliers_free_mask(alti_map['im'].data, alti_map.attrs['no_data'])
 
     # If the classification is on then we also consider ref_support nan values
     if do_classification:
-        masks[0] *= get_nonan_mask(ref_support.r, ref_support.nodata)
+        masks[0] *= get_nonan_mask(ref_support['im'].data, ref_support.attrs['no_data'])
 
     # Carrying on with potentially the cross classification masks
     if do_classification and do_cross_classification:
         modes.append('coherent-classification')
-        ref_support_classified_dataset = gdal.Open(ref_support_classified_desc['path'])
-        ref_support_classified_val = ref_support_classified_dataset.GetRasterBand(4).ReadAsArray()
+
+        ref_support_classified_val = read_image(ref_support_classified_desc['path'], band=4)
         # so we get rid of what are actually 'nodata' and incoherent values as well
         coherent_mask = get_nonan_mask(ref_support_classified_val, ref_support_classified_desc['nodata'][0])
         masks.append(masks[0] * coherent_mask)
@@ -383,7 +322,7 @@ def dem_diff_plot(dem_diff, title='', plot_file='dem_diff.png', display=False):
     """
     Simple img show after outliers removal
 
-    :param dem_diff: A3DGeoRaster,
+    :param dem_diff: xarray Dataset,
     :param title: string, plot title
     :param plot_file: path and name for the saved plot (used when display if False)
     :param display: boolean, set to True if display is on, otherwise the plot is saved to plot_file location
@@ -403,9 +342,9 @@ def dem_diff_plot(dem_diff, title='', plot_file='dem_diff.png', display=False):
     #
     P.figure(1, figsize=(7.0, 8.0))
     P.title(title)
-    mu = np.nanmean(dem_diff.r)
-    sigma = np.nanstd(dem_diff.r)
-    P.imshow(dem_diff.r, vmin=mu-sigma, vmax=mu+sigma)
+    mu = np.nanmean(dem_diff["im"].data)
+    sigma = np.nanstd(dem_diff["im"].data)
+    P.imshow(dem_diff["im"].data, vmin=mu-sigma, vmax=mu+sigma)
     cb = P.colorbar()
     cb.set_label('Elevation differences (m)')
 
@@ -643,8 +582,8 @@ def create_partitions(dsm, ref, outputDir, stats_opts, geo_ref=True):
     """
     Create or adapt all classification supports for the stats.
     If the support is a slope,it's transformed into a classification support.
-    :param dsm: A3GDEMRaster, dsm
-    :param ref: A3GDEMRaster, coregistered ref
+    :param dsm: xarray Dataset, dsm
+    :param ref: xarray Dataset, coregistered ref
     :param outputDir: ouput directory
     :param stats_opts: TODO
     :param geo_ref: boolean, set to False if images are not georeferenced
@@ -715,9 +654,9 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
     -and, incoherent mode (the coherent complementary one).
 
     :param cfg: config file
-    :param dsm: A3GDEMRaster, dsm
-    :param ref: A3GDEMRaster, coregistered ref
-    :param alti_map: A3DGeoRaster, dsm - ref
+    :param dsm: xarray Dataset, dsm
+    :param ref: xarray Dataset, coregistered ref
+    :param alti_map: xarray Dataset, dsm - ref
     :param display: boolean, display option (set to False to save plot on file system)
     :param remove_outliers: boolean, set to True to remove outliers ( x < mu - 3sigma ; x > mu + 3sigma)
     :param geo_ref: boolean, set to False if images are not georeferenced
@@ -730,8 +669,8 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
             title = ['MNT quality performance']
             dx = cfg['plani_results']['dx']
             dy = cfg['plani_results']['dy']
-            biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.xres},
-                      'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.yres}}
+            biases = {'dx': {'value_m': dx['bias_value'], 'value_p': dx['bias_value'] / ref.attrs["xres"]},
+                      'dy': {'value_m': dy['bias_value'], 'value_p': dy['bias_value'] / ref.attrs["yres"]}}
             title.append('(mean biases : '
                          'dx : {:.2f}m (roughly {:.2f}pixel); '
                          'dy : {:.2f}m (roughly {:.2f}pixel);)'.format(biases['dx']['value_m'],
@@ -762,7 +701,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
 
     # Get outliers free mask (array of True where value is no outlier)
     if remove_outliers:
-        outliers_free_mask = get_outliers_free_mask(alti_map.r, alti_map.nodata)
+        outliers_free_mask = get_outliers_free_mask(alti_map['im'].data, alti_map.attrs["no_data"])
     else:
         outliers_free_mask = 1
 
@@ -781,7 +720,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
                                                                 outliers_free_mask=outliers_free_mask)
 
         # Save stats as plots, csv and json and do so for each mode
-        p.stats_mode_json = save_as_graphs_and_tables(alti_map.r,
+        p.stats_mode_json = save_as_graphs_and_tables(alti_map['im'].data,
                                                       p.stats_dir,
                                                       p.plots_dir,
                                                       p.histograms_dir,
@@ -906,7 +845,7 @@ def get_stats_per_mode(data, sets_masks=None, sets_labels=None, sets_names=None,
     for mode in range(0, len(mode_names)):
 
         # Compute stats for all sets of a single mode
-        mode_stats.append(get_stats(data.r,
+        mode_stats.append(get_stats(data['im'].data,
                                     to_keep_mask=mode_masks[mode],
                                     outliers_free_mask=outliers_free_mask,
                                     sets=sets_masks[0],     # do not need ref and dsm but only one of them
@@ -922,22 +861,22 @@ def wave_detection(cfg, dh, display=False):
     Detect potential oscillations inside dh
 
     :param cfg: config file
-    :param dh: A3DGeoRaster, dsm - ref
+    :param dh: xarray Dataset, dsm - ref
     :return:
 
     """
 
     # Compute mean dh row and mean dh col
     # -> then compute the min between dh mean row (col) vector and dh rows (cols)
-    res = {'row_wise': np.zeros(dh.r.shape, dtype=np.float32), 'col_wise': np.zeros(dh.r.shape, dtype=np.float32)}
+    res = {'row_wise': np.zeros(dh['im'].data.shape, dtype=np.float32), 'col_wise': np.zeros(dh['im'].data.shape, dtype=np.float32)}
     axis = -1
     for dim in list(res.keys()):
         axis += 1
-        mean = np.nanmean(dh.r, axis=axis)
+        mean = np.nanmean(dh['im'].data, axis=axis)
         if axis == 1:
             # for axis == 1, we need to transpose the array to substitute it to dh.r otherwise 1D array stays row array
             mean = np.transpose(np.ones((1, mean.size), dtype=np.float32) * mean)
-        res[dim] = dh.r - mean
+        res[dim] = dh['im'].data - mean
 
         cfg['stats_results']['images']['list'].append(dim)
         cfg['stats_results']['images'][dim] = copy.deepcopy(cfg['alti_results']['dzMap'])
@@ -945,5 +884,5 @@ def wave_detection(cfg, dh, display=False):
         cfg['stats_results']['images'][dim]['path'] = os.path.join(cfg['outputDir'],
                                                                    get_out_file_path('dh_{}_wave_detection.tif'.format(dim)))
 
-        georaster = A3DGeoRaster.from_raster(res[dim], dh.trans, "{}".format(dh.srs.ExportToProj4()), nodata=-32768)
-        georaster.save_geotiff(cfg['stats_results']['images'][dim]['path'])
+        georaster = read_img_from_array(res[dim], from_dataset=dh, no_data=-32768)
+        save_tif(georaster, cfg['stats_results']['images'][dim]['path'])
