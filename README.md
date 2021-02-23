@@ -40,6 +40,9 @@ This package can be install through the following commands:
     cd demcompare
     pip install .
 
+Be careful : `Demcompare` needs `rasterio` which needs GDAL.
+Follow [Rasterio installation](https://rasterio.readthedocs.io/en/latest/installation.html#) depending on your platform
+
 ## Usage
 
 Run the python script `demcompare` with a json configuration file as unique
