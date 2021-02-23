@@ -4,7 +4,7 @@
 # Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
 
 """
-Compare results again baseline
+Tests : Compare results against baseline
 
 """
 
@@ -14,8 +14,7 @@ import glob
 import os
 from collections import OrderedDict
 
-
-from dem_compare.output_tree_design import get_out_dir
+from demcompare.output_tree_design import get_out_dir
 
 def load_json(json_file):
     with open(json_file, 'r') as f:
@@ -64,7 +63,7 @@ def check_csv(csv_ref, csv_test, csv_file, epsilon):
     return csv_differences
 
 
-def main(baseline_dir, output_dir, epsilon=1.e-6):
+def run(baseline_dir, output_dir, epsilon=1.e-6):
     """
     Compare output_dir results to baseline_dir ones
 
@@ -102,7 +101,7 @@ def main(baseline_dir, output_dir, epsilon=1.e-6):
                    for csv_ref, csv_test, csv_file in zip(baseline_data, test_data, baseline_csv_files)]
 
     if sum([len(diff) for diff in differences]) != 0:
-        error = 'Invalid results obtained with this version of dem_compare.py: \n{}'.format(differences)
+        error = 'Invalid results obtained with this version of demcompare: \n{}'.format(differences)
         raise ValueError(error)
     else:
         print(('No difference between tested files : {}'.format(list(zip(baseline_csv_files, output_csv_files)))))
@@ -114,17 +113,22 @@ def get_parser():
     :param None
     :return parser
     """
-    parser = argparse.ArgumentParser(description=('Compares dem_compare.py test_config.json outputs to baseline'))
+    parser = argparse.ArgumentParser(description=('Compares demcompare test_config.json outputs to baseline'))
 
     parser.add_argument('--baselinePath', default='./test_baseline',
                         help='path to the baseline')
     parser.add_argument('--currentRunPath', default='./test_output',
-                        help='path to the dem_compare run to test against the baseline')
+                        help='path to the demcompare run to test against the baseline')
 
     return parser
 
-
-if __name__ == "__main__":
+def main():
+    """
+    Call demcompare_with_baseline's main
+    """
     parser = get_parser()
     args = parser.parse_args()
-    main(args.baselinePath, args.currentRunPath)
+    run(args.baselinePath, args.currentRunPath)
+
+if __name__ == "__main__":
+    main()

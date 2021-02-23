@@ -4,16 +4,14 @@
 # Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
 
 """
-dem_compare aims at coregistering and comparing two dsms
-
-
+demcompare aims at coregistering and comparing two dsms
 """
 
 from __future__ import print_function
 import argparse
 import copy
 
-import dem_compare
+import demcompare
 
 DEFAULT_STEPS = ['coregistration', 'stats', 'report']
 ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
@@ -21,7 +19,7 @@ ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
 
 def get_parser():
     """
-    ArgumentParser for dem_compare
+    ArgumentParser for demcompare
     :param None
     :return parser
     """
@@ -38,8 +36,13 @@ def get_parser():
 
     return parser
 
-
-if __name__ == "__main__":
+def main():
+    """
+    Call demcompare's main
+    """
     parser = get_parser()
     args = parser.parse_args()
-    dem_compare.run(args.config, args.step, debug=args.debug, display=args.display)
+    demcompare.run(args.config, args.step, debug=args.debug, display=args.display)
+
+if __name__ == "__main__":
+    main()

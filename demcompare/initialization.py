@@ -124,7 +124,7 @@ def initialization_plani_opts(cfg):
 
 
 def initialization_alti_opts(cfg):
-    default_alti_opts = {'egm96-15': {'path': "dem_compare/geoid/egm96_15.gtx", 'zunit': "meter"},
+    default_alti_opts = {'egm96-15': {'path': "demcompare/geoid/egm96_15.gtx", 'zunit': "meter"},
                          'deramping': False}
 
     if 'alti_opts' not in cfg:

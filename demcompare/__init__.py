@@ -4,9 +4,7 @@
 # Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
 
 """
-dem_compare aims at coregistering and comparing two dsms
-
-
+demcompare aims at coregistering and comparing two dems
 """
 
 
@@ -28,7 +26,7 @@ DEFAULT_STEPS = ['coregistration', 'stats', 'report']
 ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
 
 
-def setup_logging(path='dem_compare/logging.json', default_level=logging.WARNING,):
+def setup_logging(path='demcompare/logging.json', default_level=logging.WARNING,):
     """
     Setup the logging configuration
 
@@ -190,7 +188,7 @@ def computeInitialization(config_json):
 
 def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
     """
-    dem_compare execution for a single tile
+    demcompare execution for a single tile
 
     :param json_file:
     :param steps:
@@ -204,7 +202,7 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=F
     # Initialization
     #
     cfg = computeInitialization(json_file)
-    print(('*** dem_compare.py : start processing into {} ***'.format(cfg['outputDir'])))
+    print(('*** demcompare : start processing into {} ***'.format(cfg['outputDir'])))
     sys.stdout.flush()
     if display is False:
         # if display is False we have to tell matplotlib to cancel it
