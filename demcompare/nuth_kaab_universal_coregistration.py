@@ -20,6 +20,12 @@
 #
 """
 Nuth and Kaab universal co-registration (Correcting elevation data for glacier change detection 2011).
+
+Based on the work of geoutils project
+https://github.com/GeoUtils/geoutils/blob/master/geoutils/dem_coregistration.py
+Authors : Amaury Dehecq, Andrew Tedstone
+Date : June 2015
+License : MIT
 """
 
 import os
