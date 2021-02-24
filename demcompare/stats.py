@@ -693,7 +693,7 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
         # If required, get list of altitude thresholds and adjust the unit
         list_threshold_m = None
         if cfg['stats_opts']['elevation_thresholds']['list']:
-            # Convert thresholds to meter since all dem_compare elevation unit is "meter"
+            # Convert thresholds to meter since all demcompare elevation unit is "meter"
             original_unit = cfg['stats_opts']['elevation_thresholds']['zunit']
             list_threshold_m = [((threshold * u.Unit(original_unit)).to(u.meter)).value
                                 for threshold in cfg['stats_opts']['elevation_thresholds']['list']]
@@ -737,9 +737,11 @@ def alti_diff_stats(cfg, dsm, ref, alti_map, display=False, remove_outliers=Fals
 
         # get partition stats results
         cfg['stats_results']['partitions'][p.name] = p.stats_results
-        # TODO soit c'est lui qui appel generate_report
-        #      soit Partition genere lui meme sa page HTML (cree un string) et generate_report() concatene les pages générées [SOLUTION PLUS ELEGANTE]
 
+        # TODO two possibilities :
+        # - call generate_report() itself directly
+        # - Best way: the partition generate itself its HTML page
+        #   (string to create) and generate_report() concatenate generated pages
 
 def save_as_graphs_and_tables(data_array, stats_dir, outplotdir, outhistdir,
                               mode_masks, mode_names, mode_stats,

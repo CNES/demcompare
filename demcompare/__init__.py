@@ -4,9 +4,7 @@
 # Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
 
 """
-dem_compare aims at coregistering and comparing two dsms
-
-
+demcompare aims at coregistering and comparing two dems
 """
 
 
@@ -23,12 +21,26 @@ from . import initialization, coregistration, stats, report
 from .output_tree_design import get_out_dir, get_out_file_path, get_otd_dirs
 from .img_tools import read_img, save_tif, load_dems, read_img_from_array
 
+## VERSION
+# Depending on python version get importlib standard lib or backported package
+if sys.version_info[:2] >= (3, 8):
+    # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
+    from importlib.metadata import PackageNotFoundError, version  # pragma: no cover
+else:
+    from importlib_metadata import PackageNotFoundError, version  # pragma: no cover
+try:
+    dist_name = "demcompare"
+    __version__ = version(dist_name)
+except PackageNotFoundError:
+    __version__ = "unknown"  # pragma: no cover
+finally:
+    del version, PackageNotFoundError
 
+## STEPS
 DEFAULT_STEPS = ['coregistration', 'stats', 'report']
 ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
 
-
-def setup_logging(path='dem_compare/logging.json', default_level=logging.WARNING,):
+def setup_logging(path='demcompare/logging.json', default_level=logging.WARNING,):
     """
     Setup the logging configuration
 
@@ -190,7 +202,7 @@ def computeInitialization(config_json):
 
 def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
     """
-    dem_compare execution for a single tile
+    demcompare execution for a single tile
 
     :param json_file:
     :param steps:
@@ -204,7 +216,7 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=F
     # Initialization
     #
     cfg = computeInitialization(json_file)
-    print(('*** dem_compare.py : start processing into {} ***'.format(cfg['outputDir'])))
+    print(('*** demcompare : start processing into {} ***'.format(cfg['outputDir'])))
     sys.stdout.flush()
     if display is False:
         # if display is False we have to tell matplotlib to cancel it

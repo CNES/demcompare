@@ -3,9 +3,9 @@
 #
 # Copyright (c) 2020 Centre National d'Etudes Spatiales (CNES).
 #
-# This file is part of DEM_COMPARE
+# This file is part of DEMCOMPARE
 #
-#     https://github.com/CNES/Pandora_pandora
+#     https://github.com/CNES/demcompare
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

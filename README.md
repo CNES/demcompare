@@ -1,34 +1,65 @@
-# dem_compare
+<h4 align="center">DEMCOMPARE, a DEM comparison tool  </h4>
 
-This python software aims at comparing two DSMs together, whether or not they share common format, projection system,
+[![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)](#)
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](#)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0/)
+
+<p align="center">
+  <a href="#overview">Overview</a> •
+  <a href="#Quick Start">Quick Start</a> •
+  <a href="#documentation">Documentation</a> •
+  <a href="#contribution">Contribution</a> •
+  <a href="#references">References</a>
+</p>
+
+## Overview
+
+This python software aims at `comparing two DEMs` together.
+
+A DEM is a 3D computer graphics representation of elevation data to represent terrain.
+
+`DEMcompare` is able to work whether or not the two DEMs share common format, projection system,
 planimetric resolution, and altimetric unit.
 
 The coregistration algorithm is based on the Nuth & Kääb universal coregistration method.
 
-dem_compare provides a wide variety of standard metrics and allows one to classify the statistics. The default behavior
-classifies the stats by slope ranges but one can provide any other data to classify the stats from.
+`demcompare` provides a wide variety of standard metrics and allows one to classify the statistics.
+
+The default behavior classifies the stats by slope ranges but one can provide any other data to classify the stats from.
 
 A comparison report can be compiled as html or pdf documentation with statistics printed as tables and plots.
 
-Only Linux Plaforms are supported (virtualenv or bare machine) with Python 3 installed. 
+Only Linux Plaforms are supported (virtualenv or bare machine) with Python 3 installed.
+
 
 ## Install
 
 This package can be install through the following commands:
-
-    cd dem_compare
+```
+    cd demcompare
     pip install .
+```
+Be careful : `Demcompare` needs `rasterio` which needs GDAL.
+Follow [Rasterio installation](https://rasterio.readthedocs.io/en/latest/installation.html#) depending on your platform
+
+If global autocompletion is not configured, please use to have completion :
+```
+eval "$(register-python-argcomplete demcompare)"
+```
+
+See [Argcomplete documentation](https://kislyuk.github.io/argcomplete/#global-completion) for more details.
 
 ## Usage
 
-Run the python script `cli-dem_compare.py` with a json configuration file as unique
+Run the python script `demcompare` with a json configuration file as unique
 argument (see `test_config.json` as an example):
 
-    cli-dem_compare.py test_config.json
+    cd tests/
+    demcompare test_config.json
 
 The results can be observed with:
 
-    firefox test_output/doc/published_report/html/dem_compare_report.html &
+    firefox test_output/doc/published_report/html/demcompare_report.html &
 
 #### Conventions
 
@@ -54,7 +85,7 @@ coordinates of the projected image as tuple with (left, bottom, right, top) coor
 
 In anyway, this is four numbers that ought to be given in the `json` configuration file.
 
-The ROI refers to the tested DEM and will be adapted to the REF dem georef by dem_compare.py itself.
+The ROI refers to the tested DEM and will be adapted to the REF dem georef by demcompare itself.
 
 If no ROI definition is provided then DEMs raster are fully processed.
 
@@ -65,18 +96,18 @@ the meantime one can deal with heavy DSMs by setting a ROI (see previous chapter
 
 #### step by step process (and the possibility to avoid the coregistration step)
 
-dem_compare allows one to execute only a subset of the whole process. As such, a `--step` command line argument is
+`demcompare` allows one to execute only a subset of the whole process. As such, a `--step` command line argument is
 provided. It accepts values from `{coregistration,stats,report}` :
 
-    [user@machine] $ cli-dem_compare.py
-    usage: cli-dem_compare.py [-h]
+    [user@machine] $ demcompare
+    usage: demcompare [-h]
                               [--step {coregistration,stats,report,mosaic} [{coregistration,stats,report,mosaic} ...]]
                               [--debug] [--display]
                               config.json
 
-All the steps but stats are optional, and dem_compare can start at any step as long as previously required steps have been launched.
+All the steps but stats are optional, and `demcompare` can start at any step as long as previously required steps have been launched.
 This means that one can launch the report step only as long as the stats step has already been performed from a previous
-dem_compare launch and the config.json remains the same.
+`demcompare` launch and the config.json remains the same.
 Note that the coregistration step is not mandatory for stats and following steps as one can decide its DEMs are already
 coregistered.
 
@@ -107,7 +138,7 @@ Here is the list of the parameters and the associated default value when it exis
 
 Where a valid `classification_layers` value could be:
 
-``` 
+```
                             "classification_layers": {"land_cover": {"ref": 'None_or_path_to_land_cover_associated_with_the_ref',
                                                                      "dsm": 'None_or_path_to_land_cover_associated_with_the_dsm',
                                                                      "classes": {"forest": [31, 32], "urbain": [42]}}}
@@ -118,7 +149,7 @@ Where a valid `classification_layers` value could be:
 
 #### The stats
 
-dem_compare results display some basic statistics computed on the image on altitude differences (calles `errors` below)
+`demcompare` results display some basic statistics computed on the image on altitude differences (calles `errors` below)
 that are listed here :
 - the minimal and maximal values
 - the mean and the standard deviation
@@ -130,7 +161,7 @@ Those stats are actually displayed by stats set (see next section).
 
 #### The stats sets
 
-Using dem_compare one can get a closer look on particular areas compared together. It is by setting the `to_be_classification_layers`
+Using `demcompare` one can get a closer look on particular areas compared together. It is by setting the `to_be_classification_layers`
 and / or the `classification_layers` parameters of the stats options (`stats_opts`) that one can set how the stats shall be classified if at
 all.
 
@@ -141,36 +172,36 @@ there is a stats set for each slope range, and all the stats set form a partitio
 
 Now, one can decide not to classify the stats by slope range but to use instead any other exogenous data he posses. For
 that purpose, one might use `to_be_classification_layers` and / or the `classification_layers` parameters as stated earlier:
-- `to_be_classification_layers` are layers (exogenous rasters) that could be use as classification layers by the use of a `ranges` list. Hence, the slope layer dem_compare computes itself belongs to this category. 
+- `to_be_classification_layers` are layers (exogenous rasters) that could be use as classification layers by the use of a `ranges` list. Hence, the slope layer `demcompare` computes itself belongs to this category.
 - `classification_layers` are layers (exogenous raster) such as segmentation or semantic segmentation for which pixels are gathered inside superpixels whose values are shared by every pixels in a superpixel and called a label value.
 
-For every exogenous layer, the user ought to specify ontop of which DEM it is superimposable: `ref` and `dsm` keywords are designed to 
-register the path of the exogenous layer, respectively superimposable to the `ref` or the `dsm`. 
+For every exogenous layer, the user ought to specify ontop of which DEM it is superimposable: `ref` and `dsm` keywords are designed to
+register the path of the exogenous layer, respectively superimposable to the `ref` or the `dsm`.
 
-The user can set as many exogenous layers to classify the stats from: land cover map, validity masks, etc. 
+The user can set as many exogenous layers to classify the stats from: land cover map, validity masks, etc.
 All of them will be used seperatly to classify the stats, and then merge into a full classification layer that will also be used to classify the stats
-(in that cas dem_compare could display the results for 'elevated roads' for which pixels are 'valid pixels').
+(in that case `demcompare` could display the results for 'elevated roads' for which pixels are 'valid pixels').
 
 #### The cross classification and the modes
 
-Along with classifying the statistics, dem_compare can display those stats in three different modes where a mode is
+Along with classifying the statistics, `demcompare` can display those stats in three different modes where a mode is
 actually a set of all the pixels of the altitude differences image.
 
-As written before, dem_compare will classify stats according to classification layers that can be dem_compare computed slopes, or exogenous data provided by the user.
-For each classification layer, dem_compare knows if it is superimposable to the `ref` or the `dsm` to be evaluated. Now one could actually provided two land cover classification layers to dem_compare.
-One that would come with the `ref` DEM. And one that would come with the `dsm`. When that happens, dem_compare provides a three modes stats display.
+As written before, `demcompare` will classify stats according to classification layers that can be `demcompare` computed slopes, or exogenous data provided by the user.
+For each classification layer, `demcompare` knows if it is superimposable to the `ref` or the `dsm` to be evaluated. Now one could actually provided two land cover classification layers to `demcompare`.
+One that would come with the `ref` DEM. And one that would come with the `dsm`. When that happens, `demcompare` provides a three modes stats display.
 
 Now here is how the modes are defined :
 1. the standard mode results simply on all valid pixels. This means nan values but also ouliers (if `remove_outliers` was set to True) and masked ones are
 discarded. Note that the nan values can be originated from the altitude differences image and / or the exogenous classification layers themselves.
 
-2. the coherent mode which is the standard mode where only the pixels sharing the same label for both DEMs classification layers are kept. Say after a coregistration, a pixel P is associated to a 'grass land' inside a `ref` classification layer named `land_cover` and a `road` inside the `dsm` classification layer also named `land_cover`, then P is not coherent for dem_compare.
+2. the coherent mode which is the standard mode where only the pixels sharing the same label for both DEMs classification layers are kept. Say after a coregistration, a pixel P is associated to a 'grass land' inside a `ref` classification layer named `land_cover` and a `road` inside the `dsm` classification layer also named `land_cover`, then P is not coherent for `demcompare`.
 
 3. the incoherent mode which is the coherent one complementary.
 
 #### The elevation threshold
 
-Using the `elevation_thresholds` parameter one can set a list of thresholds. Then for each threshold dem_compare will
+Using the `elevation_thresholds` parameter one can set a list of thresholds. Then for each threshold `demcompare` will
 compute the ratio  of pixels for which the altitude difference is larger than this particular threshold.
 
 Note that so far results are only visible inside `stats_results-*.json` output files (see next chapter). Please also
@@ -179,7 +210,7 @@ always relevant and this stats computation shall be used carefully.
 
 #### The dh map and the intermediate data
 
-dem_compare will store several data and here is a brief explanation for each one.
+`demcompare` will store several data and here is a brief explanation for each one.
 
 First, the images :
 
@@ -194,13 +225,13 @@ the `final_dh.tif` average col (row) to `final_dh.tif` itself. It helps to detec
 
 - the `coreg_DSM.tif` and `coreg_Ref.tif` are the coregistered DEMS.
 
-- the images whose names start with 'AltiErrors-' are the plots saved by dem_compare. They show histograms by stats
+- the images whose names start with 'AltiErrors-' are the plots saved by `demcompare`. They show histograms by stats
 set and same histograms fitted by gaussian.
 
 Then, the remaining files :
 
 - the `final_config.json` is the completion of the initial `config.json` file given by the user. It contains additional
-information and is used when dem_compare is launched step by step.
+information and is used when `demcompare` is launched step by step.
 
 - the files whose names start with 'stats_results-' are the `.json` and `.csv` files listed the statistics for each
 set. There is one file by mode.
@@ -213,6 +244,8 @@ for each mode and each set, in `html` or `latex` format.
 ## Dependencies
 
 The full list of dependencies can be observed from the setup.py file.
+
+
 
 ## References
 
