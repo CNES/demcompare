@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
+# PYTHON_ARGCOMPLETE_OK
 
 # Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
 
@@ -9,7 +10,7 @@ Tests : Compare results against baseline
 """
 
 import json
-import argparse
+import argcomplete, argparse
 import glob
 import os
 from collections import OrderedDict
@@ -127,6 +128,7 @@ def main():
     Call demcompare_with_baseline's main
     """
     parser = get_parser()
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     run(args.baselinePath, args.currentRunPath)
 

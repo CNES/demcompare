@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
+# PYTHON_ARGCOMPLETE_OK
 
 # Copyright (C) 2017-2018 Centre National d'Etudes Spatiales (CNES)
 
@@ -8,7 +9,7 @@ demcompare aims at coregistering and comparing two dsms
 """
 
 from __future__ import print_function
-import argparse
+import argcomplete, argparse
 import copy
 
 import demcompare
@@ -41,6 +42,7 @@ def main():
     Call demcompare's main
     """
     parser = get_parser()
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     demcompare.run(args.config, args.step, debug=args.debug, display=args.display)
 

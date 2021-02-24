@@ -1,6 +1,5 @@
 <h4 align="center">DEMCOMPARE, a DEM comparison tool  </h4>
 
-
 [![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)](#)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](#)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0/)
@@ -36,12 +35,19 @@ Only Linux Plaforms are supported (virtualenv or bare machine) with Python 3 ins
 ## Install
 
 This package can be install through the following commands:
-
+```
     cd demcompare
     pip install .
-
+```
 Be careful : `Demcompare` needs `rasterio` which needs GDAL.
 Follow [Rasterio installation](https://rasterio.readthedocs.io/en/latest/installation.html#) depending on your platform
+
+If global autocompletion is not configured, please use to have completion :
+```
+eval "$(register-python-argcomplete demcompare)"
+```
+
+See [Argcomplete documentation](https://kislyuk.github.io/argcomplete/#global-completion) for more details.
 
 ## Usage
 

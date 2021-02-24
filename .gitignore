@@ -1,2 +1,16 @@
+# Compiled python files
 *.pyc
-test_output
+
+# Python egg metadata, regenerated from source files by setuptools
+/*.egg-info
+
+# Python coverage output
+/cover/
+.coverage
+
+# Setuptools build and distribution directories
+/dist/
+/build/
+
+# demcompare test outputs
+tests/test_output
