@@ -31,10 +31,16 @@ def get_parser():
                               'input and output files and the algorithm '
                               'parameters'))
     parser.add_argument('--step', type=str, nargs='+', choices=ALL_STEPS,
-                        default=DEFAULT_STEPS)
-    parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--display', action='store_true')
-
+                        default=DEFAULT_STEPS,
+                        help='steps to choose. default: all steps')
+    parser.add_argument('--debug', action='store_true',
+                        help='debug mode')
+    parser.add_argument('--display', action='store_true',
+                        help='choose between plot show and plot save. '
+                             'default: plot save')
+    parser.add_argument('--version', '-v', action='version',
+                        version='%(prog)s {version}'.format(
+                                        version=demcompare.__version__))
     return parser
 
 def main():

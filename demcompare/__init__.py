@@ -21,10 +21,24 @@ from . import initialization, coregistration, stats, report
 from .output_tree_design import get_out_dir, get_out_file_path, get_otd_dirs
 from .img_tools import read_img, save_tif, load_dems, read_img_from_array
 
+## VERSION
+# Depending on python version get importlib standard lib or backported package
+if sys.version_info[:2] >= (3, 8):
+    # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
+    from importlib.metadata import PackageNotFoundError, version  # pragma: no cover
+else:
+    from importlib_metadata import PackageNotFoundError, version  # pragma: no cover
+try:
+    dist_name = "demcompare"
+    __version__ = version(dist_name)
+except PackageNotFoundError:
+    __version__ = "unknown"  # pragma: no cover
+finally:
+    del version, PackageNotFoundError
 
+## STEPS
 DEFAULT_STEPS = ['coregistration', 'stats', 'report']
 ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
-
 
 def setup_logging(path='demcompare/logging.json', default_level=logging.WARNING,):
     """
