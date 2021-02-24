@@ -56,7 +56,8 @@ def generate_report(workingDir, dsmName, refName, partitionsList=None, docDir='.
     # Initialize the sphinx project
     SPM = SphinxProjectManager(projectDir, docDir, 'demcompare_report', 'DEM Compare Report')
 
-    # TODO modes_information[mode] ecras�, il faut un par partition => modes_information[partition_name][mode]
+    # TODO modes_information[mode] overwritten , needs one per partition
+    # => modes_information[partition_name][mode]
 
     # Initialize mode informations
     modes_information = collections.OrderedDict()
