@@ -6,9 +6,9 @@
 
 <p align="center">
   <a href="#overview">Overview</a> •
-  <a href="#Install">Install</a> •
-  <a href="#Usage">Usage</a> •
-  <a href="#Outputs processing">Outputs processing</a> •
+  <a href="#install">Install</a> •
+  <a href="#usage">Usage</a> •
+  <a href="#outputs-processing">Outputs processing</a> •
   <a href="#references">References</a>
 </p>
 
@@ -34,15 +34,16 @@ Only Linux Plaforms are supported (virtualenv or bare machine) with Python 3 ins
 
 ## Install
 
-This package can be install through the following commands:
+This package can be installed through the following commands:
 ```
     cd demcompare
     pip install .
 ```
-Be careful : `Demcompare` needs `rasterio` which needs GDAL.
+
+Be careful : `demcompare` needs `rasterio` which needs GDAL.
 Follow [Rasterio installation](https://rasterio.readthedocs.io/en/latest/installation.html#) depending on your platform
 
-If global autocompletion is not configured, please use to have completion :
+If global autocompletion is not configured in your environment, please use the following command to have completion:
 ```
 eval "$(register-python-argcomplete demcompare)"
 ```
@@ -52,32 +53,33 @@ See [Argcomplete documentation](https://kislyuk.github.io/argcomplete/#global-co
 ## Usage
 
 Run the python script `demcompare` with a json configuration file as unique
-argument (see `test_config.json` as an example):
-
+argument (see `tests/test_config.json` as an example):
+```
     cd tests/
     demcompare test_config.json
-
+```
 The results can be observed with:
-
+```
     firefox test_output/doc/published_report/html/demcompare_report.html &
+```
 
-### Conventions
+#### Conventions
 
 Inside the `json` file, the DEMs are referred to as inputDSM and inputRef. The last one is supposed to be the denser one.
 Hence, if any resampling process must be done, it is the only DEM that shall be resampled. Plus, if the DEMs where to be
 uncoregistered, then the inputRef geographical location is supposedly the correct one.
 
-### WGS84 and EGM96 references
+#### WGS84 and EGM96 references
 
 The DEMs altitudes can rely on both ellipsoid and geoid references. However one shall use the `georef` parameter to set
 the reference assigned to the DEMs (the two DEMs can rely on different references).
 
-### Altimetric unit
+#### Altimetric unit
 
 It is assumed both DEMs altimetric unit is meter. If otherwise, one shall use the `zunit` to set the actual altimetric
 unit.
 
-### ROI definition
+#### ROI definition
 
 The processed Region of interest (ROI) is either defined by (1) either the image coordinates (x,y) of its top-left corner,
 and its dimensions (w, h) in pixels as a python dictionary with 'x', 'y', 'w' and 'h' keys or (2) the geographical
@@ -89,12 +91,12 @@ The ROI refers to the tested DEM and will be adapted to the REF dem georef by de
 
 If no ROI definition is provided then DEMs raster are fully processed.
 
-### Tile processing
+#### Tile processing
 
 Tile processing is not available anymore. A future version might provide a better way to deal with very large data. In
 the meantime one can deal with heavy DSMs by setting a ROI (see previous chapter).
 
-### Step by step process (and the possibility to avoid the coregistration step)
+#### Step by step process (and the possibility to avoid the coregistration step)
 
 `demcompare` allows one to execute only a subset of the whole process. As such, a `--step` command line argument is
 provided. It accepts values from `{coregistration,stats,report}` :
@@ -112,7 +114,7 @@ Note that the coregistration step is not mandatory for stats and following steps
 coregistered.
 
 
-### The parameters
+#### The parameters
 
 Here is the list of the parameters and the associated default value when it exists:
 
@@ -147,7 +149,7 @@ Where a valid `classification_layers` value could be:
 
 ## Outputs processing
 
-### The stats
+#### The stats
 
 `demcompare` results display some basic statistics computed on the image on altitude differences (calles `errors` below)
 that are listed here :
@@ -159,7 +161,7 @@ that are listed here :
 
 Those stats are actually displayed by stats set (see next section).
 
-### The stats sets
+#### The stats sets
 
 Using `demcompare` one can get a closer look on particular areas compared together. It is by setting the `to_be_classification_layers`
 and / or the `classification_layers` parameters of the stats options (`stats_opts`) that one can set how the stats shall be classified if at
@@ -182,7 +184,7 @@ The user can set as many exogenous layers to classify the stats from: land cover
 All of them will be used seperatly to classify the stats, and then merge into a full classification layer that will also be used to classify the stats
 (in that case `demcompare` could display the results for 'elevated roads' for which pixels are 'valid pixels').
 
-### The cross classification and the modes
+#### The cross classification and the modes
 
 Along with classifying the statistics, `demcompare` can display those stats in three different modes where a mode is
 actually a set of all the pixels of the altitude differences image.
@@ -199,7 +201,7 @@ discarded. Note that the nan values can be originated from the altitude differen
 
 3. the incoherent mode which is the coherent one complementary.
 
-### The elevation threshold
+#### The elevation threshold
 
 Using the `elevation_thresholds` parameter one can set a list of thresholds. Then for each threshold `demcompare` will
 compute the ratio  of pixels for which the altitude difference is larger than this particular threshold.
@@ -208,7 +210,7 @@ Note that so far results are only visible inside `stats_results-*.json` output f
 note that the threshold is compared against the altitude differences being signed. This means that the result is not
 always relevant and this stats computation shall be used carefully.
 
-### The dh map and the intermediate data
+#### The dh map and the intermediate data
 
 `demcompare` will store several data and here is a brief explanation for each one.
 
@@ -245,12 +247,13 @@ for each mode and each set, in `html` or `latex` format.
 
 The full list of dependencies can be observed from the [setup.cfg](./setup.cfg) file.
 
-## Licencing
+## Licensing
 
-demcompare software is distributed under the Apache Software License (ASL) v2.0, see
-[LICENSE](./LICENSE) file or http://www.apache.org/licenses/LICENSE-2.0 for details.
+demcompare software is distributed under the Apache Software License (ASL) v2.0.
 
-Copyrights and authoring can be found in [NOTICE](./NOTICE) file. 
+See [LICENSE](./LICENSE) file or http://www.apache.org/licenses/LICENSE-2.0 for details.
+
+Copyrights and authoring can be found in [NOTICE](./NOTICE) file.
 
 ## References
 
