@@ -1,10 +1,11 @@
 # **DEMcompare** **Contributing guide**.
 
-1. [Bug report](# Bug report)
-2. [Contributing workflow](# Contributing workflow)
-3. [Coding guide](# Coding guide)
-4. [Pylint pre-commit validation](# Pylint pre-commit validation)
-5. [Merge request acceptation process](# Merge request acceptation process)
+1. [Bug report](#bug-report)
+2. [Contributing workflow](#contributing-workflow)
+3. [Coding guide](#coding-guide)
+4. [Pre-commit validation](#pre-commit-validation)
+5. [Pylint usage](#pylint-usage)
+6. [Merge request acceptation process](#merge-request-acceptation-process)
 
 # Bug report
 
