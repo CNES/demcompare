@@ -1,4 +1,4 @@
-<h4 align="center">DEMCOMPARE, a DEM comparison tool  </h4>
+<h4 align="center">DEMcompare, a DEM comparison tool  </h4>
 
 [![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)](#)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](#)
@@ -6,43 +6,45 @@
 
 <p align="center">
   <a href="#overview">Overview</a> •
-  <a href="#Quick Start">Quick Start</a> •
-  <a href="#documentation">Documentation</a> •
-  <a href="#contribution">Contribution</a> •
+  <a href="#install">Install</a> •
+  <a href="#usage">Usage</a> •
+  <a href="#outputs-processing">Outputs processing</a> •
   <a href="#references">References</a>
 </p>
 
 ## Overview
 
-This python software aims at `comparing two DEMs` together.
+This python software aims at **comparing two DEMs** together.
 
 A DEM is a 3D computer graphics representation of elevation data to represent terrain.
 
-`DEMcompare` is able to work whether or not the two DEMs share common format, projection system,
+**DEMcompare** has several characteristics: 
+
+* provides a wide variety of standard metrics and allows one to classify the statistics.
+* works whether or not the two DEMs share common format, projection system,
 planimetric resolution, and altimetric unit.
+* the coregistration algorithm is based on the Nuth & Kääb universal coregistration method.
+* the default behavior classifies the stats by slope ranges but one can provide any other data to classify the stats.
+* A comparison report can be compiled as html or pdf documentation with statistics printed as tables and plots.
 
-The coregistration algorithm is based on the Nuth & Kääb universal coregistration method.
-
-`demcompare` provides a wide variety of standard metrics and allows one to classify the statistics.
-
-The default behavior classifies the stats by slope ranges but one can provide any other data to classify the stats from.
-
-A comparison report can be compiled as html or pdf documentation with statistics printed as tables and plots.
-
-Only Linux Plaforms are supported (virtualenv or bare machine) with Python 3 installed.
+Only **Linux Plaforms** are supported (virtualenv or bare machine) with **Python 3** installed.
 
 
 ## Install
 
-This package can be install through the following commands:
+This package can be installed through the following commands:
 ```
+    git clone https://github.com/CNES/demcompare
     cd demcompare
     pip install .
 ```
-Be careful : `Demcompare` needs `rasterio` which needs GDAL.
-Follow [Rasterio installation](https://rasterio.readthedocs.io/en/latest/installation.html#) depending on your platform
 
-If global autocompletion is not configured, please use to have completion :
+Be careful : DEMcompare needs **GDAL** for **rasterio**.
+Follow [Rasterio installation](https://rasterio.readthedocs.io/en/latest/installation.html#) depending on your platform to install GDAL. 
+
+It is recommended to install DEMcompare in [virtualenv](https://docs.python.org/3/library/venv) environment. 
+
+If global autocompletion is not configured in your environment, please use the following command to have completion:
 ```
 eval "$(register-python-argcomplete demcompare)"
 ```
@@ -51,15 +53,16 @@ See [Argcomplete documentation](https://kislyuk.github.io/argcomplete/#global-co
 
 ## Usage
 
-Run the python script `demcompare` with a json configuration file as unique
-argument (see `test_config.json` as an example):
-
+Run the python script **demcompare** with a json configuration file as unique
+argument (see [`tests/test_config.json`](./tests/test_config.json) as an example):
+```
     cd tests/
     demcompare test_config.json
-
+```
 The results can be observed with:
-
+```
     firefox test_output/doc/published_report/html/demcompare_report.html &
+```
 
 #### Conventions
 
@@ -94,7 +97,7 @@ If no ROI definition is provided then DEMs raster are fully processed.
 Tile processing is not available anymore. A future version might provide a better way to deal with very large data. In
 the meantime one can deal with heavy DSMs by setting a ROI (see previous chapter).
 
-#### step by step process (and the possibility to avoid the coregistration step)
+#### Step by step process (and the possibility to avoid the coregistration step)
 
 `demcompare` allows one to execute only a subset of the whole process. As such, a `--step` command line argument is
 provided. It accepts values from `{coregistration,stats,report}` :
@@ -145,7 +148,7 @@ Where a valid `classification_layers` value could be:
     }
 ```
 
-## Processing the outputs
+## Outputs processing
 
 #### The stats
 
@@ -243,9 +246,15 @@ for each mode and each set, in `html` or `latex` format.
 
 ## Dependencies
 
-The full list of dependencies can be observed from the setup.py file.
+The full list of dependencies can be observed from the [setup.cfg](./setup.cfg) file.
 
+## Licensing
 
+demcompare software is distributed under the Apache Software License (ASL) v2.0.
+
+See [LICENSE](./LICENSE) file or http://www.apache.org/licenses/LICENSE-2.0 for details.
+
+Copyrights and authoring can be found in [NOTICE](./NOTICE) file.
 
 ## References
 

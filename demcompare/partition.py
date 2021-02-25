@@ -1,8 +1,23 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-15 -*-
-
-# Copyright (C) 2019 Centre National d'Etudes Spatiales (CNES)
-
+# coding: utf8
+#
+# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+#
+# This file is part of demcompare
+# (see https://github.com/CNES/demcompare).
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 """
 Mainly contains the Partition class. A partition defines a way to partition the DEMs alti differences.
 TODO add comment Fusion_partition
@@ -562,7 +577,7 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
     map_fusion = np.ones(layers_obj.r.shape) * -32768.0
     sets_fusion = []
     sets_colors = np.multiply(getColor(len(all_combi_labels)), 255)
-    # recupere les masques associées aux tuples
+    # recupere les masques associï¿½es aux tuples
     for combi in all_combi_labels:
         mask_fusion = np.ones(layers_obj.r.shape)
         for elm_combi in combi:
@@ -573,7 +588,7 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
             mask_label[sets_masks[layer_name][label_name]] = 1              # TODO change sets_masks[layer_name]['sets_def'][label_name] le dictionnaire n'est plus le meme => une liste mtn
             mask_fusion = mask_fusion * mask_label
 
-        # recupere le new label associé dans ls dictionnaire new_classes
+        # recupere le new label associï¿½ dans ls dictionnaire new_classes
         new_label_name = '&'.join(['@'.join(elm_combi) for elm_combi in combi])
         new_label_value = classes_fusion[new_label_name]
         map_fusion[np.where(mask_fusion)] = new_label_value

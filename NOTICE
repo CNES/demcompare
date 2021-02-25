@@ -1,0 +1,108 @@
+Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+
+This file is part of demcompare
+(see https://github.com/CNES/demcompare).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+demcompare software is distributed under the Apache Software License (ASL) v2.0, see
+LICENSE file or http://www.apache.org/licenses/LICENSE-2.0 for details.
+
+Python: programming language that lets you work quickly and integrate systems more effectively.
+Copyright (c) 2001-2021 Python Software Foundation. All Rights reserved.
+Website: http://python.org/
+License: Python Software License.
+
+NumPy: The fundamental package for scientific computing with Python.
+Copyright (c) 2005-2021, NumPy Developers.
+Website: https://numpy.org/
+License: BSD 3 Clause.
+
+Matplotlib: comprehensive library for creating static, animated, and interactive visualizations in Python.
+Copyright (C) All matplotlib Development Team
+Website: https://matplotlib.org/
+License: Matplotlib only uses BSD compatible code, and its license is based on the PSF license
+
+SciPy: open-source software for mathematics, science, and engineering.
+Copyright (c) 2001, 2002 Enthought, Inc. All rights reserved.
+Copyright (c) 2003-2019 SciPy Developers. All rights reserved.
+Website: https://www.scipy.org/scipylib/
+License: BSD 3 Clause.
+
+GDAL Python: open source X/MIT licensed translator library for raster and vector geospatial data formats.
+Copyright (c) 1998-2021 Frank Warmerdam, Even Rouault, and others
+Website: https://pypi.org/project/GDAL/
+License: MIT.
+
+Setuptools: build system
+Copyright (C) 2016 Jason R Coombs <jaraco@jaraco.com>
+Website: https://setuptools.readthedocs.io/
+License: MIT.
+
+Setuptools_scm: the blessed package to manage your versions by scm tags
+Copyright (C) 2021  Ronny Pfannschmidt and others
+Website: https://pypi.org/project/setuptools-scm/
+License: MIT.
+
+Importlib-metadata: Read metadata from Python packages
+Copyright (C) 2021 Jason R. Coombs and others
+Website: https://pypi.org/project/importlib-metadata/
+License: Apache Software License
+
+Lib_programname:  Determining the Name of a Process from Python
+Copyright (c) 1990-2020 Robert Nowotny
+Website: https://github.com/bitranox/lib_programname
+License: MIT
+
+Xarray: N-D labeled arrays and datasets in Python
+Copyright 2014-2019, xarray Developers
+Website: http://xarray.pydata.org
+License: Apache v2.0.
+
+Geoutils: Libraries and command-line utilities for geospatial data processing/analysis in Python
+Copyright (c) 2020 Amaury Dehecq, Andrew Tedstone
+Website: https://github.com/GeoUtils/geoutils
+License: MIT.
+
+Python interface to PROJ
+Copyright (c) 2006-2018, Jeffrey Whitaker.
+Copyright (c) 2019-2020, Open source contributors.
+Website: https://github.com/pyproj4/pyproj
+Version : non définie
+License: MIT
+
+Rasterio: access to geospatial raster data
+Copyright (c) 2016, MapBox All rights reserved.
+Website: https://github.com/mapbox/rasterio
+License: BSD 3 Clause.
+
+argcomplete: Python and tab completion, better together
+Copyright (c) 2012-2019, Andrey Kislyuk and argcomplete contributors.
+Website: https://github.com/kislyuk/argcomplete
+License: Apache v2.0.
+
+pytest: helps to write better programs
+Copyright (c) 2004-2021 Holger Krekel and others.
+Website: https://pytest.org
+License: MIT
+
+Sphinx: Python documentation generator
+Copyright (c) 2007-2021 by the Sphinx team (see AUTHORS file).
+   https://github.com/sphinx-doc/sphinx/blob/3.x/AUTHORS
+Website: https://www.sphinx-doc.org/
+License: Apache v2.0
+
+Astropy: single core package for Astronomy
+Copyright (c) 2011-2021, Astropy Developers
+Website: https://www.astropy.org/
+License:  BSD-3-Clause License

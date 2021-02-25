@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (c) 2020 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
 #
-# This file is part of DEMCOMPARE
-#
-#     https://github.com/CNES/demcompare
+# This file is part of demcompare
+# (see https://github.com/CNES/demcompare).
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
