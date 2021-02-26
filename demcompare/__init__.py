@@ -56,10 +56,14 @@ finally:
     del version, PackageNotFoundError
 
 ## STEPS
-DEFAULT_STEPS = ['coregistration', 'stats', 'report']
+DEFAULT_STEPS = ["coregistration", "stats", "report"]
 ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
 
-def setup_logging(path='demcompare/logging.json', default_level=logging.WARNING,):
+
+def setup_logging(
+    path="demcompare/logging.json",
+    default_level=logging.WARNING,
+):
     """
     Setup the logging configuration
 
@@ -69,7 +73,7 @@ def setup_logging(path='demcompare/logging.json', default_level=logging.WARNING,
     :type default_level: logging level
     """
     if os.path.exists(path):
-        with open(path, 'rt') as f:
+        with open(path, "rt") as f:
             config = json.load(f)
         logging.config.dictConfig(config)
     else:
@@ -85,13 +89,15 @@ def computeReport(cfg, steps, dem, ref):
     :param ref: A3DDEMRaster,reference dem raster to be coregistered to dem raster
     :return:
     """
-    if 'report' in steps:
-        report.generate_report(cfg['outputDir'],
-                               dem.ds_file,
-                               ref.ds_file,
-                               cfg['stats_results']['partitions'],
-                               os.path.join(cfg['outputDir'], get_out_dir('sphinx_built_doc')),
-                               os.path.join(cfg['outputDir'], get_out_dir('sphinx_src_doc')))
+    if "report" in steps:
+        report.generate_report(
+            cfg["outputDir"],
+            dem.ds_file,
+            ref.ds_file,
+            cfg["stats_results"]["partitions"],
+            os.path.join(cfg["outputDir"], get_out_dir("sphinx_built_doc")),
+            os.path.join(cfg["outputDir"], get_out_dir("sphinx_src_doc")),
+        )
 
 
 def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
@@ -107,19 +113,28 @@ def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     :return:
     """
 
-    cfg['stats_results'] = {}
-    cfg['stats_results']['images'] = {}
-    cfg['stats_results']['images']['list'] = []
+    cfg["stats_results"] = {}
+    cfg["stats_results"]["images"] = {}
+    cfg["stats_results"]["images"]["list"] = []
 
     stats.wave_detection(cfg, final_dh, display=display)
 
-    stats.alti_diff_stats(cfg, dem, ref, final_dh, display=display, remove_outliers=cfg['stats_opts']['remove_outliers'])
+    stats.alti_diff_stats(
+        cfg,
+        dem,
+        ref,
+        final_dh,
+        display=display,
+        remove_outliers=cfg["stats_opts"]["remove_outliers"],
+    )
     # save results
-    with open(final_json_file, 'w') as outfile:
+    with open(final_json_file, "w") as outfile:
         json.dump(cfg, outfile, indent=2)
 
 
-def computeCoregistration(cfg, steps, dem, ref, initial_dh, final_cfg=None, final_json_file=None):
+def computeCoregistration(
+    cfg, steps, dem, ref, initial_dh, final_cfg=None, final_json_file=None
+):
     """
     Coregister two DSMs together and compute alti differences (before and after coregistration).
 
@@ -135,53 +150,98 @@ def computeCoregistration(cfg, steps, dem, ref, initial_dh, final_cfg=None, fina
     :param final_json_file: filename of final_cfg
     :return: coregistered dem and ref A3DEMRAster + final alti differences as A3DGeoRaster
     """
-    if 'coregistration' in steps:
-        coreg_dem, coreg_ref, final_dh = coregistration.coregister_and_compute_alti_diff(cfg, dem, ref)
+    if "coregistration" in steps:
+        (
+            coreg_dem,
+            coreg_ref,
+            final_dh,
+        ) = coregistration.coregister_and_compute_alti_diff(cfg, dem, ref)
 
         # saves results here in case next step fails
-        with open(final_json_file, 'w') as outfile:
+        with open(final_json_file, "w") as outfile:
             json.dump(cfg, outfile, indent=2)
 
     else:
-        if final_cfg and 'plani_results' and 'alti_results' in final_cfg:
-            cfg['plani_results'] = final_cfg['plani_results']
-            cfg['alti_results'] = final_cfg['alti_results']
-            coreg_dem = read_img(str(cfg['alti_results']['rectifiedDSM']['path']), no_data=(
-                cfg['alti_results']['rectifiedDSM']['nodata'] if 'nodata' in cfg['alti_results'][
-                    'rectifiedDSM'] else None))
-            coreg_ref = read_img(str(cfg['alti_results']['rectifiedRef']['path']), no_data=(
-                cfg['alti_results']['rectifiedRef']['nodata'] if 'nodata' in cfg['alti_results'][
-                    'rectifiedRef'] else None))
-            final_dh = read_img(str(cfg['alti_results']['dzMap']['path']),
-                                    no_data=cfg['alti_results']['dzMap']['nodata'])
+        if final_cfg and "plani_results" and "alti_results" in final_cfg:
+            cfg["plani_results"] = final_cfg["plani_results"]
+            cfg["alti_results"] = final_cfg["alti_results"]
+            coreg_dem = read_img(
+                str(cfg["alti_results"]["rectifiedDSM"]["path"]),
+                no_data=(
+                    cfg["alti_results"]["rectifiedDSM"]["nodata"]
+                    if "nodata" in cfg["alti_results"]["rectifiedDSM"]
+                    else None
+                ),
+            )
+            coreg_ref = read_img(
+                str(cfg["alti_results"]["rectifiedRef"]["path"]),
+                no_data=(
+                    cfg["alti_results"]["rectifiedRef"]["nodata"]
+                    if "nodata" in cfg["alti_results"]["rectifiedRef"]
+                    else None
+                ),
+            )
+            final_dh = read_img(
+                str(cfg["alti_results"]["dzMap"]["path"]),
+                no_data=cfg["alti_results"]["dzMap"]["nodata"],
+            )
 
         else:
             coreg_ref = ref
             coreg_dem = dem
             final_dh = initial_dh
-            cfg['plani_results'] = {}
-            cfg['plani_results']['dx'] = {'bias_value': 0,
-                                          'unit': 'm'}
-            cfg['plani_results']['dy'] = {'bias_value': 0,
-                                          'unit': 'm'}
-            cfg['alti_results'] = {}
-            cfg['alti_results']['rectifiedDSM'] = copy.deepcopy(cfg['inputDSM'])
-            cfg['alti_results']['rectifiedRef'] = copy.deepcopy(cfg['inputRef'])
+            cfg["plani_results"] = {}
+            cfg["plani_results"]["dx"] = {"bias_value": 0, "unit": "m"}
+            cfg["plani_results"]["dy"] = {"bias_value": 0, "unit": "m"}
+            cfg["alti_results"] = {}
+            cfg["alti_results"]["rectifiedDSM"] = copy.deepcopy(cfg["inputDSM"])
+            cfg["alti_results"]["rectifiedRef"] = copy.deepcopy(cfg["inputRef"])
 
-            coreg_dem = save_tif(coreg_dem, os.path.join(cfg['outputDir'], get_out_file_path('coreg_DEM.tif')))
-            coreg_ref = save_tif(coreg_ref, os.path.join(cfg['outputDir'], get_out_file_path('coreg_REF.tif')))
-            final_dh = save_tif(final_dh, os.path.join(cfg['outputDir'], get_out_file_path('final_dh.tif')))
-            cfg['alti_results']['rectifiedDSM']['path'] = coreg_dem.attrs['ds_file']
-            cfg['alti_results']['rectifiedRef']['path'] = coreg_ref.attrs['ds_file']
-            cfg['alti_results']['rectifiedDSM']['nb_points'] = coreg_dem['im'].data.size
-            cfg['alti_results']['rectifiedRef']['nb_points'] = coreg_ref['im'].data.size
-            cfg['alti_results']['rectifiedDSM']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_dem['im'].data))
-            cfg['alti_results']['rectifiedRef']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_ref['im'].data))
-            cfg['alti_results']['dzMap'] = {'path': final_dh.attrs['ds_file'],
-                                            'zunit': coreg_ref.attrs['zunit'].name,
-                                            'nodata': final_dh.coords["no_data"],
-                                            'nb_points': final_dh['im'].data.size,
-                                            'nb_valid_points': np.count_nonzero(~np.isnan(final_dh['im'].data.size))}
+            coreg_dem = save_tif(
+                coreg_dem,
+                os.path.join(
+                    cfg["outputDir"], get_out_file_path("coreg_DEM.tif")
+                ),
+            )
+            coreg_ref = save_tif(
+                coreg_ref,
+                os.path.join(
+                    cfg["outputDir"], get_out_file_path("coreg_REF.tif")
+                ),
+            )
+            final_dh = save_tif(
+                final_dh,
+                os.path.join(
+                    cfg["outputDir"], get_out_file_path("final_dh.tif")
+                ),
+            )
+            cfg["alti_results"]["rectifiedDSM"]["path"] = coreg_dem.attrs[
+                "ds_file"
+            ]
+            cfg["alti_results"]["rectifiedRef"]["path"] = coreg_ref.attrs[
+                "ds_file"
+            ]
+            cfg["alti_results"]["rectifiedDSM"]["nb_points"] = coreg_dem[
+                "im"
+            ].data.size
+            cfg["alti_results"]["rectifiedRef"]["nb_points"] = coreg_ref[
+                "im"
+            ].data.size
+            cfg["alti_results"]["rectifiedDSM"][
+                "nb_valid_points"
+            ] = np.count_nonzero(~np.isnan(coreg_dem["im"].data))
+            cfg["alti_results"]["rectifiedRef"][
+                "nb_valid_points"
+            ] = np.count_nonzero(~np.isnan(coreg_ref["im"].data))
+            cfg["alti_results"]["dzMap"] = {
+                "path": final_dh.attrs["ds_file"],
+                "zunit": coreg_ref.attrs["zunit"].name,
+                "nodata": final_dh.coords["no_data"],
+                "nb_points": final_dh["im"].data.size,
+                "nb_valid_points": np.count_nonzero(
+                    ~np.isnan(final_dh["im"].data.size)
+                ),
+            }
 
     return coreg_dem, coreg_ref, final_dh
 
@@ -189,17 +249,19 @@ def computeCoregistration(cfg, steps, dem, ref, initial_dh, final_cfg=None, fina
 def computeInitialization(config_json):
 
     # read the json configuration file
-    with open(config_json, 'r') as f:
+    with open(config_json, "r") as f:
         cfg = json.load(f)
 
     # create output directory
-    cfg['outputDir'] = os.path.abspath(cfg['outputDir'])
-    initialization.mkdir_p(cfg['outputDir'])
+    cfg["outputDir"] = os.path.abspath(cfg["outputDir"])
+    initialization.mkdir_p(cfg["outputDir"])
 
     # copy config into outputDir
     try:
-        shutil.copy(config_json,
-                    os.path.join(cfg['outputDir'], os.path.basename(config_json)))
+        shutil.copy(
+            config_json,
+            os.path.join(cfg["outputDir"], os.path.basename(config_json)),
+        )
     except shutil.Error:
         # file exists or file is the same
         pass
@@ -209,8 +271,11 @@ def computeInitialization(config_json):
     # checks config
     initialization.check_parameters(cfg)
 
-    #create output tree dirs
-    [initialization.mkdir_p(os.path.join(cfg['outputDir'], directory)) for directory in get_otd_dirs(cfg['otd'])]
+    # create output tree dirs
+    [
+        initialization.mkdir_p(os.path.join(cfg["outputDir"], directory))
+        for directory in get_otd_dirs(cfg["otd"])
+    ]
 
     initialization.initialization_plani_opts(cfg)
     initialization.initialization_alti_opts(cfg)
@@ -219,7 +284,9 @@ def computeInitialization(config_json):
     return cfg
 
 
-def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
+def run_tile(
+    json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
+):
     """
     demcompare execution for a single tile
 
@@ -235,55 +302,104 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=F
     # Initialization
     #
     cfg = computeInitialization(json_file)
-    print(('*** demcompare : start processing into {} ***'.format(cfg['outputDir'])))
+    print(
+        (
+            "*** demcompare : start processing into {} ***".format(
+                cfg["outputDir"]
+            )
+        )
+    )
     sys.stdout.flush()
     if display is False:
         # if display is False we have to tell matplotlib to cancel it
-        mpl.use('Agg')
+        mpl.use("Agg")
 
     # Set final_json_file name and try to read it if it exists (if a previous run was launched)
-    final_json_file = os.path.join(cfg['outputDir'], get_out_file_path('final_config.json'))
+    final_json_file = os.path.join(
+        cfg["outputDir"], get_out_file_path("final_config.json")
+    )
     final_cfg = None
     if os.path.isfile(final_json_file):
-        with open(final_json_file, 'r') as f:
+        with open(final_json_file, "r") as f:
             final_cfg = json.load(f)
 
     #
     # Create datasets
     #
-    ref, dem = load_dems(cfg['inputRef']['path'], cfg['inputDSM']['path'],
-                             ref_nodata=(cfg['inputRef']['nodata'] if 'nodata' in cfg['inputRef'] else None),
-                             dem_nodata=(cfg['inputDSM']['nodata'] if 'nodata' in cfg['inputDSM'] else None),
-                             ref_georef=cfg['inputRef']['georef'], dem_georef=cfg['inputDSM']['georef'],
-                             ref_zunit=(cfg['inputRef']['zunit'] if 'zunit' in cfg['inputRef'] else 'm'),
-                             dem_zunit=(cfg['inputDSM']['zunit'] if 'zunit' in cfg['inputDSM'] else 'm'),
-                             load_data=(cfg['roi'] if 'roi' in cfg else True))
+    ref, dem = load_dems(
+        cfg["inputRef"]["path"],
+        cfg["inputDSM"]["path"],
+        ref_nodata=(
+            cfg["inputRef"]["nodata"] if "nodata" in cfg["inputRef"] else None
+        ),
+        dem_nodata=(
+            cfg["inputDSM"]["nodata"] if "nodata" in cfg["inputDSM"] else None
+        ),
+        ref_georef=cfg["inputRef"]["georef"],
+        dem_georef=cfg["inputDSM"]["georef"],
+        ref_zunit=(
+            cfg["inputRef"]["zunit"] if "zunit" in cfg["inputRef"] else "m"
+        ),
+        dem_zunit=(
+            cfg["inputDSM"]["zunit"] if "zunit" in cfg["inputDSM"] else "m"
+        ),
+        load_data=(cfg["roi"] if "roi" in cfg else True),
+    )
 
     #
     # Compute initial dh and save it
     #
 
-    initial_dh = read_img_from_array(ref['im'].data - dem['im'].data, from_dataset=dem, no_data=-32768)
-    initial_dh = save_tif(initial_dh, os.path.join(cfg['outputDir'], get_out_file_path('initial_dh.tif')))
+    initial_dh = read_img_from_array(
+        ref["im"].data - dem["im"].data, from_dataset=dem, no_data=-32768
+    )
+    initial_dh = save_tif(
+        initial_dh,
+        os.path.join(cfg["outputDir"], get_out_file_path("initial_dh.tif")),
+    )
 
-    stats.dem_diff_plot(initial_dh, title='DSMs diff without coregistration (REF - DSM)',
-                        plot_file=os.path.join(cfg['outputDir'], get_out_file_path('initial_dem_diff.png')),
-                        display=False)
+    stats.dem_diff_plot(
+        initial_dh,
+        title="DSMs diff without coregistration (REF - DSM)",
+        plot_file=os.path.join(
+            cfg["outputDir"], get_out_file_path("initial_dem_diff.png")
+        ),
+        display=False,
+    )
 
     #
     # Coregister both DSMs together and compute final differences
     #
-    coreg_dem, coreg_ref, final_dh = computeCoregistration(cfg, steps, dem, ref, initial_dh,
-                                                           final_cfg=final_cfg, final_json_file=final_json_file)
+    coreg_dem, coreg_ref, final_dh = computeCoregistration(
+        cfg,
+        steps,
+        dem,
+        ref,
+        initial_dh,
+        final_cfg=final_cfg,
+        final_json_file=final_json_file,
+    )
     if final_dh is not initial_dh:
-        stats.dem_diff_plot(final_dh, title='DSMs diff with coregistration (REF - DSM)',
-                            plot_file=os.path.join(cfg['outputDir'], get_out_file_path('final_dem_diff.png')),
-                            display=False)
+        stats.dem_diff_plot(
+            final_dh,
+            title="DSMs diff with coregistration (REF - DSM)",
+            plot_file=os.path.join(
+                cfg["outputDir"], get_out_file_path("final_dem_diff.png")
+            ),
+            display=False,
+        )
 
     #
     # Compute stats
     #
-    computeStats(cfg, coreg_dem, coreg_ref, final_dh, display=display, final_json_file=final_json_file)
+    computeStats(
+        cfg,
+        coreg_dem,
+        coreg_ref,
+        final_dh,
+        display=display,
+        final_json_file=final_json_file,
+    )
 
     #
     # Compute reports
@@ -291,7 +407,9 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=F
     computeReport(cfg, steps, coreg_dem, coreg_ref)
 
 
-def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False):
+def run(
+    json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
+):
     #
     # Initialization
     #
@@ -299,13 +417,13 @@ def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False)
     cfg = computeInitialization(json_file)
     if display is False:
         # if display is False we have to tell matplotlib to cancel it
-        mpl.use('Agg')
+        mpl.use("Agg")
 
     #
     # Get back tiles
     #
-    if 'tile_size' not in cfg:
-        tiles = [{'json': json_file}]
+    if "tile_size" not in cfg:
+        tiles = [{"json": json_file}]
     else:
         tiles = initialization.divide_images(cfg)
 
@@ -314,9 +432,12 @@ def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False)
     #
     for tile in tiles:
         try:
-            run_tile(tile['json'], steps, display=display, debug=debug, force=force)
+            run_tile(
+                tile["json"], steps, display=display, debug=debug, force=force
+            )
         except Exception as e:
             import traceback
+
             traceback.print_exc()
-            print(('Error encountered for tile: {} -> {}'.format(tile, e)))
+            print(("Error encountered for tile: {} -> {}".format(tile, e)))
             pass

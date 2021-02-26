@@ -45,13 +45,13 @@ def grad2d(dem):
     :param dem:
     :return: slope (fast forward style) and aspect
     """
-    g2, g1 = np.gradient(dem) # in Python, x and y axis reversed
+    g2, g1 = np.gradient(dem)  # in Python, x and y axis reversed
 
-    slope = np.sqrt(g1**2 + g2**2)
-    aspect = np.arctan2(-g1,g2)    #aspect=0 when slope facing north
-    aspect = aspect+np.pi
+    slope = np.sqrt(g1 ** 2 + g2 ** 2)
+    aspect = np.arctan2(-g1, g2)  # aspect=0 when slope facing north
+    aspect = aspect + np.pi
 
-    return slope,aspect
+    return slope, aspect
 
 
 def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
@@ -76,22 +76,26 @@ def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
     # function to be correlated with terrain aspect
     # NB : target = dh / tan(alpha) (see Fig. 2 of Nuth & Kaab 2011)
     # Explicitely ignore divide by zero warning, as they will be processed as nan later.
-    with np.errstate(divide='ignore', invalid='ignore'):
-        target = dh/slope
+    with np.errstate(divide="ignore", invalid="ignore"):
+        target = dh / slope
     target = target[np.isfinite(dh)]
     aspect = aspect[np.isfinite(dh)]
 
     # compute median value of target for different aspect slices
-    slice_bounds = np.arange(0, 2*np.pi, np.pi/36)
+    slice_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
     mean = np.zeros([len(slice_bounds)])
     x_s = np.zeros([len(slice_bounds)])
-    j=0
+    j = 0
     for i in slice_bounds:
-        target_slice = target[(i<aspect) & (aspect<i+np.pi/36)] #select target in the slice
-        target_slice = target_slice[(target_slice<200) & (target_slice>-200)] #avoid target>200 and target<-200
+        target_slice = target[
+            (i < aspect) & (aspect < i + np.pi / 36)
+        ]  # select target in the slice
+        target_slice = target_slice[
+            (target_slice < 200) & (target_slice > -200)
+        ]  # avoid target>200 and target<-200
         mean[j] = np.median(target_slice)
         x_s[j] = i
-        j=j+1
+        j = j + 1
 
     # function to fit according to Nuth & Kaab
     x = aspect.ravel()
@@ -102,43 +106,43 @@ def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
     yf = y[(np.isfinite(x)) & (np.isfinite(y))]
 
     # remove outliers
-    p1 = np.percentile(yf,1)
-    p99 = np.percentile(yf,99)
-    xf = xf[(p1<yf) & (yf<p99)]
-    yf = yf[(p1<yf) & (yf<p99)]
+    p1 = np.percentile(yf, 1)
+    p99 = np.percentile(yf, 99)
+    xf = xf[(p1 < yf) & (yf < p99)]
+    yf = yf[(p1 < yf) & (yf < p99)]
 
     # set the first guess
-    p0 = (3*np.std(yf)/(2**0.5),0,np.mean(yf))
+    p0 = (3 * np.std(yf) / (2 ** 0.5), 0, np.mean(yf))
 
     # least square fit : peval defines the model chosen
-    def peval(x,p):
-        return p[0]*np.cos(p[1]-x) + p[2]
+    def peval(x, p):
+        return p[0] * np.cos(p[1] - x) + p[2]
 
-    def residuals(p,y,x):
-        err = peval(x,p)-y
+    def residuals(p, y, x):
+        err = peval(x, p) - y
         return err
 
     # we run the least square fit by minimizing the "distance" between y and peval (see residuals())
-    plsq = leastsq(residuals, p0, args = (mean,x_s),full_output = 1)
-    yfit = peval(x_s,plsq[0])
+    plsq = leastsq(residuals, p0, args=(mean, x_s), full_output=1)
+    yfit = peval(x_s, plsq[0])
 
-    #plotting results
+    # plotting results
     if plotFile is not False:
         pl.figure(1, figsize=(7.0, 8.0))
-        pl.plot(x_s,mean,'b.')
-        pl.plot(x_s,yfit,'k-')
-        #ax.set_ylim([np.min(mean),])
-        pl.xlabel('Terrain aspect (rad)')
-        pl.ylabel(r'dh/tan($\alpha$)')
+        pl.plot(x_s, mean, "b.")
+        pl.plot(x_s, yfit, "k-")
+        # ax.set_ylim([np.min(mean),])
+        pl.xlabel("Terrain aspect (rad)")
+        pl.ylabel(r"dh/tan($\alpha$)")
         if plotFile:
-            pl.savefig(plotFile, dpi=100, bbox_inches='tight')
+            pl.savefig(plotFile, dpi=100, bbox_inches="tight")
         else:
             pl.show()
         pl.close()
 
-    a,b,c = plsq[0]
-    east = a*np.sin(b)     #with b=0 when north (origin=y-axis)
-    north = a*np.cos(b)
+    a, b, c = plsq[0]
+    east = a * np.sin(b)  # with b=0 when north (origin=y-axis)
+    north = a * np.cos(b)
 
     return east, north, c
 
@@ -163,26 +167,32 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
     """
 
     # Set target dsm grid for interpolation purpose
-    xgrid = np.arange(dsm_dataset['im'].data.shape[1])
-    ygrid = np.arange(dsm_dataset['im'].data.shape[0])
+    xgrid = np.arange(dsm_dataset["im"].data.shape[1])
+    ygrid = np.arange(dsm_dataset["im"].data.shape[0])
     Xpixels, Ypixels = np.meshgrid(xgrid, ygrid)
-    trans = dsm_dataset['trans'].data
+    trans = dsm_dataset["trans"].data
     Xgeo = trans[0] + (Xpixels + 0.5) * trans[1] + (Ypixels + 0.5) * trans[2]
     Ygeo = trans[3] + (Xpixels + 0.5) * trans[4] + (Ypixels + 0.5) * trans[5]
 
-    initial_dh = ref_dataset['im'].data - dsm_dataset['im'].data
-    coreg_ref = ref_dataset['im'].data
+    initial_dh = ref_dataset["im"].data - dsm_dataset["im"].data
+    coreg_ref = ref_dataset["im"].data
 
     # Display
     median = np.median(initial_dh[np.isfinite(initial_dh)])
-    NMAD_old = 1.4826 * np.median(np.abs(initial_dh[np.isfinite(initial_dh)] - median))
+    NMAD_old = 1.4826 * np.median(
+        np.abs(initial_dh[np.isfinite(initial_dh)] - median)
+    )
     maxval = 3 * NMAD_old
     pl.figure(1, figsize=(7.0, 8.0))
     pl.imshow(initial_dh, vmin=-maxval, vmax=maxval)
     cb = pl.colorbar()
-    cb.set_label('Elevation difference (m)')
+    cb.set_label("Elevation difference (m)")
     if outdirPlot:
-        pl.savefig(os.path.join(outdirPlot, "ElevationDiff_BeforeCoreg.png"), dpi=100, bbox_inches='tight')
+        pl.savefig(
+            os.path.join(outdirPlot, "ElevationDiff_BeforeCoreg.png"),
+            dpi=100,
+            bbox_inches="tight",
+        )
     else:
         pl.show()
     pl.close()
@@ -198,7 +208,7 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
     xoff, yoff, zoff = 0, 0, 0
 
     print("Nuth & Kaab iterations...")
-    coreg_dsm = dsm_dataset['im'].data
+    coreg_dsm = dsm_dataset["im"].data
     for i in range(nb_iters):
         # remove bias
         coreg_ref -= median
@@ -209,11 +219,21 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
 
         # compute offset
         if outdirPlot:
-            plotfile = os.path.join(outdirPlot, "nuth_kaab_iter#{}.png".format(i))
+            plotfile = os.path.join(
+                outdirPlot, "nuth_kaab_iter#{}.png".format(i)
+            )
         else:
             plotfile = None
-        east, north, z = nuth_kaab_single_iter(dh, slope, aspect, plotFile=plotfile)
-        print(("#{} - Offset in pixels : ({},{}), -bias : ({})".format(i + 1, east, north, z)))
+        east, north, z = nuth_kaab_single_iter(
+            dh, slope, aspect, plotFile=plotfile
+        )
+        print(
+            (
+                "#{} - Offset in pixels : ({},{}), -bias : ({})".format(
+                    i + 1, east, north, z
+                )
+            )
+        )
         xoff += east
         yoff += north
         zoff += z
@@ -229,17 +249,25 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
 
         # update DEM
         if xoff >= 0:
-            coreg_ref = znew[:, 0:znew.shape[1] - int(np.ceil(xoff))]
-            coreg_dsm = dsm_dataset['im'].data[:, 0:dsm_dataset['im'].data.shape[1] - int(np.ceil(xoff))]
+            coreg_ref = znew[:, 0 : znew.shape[1] - int(np.ceil(xoff))]
+            coreg_dsm = dsm_dataset["im"].data[
+                :, 0 : dsm_dataset["im"].data.shape[1] - int(np.ceil(xoff))
+            ]
         else:
-            coreg_ref = znew[:, int(np.floor(-xoff)):znew.shape[1]]
-            coreg_dsm = dsm_dataset['im'].data[:, int(np.floor(-xoff)):dsm_dataset['im'].data.shape[1]]
+            coreg_ref = znew[:, int(np.floor(-xoff)) : znew.shape[1]]
+            coreg_dsm = dsm_dataset["im"].data[
+                :, int(np.floor(-xoff)) : dsm_dataset["im"].data.shape[1]
+            ]
         if -yoff >= 0:
-            coreg_ref = coreg_ref[0:znew.shape[0] - int(np.ceil(-yoff)), :]
-            coreg_dsm = coreg_dsm[0:dsm_dataset['im'].data.shape[0] - int(np.ceil(-yoff)), :]
+            coreg_ref = coreg_ref[0 : znew.shape[0] - int(np.ceil(-yoff)), :]
+            coreg_dsm = coreg_dsm[
+                0 : dsm_dataset["im"].data.shape[0] - int(np.ceil(-yoff)), :
+            ]
         else:
-            coreg_ref = coreg_ref[int(np.floor(yoff)):znew.shape[0], :]
-            coreg_dsm = coreg_dsm[int(np.floor(yoff)):dsm_dataset['im'].data.shape[0], :]
+            coreg_ref = coreg_ref[int(np.floor(yoff)) : znew.shape[0], :]
+            coreg_dsm = coreg_dsm[
+                int(np.floor(yoff)) : dsm_dataset["im"].data.shape[0], :
+            ]
 
         # print some statistics
         diff = coreg_ref - coreg_dsm
@@ -247,7 +275,13 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
         NMAD_new = 1.4826 * np.median(np.abs(diff - np.median(diff)))
         median = np.median(diff)
 
-        print(("Median : {0:.2f}, NMAD = {1:.2f}, Gain : {2:.2f}".format(median, NMAD_new, (NMAD_new - NMAD_old) / NMAD_old * 100)))
+        print(
+            (
+                "Median : {0:.2f}, NMAD = {1:.2f}, Gain : {2:.2f}".format(
+                    median, NMAD_new, (NMAD_new - NMAD_old) / NMAD_old * 100
+                )
+            )
+        )
         NMAD_old = NMAD_new
 
     print(("Final Offset in pixels (east, north) : ({},{})".format(xoff, yoff)))
@@ -255,15 +289,40 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
     #
     # Get geo raster from coreg_ref array
     #
-    coreg_dsm_dataset = read_img_from_array(coreg_dsm, from_dataset=dsm_dataset, no_data=-32768)
-    coreg_ref_dataset = read_img_from_array(coreg_ref, from_dataset=dsm_dataset, no_data=-32768)
-    initial_dh_dataset = read_img_from_array(initial_dh, from_dataset=dsm_dataset, no_data=-32768)
-    final_dh_dataset = read_img_from_array(coreg_ref - coreg_dsm, from_dataset=dsm_dataset, no_data=-32768)
+    coreg_dsm_dataset = read_img_from_array(
+        coreg_dsm, from_dataset=dsm_dataset, no_data=-32768
+    )
+    coreg_ref_dataset = read_img_from_array(
+        coreg_ref, from_dataset=dsm_dataset, no_data=-32768
+    )
+    initial_dh_dataset = read_img_from_array(
+        initial_dh, from_dataset=dsm_dataset, no_data=-32768
+    )
+    final_dh_dataset = read_img_from_array(
+        coreg_ref - coreg_dsm, from_dataset=dsm_dataset, no_data=-32768
+    )
 
-    return xoff, yoff, zoff, coreg_dsm_dataset, coreg_ref_dataset, initial_dh_dataset, final_dh_dataset
+    return (
+        xoff,
+        yoff,
+        zoff,
+        coreg_dsm_dataset,
+        coreg_ref_dataset,
+        initial_dh_dataset,
+        final_dh_dataset,
+    )
 
 
-def main(dsm_to, dsm_from, outfile=None, nb_iters=6, outputDirPlot=None, nan_dsm_to=None, nan_dsm_from=None, save_diff=False):
+def main(
+    dsm_to,
+    dsm_from,
+    outfile=None,
+    nb_iters=6,
+    outputDirPlot=None,
+    nan_dsm_to=None,
+    nan_dsm_from=None,
+    save_diff=False,
+):
     """
     Coregister dsm_from to dsm_to using Nuth & Kaab (2011) algorithm.
 
@@ -291,59 +350,110 @@ def main(dsm_to, dsm_from, outfile=None, nb_iters=6, outputDirPlot=None, nan_dsm
     # Create datasets
     #
 
-    reproj_dem, reproj_ref = load_dems(dsm_to, dsm_from, ref_nodata=nan_dsm_from, dem_nodata=nan_dsm_to,
-                                       load_data=False)
+    reproj_dem, reproj_ref = load_dems(
+        dsm_to,
+        dsm_from,
+        ref_nodata=nan_dsm_from,
+        dem_nodata=nan_dsm_to,
+        load_data=False,
+    )
 
     #
     # Coregister and compute diff
     #
-    xoff, yoff, zoff, coreg_dsm_dataset, coreg_ref_dataset, init_dh_dataset, final_dh_dataset = \
-        a3D_libAPI(reproj_dem, reproj_ref, nb_iters=nb_iters, outdirPlot=outputDirPlot)
+    (
+        xoff,
+        yoff,
+        zoff,
+        coreg_dsm_dataset,
+        coreg_ref_dataset,
+        init_dh_dataset,
+        final_dh_dataset,
+    ) = a3D_libAPI(
+        reproj_dem, reproj_ref, nb_iters=nb_iters, outdirPlot=outputDirPlot
+    )
 
     #
     # Save coreg dem
     #
     if outfile:
-        save_tif(coreg_dsm_dataset, './coreg_dsm.tif')
-        save_tif(coreg_ref_dataset, './coreg_ref.tif')
+        save_tif(coreg_dsm_dataset, "./coreg_dsm.tif")
+        save_tif(coreg_ref_dataset, "./coreg_ref.tif")
 
     #
     # Save diffs
     #
     if save_diff:
-        save_tif(init_dh_dataset, './initial_dh.tif')
-        save_tif(final_dh_dataset, './final_dh.tif')
+        save_tif(init_dh_dataset, "./initial_dh.tif")
+        save_tif(final_dh_dataset, "./final_dh.tif")
 
     return xoff, yoff, zoff
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(os.path.basename(__file__),
-                                     description='The universal co-registration method presented in Nuth & Kaab 2011.'
-                                                 'NB : 1) It is supposed that both dsms share common reference (whether it is geoid or ellipsoid).'
-                                                 '     2) DSMs must be georefenced.')
+    parser = argparse.ArgumentParser(
+        os.path.basename(__file__),
+        description="The universal co-registration method presented in Nuth & Kaab 2011."
+        "NB : 1) It is supposed that both dsms share common reference (whether it is geoid or ellipsoid)."
+        "     2) DSMs must be georefenced.",
+    )
 
-    parser.add_argument('dsm_to', type=str, help='master dsm')
-    parser.add_argument('dsm_from', type=str, help='slave dsm you wish to coregister to dsm_to')
-    parser.add_argument('-outfile', action='store_true', help='saves output coregistered DSM')
-    parser.add_argument('-nb_iters', dest='nb_iters', type=int, default=6, help='number of iterations')
-    parser.add_argument('-dirplot', dest='plot', type=str, default=None, help='path to output plot directory. Plots are printed if set to None (default)')
-    parser.add_argument('-nodata1', dest='nodata1', type=str, default=None, help='no data value for DSM to compare (default value is read in metadata)')
-    parser.add_argument('-nodata2', dest='nodata2', type=str, default=None, help='no data value for Reference DSM (default value is read in metadata)')
-    parser.add_argument('-save_diff', action='store_true', help='store on file system a ./initial_dh.tiff and a ./final_dh.tiff with dsms differences before and after coregistration')
+    parser.add_argument("dsm_to", type=str, help="master dsm")
+    parser.add_argument(
+        "dsm_from", type=str, help="slave dsm you wish to coregister to dsm_to"
+    )
+    parser.add_argument(
+        "-outfile", action="store_true", help="saves output coregistered DSM"
+    )
+    parser.add_argument(
+        "-nb_iters",
+        dest="nb_iters",
+        type=int,
+        default=6,
+        help="number of iterations",
+    )
+    parser.add_argument(
+        "-dirplot",
+        dest="plot",
+        type=str,
+        default=None,
+        help="path to output plot directory. Plots are printed if set to None (default)",
+    )
+    parser.add_argument(
+        "-nodata1",
+        dest="nodata1",
+        type=str,
+        default=None,
+        help="no data value for DSM to compare (default value is read in metadata)",
+    )
+    parser.add_argument(
+        "-nodata2",
+        dest="nodata2",
+        type=str,
+        default=None,
+        help="no data value for Reference DSM (default value is read in metadata)",
+    )
+    parser.add_argument(
+        "-save_diff",
+        action="store_true",
+        help="store on file system a ./initial_dh.tiff and a ./final_dh.tiff with dsms differences before and after coregistration",
+    )
 
     return parser
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     parser = get_parser()
     args = parser.parse_args()
 
-    main(args.dsm_to, args.dsm_from,
-         outfile=args.outfile,
-         nb_iters=args.nb_iters,
-         outputDirPlot=args.plot,
-         nan_dsm_to=args.nodata1,
-         nan_dsm_from=args.nodata2,
-         save_diff=args.save_diff)
+    main(
+        args.dsm_to,
+        args.dsm_from,
+        outfile=args.outfile,
+        nb_iters=args.nb_iters,
+        outputDirPlot=args.plot,
+        nan_dsm_to=args.nodata1,
+        nan_dsm_from=args.nodata2,
+        save_diff=args.save_diff,
+    )

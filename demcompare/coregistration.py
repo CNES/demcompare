@@ -33,7 +33,9 @@ from .img_tools import save_tif, translate
 from .output_tree_design import get_out_dir, get_out_file_path
 
 
-def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpDir='.'):
+def coregister_with_Nuth_and_Kaab(
+    dem1, dem2, init_disp_x=0, init_disp_y=0, tmpDir="."
+):
     """
     Compute x and y offsets between two DSMs using Nuth and Kaab (2011) algorithm
 
@@ -51,14 +53,23 @@ def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpD
     # Resample images to pre-coregistered geometry according to the initial disp
     if init_disp_x != 0 or init_disp_y != 0:
         from .img_tools import translate_to_coregistered_geometry
-        dem1, dem2 = translate_to_coregistered_geometry(dem1, dem2, init_disp_x, init_disp_y)
 
+        dem1, dem2 = translate_to_coregistered_geometry(
+            dem1, dem2, init_disp_x, init_disp_y
+        )
 
     # Compute nuth and kaab coregistration
     from .nuth_kaab_universal_coregistration import a3D_libAPI as nk_a3D_libAPI
-    x_off, y_off, z_off, coreg_dem1, coreg_dem2, init_dh, final_dh = nk_a3D_libAPI(dem1,
-                                                                                   dem2,
-                                                                                   outdirPlot=tmpDir)
+
+    (
+        x_off,
+        y_off,
+        z_off,
+        coreg_dem1,
+        coreg_dem2,
+        init_dh,
+        final_dh,
+    ) = nk_a3D_libAPI(dem1, dem2, outdirPlot=tmpDir)
 
     # Instead of taking nk_a3d_libAPI results we change their georef
     # -> this is because
@@ -77,7 +88,14 @@ def coregister_with_Nuth_and_Kaab(dem1, dem2, init_disp_x=0, init_disp_y=0, tmpD
     # Eventually we return nuth and kaab results :
     #  NB : -y_off because y_off from nk is north oriented
     #       we take into account initial disparity
-    return x_off + init_disp_x, -y_off + init_disp_y, z_off, coreg_dem1, coreg_dem2, final_dh
+    return (
+        x_off + init_disp_x,
+        -y_off + init_disp_y,
+        z_off,
+        coreg_dem1,
+        coreg_dem2,
+        final_dh,
+    )
 
 
 def coregister_and_compute_alti_diff(cfg, dem1, dem2):
@@ -94,57 +112,120 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     :return: coreg_dem1, coreg_dem2 and alti differences
     """
 
-    if cfg['plani_opts']['coregistration_method'] == 'nuth_kaab':
-        x_bias, y_bias, z_bias, coreg_dem1, coreg_dem2, final_dh = \
-            coregister_with_Nuth_and_Kaab(dem1, dem2,
-                                          init_disp_x=cfg['plani_opts']['disp_init']['x'],
-                                          init_disp_y=cfg['plani_opts']['disp_init']['y'],
-                                          tmpDir=os.path.join(cfg['outputDir'], get_out_dir('nuth_kaab_tmpDir')))
-        z_bias = np.nanmean(final_dh['im'].data)
+    if cfg["plani_opts"]["coregistration_method"] == "nuth_kaab":
+        (
+            x_bias,
+            y_bias,
+            z_bias,
+            coreg_dem1,
+            coreg_dem2,
+            final_dh,
+        ) = coregister_with_Nuth_and_Kaab(
+            dem1,
+            dem2,
+            init_disp_x=cfg["plani_opts"]["disp_init"]["x"],
+            init_disp_y=cfg["plani_opts"]["disp_init"]["y"],
+            tmpDir=os.path.join(
+                cfg["outputDir"], get_out_dir("nuth_kaab_tmpDir")
+            ),
+        )
+        z_bias = np.nanmean(final_dh["im"].data)
     else:
         raise NameError("coregistration method unsupported")
 
     # Saves output coreg DEM to file system
-    coreg_dem1 = save_tif(coreg_dem1, os.path.join(cfg['outputDir'], get_out_file_path('coreg_DEM.tif')))
-    coreg_dem2 = save_tif(coreg_dem2, os.path.join(cfg['outputDir'], get_out_file_path('coreg_REF.tif')))
-    final_dh = save_tif(final_dh, os.path.join(cfg['outputDir'], get_out_file_path('final_dh.tif')))
+    coreg_dem1 = save_tif(
+        coreg_dem1,
+        os.path.join(cfg["outputDir"], get_out_file_path("coreg_DEM.tif")),
+    )
+    coreg_dem2 = save_tif(
+        coreg_dem2,
+        os.path.join(cfg["outputDir"], get_out_file_path("coreg_REF.tif")),
+    )
+    final_dh = save_tif(
+        final_dh,
+        os.path.join(cfg["outputDir"], get_out_file_path("final_dh.tif")),
+    )
 
     # Update cfg
     # -> for plani_results
-    cfg['plani_results'] = {}
-    cfg['plani_results']['dx'] = {'bias_value': x_bias * coreg_dem1.attrs["xres"],
-                                  'unit': coreg_dem1.attrs["plani_unit"].name}
-    cfg['plani_results']['dy'] = {'bias_value': y_bias * abs(coreg_dem1.attrs["yres"]),
-                                  'unit': coreg_dem1.attrs["plani_unit"].name}
+    cfg["plani_results"] = {}
+    cfg["plani_results"]["dx"] = {
+        "bias_value": x_bias * coreg_dem1.attrs["xres"],
+        "unit": coreg_dem1.attrs["plani_unit"].name,
+    }
+    cfg["plani_results"]["dy"] = {
+        "bias_value": y_bias * abs(coreg_dem1.attrs["yres"]),
+        "unit": coreg_dem1.attrs["plani_unit"].name,
+    }
     # -> for alti_results
-    cfg['alti_results'] = {}
-    cfg['alti_results']['rectifiedDSM'] = copy.deepcopy(cfg['inputDSM'])
-    cfg['alti_results']['rectifiedRef'] = copy.deepcopy(cfg['inputRef'])
-    cfg['alti_results']['rectifiedDSM']['path'] = coreg_dem1.attrs['ds_file']
-    cfg['alti_results']['rectifiedRef']['path'] = coreg_dem2.attrs['ds_file']
-    cfg['alti_results']['rectifiedDSM']['nodata'] = coreg_dem1.attrs['no_data']
-    cfg['alti_results']['rectifiedRef']['nodata'] = coreg_dem2.attrs['no_data']
-    cfg['alti_results']['dz'] = {'bias_value': float(z_bias),
-                                 'unit': coreg_dem1.attrs["zunit"].name,
-                                 'percent': 100 * np.count_nonzero(~np.isnan(final_dh['im'].data)) / final_dh['im'].data.size}
-    cfg['alti_results']['dzMap'] = {'path': final_dh.attrs['ds_file'],
-                                    'zunit': coreg_dem1.attrs["zunit"].name,
-                                    'nodata': final_dh.attrs['no_data'],
-                                    'nb_points': final_dh['im'].data.size,
-                                    'nb_valid_points': np.count_nonzero(~np.isnan(final_dh['im'].data))}
-    cfg['alti_results']['rectifiedDSM']['nb_points'] = coreg_dem1['im'].data.size
-    cfg['alti_results']['rectifiedRef']['nb_points'] = coreg_dem2['im'].data.size
-    cfg['alti_results']['rectifiedDSM']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_dem1['im'].data))
-    cfg['alti_results']['rectifiedRef']['nb_valid_points'] = np.count_nonzero(~np.isnan(coreg_dem2['im'].data))
+    cfg["alti_results"] = {}
+    cfg["alti_results"]["rectifiedDSM"] = copy.deepcopy(cfg["inputDSM"])
+    cfg["alti_results"]["rectifiedRef"] = copy.deepcopy(cfg["inputRef"])
+    cfg["alti_results"]["rectifiedDSM"]["path"] = coreg_dem1.attrs["ds_file"]
+    cfg["alti_results"]["rectifiedRef"]["path"] = coreg_dem2.attrs["ds_file"]
+    cfg["alti_results"]["rectifiedDSM"]["nodata"] = coreg_dem1.attrs["no_data"]
+    cfg["alti_results"]["rectifiedRef"]["nodata"] = coreg_dem2.attrs["no_data"]
+    cfg["alti_results"]["dz"] = {
+        "bias_value": float(z_bias),
+        "unit": coreg_dem1.attrs["zunit"].name,
+        "percent": 100
+        * np.count_nonzero(~np.isnan(final_dh["im"].data))
+        / final_dh["im"].data.size,
+    }
+    cfg["alti_results"]["dzMap"] = {
+        "path": final_dh.attrs["ds_file"],
+        "zunit": coreg_dem1.attrs["zunit"].name,
+        "nodata": final_dh.attrs["no_data"],
+        "nb_points": final_dh["im"].data.size,
+        "nb_valid_points": np.count_nonzero(~np.isnan(final_dh["im"].data)),
+    }
+    cfg["alti_results"]["rectifiedDSM"]["nb_points"] = coreg_dem1[
+        "im"
+    ].data.size
+    cfg["alti_results"]["rectifiedRef"]["nb_points"] = coreg_dem2[
+        "im"
+    ].data.size
+    cfg["alti_results"]["rectifiedDSM"]["nb_valid_points"] = np.count_nonzero(
+        ~np.isnan(coreg_dem1["im"].data)
+    )
+    cfg["alti_results"]["rectifiedRef"]["nb_valid_points"] = np.count_nonzero(
+        ~np.isnan(coreg_dem2["im"].data)
+    )
 
     # Print report
-    print(("Plani 2D shift between input dsm ({}) and input ref ({}) is".format(cfg['inputDSM']['path'],
-                                                                               cfg['inputRef']['path'])))
-    print((" -> row : {}".format(cfg['plani_results']['dy']['bias_value'] * coreg_dem1.attrs["plani_unit"])))
-    print((" -> col : {}".format(cfg['plani_results']['dx']['bias_value'] * coreg_dem1.attrs["plani_unit"])))
-    print('')
-    print(("Alti shift between coreg dsm ({}) and coreg ref ({}) is".format(cfg['alti_results']['rectifiedDSM']['path'],
-                                                                           cfg['alti_results']['rectifiedRef']['path'])))
+    print(
+        (
+            "Plani 2D shift between input dsm ({}) and input ref ({}) is".format(
+                cfg["inputDSM"]["path"], cfg["inputRef"]["path"]
+            )
+        )
+    )
+    print(
+        (
+            " -> row : {}".format(
+                cfg["plani_results"]["dy"]["bias_value"]
+                * coreg_dem1.attrs["plani_unit"]
+            )
+        )
+    )
+    print(
+        (
+            " -> col : {}".format(
+                cfg["plani_results"]["dx"]["bias_value"]
+                * coreg_dem1.attrs["plani_unit"]
+            )
+        )
+    )
+    print("")
+    print(
+        (
+            "Alti shift between coreg dsm ({}) and coreg ref ({}) is".format(
+                cfg["alti_results"]["rectifiedDSM"]["path"],
+                cfg["alti_results"]["rectifiedRef"]["path"],
+            )
+        )
+    )
     print((" -> alti : {}".format(z_bias * coreg_dem1.attrs["zunit"])))
 
     return coreg_dem1, coreg_dem2, final_dh
