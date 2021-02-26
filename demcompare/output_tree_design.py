@@ -20,6 +20,8 @@
 """
 Output tree design architecture for demcompare
 """
+
+# Standard imports
 import os
 
 # In what comes next : OTD stands for Output Tree Design

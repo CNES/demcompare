@@ -22,11 +22,13 @@
 This module contains functions associated to raster images.
 """
 
+# Standard imports
 import copy
 import logging
 import os
 from typing import List, Tuple, Union
 
+# Third party imports
 import numpy as np
 import pyproj
 import rasterio

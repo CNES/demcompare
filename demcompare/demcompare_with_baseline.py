@@ -21,17 +21,19 @@
 #
 """
 Tests : Compare results against baseline
-
 """
 
+# Standard imports
 import argparse
 import glob
 import json
 import os
 from collections import OrderedDict
 
+# Third party imports
 import argcomplete
 
+# DEMcompare imports
 from demcompare.output_tree_design import get_out_dir
 
 

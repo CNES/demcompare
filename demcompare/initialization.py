@@ -24,15 +24,18 @@ This is where high level parameters are checked and default options are set
 
 """
 
+# Standard imports
 import ast
 import copy
 import errno
 import json
 import os
 
+# Third party imports
 import numpy as np
 from astropy import units as u
 
+# DEMcompare imports
 from .img_tools import read_img
 from .output_tree_design import supported_OTD
 

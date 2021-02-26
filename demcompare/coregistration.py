@@ -20,15 +20,17 @@
 #
 """
 Coregistration part of dsm_compare
-
 """
 
+# Standard imports
 import copy
 import os
 import re
 
+# Third party imports
 import numpy as np
 
+# DEMcompare imports
 from .img_tools import save_tif, translate
 from .output_tree_design import get_out_dir, get_out_file_path
 

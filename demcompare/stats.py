@@ -22,6 +22,7 @@
 Stats module of dsm_compare offers routines for stats computation and plot viewing
 """
 
+# Standard imports
 import collections
 import copy
 import csv
@@ -30,11 +31,13 @@ import logging
 import math
 import os
 
+# Third party imports
 import numpy as np
 from astropy import units as u
 from scipy import exp
 from scipy.optimize import curve_fit
 
+# DEMcompare imports
 from .img_tools import read_image, read_img_from_array, save_tif
 from .output_tree_design import get_out_dir, get_out_file_path
 from .partition import (

@@ -22,6 +22,7 @@
 Create sphinx report and compile it for html and pdf format
 """
 
+# Standard imports
 import collections
 import csv
 import fnmatch
@@ -29,6 +30,7 @@ import glob
 import os
 import sys
 
+# DEMcompare imports
 from .sphinx_project_generator import SphinxProjectManager
 
 

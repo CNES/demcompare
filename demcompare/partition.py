@@ -23,14 +23,17 @@ Mainly contains the Partition class. A partition defines a way to partition the 
 TODO add comment Fusion_partition
 """
 
+# Standard imports
 import collections
 import itertools
 import logging
 import os
 from functools import reduce
 
+# Third party imports
 import numpy as np
 
+# DEMcompare imports
 from .img_tools import (
     get_slope,
     read_img,

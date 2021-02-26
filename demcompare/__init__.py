@@ -19,10 +19,11 @@
 # limitations under the License.
 #
 """
-demcompare aims at coregistering and comparing two dems
+DEMcompare init module file.
+DEMcompare aims at coregistering and comparing two Digital Elevation Models(DEM)
 """
 
-
+# Standard imports
 import copy
 import json
 import logging
@@ -30,18 +31,21 @@ import logging.config
 import os
 import shutil
 import sys
+from typing import List
 
+# Third party imports
 import matplotlib as mpl
 import numpy as np
 
+# DEMcompare imports
 from . import coregistration, initialization, report, stats
 from .img_tools import load_dems, read_img, read_img_from_array, save_tif
 from .output_tree_design import get_otd_dirs, get_out_dir, get_out_file_path
 
-## VERSION
+# ** VERSION **
 # Depending on python version get importlib standard lib or backported package
 if sys.version_info[:2] >= (3, 8):
-    # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
+    # when python3 > 3.8
     from importlib.metadata import PackageNotFoundError  # pragma: no cover
     from importlib.metadata import version
 else:
@@ -55,7 +59,7 @@ except PackageNotFoundError:
 finally:
     del version, PackageNotFoundError
 
-## STEPS
+# ** STEPS **
 DEFAULT_STEPS = ["coregistration", "stats", "report"]
 ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
 
@@ -408,7 +412,11 @@ def run_tile(
 
 
 def run(
-    json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
+    json_file: str,
+    steps: List[str] = DEFAULT_STEPS,
+    display=False,
+    debug=False,
+    force=False,
 ):
     #
     # Initialization

@@ -25,7 +25,7 @@ the Makefile and the conf.py are proposed, and no way to control them.
 If somehow required, this project generator shall be improved to offer some
 level of customization.
 """
-
+# Standard imports
 import errno
 import os
 import shutil

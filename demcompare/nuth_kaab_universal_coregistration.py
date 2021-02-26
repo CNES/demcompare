@@ -28,14 +28,17 @@ Date : June 2015
 License : MIT
 """
 
+# Standard imports
 import argparse
 import os
 
+# Third party imports
 import matplotlib.pyplot as pl
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
 
+# DEMcompare imports
 from .img_tools import load_dems, read_img_from_array, save_tif
 
 

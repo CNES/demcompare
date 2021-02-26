@@ -21,6 +21,8 @@
 """
 Mosaic part of demcompare
 """
+
+# Standard imports
 import argparse
 import datetime
 import json
@@ -28,6 +30,7 @@ import os
 import subprocess
 import sys
 
+# Third party imports
 import numpy as np
 
 

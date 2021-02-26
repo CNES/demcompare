@@ -23,13 +23,16 @@
 demcompare aims at coregistering and comparing two dsms
 """
 
+# Standard imports
 from __future__ import print_function
 
 import argparse
 import copy
 
+# Third party imports
 import argcomplete
 
+# DEMcompare import
 import demcompare
 
 DEFAULT_STEPS = ["coregistration", "stats", "report"]
