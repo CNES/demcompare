@@ -37,8 +37,12 @@ from scipy.optimize import curve_fit
 
 from .img_tools import read_image, read_img_from_array, save_tif
 from .output_tree_design import get_out_dir, get_out_file_path
-from .partition import (Fusion_partition, NotEnoughDataToPartitionError,
-                        Partition, getColor)
+from .partition import (
+    Fusion_partition,
+    NotEnoughDataToPartitionError,
+    Partition,
+    getColor,
+)
 
 
 class NoPointsToPlot(Exception):

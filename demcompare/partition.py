@@ -31,8 +31,13 @@ from functools import reduce
 
 import numpy as np
 
-from .img_tools import (get_slope, read_img, read_img_from_array,
-                        reproject_dataset, save_tif)
+from .img_tools import (
+    get_slope,
+    read_img,
+    read_img_from_array,
+    reproject_dataset,
+    save_tif,
+)
 from .output_tree_design import get_out_dir
 
 
