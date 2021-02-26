@@ -24,13 +24,16 @@ Tests : Compare results against baseline
 
 """
 
-import json
-import argcomplete, argparse
+import argparse
 import glob
+import json
 import os
 from collections import OrderedDict
 
+import argcomplete
+
 from demcompare.output_tree_design import get_out_dir
+
 
 def load_json(json_file):
     with open(json_file, 'r') as f:

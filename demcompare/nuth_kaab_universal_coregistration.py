@@ -28,13 +28,15 @@ Date : June 2015
 License : MIT
 """
 
-import os
 import argparse
-import numpy as np
+import os
+
 import matplotlib.pyplot as pl
+import numpy as np
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
-from .img_tools import read_img_from_array, load_dems, save_tif
+
+from .img_tools import load_dems, read_img_from_array, save_tif
 
 
 def grad2d(dem):

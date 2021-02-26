@@ -23,26 +23,30 @@ demcompare aims at coregistering and comparing two dems
 """
 
 
+import copy
+import json
 import logging
 import logging.config
 import os
-import sys
-import json
 import shutil
-import numpy as np
-import copy
+import sys
+
 import matplotlib as mpl
-from . import initialization, coregistration, stats, report
-from .output_tree_design import get_out_dir, get_out_file_path, get_otd_dirs
-from .img_tools import read_img, save_tif, load_dems, read_img_from_array
+import numpy as np
+
+from . import coregistration, initialization, report, stats
+from .img_tools import load_dems, read_img, read_img_from_array, save_tif
+from .output_tree_design import get_otd_dirs, get_out_dir, get_out_file_path
 
 ## VERSION
 # Depending on python version get importlib standard lib or backported package
 if sys.version_info[:2] >= (3, 8):
     # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
-    from importlib.metadata import PackageNotFoundError, version  # pragma: no cover
+    from importlib.metadata import PackageNotFoundError  # pragma: no cover
+    from importlib.metadata import version
 else:
-    from importlib_metadata import PackageNotFoundError, version  # pragma: no cover
+    from importlib_metadata import PackageNotFoundError  # pragma: no cover
+    from importlib_metadata import version
 try:
     dist_name = "demcompare"
     __version__ = version(dist_name)

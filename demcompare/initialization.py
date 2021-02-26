@@ -24,16 +24,17 @@ This is where high level parameters are checked and default options are set
 
 """
 
-from astropy import units as u
 import ast
-import numpy as np
-import json
 import copy
 import errno
+import json
 import os
-from .output_tree_design import supported_OTD
-from .img_tools import read_img
 
+import numpy as np
+from astropy import units as u
+
+from .img_tools import read_img
+from .output_tree_design import supported_OTD
 
 
 def mkdir_p(path):

@@ -23,11 +23,11 @@ Create sphinx report and compile it for html and pdf format
 """
 
 import collections
-import os
-import glob
 import csv
-import sys
 import fnmatch
+import glob
+import os
+import sys
 
 from .sphinx_project_generator import SphinxProjectManager
 

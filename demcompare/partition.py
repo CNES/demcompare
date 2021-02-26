@@ -23,15 +23,17 @@ Mainly contains the Partition class. A partition defines a way to partition the 
 TODO add comment Fusion_partition
 """
 
-import os
 import collections
-import numpy as np
-import logging
-from functools import reduce
 import itertools
+import logging
+import os
+from functools import reduce
 
+import numpy as np
+
+from .img_tools import (get_slope, read_img, read_img_from_array,
+                        reproject_dataset, save_tif)
 from .output_tree_design import get_out_dir
-from .img_tools import read_img_from_array, save_tif, read_img, reproject_dataset, get_slope
 
 
 class NotEnoughDataToPartitionError(Exception):

@@ -26,9 +26,9 @@ If somehow required, this project generator shall be improved to offer some
 level of customization.
 """
 
+import errno
 import os
 import shutil
-import errno
 import subprocess
 
 

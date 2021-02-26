@@ -24,8 +24,11 @@ demcompare aims at coregistering and comparing two dsms
 """
 
 from __future__ import print_function
-import argcomplete, argparse
+
+import argparse
 import copy
+
+import argcomplete
 
 import demcompare
 

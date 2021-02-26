@@ -22,22 +22,24 @@
 Stats module of dsm_compare offers routines for stats computation and plot viewing
 """
 
-import os
-import logging
-import copy
-import math
-import json
 import collections
+import copy
 import csv
+import json
+import logging
+import math
+import os
+
 import numpy as np
+from astropy import units as u
 from scipy import exp
 from scipy.optimize import curve_fit
-from astropy import units as u
 
-
-from .partition import Partition, Fusion_partition, getColor, NotEnoughDataToPartitionError
+from .img_tools import read_image, read_img_from_array, save_tif
 from .output_tree_design import get_out_dir, get_out_file_path
-from .img_tools import read_img_from_array, read_image, save_tif
+from .partition import (Fusion_partition, NotEnoughDataToPartitionError,
+                        Partition, getColor)
+
 
 class NoPointsToPlot(Exception):
     pass

@@ -21,7 +21,12 @@
 """
 Mosaic part of demcompare
 """
-import argparse, json, os, datetime, subprocess, sys
+import argparse
+import datetime
+import json
+import os
+import subprocess
+import sys
 
 import numpy as np
 

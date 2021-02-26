@@ -22,23 +22,24 @@
 This module contains functions associated to raster images.
 """
 
+import copy
 import logging
-from typing import List, Union, Tuple
+import os
+from typing import List, Tuple, Union
+
 import numpy as np
+import pyproj
 import rasterio
+import rasterio.crs
+import rasterio.mask
 import rasterio.warp
 import rasterio.windows
-import rasterio.mask
-import rasterio.crs
 import xarray as xr
-import copy
-import os
 from astropy import units as u
 from rasterio import Affine
-from scipy.ndimage import filters
-from rasterio.warp import reproject, Resampling
+from rasterio.warp import Resampling, reproject
 from scipy import interpolate
-import pyproj
+from scipy.ndimage import filters
 
 
 def read_image(path: str, band: int = 1) -> np.ndarray:
