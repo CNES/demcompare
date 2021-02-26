@@ -18,13 +18,13 @@ install: venv  ## install environment for development target (depends venv)
 
 lint: install  ## run lint tools (depends install)
 	@venv/bin/isort --check **/*.py
-#	@venv/bin/black --check **/*.py
+	@venv/bin/black --check **/*.py
 #	@venv/bin/flake8 **/*.py
 #	@venv/bin/mypy
 
 format: install  ## run black and isort (depends install)
 	@venv/bin/isort **/*.py
-#	@venv/bin/black **/*.py
+	@venv/bin/black **/*.py
 
 clean: ## clean: remove venv
 	@rm -rf venv
