@@ -67,7 +67,8 @@ def generate_report(
     """
     Create pdf report from png graph and csv stats summary
 
-    :param workingDir: directory in which to find *mode*.png and *mode*.csv files for each mode in modename
+    :param workingDir: directory in which to find *mode*.png
+                    and *mode*.csv files for each mode in modename
     :param dsmName: name or path to the dsm to be compared against the ref
     :param refName: name or path to the reference dsm
     :param partitionsList: list of partition, contains modes by partition
@@ -94,10 +95,11 @@ def generate_report(
         # Initialize mode informations for partition
         modes_information[partition_name] = collections.OrderedDict()
         modes_information[partition_name]["standard"] = {
-            "pitch": "This mode results simply relies only on valid values. This means nan "
-            "values (whether they are from the error image or the reference support "
-            "image when do_classification is on), but also ouliers and masked ones "
-            "has been discarded."
+            "pitch": "This mode results simply relies only on valid values. "
+            "This means nan values "
+            "(whether they are from the error image or the reference support "
+            "image when do_classification is on), but also ouliers and "
+            "masked ones has been discarded."
         }
         modes_information[partition_name]["coherent-classification"] = {
             "pitch": "This is the standard mode where only the pixels for "
@@ -190,7 +192,7 @@ def generate_report(
             "*********************",
             " DSM COMPARE REPORT",
             "*********************" "",
-            "**This report shows comparison results between the following DSMs:**",
+            "**It shows comparison results between the following DSMs:**",
             "",
             "* **The DSM to evaluate**: {}".format(dsmName),
             "* **The Reference DSM**  : {}".format(refName),
@@ -223,7 +225,8 @@ def generate_report(
     src = "\n".join(
         [
             src,
-            "**The comparison outcomes are provided for the evaluation mode listed hereafter:**",
+            "**The comparison outcomes are provided for the evaluation \
+                mode listed hereafter:**",
             "",
         ]
     )

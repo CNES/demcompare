@@ -25,7 +25,6 @@ Coregistration part of dsm_compare
 # Standard imports
 import copy
 import os
-import re
 
 # Third party imports
 import numpy as np
@@ -39,7 +38,8 @@ def coregister_with_Nuth_and_Kaab(
     dem1, dem2, init_disp_x=0, init_disp_y=0, tmpDir="."
 ):
     """
-    Compute x and y offsets between two DSMs using Nuth and Kaab (2011) algorithm
+    Compute x and y offsets between two DEMs
+    using Nuth and Kaab (2011) algorithm
 
     Note that dem1 will not be resampled in the process
     Note that dem1 geo reference might be shifted in the process
@@ -74,15 +74,18 @@ def coregister_with_Nuth_and_Kaab(
     ) = nk_a3D_libAPI(dem1, dem2, outdirPlot=tmpDir)
 
     # Instead of taking nk_a3d_libAPI results we change their georef
-    # -> this is because
-    #    NK library takes two DEMs georeferenced and gives back two coreg DEMs keeping the initial georef
+    # -> this is because NK library takes two DEMs georeferenced
+    #    and gives back two coreg DEMs keeping the initial georef.
     #    This is done by interpolating & resampling the REF DEM (dem2 here)
-    #    The initial georef is the input DSM (dem1) one, since dem1 and dem2 have supposedly been reprojected onto dem1
+    #    The initial georef is the input DSM (dem1) one,
+    #    since dem1 and dem2 have supposedly been reprojected onto dem1
     #    so that dem1 was not resampled
-    #    While this is good behavior for independent use, this is not exactly what we 're wishing for
-    #    We do want the REF DEM to be the one resampled, but we want to keep its georef, and so here is what we do
-    #    so that coreg dem from NK are not modified, but their georef now is the one of dem2
-
+    #    While this is good behavior for independent use,
+    #    this is not exactly what we 're wishing for
+    #    We do want the REF DEM to be the one resampled,
+    #    but we want to keep its georef, and so here is what we do
+    #    so that coreg dem from NK are not modified,
+    #    but their georef now is the one of dem2
     coreg_dem1 = translate(coreg_dem1, x_off - 0.5, -y_off - 0.5)
     coreg_dem2 = translate(coreg_dem2, x_off - 0.5, -y_off - 0.5)
     final_dh = translate(final_dh, x_off - 0.5, -y_off - 0.5)
@@ -102,7 +105,8 @@ def coregister_with_Nuth_and_Kaab(
 
 def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     """
-    Coregister two DSMs together and compute alti differences (before and after coregistration).
+    Coregister two DSMs together
+    and compute alti differences (before and after coregistration).
 
     This can be view as a two step process:
     - plani rectification computation
@@ -197,37 +201,31 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
 
     # Print report
     print(
-        (
-            "Plani 2D shift between input dsm ({}) and input ref ({}) is".format(
-                cfg["inputDSM"]["path"], cfg["inputRef"]["path"]
-            )
+        "Plani 2D shift between input dsm ({}) and input ref ({}) is".format(
+            cfg["inputDSM"]["path"], cfg["inputRef"]["path"]
+        )
+    )
+
+    print(
+        " -> row : {}".format(
+            cfg["plani_results"]["dy"]["bias_value"]
+            * coreg_dem1.attrs["plani_unit"]
         )
     )
     print(
-        (
-            " -> row : {}".format(
-                cfg["plani_results"]["dy"]["bias_value"]
-                * coreg_dem1.attrs["plani_unit"]
-            )
-        )
-    )
-    print(
-        (
-            " -> col : {}".format(
-                cfg["plani_results"]["dx"]["bias_value"]
-                * coreg_dem1.attrs["plani_unit"]
-            )
+        " -> col : {}".format(
+            cfg["plani_results"]["dx"]["bias_value"]
+            * coreg_dem1.attrs["plani_unit"]
         )
     )
     print("")
     print(
-        (
-            "Alti shift between coreg dsm ({}) and coreg ref ({}) is".format(
-                cfg["alti_results"]["rectifiedDSM"]["path"],
-                cfg["alti_results"]["rectifiedRef"]["path"],
-            )
+        "Alti shift between coreg dsm ({}) and coreg ref ({}) is".format(
+            cfg["alti_results"]["rectifiedDSM"]["path"],
+            cfg["alti_results"]["rectifiedRef"]["path"],
         )
     )
+
     print((" -> alti : {}".format(z_bias * coreg_dem1.attrs["zunit"])))
 
     return coreg_dem1, coreg_dem2, final_dh

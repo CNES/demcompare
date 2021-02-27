@@ -61,7 +61,8 @@ def check_csv(csv_ref, csv_test, csv_file, epsilon):
     for row_ref, row_test in zip(
         csv_ref[1 : len(csv_ref)], csv_test[1 : len(csv_test)]
     ):
-        # - we need to split a row by ',' to get columns after we removed the '\r\n' end characters
+        # - we need to split a row by ',' to get columns
+        # after we removed the '\r\n' end characters
         cols_ref = row_ref.strip("\r\n").split(",")
         cols_test = row_test.strip("\r\n").split(",")
 
@@ -140,7 +141,8 @@ def run(baseline_dir, output_dir, epsilon=1.0e-6):
     baseline_data = [load_csv(csv_file) for csv_file in baseline_csv_files]
     test_data = [load_csv(csv_file) for csv_file in output_csv_files]
 
-    # before checking values we see if class names (slope range) and stats tested are the same between both versions
+    # before checking values we see if class names (slope range)
+    # and stats tested are the same between both versions
     if len(baseline_data) != len(test_data):
         raise ValueError(
             "Inconsistent number of csv files between baseline ({}) "
@@ -156,7 +158,8 @@ def run(baseline_dir, output_dir, epsilon=1.0e-6):
     ]
 
     if sum([len(diff) for diff in differences]) != 0:
-        error = "Invalid results obtained with this version of demcompare: \n{}".format(
+        error = "Invalid results obtained with this version \
+                 of demcompare: \n{}".format(
             differences
         )
         raise ValueError(error)

@@ -66,7 +66,7 @@ def compute_stats_array(
 
     :param cfg: configuration dictionary
     :param dem: numpy array, dem raster
-    :param ref: numpy array,reference dem raster to be coregistered to dem raster
+    :param ref: numpy array, reference dem raster to be coregistered to dem
     :param dem_nodata: int/float, nodata value in dem
     :param ref_nodata: int/float, nodata value in ref
     :param display: boolean, choose between plot show and plot save
@@ -155,17 +155,23 @@ def get_outliers_free_mask(array, no_data_value=None):
 def create_mode_masks(alti_map, partitions_sets_masks=None):
     """
     Compute Masks for every required modes :
-    -> the 'standard' mode where the mask stands for nan values inside the error image with the nan values
-       inside the ref_support_desc when do_classification is on & it also stands for outliers free values
-    -> the 'coherent-classification' mode which is the 'standard' mode where only the pixels for which both sets (dsm
-       and reference) are coherent
-    -> the 'incoherent-classification' mode which is 'coherent-classification' complementary
+    -> the 'standard' mode
+       where the mask stands for nan values inside the error image
+       with the nan values inside the ref_support_desc
+       when do_classification is on & it also stands for outliers free values
+    -> the 'coherent-classification' mode
+       which is the 'standard' mode where only the pixels
+       for which both sets (dsm and reference) are coherent
+    -> the 'incoherent-classification' mode
+       which is 'coherent-classification' complementary
 
-    Note that 'coherent-classification' and 'incoherent-classification' mode masks can only be computed if
-    len(list_of_sets_masks)==2
+    Note that 'coherent-classification'
+    and 'incoherent-classification' mode masks
+    can only be computed if len(list_of_sets_masks)==2
 
     :param alti_map: xarray Dataset, alti differences
-    :param partitions_sets_masks: [] (master and/or slave dsm) of [] of boolean array (sets for each dsm)
+    :param partitions_sets_masks: [] (master and/or slave dsm)
+        of [] of boolean array (sets for each dsm)
     :return: list of masks, associated modes, and error_img read as array
     """
 
@@ -181,18 +187,23 @@ def create_mode_masks(alti_map, partitions_sets_masks=None):
     # -> remove nodata indices for every partitioning image
     if partitions_sets_masks:
         for pImg in partitions_sets_masks:
-            # for a given partition, nan values are flagged False for all sets hence
-            # np.any return True for a pixel if it belongs to at least one set (=it this is not a nodata pixel)
+            # for a given partition,
+            # nan values are flagged False for all sets hence
+            # np.any return True for a pixel
+            # if it belongs to at least one set (=it this is not a nodata pixel)
             partition_nonan_mask = np.any(pImg, axis=0)
             mode_masks[0] *= partition_nonan_mask
 
-    # Carrying on with potentially the cross classification (coherent & incoherent) masks
-    if (
-        len(partitions_sets_masks) == 2
-    ):  # there's a classification img to partition from for both master & slave dsm
+    # Carrying on with potentially
+    # the cross classification (coherent & incoherent) masks
+    if len(partitions_sets_masks) == 2:
+        # case where there's a classification img to partition
+        # from for both master & slave dsm
         mode_names.append("coherent-classification")
-        # Combine pairs of sets together (meaning first partition first set with second partition first set)
-        # -> then for each single class / set, we know which pixels are coherent between both partitions
+        # Combine pairs of sets together
+        # (meaning first partition first set with second partition first set)
+        # -> then for each single class / set,
+        #    we know which pixels are coherent between both partitions
         # -> combine_sets[0].shape[0] = number of sets (classes)
         # -> combine_sets[0].shape[1] = number of pixels inside a single DSM
         pImgs = partitions_sets_masks
@@ -222,18 +233,26 @@ def create_masks(
 ):
     """
     Compute Masks for every required modes :
-    -> the 'standard' mode where the mask stands for nan values inside the error image with the nan values
-       inside the ref_support_desc when do_classification is on & it also stands for outliers free values
-    -> the 'coherent-classification' mode which is the 'standard' mode where only the pixels for which both sets (dsm
-       and reference) are coherent
-    -> the 'incoherent-classification' mode which is 'coherent-classification' complementary
+    -> the 'standard' mode
+       where the mask stands for nan values
+       inside the error image with the nan values
+       inside the ref_support_desc when do_classification is on
+       & it also stands for outliers free values
+    -> the 'coherent-classification' mode
+       which is the 'standard' mode where only the pixels for which both sets
+       (dsm and reference) are coherent
+    -> the 'incoherent-classification' mode
+       which is 'coherent-classification' complementary
 
     :param alti_map: xarray Dataset, alti differences
-    :param do_classification: boolean indicated wether or not the classification is activated
+    :param do_classification: wether or not the classification is activated
     :param ref_support: xarray Dataset
-    :param do_cross_classification: boolean indicated wether or not the cross classification is activated
-    :param ref_support_classified_desc: dict with 'path' and 'nodata' keys for the ref support image classified
-    :param remove_outliers: boolean, set to True (default) to return a no_outliers mask
+    :param do_cross_classification:
+        wether or not the cross classification is activated
+    :param ref_support_classified_desc:
+        dict with 'path' and 'nodata' keys for the ref support image classified
+    :param remove_outliers:
+        boolean, set to True (default) to return a no_outliers mask
     :return: list of masks, associated modes, and error_img read as array
     """
 
@@ -264,7 +283,8 @@ def create_masks(
         ref_support_classified_val = read_image(
             ref_support_classified_desc["path"], band=4
         )
-        # so we get rid of what are actually 'nodata' and incoherent values as well
+        # so we get rid of what are actually 'nodata'
+        # and incoherent values as well
         coherent_mask = get_nonan_mask(
             ref_support_classified_val, ref_support_classified_desc["nodata"][0]
         )
@@ -282,7 +302,8 @@ def stats_computation(array, list_threshold=None):
     Compute stats for a specific array
 
     :param array: numpy array
-    :param list_threshold: list, defines thresholds to be used for pixels above thresholds ratio computation
+    :param list_threshold: list, defines thresholds to be used
+        for pixels above thresholds ratio computation
     :return: dict with stats name and values
     """
     if array.size:
@@ -344,11 +365,14 @@ def get_stats(
 
     :param dz_values: errors
     :param to_keep_mask: boolean mask with True values for pixels to use
-    :param sets: list of sets (boolean arrays that indicate which class a pixel belongs to)
+    :param sets: list of sets
+        (boolean arrays that indicate which class a pixel belongs to)
     :param sets_labels: label associated to the sets
     :param sets_names: name associated to the sets
-    :param list_threshold: list, defines thresholds to be used for pixels above thresholds ratio computation
-    :return: list of dictionary (set_name, nbpts, %(out_of_all_pts), max, min, mean, std, rmse, ...)
+    :param list_threshold: list, defines thresholds to be used
+        for pixels above thresholds ratio computation
+    :return: list of dictionary
+        (set_name, nbpts, %(out_of_all_pts), max, min, mean, std, rmse, ...)
     """
 
     def nighty_percentile(array):
@@ -366,13 +390,15 @@ def get_stats(
     # Init
     output_list = []
     nb_total_points = dz_values.size
-    # - if a mask is not set, we set it with True values only so that it has no effect
+    # - if a mask is not set,
+    # we set it with True values only so that it has no effect
     if to_keep_mask is None:
         to_keep_mask = np.ones(dz_values.shape)
     if outliers_free_mask is None:
         outliers_free_mask = np.ones(dz_values.shape)
 
-    # Computing first set of values with all pixels considered -except the ones masked or the outliers-
+    # Computing first set of values with all pixels considered
+    # -except the ones masked or the outliers-
     output_list.append(
         stats_computation(
             dz_values[np.where(to_keep_mask * outliers_free_mask == True)],
@@ -385,7 +411,8 @@ def get_stats(
     output_list[0]["%"] = (
         100 * float(output_list[0]["nbpts"]) / float(nb_total_points)
     )
-    # - we add computation of nighty percentile (of course we keep outliers for that so we use dz_values as input array)
+    # - we add computation of nighty percentile
+    # (of course we keep outliers for that so we use dz_values as input array)
     output_list[0]["90p"] = nighty_percentile(
         dz_values[np.where(to_keep_mask == True)]
     )
@@ -417,9 +444,10 @@ def dem_diff_plot(dem_diff, title="", plot_file="dem_diff.png", display=False):
 
     :param dem_diff: xarray Dataset,
     :param title: string, plot title
-    :param plot_file: path and name for the saved plot (used when display if False)
-    :param display: boolean, set to True if display is on, otherwise the plot is saved to plot_file location
-    :return:
+    :param plot_file: path and name for the saved plot
+        (used when display if False)
+    :param display: boolean, set to True if display is on,
+        otherwise the plot is saved to plot_file location
     """
 
     #
@@ -468,20 +496,26 @@ def plot_histograms(
 ):
     """
     Creates a histogram plot for all sets given and saves them on disk.
-    Note : If more than one set is given, than all the remaining sets are supposed to partitioned the first one. Hence
-           in the contribution plot the first set is not considered and all percentage are computed in regards of the
-           number of points within the first set (which is supposed to contain them all)
+
+    Note :
+    If more than one set is given, than all the remaining sets are supposed
+    to partitioned the first one.
+    Hence, in the contribution plot the first set is not considered and all
+    percentage are computed in regards of the number of points
+    within the first set (which is supposed to contain them all)
 
     :param input_array: data to plot
     :param bin_step: histogram bin step
     :param to_keep_mask: boolean mask with True values for pixels to use
-    :param sets: list of sets (boolean arrays that indicate which class a pixel belongs to)
+    :param sets: list of sets
+        (boolean arrays that indicate which class a pixel belongs to)
     :param set_labels: name associated to the sets
     :param sets_colors: color set for plotting
     :param sets_stats: where should be retrived mean and std values for all sets
     :param plot_title: plot primary title
     :param outplotdir: directory where histograms are to be saved
-    :param outhistdir: directory where histograms (as numpy files) are to be saved
+    :param outhistdir: directory where histograms
+        (as numpy files) are to be saved
     :param save_prefix: prefix to the histogram files saved by this method
     :param display: set to False to save plot instead of actually plotting them
     :param plot_real_hist: plot or save (see display param) real histrograms
@@ -502,7 +536,8 @@ def plot_histograms(
     import matplotlib.pyplot as P
     from matplotlib import gridspec
 
-    # -> bins should rely on [-A;A],A being the higher absolute error value (all histograms rely on the same bins range)
+    # -> bins should rely on [-A;A],A being the higher absolute error value
+    # (all histograms rely on the same bins range)
     if to_keep_mask is not None:
         if input_array[np.where(to_keep_mask == True)].size != 0:
             borne = np.max(
@@ -642,6 +677,8 @@ def plot_histograms(
                         ),
                     )
                     if set_idx != 0:
+                        # 1 is the x location and 0.05 is the width
+                        # (label is not printed)
                         fig2_ax_classes.bar(
                             1,
                             set_contribution,
@@ -649,7 +686,8 @@ def plot_histograms(
                             color=sets_colors[set_idx],
                             bottom=cumulative_percent - set_contribution,
                             label="test",
-                        )  # 1 is the x location and 0.05 is the width (label is not printed)
+                        )
+
                         fig2_ax_classes.text(
                             1,
                             cumulative_percent - 0.5 * set_contribution,
@@ -659,7 +697,8 @@ def plot_histograms(
                         )
                 except RuntimeError:
                     print(
-                        "No fitted gaussian plot created as curve_fit failed to converge"
+                        "No fitted gaussian plot "
+                        "created as curve_fit failed to converge"
                     )
                     pass
 
@@ -714,7 +753,8 @@ def save_results(
     :param labels_plotted: list of labels plotted
     :param plot_files: list of plot files associdated to the labels_plotted
     :param plot_colors: list of plot colors associdated to the labels_plotted
-    :param to_csv: boolean, set to True to save to csv format as well (default False)
+    :param to_csv: boolean, set to True to save to csv format as well
+        (default False)
     :return:
     """
 
@@ -738,7 +778,8 @@ def save_results(
                     )
                 except:
                     print(
-                        "Error: plot_files and plot_colors should have same dimension as labels_plotted"
+                        "Error: plot_files and plot_colors "
+                        "should have same dimension as labels_plotted"
                     )
                     raise
 
@@ -746,7 +787,8 @@ def save_results(
         json.dump(results, outfile, indent=4)
 
     if to_csv:
-        # Print the merged results into a csv file with only "important" fields and extended fieldnames
+        # Print the merged results into a csv file
+        # with only "important" fields and extended fieldnames
         # - create filename
         csv_filename = os.path.join(
             os.path.splitext(output_json_file)[0] + ".csv"
@@ -890,26 +932,38 @@ def alti_diff_stats(
     """
     Computes alti error stats with graphics and tables support.
 
-    If cfg['stats_opt']['class_type'] is not None those stats can be partitioned into different sets. The sets
-    are radiometric ranges used to classify a support image. May the support image be the slope image associated
-    with the reference DSM then the sets are slopes ranges and the stats are provided by classes of slopes ranges.
+    If cfg['stats_opt']['class_type'] is not None,
+    those stats can be partitioned into different sets.
+    The sets are radiometric ranges used to classify a support image.
+    May the support image be the slope image associated with the reference DSM
+    then the sets are slopes ranges
+    and the stats are provided by classes of slopes ranges.
 
-    Actually, if cfg['stats_opt']['class_type'] is 'slope' then computeStats first computes slope image and classify
-    stats over slopes. If cfg['stats_opt']['class_type'] is 'user' then a user support image must be given to be
-    classified over cfg['stats_opt']['class_rad_range'] intervals so it can partitioned the stats.
+    Actually, if cfg['stats_opt']['class_type'] is 'slope'
+    then computeStats first computes slope image and classify stats over slopes.
 
-    When cfg['stats_opt']['class_type']['class_coherent'] is set to True then two images to classify are required
-    (one associated with the reference DEM and one with the other one). The results will be presented through 3 modes:
-    -standard mode,
-    -coherent mode where only alti errors values associated with coherent classes between both classified images are used
-    -and, incoherent mode (the coherent complementary one).
+    If cfg['stats_opt']['class_type'] is 'user' then a user support image
+    must be given to be classified over cfg['stats_opt']['class_rad_range']
+    intervals so it can partitioned the stats.
+
+    When cfg['stats_opt']['class_type']['class_coherent'] is set to True
+    then two images to classify are required
+    (one associated with the reference DEM and one with the other one).
+    The results will be presented through 3 modes:
+        - standard mode,
+        - coherent mode
+            where only alti errors values associated with coherent classes
+            between both classified images are used
+        - incoherent mode (the coherent complementary one).
 
     :param cfg: config file
     :param dsm: xarray Dataset, dsm
     :param ref: xarray Dataset, coregistered ref
     :param alti_map: xarray Dataset, dsm - ref
-    :param display: boolean, display option (set to False to save plot on file system)
-    :param remove_outliers: boolean, set to True to remove outliers ( x < mu - 3sigma ; x > mu + 3sigma)
+    :param display: boolean, display option
+        (set to False to save plot on file system)
+    :param remove_outliers: boolean, set to True to remove outliers
+        ( x < mu - 3sigma ; x > mu + 3sigma)
     :param geo_ref: boolean, set to False if images are not georeferenced
     :return:
     """
@@ -968,7 +1022,8 @@ def alti_diff_stats(
         # If required, get list of altitude thresholds and adjust the unit
         list_threshold_m = None
         if cfg["stats_opts"]["elevation_thresholds"]["list"]:
-            # Convert thresholds to meter since all demcompare elevation unit is "meter"
+            # Convert thresholds to meter
+            # since all DEMcompare elevation unit is "meter"
             original_unit = cfg["stats_opts"]["elevation_thresholds"]["zunit"]
             list_threshold_m = [
                 ((threshold * u.Unit(original_unit)).to(u.meter)).value
@@ -986,7 +1041,8 @@ def alti_diff_stats(
     else:
         outliers_free_mask = 1
 
-    # There can be multiple ways to partition the stats. We gather them all inside a list here:
+    # There can be multiple ways to partition the stats.
+    # We gather them all inside a list here:
     partitions = create_partitions(
         dsm, ref, cfg["outputDir"], cfg["stats_opts"], geo_ref=geo_ref
     )
@@ -1137,17 +1193,24 @@ def get_stats_per_mode(
     """
     Generates alti error stats with graphics and csv tables.
 
-    Stats are computed based on support images which can be viewed as classification layers. The layers are represented
-    by the support_sets which partitioned the alti_map indices. Hence stats are computed on each set separately.
+    Stats are computed based on support images which can be viewed
+    as classification layers. The layers are represented by the support_sets
+    which partitioned the alti_map indices.
+    Hence stats are computed on each set separately.
 
-    There can be one or two support_imgs, associated to just the same amount of supports_sets. Both arguments being
-    lists. If two such classification layers are given, then this method also produces stats based on 3 modes:
-    -standard mode,
-    -coherent mode where only alti errors values associated with coherent classes between both classified images are used
-    -and, incoherent mode (the coherent complementary one).
+    There can be one or two support_imgs, associated to just the same amount
+    of supports_sets. Both arguments being lists.
+    If two such classification layers are given,
+    then this method also produces stats based on 3 modes:
+        - standard mode,
+        - coherent mode
+            where only alti errors values associated
+            with coherent classes between both classified images are used
+        - incoherent mode (the coherent complementary one).
 
     :param data: array to compute stats from
-    :param sets_masks: [] of one or two array (sets partitioning the support_img) of size equal to data ones
+    :param sets_masks: [] of one or two array
+        (sets partitioning the support_img) of size equal to data ones
     :param sets_labels: sets labels
     :param sets_names: sets names
     :param elevation_thresholds: list of elevation thresholds
@@ -1155,7 +1218,8 @@ def get_stats_per_mode(
     :return: stats, masks, names per mode
     """
 
-    # Get mode masks and names (sets_masks will be cross checked if len(sets_masks)==2)
+    # Get mode masks and names
+    # (sets_masks will be cross checked if len(sets_masks)==2)
     mode_masks, mode_names = create_mode_masks(data, sets_masks)
 
     # Next is done for all modes
@@ -1191,7 +1255,7 @@ def wave_detection(cfg, dh, display=False):
     """
 
     # Compute mean dh row and mean dh col
-    # -> then compute the min between dh mean row (col) vector and dh rows (cols)
+    # -> then compute min between dh mean row (col) vector and dh rows (cols)
     res = {
         "row_wise": np.zeros(dh["im"].data.shape, dtype=np.float32),
         "col_wise": np.zeros(dh["im"].data.shape, dtype=np.float32),
@@ -1201,7 +1265,8 @@ def wave_detection(cfg, dh, display=False):
         axis += 1
         mean = np.nanmean(dh["im"].data, axis=axis)
         if axis == 1:
-            # for axis == 1, we need to transpose the array to substitute it to dh.r otherwise 1D array stays row array
+            # for axis == 1, we need to transpose the array to substitute it
+            # to dh.r otherwise 1D array stays row array
             mean = np.transpose(
                 np.ones((1, mean.size), dtype=np.float32) * mean
             )

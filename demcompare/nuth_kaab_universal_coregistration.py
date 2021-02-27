@@ -19,7 +19,8 @@
 # limitations under the License.
 #
 """
-Nuth and Kaab universal co-registration (Correcting elevation data for glacier change detection 2011).
+Nuth and Kaab universal co-registration
+(Correcting elevation data for glacier change detection 2011).
 
 Based on the work of geoutils project
 https://github.com/GeoUtils/geoutils/blob/master/geoutils/dem_coregistration.py
@@ -59,18 +60,22 @@ def grad2d(dem):
 
 def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
     """
-    Compute the horizontal shift between 2 DEMs using the method presented in Nuth & Kaab 2011
+    Compute the horizontal shift between 2 DEMs
+    using the method presented in Nuth & Kaab 2011
 
     Inputs :
     - dh : array, elevation difference master_dem - slave_dem
     - slope/aspect : array, slope and aspect for the same locations as the dh
-    - plotFile : file to where store plot. Set to None if plot is to be printed. Set to False for no plot at all.
+    - plotFile : file to where store plot.
+        Set to None if plot is to be printed. Set to False for no plot at all.
     Returns :
-    - east, north, c : f, estimated easting and northing of the shift, c is not used here but is related to the vertical shift
+    - east, north, c : f, estimated easting and northing of the shift,
+        c is not used here but is related to the vertical shift
     """
 
     # The aim is to compute dh / tan(alpha) as a function of the aspect
-    # -> hence we are going to be slice the aspect to average a value for dh / tan(alpha) on those sliced areas
+    # -> hence we are going to be slice the aspect to average a value
+    #     for dh / tan(alpha) on those sliced areas
     # -> then we are going to fit the values by the model a.cos(b-aspect)+c
     #    - a will be the magnitude of the horizontal shift
     #    - b will be its orientation
@@ -78,7 +83,8 @@ def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
 
     # function to be correlated with terrain aspect
     # NB : target = dh / tan(alpha) (see Fig. 2 of Nuth & Kaab 2011)
-    # Explicitely ignore divide by zero warning, as they will be processed as nan later.
+    # Explicitely ignore divide by zero warning,
+    #   as they will be processed as nan later.
     with np.errstate(divide="ignore", invalid="ignore"):
         target = dh / slope
     target = target[np.isfinite(dh)]
@@ -125,7 +131,8 @@ def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
         err = peval(x, p) - y
         return err
 
-    # we run the least square fit by minimizing the "distance" between y and peval (see residuals())
+    # we run the least square fit
+    # by minimizing the "distance" between y and peval (see residuals())
     plsq = leastsq(residuals, p0, args=(mean, x_s), full_output=1)
     yfit = peval(x_s, plsq[0])
 
@@ -153,19 +160,22 @@ def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
 def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
     """
     This is the lib api of nuth and kaab universal coregistration.
-    It offers quite the same services as the classic main api but uses A3DDEMRaster as input instead of raster files
-    This allows the user to pre-process the data and / or avoid unecessary reload of the data.
+    It offers quite the same services as the classic main api
+    but uses Xarray as input instead of raster files.
+    This allows the user to pre-process the data
+    and / or avoid unecessary reload of the data.
 
     Output coregister DSM might be saved.
     Plots might be saved as well (and then not printed) if outputPlot is set.
 
-    NB : it is assumed that both dem3Draster have np.nan values inside the '.r' field as masked values
+    NB : it is assumed that both dem3Draster have np.nan values inside
+    the '.r' field as masked values
 
     :param dsm_dataset: xarray Dataset
-    :param dsm_from: path to dsm to coregister from
+    :param ref_dataset: xarray Dataset
+    :param outputDirPlot: path to output Plot directory
+        (plots are printed if set to None)
     :param nb_iters:
-    :param outputDirPlot: path to output Plot directory (plots are printed if set to None)
-    :param keep_georef: keep georef for the output coreg dsm
     :return: x and y shifts (as 'dsm_dataset + (x,y) = ref_dataset')
     """
 
@@ -200,8 +210,9 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
         pl.show()
     pl.close()
 
-    # Since later interpolations will consider nodata values as normal values we need to keep track of nodata values to
-    # get rid of them when the time comes
+    # Since later interpolations will consider nodata values as normal values,
+    # we need to keep track of nodata values
+    # to get rid of them when the time comes
     nan_maskval = np.isnan(coreg_ref)
     dsm_from_filled = np.where(nan_maskval, -9999, coreg_ref)
 
@@ -245,8 +256,9 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
         znew = f(ygrid - yoff, xgrid + xoff)  # positive y shift moves south
         nanval_new = f2(ygrid - yoff, xgrid + xoff)
 
-        # we created nan_maskval so that non nan values are set to 0
-        # interpolation "creates" values and the one not affected by nan are the one still equal to 0
+        # we created nan_maskval so that non nan values are set to 0.
+        # interpolation "creates" values
+        # and the one not affected by nan are the one still equal to 0.
         # hence, all other values must be considered invalid ones
         znew[nanval_new != 0] = np.nan
 
@@ -332,27 +344,31 @@ def main(
     Output coregister DSM might be saved.
     Plots might be saved as well (and then not printed) if outputPlot is set.
 
-    If nan_dsm and/or nan_ref are not set, no data values are read from dsms metadata
+    If nan_dsm and/or nan_ref are not set,
+    no data values are read from dsms metadata
 
     Both input dsm are projected on the same grid :
      - with dsm_to resolution
      - on the biggest common footprint
 
+    TODO: not used in code, Refactor with a3D_libAPI function.
+
     :param dsm_to: path to dsm to coregister to
     :param dsm_from: path to dsm to coregister from
     :param outfile: path to dsm_from after coregistration to dsm_to
     :param nb_iters:
-    :param outputDirPlot: path to output Plot directory (plots are printed if set to None)
+    :param outputDirPlot: path to output Plot directory
+        (plots are printed if set to None)
     :param nan_dsm_to:
     :param nan_dsm_from:
-    :param save_diff: save ./initial_dh.tiff and ./final_dh.tiff with dsms diff before and after coregistration
+    :param save_diff: save ./initial_dh.tiff and ./final_dh.tiff
+        with dsms diff before and after coregistration
     :return: x and y shifts (as 'dsm_from + (x,y) = dsm_to')
     """
 
     #
     # Create datasets
     #
-
     reproj_dem, reproj_ref = load_dems(
         dsm_to,
         dsm_from,
@@ -396,8 +412,10 @@ def main(
 def get_parser():
     parser = argparse.ArgumentParser(
         os.path.basename(__file__),
-        description="The universal co-registration method presented in Nuth & Kaab 2011."
-        "NB : 1) It is supposed that both dsms share common reference (whether it is geoid or ellipsoid)."
+        description="Universal co-registration method "
+        "presented in Nuth & Kaab 2011."
+        "NB : 1) It is supposed that both dsms share common reference"
+        "            (whether it is geoid or ellipsoid)."
         "     2) DSMs must be georefenced.",
     )
 
@@ -420,26 +438,30 @@ def get_parser():
         dest="plot",
         type=str,
         default=None,
-        help="path to output plot directory. Plots are printed if set to None (default)",
+        help="path to output plot directory. "
+        "Plots are printed if set to None (default)",
     )
     parser.add_argument(
         "-nodata1",
         dest="nodata1",
         type=str,
         default=None,
-        help="no data value for DSM to compare (default value is read in metadata)",
+        help="no data value for DSM to compare "
+        "(default value is read in metadata)",
     )
     parser.add_argument(
         "-nodata2",
         dest="nodata2",
         type=str,
         default=None,
-        help="no data value for Reference DSM (default value is read in metadata)",
+        help="no data value for Reference DSM "
+        "(default value is read in metadata)",
     )
     parser.add_argument(
         "-save_diff",
         action="store_true",
-        help="store on file system a ./initial_dh.tiff and a ./final_dh.tiff with dsms differences before and after coregistration",
+        help="store on file system a ./initial_dh.tiff and a ./final_dh.tiff "
+        "with dsms differences before and after coregistration",
     )
 
     return parser

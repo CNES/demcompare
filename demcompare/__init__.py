@@ -31,7 +31,6 @@ import logging.config
 import os
 import shutil
 import sys
-from typing import List
 
 # Third party imports
 import matplotlib as mpl
@@ -89,8 +88,8 @@ def computeReport(cfg, steps, dem, ref):
     Create html and pdf report
 
     :param cfg: configuration dictionary
-    :param dem: A3DDEMRaster, dem raster
-    :param ref: A3DDEMRaster,reference dem raster to be coregistered to dem raster
+    :param dem: dem raster
+    :param ref: reference dem raster to be coregistered to dem raster
     :return:
     """
     if "report" in steps:
@@ -109,8 +108,8 @@ def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     Compute Stats on final_dh
 
     :param cfg: configuration dictionary
-    :param dem: A3DDEMRaster, dem raster
-    :param ref: A3DDEMRaster,reference dem raster to be coregistered to dem raster
+    :param dem: dem raster
+    :param ref: reference dem raster to be coregistered to dem raster
     :param final_dh: xarray.Dataset, initial alti diff
     :param display: boolean, choose between plot show and plot save
     :param final_json_file: filename of final_cfg
@@ -140,19 +139,20 @@ def computeCoregistration(
     cfg, steps, dem, ref, initial_dh, final_cfg=None, final_json_file=None
 ):
     """
-    Coregister two DSMs together and compute alti differences (before and after coregistration).
+    Coregister two DSMs together and compute alti differences
+    (before and after coregistration).
 
     This can be view as a two step process:
     - plani rectification computation
     - alti differences computation
 
     :param cfg: configuration dictionary
-    :param dem: xarray.Dataset, dem raster
-    :param ref: xarray.Dataset,reference dem raster to be coregistered to dem raster
+    :param dem: xarray.Dataset, dem raster to compare
+    :param ref: xarray.Dataset, reference dem raster coregistered with dem
     :param initial_dh: xarray.Dataset, inital alti diff
     :param final_cfg: cfg from a previous run
     :param final_json_file: filename of final_cfg
-    :return: coregistered dem and ref A3DEMRAster + final alti differences as A3DGeoRaster
+    :return: coregistered dem and ref rasters + final alti differences
     """
     if "coregistration" in steps:
         (
@@ -269,7 +269,7 @@ def computeInitialization(config_json):
     except shutil.Error:
         # file exists or file is the same
         pass
-    except:
+    except Exception:
         raise
 
     # checks config
@@ -288,18 +288,14 @@ def computeInitialization(config_json):
     return cfg
 
 
-def run_tile(
-    json_file, steps=DEFAULT_STEPS, display=False, debug=False, force=False
-):
+def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False):
     """
-    demcompare execution for a single tile
+    DEMcompare execution for a single tile
 
-    :param json_file:
-    :param steps:
-    :param display:
-    :param debug:
-    :param force:
-    :return:
+    :param json_file: Input Json configuration file (mandatory)
+    :param steps: Steps to execute (default: all)
+    :param display: Choose Plot show or plot save (default).
+    :param debug: Debug mode (default: false)
     """
 
     #
@@ -308,7 +304,7 @@ def run_tile(
     cfg = computeInitialization(json_file)
     print(
         (
-            "*** demcompare : start processing into {} ***".format(
+            "*** DEMcompare : start processing into {} ***".format(
                 cfg["outputDir"]
             )
         )
@@ -318,10 +314,11 @@ def run_tile(
         # if display is False we have to tell matplotlib to cancel it
         mpl.use("Agg")
 
-    # Set final_json_file name and try to read it if it exists (if a previous run was launched)
+    # Set final_json_file name
     final_json_file = os.path.join(
         cfg["outputDir"], get_out_file_path("final_config.json")
     )
+    # Try to read json_file if exists and if a previous run was launched
     final_cfg = None
     if os.path.isfile(final_json_file):
         with open(final_json_file, "r") as f:
@@ -353,7 +350,6 @@ def run_tile(
     #
     # Compute initial dh and save it
     #
-
     initial_dh = read_img_from_array(
         ref["im"].data - dem["im"].data, from_dataset=dem, no_data=-32768
     )
@@ -411,13 +407,16 @@ def run_tile(
     computeReport(cfg, steps, coreg_dem, coreg_ref)
 
 
-def run(
-    json_file: str,
-    steps: List[str] = DEFAULT_STEPS,
-    display=False,
-    debug=False,
-    force=False,
-):
+def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False):
+    """
+    DEMcompare main execution for all tiles.
+    Call run_tile() function for each tile.
+
+    :param json_file: Input Json configuration file (mandatory)
+    :param steps: Steps to execute (default: all)
+    :param display: Choose Plot show or plot save (default).
+    :param debug: Debug mode (default: false)
+    """
     #
     # Initialization
     #
@@ -436,12 +435,16 @@ def run(
         tiles = initialization.divide_images(cfg)
 
     #
-    # Run classic steps by tiles (there can be just one tile which could be the whole image)
+    # Run classic steps by tiles
+    # (there can be just one tile which could be the whole image)
     #
     for tile in tiles:
         try:
             run_tile(
-                tile["json"], steps, display=display, debug=debug, force=force
+                tile["json"],
+                steps,
+                display=display,
+                debug=debug,
             )
         except Exception as e:
             import traceback

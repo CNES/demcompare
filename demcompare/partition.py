@@ -81,7 +81,8 @@ class Partition(object):
             self._type_layer = partition_kind
         else:
             logging.error(
-                "Unsupported partition kind {}. Try one of the following {}".format(
+                "Unsupported partition kind {}. \
+                Try one of the following {}".format(
                     partition_kind, self.type
                 )
             )
@@ -346,7 +347,8 @@ class Partition(object):
 
     def create_map(self, slope_img, type_slope):
         """
-        Create the map for each slope (l'intervalle des valeurs est transforme en 1 valeur (la min de l'intervalle))
+        Create the map for each slope
+        (value interval is transformed into 1 value (interval minimum value)
         :param slope_img: slope image path
         :param type_slope: type of slope : 'ref' or 'dsm'
         :return:
@@ -385,10 +387,12 @@ class Partition(object):
 
     def _create_set_indices(self):
         """
-        Returns a list of numpy.where, by class. Each element defines a set. The sets partition / classify the image.
+        Returns a list of numpy.where, by class. Each element defines a set.
+        The sets partition / classify the image.
         Each numpy.where contains the coordinates of the sets of the class.
         Create list of coordinates arrays :
-            -> self.sets_indices = [(label_name, np.where(...)), ... label_name, np.where(...))] ,
+            -> self.sets_indices = [(label_name, np.where(...)),
+                                ... label_name, np.where(...))] ,
 
         :param classes: ordered dict of labels and associated values
         :return:
@@ -488,7 +492,8 @@ class Partition(object):
             self._classes = self.generate_classes(cfg_layer["ranges"])
         else:
             logging.error(
-                "Neither classes nor ranges where given as input sets to partition the stats"
+                "Neither classes nor ranges \
+                where given as input sets to partition the stats"
             )
             raise KeyError
 
@@ -529,9 +534,9 @@ class Partition(object):
 
     def rectify_map(self):
         """
-        Reproject  the layer maps on top of coreg dsm and coreg ref (which are coregistered together)
+        Reproject the layer maps on top of coreg dsm and coreg ref
+        (which are coregistered together)
 
-        :return:
         """
         for map_name, map_path in self.map_path.items():
             if map_path:
@@ -575,7 +580,8 @@ class Fusion_partition(Partition):
         }
         if ~(self.dict_fusion["ref"] + self.dict_fusion["dsm"]):
             logging.error(
-                "For the partition to be merged, there must be at least one support (ref or dsm) "
+                "For the partition to be merged, "
+                "there must be at least one support (ref or dsm) "
                 "provided by every partition"
             )
             raise NotEnoughDataToPartitionError
@@ -647,7 +653,8 @@ class Fusion_partition(Partition):
             if df_v:
                 self._sets_indexes[df_k] = []
                 for combi in all_combi_labels:
-                    # following list will contain indexes for couple (partition layer, label index) for this merged label
+                    # following list will contain indexes for couple
+                    # (partition layer, label index) for this merged label
                     all_indexes = []
                     for elm in combi:
                         layer_name = elm[0]
@@ -716,8 +723,8 @@ def getColor(nb_color=10):
 
     if 10 < nb_color < 21:
         if matplotlib.__version__ >= "2.0.1":
-            # According to matplotlib documentation the Vega colormaps are deprecated since the 2.0.1 and
-            # disabled since 2.2.0
+            # According to matplotlib documentation the Vega colormaps are
+            # deprecated since the 2.0.1 and disabled since 2.2.0
             x = P.cm.get_cmap("tab20")
         else:
             x = P.cm.get_cmap("Vega20")
@@ -737,37 +744,39 @@ def getColor(nb_color=10):
 
 def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
     """
-    TODO create la fusion de toute les maps
-    :param sets_masks: dict par layer (exemple 'slope', 'carte_occupation', ...) contentant chacun une liste de tuple,
-                        dont chaque tuple contient ('nom_label', A3DGeoRaster_mask)
-    layers_obj: une layer d'exemple pour recuperer la taille et le georef
+    TODO: create all maps fusion
+    :param sets_masks: dict per layer (example 'slope', 'carte_occupation', ...)
+        contains a tuple list each,
+        where each tuple contains ('label_name', A3DGeoRaster_mask)
+    layers_obj: example layer to get size and georef
     :return:
     """
-    # create map qui fusionne toutes les combinaisons de classes
+    # create map which fusion all classes combinaisons
     map_fusion = np.ones(layers_obj.r.shape) * -32768.0
     sets_fusion = []
     sets_colors = np.multiply(getColor(len(all_combi_labels)), 255)
-    # recupere les masques associ�es aux tuples
+    # get masks associated with tuples
     for combi in all_combi_labels:
         mask_fusion = np.ones(layers_obj.r.shape)
         for elm_combi in combi:
             layer_name = elm_combi[0]
             label_name = elm_combi[1]
-            # concatene les masques des differentes labels du tuple/combi dans mask_fusion
+            # concatenate masks of different labels
+            # from tuple/combinaison in mask_fusion
             mask_label = np.zeros(layers_obj.r.shape)
-            mask_label[
-                sets_masks[layer_name][label_name]
-            ] = 1  # TODO change sets_masks[layer_name]['sets_def'][label_name] le dictionnaire n'est plus le meme => une liste mtn
+            mask_label[sets_masks[layer_name][label_name]] = 1
+            # TODO change sets_masks[layer_name]['sets_def'][label_name]
+            # dict is not the same anymore => a list now
             mask_fusion = mask_fusion * mask_label
 
-        # recupere le new label associ� dans ls dictionnaire new_classes
+        # get new label associated in new_classes dict
         new_label_name = "&".join(["@".join(elm_combi) for elm_combi in combi])
         new_label_value = classes_fusion[new_label_name]
         map_fusion[np.where(mask_fusion)] = new_label_value
         # save mask_fusion
         sets_fusion.append((new_label_name, np.where(mask_fusion)))
 
-    # save map fusionne
+    # save map fusion
     map = read_img_from_array(
         map_fusion, from_dataset=layers_obj, no_data=-32768
     )

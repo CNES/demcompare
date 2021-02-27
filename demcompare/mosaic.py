@@ -80,7 +80,8 @@ def vrt_body_source(
         fname: Relative path to the source image
         band: index of the band to use as source
         src_x, src_y, src_w, src_h: source window (cropped from source image)
-        dst_x, dst_y, dst_w, dst_h: destination window (where crop will be pasted)
+        dst_x, dst_y, dst_w, dst_h: destination window
+                                    (where crop will be pasted)
     """
 
     body = "\t\t<SimpleSource>\n"
@@ -200,7 +201,8 @@ def write_row_vrts(
     Args:
         outDir : output directory in which to store the vrts
         tiles: list of config files loaded from json files
-        sub_img: Relative path of the sub-image to mosaic (for ex. height_map.tif)
+        sub_img: Relative path of the sub-image to mosaic
+            (for ex. height_map.tif)
         vrt_basename: basename of the output vrt
         min_x, max_x: col extent of the raster
     Returns:
@@ -235,7 +237,8 @@ def write_row_vrts(
 
             # Check if source image exists
             if not os.path.exists(tile_sub_img):
-                # print('Warning: ' + tile_sub_img + ' does not exist, skipping ...')
+                # print('Warning: ' + tile_sub_img +
+                #       ' does not exist, skipping ...')
                 continue
 
             relative_sub_img_dir = os.path.relpath(
@@ -328,7 +331,8 @@ def write_main_vrt(
                 main_vrt_file.write(
                     vrt_bandheader(band=band, dataType=dataType, color=color)
                 )
-            # Do not use items()/iteritems() here because of python 2 and 3 compat
+            # Do not use items()/iteritems() here
+            # because of python 2 and 3 compat
             for y in vrt_row:
                 vrt_data = vrt_row[y]
                 relative_vrt_dir = os.path.relpath(
@@ -373,7 +377,7 @@ def main(
         vrt_basename = vrt_basename[:-3] + "vrt"
     elif output_format != "vrt":
         print(
-            "Error: only vrt or tif or png extension is allowed for output image."
+            "Error: only vrt/tif/png extensions are allowed for output image."
         )
         return
 

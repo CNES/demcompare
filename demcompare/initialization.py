@@ -25,7 +25,6 @@ This is where high level parameters are checked and default options are set
 """
 
 # Standard imports
-import ast
 import copy
 import errno
 import json
@@ -106,9 +105,10 @@ def check_parameters(cfg):
     # check ref:
     if "geoid" in cfg["inputDSM"] or "geoid" in cfg["inputRef"]:
         print(
-            "WARNING : geoid option is deprecated. Use georef keyword now with EGM96 or WGS84 value"
+            "WARNING : geoid option is deprecated. \
+            Use georef keyword now with EGM96 or WGS84 value"
         )
-    # what we do bellow is just in case someone used georef as geoid was used...
+    # what we do below is just in case someone used georef as geoid was used...
     if "georef" in cfg["inputDSM"]:
         if cfg["inputDSM"]["georef"] is True:
             cfg["inputDSM"]["georef"] = "EGM96"
@@ -138,17 +138,21 @@ def check_parameters(cfg):
 
 def initialization_plani_opts(cfg):
     """
-    Initialize the plan2DShift step used to compute plani (x,y) shift between the two DSMs.
-    'auto_disp_first_guess' : when set to True PRO_DecMoy is used to guess disp init and disp range
+    Initialize the plan2DShift step used
+    to compute plani (x,y) shift between the two DSMs.
+
+    'auto_disp_first_guess' :
+        when set to True, PRO_DecMoy is used to guess disp init and disp range
     'coregistration_method' : 'correlation' or 'nuth_kaab'
     if 'correlation' :
         'correlator' : 'PRO_Medicis'
-        'disp_init' and 'disp_range' define the area to explore when 'auto_disp_first_guess' is set to False
+        'disp_init' and 'disp_range' define the area to explore
+            when 'auto_disp_first_guess' is set to False
 
-    Note that disp_init and disp_range are used to define margin when the process is tiled.
+    Note that disp_init and disp_range are used
+    to define margin when the process is tiled.
 
     :param cfg:
-    :return:
     """
 
     default_plani_opts = {
@@ -181,7 +185,8 @@ def initialization_alti_opts(cfg):
 
 
 def initialization_stats_opts(cfg):
-    # slope_range defines the intervals to classify the classification type image from
+    # slope_range defines the intervals
+    # to classify the classification type image from
     default_stats_opts = {
         "to_be_classification_layers": {
             "slope": {"ranges": [0, 10, 25, 50, 90], "ref": None, "dsm": None}
@@ -203,8 +208,9 @@ def initialization_stats_opts(cfg):
         "classes": {},
     }  # {}
 
-    # TODO rendre plus generique chaque partie !
-    # TODO SUITE   ET mettre a a vide classification_layers si tout vide, sinon pour chaque element mettre a vide
+    # TODO Refactor to be more generic on each part !
+    # TODO If all is empty, empty classification_layers,
+    #      if not empty for each element
 
     if not "stats_opts" in cfg:
         cfg["stats_opts"] = default_stats_opts
@@ -223,7 +229,7 @@ def initialization_stats_opts(cfg):
                 "classification_layers"
             ] = default_to_be_classification_layer
 
-        # in case slope has been erased by a user defined 'to_be_classification_layers'
+        # in case slope erased by a user defined 'to_be_classification_layers'
         if (
             "slope" not in cfg["stats_opts"]["to_be_classification_layers"]
             or cfg["stats_opts"]["to_be_classification_layers"]["slope"] is None
@@ -232,7 +238,8 @@ def initialization_stats_opts(cfg):
                 "slope"
             ] = default_to_be_classification_layer["slope"]
 
-        # in case ref and dsm support for slope have been erased by a user defined 'to_be_classification_layers'
+        # in case ref and dsm support for slope erased
+        # by a user defined 'to_be_classification_layers'
         if (
             "ref"
             not in cfg["stats_opts"]["to_be_classification_layers"]["slope"]
@@ -267,7 +274,8 @@ def initialization_stats_opts(cfg):
         # if 'classification_layers' in cfg['stats_opts']:
         #     for key in cfg['stats_opts']['classification_layers'].keys():
         #         cfg['stats_opts']['classification_layers'][key] = \
-        #             {**default_classification_layer, **cfg['stats_opts']['classification_layers'][key]}
+        #             {**default_classification_layer,
+        #              **cfg['stats_opts']['classification_layers'][key]}
 
 
 def get_tile_dir(cfg, c, r, w, h):

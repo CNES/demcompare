@@ -204,7 +204,8 @@ def create_dataset(
     load_data: bool = False,
 ) -> xr.Dataset:
     """
-    Create dataset from array and transform, and return the corresponding xarray.DataSet
+    Create dataset from array and transform,
+    and return the corresponding xarray.DataSet
 
     :param data: image data
     :param transform: image data
@@ -289,7 +290,8 @@ def read_img_from_array(
     no_data: float = None,
 ) -> xr.Dataset:
     """
-    Read image, and return the corresponding xarray.DataSet. If from_dataset is None defaults attributes are set.
+    Read image, and return the corresponding xarray.DataSet.
+    If from_dataset is None defaults attributes are set.
 
     :param img_array: array
     :param no_data: no_data value in the image
@@ -349,13 +351,16 @@ def load_dems(
 
     :param ref_path:  path to ref dem
     :param dem_path:path to sec dem
-    :param ref_nodata: ref no data value (None by default and if set inside metadata)
-    :param dem_nodata: dem no data value (None by default and if set inside metadata)
+    :param ref_nodata: ref no data value
+        (None by default and if set inside metadata)
+    :param dem_nodata: dem no data value
+        (None by default and if set inside metadata)
     :param ref_georef: ref georef (either WGS84 -default- or EGM96)
     :param dem_georef: dem georef (either WGS84 -default- or EGM96)
     :param ref_zunit: ref z unit
     :param dem_zunit: dem z unit
-    :param load_data: True if dem are to be fully loaded, other options are False or a dict roi
+    :param load_data: True if dem are to be fully loaded,
+        other options are False or a dict roi
     :return: ref and dem datasets
     """
 
@@ -528,8 +533,9 @@ def translate_to_coregistered_geometry(
     Translate both DSMs to their coregistered geometry.
 
     Note that :
-         a) The dem2 georef is assumed to be the reference
-         b) The dem2 shall be the one resampled as it supposedly is the cleaner one.
+    a) The dem2 georef is assumed to be the reference
+    b) The dem2 shall be the one resampled as it supposedly is the cleaner one.
+
     Hence, dem1 is only cropped, dem2 is the only one that might be resampled.
     However, as dem2 is the ref, dem1 georef is translated to dem2 georef.
 
@@ -550,11 +556,13 @@ def translate_to_coregistered_geometry(
 
     #
     # Intersect and reproject both dsms.
-    #   -> intersect them to the biggest common grid now that they have been shifted
-    #   -> dem1 is then cropped with intersect so that it lies within intersect but is not resampled in the process
-    #   -> reproject dem2 to dem1 grid, the intersection grid sampled on dem1 grid
+    #   -> intersect them to the biggest common grid
+    #       now that they have been shifted
+    #   -> dem1 is then cropped with intersect so that it lies within intersect
+    #       but is not resampled in the process
+    #   -> reproject dem2 to dem1 grid,
+    #       the intersection grid sampled on dem1 grid
     #
-
     transform_dem1 = Affine.from_gdal(
         dem1["trans"].data[0],
         dem1["trans"].data[1],
@@ -631,7 +639,8 @@ def save_tif(
     dataset: xr.Dataset, filename: str, new_array=None, no_data: float = -32768
 ) -> xr.Dataset:
     """
-    Write a Dataset in a tiff file. If new_array is set, new_array is used as data.
+    Write a Dataset in a tiff file.
+    If new_array is set, new_array is used as data.
 
     :param dataset: dataset
     :param filename:  output filename
@@ -700,7 +709,8 @@ def get_slope(dataset: xr.Dataset, degree: bool = False) -> np.ndarray:
     """
     Compute slope from dataset
     Slope is presented here :
-    http://pro.arcgis.com/fr/pro-app/tool-reference/spatial-analyst/how-aspect-works.htm
+    http://pro.arcgis.com/ \
+            fr/pro-app/tool-reference/spatial-analyst/how-aspect-works.htm
 
     :param dataset: dataset
     :param degree:  True if is in degree
