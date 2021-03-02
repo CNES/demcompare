@@ -89,9 +89,14 @@ The configuration is put in a flake8 section in [setup.cfg](./setup.cfg)
 [flake8-copyright](https://pypi.org/project/flake8-copyright/) is installed to check copyright in added file.
 Flake8 messages can be avoided (if necessary !) adding "# noqa error-number"
 
+[flake8-bugbear](https://pypi.org/project/flake8-bugbear/) adds several rules to flake8
+
+[flake8-comprehensions](https://pypi.org/project/flake8-comprehensions/) is set for checking dict, set, list structures usage.
+
+
 # Pylint
 [pylint](https://pypi.org/project/pylint/) is well known global rules checker, complementary with flake8.
-The configuration is set in [.pylintrc](./.pylintrc) file. 
+The configuration is set in [.pylintrc](./.pylintrc) file.
 It is possible to run only pylint tool to check code modifications:
 ```
 * cd DEMCOMPARE_HOME

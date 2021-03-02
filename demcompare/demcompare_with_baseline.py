@@ -160,7 +160,7 @@ def run(baseline_dir, output_dir, epsilon=1.0e-6):
         )
     ]
 
-    if sum([len(diff) for diff in differences]) != 0:
+    if sum(len(diff) for diff in differences) != 0:
         error = "Invalid results obtained with this version \
                  of demcompare: \n{}".format(
             differences

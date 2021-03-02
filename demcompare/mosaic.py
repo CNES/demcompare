@@ -33,7 +33,7 @@ def shellquote(string):
     return "'%s'" % string.replace("'", "'\\''")
 
 
-garbage = list()
+garbage = []
 
 
 def remove(target):
