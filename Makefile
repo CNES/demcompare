@@ -28,3 +28,7 @@ format: install  ## run black and isort (depends install)
 
 clean: ## clean: remove venv
 	@rm -rf venv
+	@rm -rf dist
+	@rm -rf build
+	@rm -rf demcompare.egg-info
+	@rm -rf demcompare/__pycache__
