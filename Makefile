@@ -13,8 +13,8 @@ venv: ## create virtualenv in "venv" dir if not exists
 
 install: venv  ## install environment for development target (depends venv)
 	@test -f venv/bin/demcompare || venv/bin/pip install -e .[dev]
-#	@venv/bin/pre-commit install -t pre-commit
-#	@venv/bin/pre-commit install -t pre-push
+	@venv/bin/pre-commit install -t pre-commit
+	@venv/bin/pre-commit install -t pre-push
 
 lint: install  ## run lint tools (depends install)
 	@venv/bin/isort --check **/*.py
