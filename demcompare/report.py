@@ -91,7 +91,7 @@ def generate_report(  # noqa: C901
     # Initialize mode informations
     modes_information = collections.OrderedDict()
 
-    for partition_name, stats_results_d in partitions.items():
+    for partition_name, _ in partitions.items():
         # Initialize mode informations for partition
         modes_information[partition_name] = collections.OrderedDict()
         modes_information[partition_name]["standard"] = {
