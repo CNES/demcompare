@@ -43,7 +43,7 @@ from .img_tools import load_dems, read_img, read_img_from_array, save_tif
 from .output_tree_design import get_otd_dirs, get_out_dir, get_out_file_path
 
 # ** VERSION **
-# pylint: disable=import-error
+# pylint: disable=import-error,no-name-in-module
 # Depending on python version get importlib standard lib or backported package
 if sys.version_info[:2] >= (3, 8):
     # when python3 > 3.8
