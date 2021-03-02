@@ -18,7 +18,7 @@ This python software aims at **comparing two DEMs** together.
 
 A DEM is a 3D computer graphics representation of elevation data to represent terrain.
 
-**DEMcompare** has several characteristics: 
+**DEMcompare** has several characteristics:
 
 * provides a wide variety of standard metrics and allows one to classify the statistics.
 * works whether or not the two DEMs share common format, projection system,
@@ -38,18 +38,29 @@ This package can be installed through the following commands:
     cd demcompare
     pip install .
 ```
+Dependencies : **git**, **make**
 
-Be careful : DEMcompare needs **GDAL** for **rasterio**.
-Follow [Rasterio installation](https://rasterio.readthedocs.io/en/latest/installation.html#) depending on your platform to install GDAL. 
+Be careful: **Rasterio** have its own embedded version of **GDAL** \
+Please use rasterio no-binary version if you want to use a GDAL local version:
+```
+python3 -m pip --no-cache-dir install --no-binary rasterio rasterio
+```
 
-It is recommended to install DEMcompare in [virtualenv](https://docs.python.org/3/library/venv) environment. 
+It is recommended to install DEMcompare in a [virtualenv](https://docs.python.org/3/library/venv) environment or use Docker (a Dockerfile is provided).
 
+#### Global autocompletion
 If global autocompletion is not configured in your environment, please use the following command to have completion:
 ```
 eval "$(register-python-argcomplete demcompare)"
 ```
-
 See [Argcomplete documentation](https://kislyuk.github.io/argcomplete/#global-completion) for more details.
+
+### PDF generation
+By default, html is available only: PDF report is not generated.
+You need to install Latex environment for Sphinx to be able to use latexpdf.
+
+See [Specific Sphinx LatexBuilder documentation](https://www.sphinx-doc.org/en/master/usage/builders/index.html#sphinx.builders.latex.LaTeXBuilder)
+
 
 ## Usage
 
