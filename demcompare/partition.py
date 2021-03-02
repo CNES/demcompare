@@ -19,8 +19,9 @@
 # limitations under the License.
 #
 """
-Mainly contains the Partition class. A partition defines a way to partition the DEMs alti differences.
-TODO add comment Fusion_partition
+Mainly contains the Partition class.
+A partition defines a way to partition the DEMs alti differences.
+TODO add comment FusionPartition
 """
 
 # Standard imports
@@ -31,6 +32,8 @@ import os
 from functools import reduce
 
 # Third party imports
+import matplotlib
+import matplotlib.pyplot as mpl_pyplot
 import numpy as np
 
 # DEMcompare imports
@@ -48,9 +51,17 @@ class NotEnoughDataToPartitionError(Exception):
     pass
 
 
-class Partition(object):
+class Partition:
+    """
+    Partition class
+    A partition defines a way to partition the DEMs alti differences.
+    """
+
+    # pylint: disable=too-many-instance-attributes
+
     class LackOfPartitionDataError(Exception):
         def __init__(self):
+            super().__init__()
             logging.error(
                 "At least one partition support must be provided "
                 "(shall it be linked to the reference DSM or the slave one). "
@@ -64,14 +75,16 @@ class Partition(object):
     # default no data value
     nodata = -32768.0
 
-    ####### initialization #######
+    #
+    # Initialization
+    #
     def __init__(
         self,
         name,
         partition_kind,
         coreg_dsm,
         coreg_ref,
-        outputDir,
+        output_dir,
         geo_ref=True,
         **cfg_layer
     ):
@@ -91,15 +104,16 @@ class Partition(object):
         # Get partition name
         self._name = name
 
+        # Init classes
+        self._classes = None
+
         # Create output dir (where to store partition results & data)
-        self._output_dir = outputDir
+        self._output_dir = output_dir
         self.create_output_dir()
 
         # Store coreg path (TODO why?)
-        self.coreg_path = {"ref": None, "dsm": None}
+        self.coreg_path = {"ref": coreg_ref, "dsm": coreg_dsm}
         self._coreg_shape = coreg_ref["im"].data.shape
-        self.coreg_path["dsm"] = coreg_dsm
-        self.coreg_path["ref"] = coreg_ref
 
         # Init input data path
         self.ref_path = ""
@@ -110,20 +124,21 @@ class Partition(object):
         self.map_path = {"ref": None, "dsm": None}
 
         # Init sets attributes
-        self._sets_indexes = {"ref": None, "dsm": None}
+        self._sets_indexes = {"ref": [], "dsm": []}
         self._sets_names = None
         self._sets_labels = None
         self._sets_masks = None
+        self._sets_colors = None
 
         # Georef set
         self.geo_ref = geo_ref
 
         # Create partition (labelled map with associated sets)
-        self._create_patition_sets(**cfg_layer)
+        self._create_partition_sets(**cfg_layer)
 
         logging.info("Partition created as: {}".format(self))
 
-    def _create_patition_sets(self, **cfg_layer):
+    def _create_partition_sets(self, **cfg_layer):
         """
 
         :param cfg_layer:
@@ -141,6 +156,9 @@ class Partition(object):
             self._fill_sets_attributes()
 
     def _create_default_partition(self):
+        """
+        Create default partition.
+        """
         self._sets_masks = [
             ~(
                 np.isnan(self.coreg_path["dsm"]["im"].data)
@@ -149,7 +167,9 @@ class Partition(object):
         ]
         self._sets_colors = None
 
-    ####### getters and setters #######
+    #
+    # Getters and setters
+    #
     @property
     def out_dir(self):
         return self._output_dir
@@ -218,8 +238,13 @@ class Partition(object):
 
     @property
     def stats_results(self):
+        """
+        Return stats results of partition.
+        """
         stats_results = {}
-        #### mode standard ####
+        #
+        # Mode standard
+        #
         stats_results["standard"] = {"Ref_support": None, "DSM_support": None}
         if self.ref_path or self.map_path["ref"]:
             stats_results["standard"]["Ref_support"] = {
@@ -234,22 +259,29 @@ class Partition(object):
         if (self.ref_path or self.map_path["ref"]) and (
             self.dsm_path or self.map_path["dsm"]
         ):
-            ##### mode coherent ######
+            #
+            # Mode coherent
+            #
             stats_results["coherent-classification"] = {
                 "Ref_support": None,
                 "DSM_support": None,
             }
-            # TODO replire le coherent avec les map correspondante
-            ##### mode incoherent ######
+            # TODO fill coherent with corresponding maps
+            #
+            # Mode incoherent
+            #
             stats_results["incoherent-classification"] = {
                 "Ref_support": None,
                 "DSM_support": None,
             }
-            # TODO replire le coherent avec les map correspondante
+            # TODO fill incoherent with corresponding maps
         return stats_results
 
     @property
     def sets_masks(self):
+        """
+        Set masks for partition.
+        """
         if self._sets_masks is None:
             all_masks = []
             ref_masks = []
@@ -294,9 +326,12 @@ class Partition(object):
         )
 
     def generate_classes(self, ranges):
+        """
+        Create classes from ranges
+        """
         # change the intervals into a list to make 'classes' generic
         classes = collections.OrderedDict()
-        for idx in range(0, len(ranges)):
+        for idx, _ in enumerate(ranges):
             if idx == len(ranges) - 1:
                 if self.name == "slope":
                     key = "[{}%;inf[".format(ranges[idx])
@@ -363,7 +398,7 @@ class Partition(object):
         )
         map_img = save_tif(map_img, self.ref_path)
 
-        for idx in range(0, len(rad_range)):
+        for idx, _ in enumerate(rad_range):
             if idx == len(rad_range) - 1:
                 map_img["im"].data[
                     np.where(
@@ -467,9 +502,8 @@ class Partition(object):
 
         # fill sets_colors
         self._sets_colors = (
-            np.multiply(getColor(len(self.sets_names)), 255) / 255
+            np.multiply(get_color(len(self.sets_names)), 255) / 255
         )
-
         # fill sets_indexes
         tuples_of_labels_and_indexes = self._create_set_indices()
         if tuples_of_labels_and_indexes["ref"]:
@@ -502,19 +536,17 @@ class Partition(object):
             self.ref_path = cfg_layer["ref"]
         if "dsm" in cfg_layer:
             self.dsm_path = cfg_layer["dsm"]
-        if (not "ref" in cfg_layer) and (not "dsm" in cfg_layer):
+        if ("ref" not in cfg_layer) and ("dsm" not in cfg_layer):
             raise self.LackOfPartitionDataError
         if (not self.ref_path) and (not self.dsm_path):
             if self.type_layer == "classification_layers":
                 raise self.LackOfPartitionDataError
-            else:
-                if self.name != "slope":
-                    raise self.LackOfPartitionDataError
-                else:
-                    # create slope : ref and dsm
-                    self.create_slope(
-                        self.coreg_path["dsm"], self.coreg_path["ref"]
-                    )
+            # else
+            if self.name != "slope":
+                raise self.LackOfPartitionDataError
+            # else
+            # create slope : ref and dsm
+            self.create_slope(self.coreg_path["dsm"], self.coreg_path["ref"])
 
         # Create the layer map
         if self.type_layer == "to_be_classification_layers":
@@ -553,8 +585,16 @@ class Partition(object):
                     self.reproject_path[map_name] = map_path
 
 
-class Fusion_partition(Partition):
-    def __init__(self, partitions, outputDir, geo_ref=True):
+class FusionPartition(Partition):
+    """
+    FusionPartition
+    TODO : comment
+    TODO : clean pylint protected access
+    """
+
+    # pylint: disable=protected-access
+
+    def __init__(self, partitions, output_dir, geo_ref=True):
         """
         TODO Merge the layers to generate the layers fusion
         :param partitions: list d objet Partition
@@ -586,16 +626,16 @@ class Fusion_partition(Partition):
             )
             raise NotEnoughDataToPartitionError
 
-        super(Fusion_partition, self).__init__(
+        super().__init__(
             "fusion_layer",
             "classification_layers",
             coreg_dsm=partitions[0].coreg_path["dsm"],
             coreg_ref=partitions[0].coreg_path["ref"],
-            outputDir=outputDir,
+            output_dir=output_dir,
             geo_ref=geo_ref,
         )
 
-    def _create_patition_sets(self, **kwargs):
+    def _create_partition_sets(self, **_):
         """
 
         :param kwargs:
@@ -639,7 +679,7 @@ class Fusion_partition(Partition):
 
         # create colors for every label
         self._sets_colors = (
-            np.multiply(getColor(len(self.sets_names)), 255) / 255
+            np.multiply(get_color(len(self.sets_names)), 255) / 255
         )
 
         # find out indexes for every label
@@ -677,7 +717,8 @@ class Fusion_partition(Partition):
                         np.unravel_index(merged_indexes, self._coreg_shape)
                     )
 
-    def _create_merged_classes(self, partitions):
+    @staticmethod
+    def _create_merged_classes(partitions):
         """
         Generate the 'classes' dictionary for merged layers
         :param classes_to_fusion: list of classes to merge
@@ -717,29 +758,30 @@ class Fusion_partition(Partition):
         return all_combi_labels, new_classes
 
 
-def getColor(nb_color=10):
-    import matplotlib
-    import matplotlib.pyplot as P
+def get_color(nb_color=10):
+    """
+    Function to get matplotlib color possibilities.
+    """
 
     if 10 < nb_color < 21:
         if matplotlib.__version__ >= "2.0.1":
             # According to matplotlib documentation the Vega colormaps are
             # deprecated since the 2.0.1 and disabled since 2.2.0
-            x = P.cm.get_cmap("tab20")
+            x = mpl_pyplot.cm.get_cmap("tab20")
         else:
-            x = P.cm.get_cmap("Vega20")
+            x = mpl_pyplot.cm.get_cmap("Vega20")
     if nb_color < 11:
         if matplotlib.__version__ >= "2.0.1":
-            x = P.cm.get_cmap("tab10")
+            x = mpl_pyplot.cm.get_cmap("tab10")
         else:
-            x = P.cm.get_cmap("Vega10")
+            x = mpl_pyplot.cm.get_cmap("Vega10")
     if nb_color > 20:
-        clr = P.cm.get_cmap("gist_earth")
+        clr = mpl_pyplot.cm.get_cmap("gist_earth")
         return np.array(
             [clr(c / float(nb_color))[0:3] for c in np.arange(nb_color)]
         )
-    else:
-        return np.array(x.colors[0:nb_color])
+    # else:
+    return np.array(x.colors[0:nb_color])
 
 
 def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
@@ -754,7 +796,7 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
     # create map which fusion all classes combinaisons
     map_fusion = np.ones(layers_obj.r.shape) * -32768.0
     sets_fusion = []
-    sets_colors = np.multiply(getColor(len(all_combi_labels)), 255)
+    sets_colors = np.multiply(get_color(len(all_combi_labels)), 255)
     # get masks associated with tuples
     for combi in all_combi_labels:
         mask_fusion = np.ones(layers_obj.r.shape)
@@ -777,8 +819,8 @@ def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
         sets_fusion.append((new_label_name, np.where(mask_fusion)))
 
     # save map fusion
-    map = read_img_from_array(
+    map_return = read_img_from_array(
         map_fusion, from_dataset=layers_obj, no_data=-32768
     )
 
-    return map, sets_fusion, sets_colors / 255.0
+    return map_return, sets_fusion, sets_colors / 255.0

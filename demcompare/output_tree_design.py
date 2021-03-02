@@ -35,7 +35,7 @@ default_OTD = {
     # coreg step
     "coreg_DEM.tif": "./coregistration/",
     "coreg_REF.tif": "./coregistration/",
-    "nuth_kaab_tmpDir": "./coregistration/nuth_kaab_tmpDir",
+    "nuth_kaab_tmp_dir": "./coregistration/nuth_kaab_tmp_dir",
     # snapshots
     "snapshots_dir": "./snapshots",
     "initial_dem_diff.png": "./snapshots/",
@@ -64,7 +64,7 @@ raw_OTD = {
     # coreg step
     "coreg_DEM.tif": ".",
     "coreg_REF.tif": ".",
-    "nuth_kaab_tmpDir": ".",
+    "nuth_kaab_tmp_dir": ".",
     # snapshots
     "snapshots_dir": ".",
     "initial_dem_diff.png": ".",

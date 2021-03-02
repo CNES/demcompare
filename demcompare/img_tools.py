@@ -81,7 +81,7 @@ def pix_to_coord(
 
     x, y = rasterio.transform.xy(transform, row, col, offset="center")
 
-    if type(x) is not int:
+    if not isinstance(x, int):
         x = np.array(x)
         y = np.array(y)
 
@@ -374,7 +374,7 @@ def load_dems(
 
     if load_data is not True:
         # Use ROI
-        if isinstance(load_data, tuple) or isinstance(load_data, list):
+        if isinstance(load_data, (tuple, list)):
             bounds_dem = load_data
 
         elif isinstance(load_data, dict):
@@ -730,8 +730,8 @@ def get_slope(dataset: xr.Dataset, degree: bool = False) -> np.ndarray:
         :return: orthodromic distance
         """
         # WGS-84 equatorial radius in km
-        re = 6378137.0
-        return re * np.arccos(
+        radius_equator = 6378137.0
+        return radius_equator * np.arccos(
             np.cos(lat1 * np.pi / 180)
             * np.cos(lat2 * np.pi / 180)
             * np.cos((lon2 - lon1) * np.pi / 180)

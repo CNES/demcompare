@@ -64,7 +64,6 @@ def get_parser():
         default=DEFAULT_STEPS,
         help="steps to choose. default: all steps",
     )
-    parser.add_argument("--debug", action="store_true", help="debug mode")
     parser.add_argument(
         "--display",
         action="store_true",
@@ -86,9 +85,7 @@ def main():
     parser = get_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    demcompare.run(
-        args.config, args.step, debug=args.debug, display=args.display
-    )
+    demcompare.run(args.config, args.step, display=args.display)
 
 
 if __name__ == "__main__":

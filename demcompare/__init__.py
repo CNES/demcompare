@@ -31,6 +31,7 @@ import logging.config
 import os
 import shutil
 import sys
+import traceback
 
 # Third party imports
 import matplotlib as mpl
@@ -42,6 +43,7 @@ from .img_tools import load_dems, read_img, read_img_from_array, save_tif
 from .output_tree_design import get_otd_dirs, get_out_dir, get_out_file_path
 
 # ** VERSION **
+# pylint: disable=import-error
 # Depending on python version get importlib standard lib or backported package
 if sys.version_info[:2] >= (3, 8):
     # when python3 > 3.8
@@ -50,9 +52,9 @@ if sys.version_info[:2] >= (3, 8):
 else:
     from importlib_metadata import PackageNotFoundError  # pragma: no cover
     from importlib_metadata import version
+# Get demcompare package version (installed from setuptools_scm)
 try:
-    dist_name = "demcompare"
-    __version__ = version(dist_name)
+    __version__ = version("demcompare")
 except PackageNotFoundError:
     __version__ = "unknown"  # pragma: no cover
 finally:
@@ -60,30 +62,29 @@ finally:
 
 # ** STEPS **
 DEFAULT_STEPS = ["coregistration", "stats", "report"]
-ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
 
 
 def setup_logging(
-    path="demcompare/logging.json",
+    logconf_path="demcompare/logging.json",
     default_level=logging.WARNING,
 ):
     """
     Setup the logging configuration
 
-    :param path: path to the configuration file
-    :type path: string
+    :param lo: path to the configuration file
+    :type logconf_path: string
     :param default_level: default level
     :type default_level: logging level
     """
-    if os.path.exists(path):
-        with open(path, "rt") as f:
-            config = json.load(f)
+    if os.path.exists(logconf_path):
+        with open(logconf_path, "rt") as logconf_file:
+            config = json.load(logconf_file)
         logging.config.dictConfig(config)
     else:
         logging.basicConfig(level=default_level)
 
 
-def computeReport(cfg, steps, dem, ref):
+def compute_report(cfg, steps, dem, ref):
     """
     Create html and pdf report
 
@@ -103,7 +104,7 @@ def computeReport(cfg, steps, dem, ref):
         )
 
 
-def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
+def compute_stats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     """
     Compute Stats on final_dh
 
@@ -120,7 +121,7 @@ def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     cfg["stats_results"]["images"] = {}
     cfg["stats_results"]["images"]["list"] = []
 
-    stats.wave_detection(cfg, final_dh, display=display)
+    stats.wave_detection(cfg, final_dh)
 
     stats.alti_diff_stats(
         cfg,
@@ -135,7 +136,7 @@ def computeStats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
         json.dump(cfg, outfile, indent=2)
 
 
-def computeCoregistration(
+def compute_coregistration(
     cfg, steps, dem, ref, initial_dh, final_cfg=None, final_json_file=None
 ):
     """
@@ -166,7 +167,12 @@ def computeCoregistration(
             json.dump(cfg, outfile, indent=2)
 
     else:
-        if final_cfg and "plani_results" and "alti_results" in final_cfg:
+        # If cfg from a previous run, get previous conf
+        if (
+            final_cfg is not None
+            and "plani_results" in final_cfg
+            and "alti_results" in final_cfg
+        ):
             cfg["plani_results"] = final_cfg["plani_results"]
             cfg["alti_results"] = final_cfg["alti_results"]
             coreg_dem = read_img(
@@ -191,6 +197,8 @@ def computeCoregistration(
             )
 
         else:
+            # Set a default config for following steps from initial DEMs
+            # No coregistration done.
             coreg_ref = ref
             coreg_dem = dem
             final_dh = initial_dh
@@ -250,11 +258,18 @@ def computeCoregistration(
     return coreg_dem, coreg_ref, final_dh
 
 
-def computeInitialization(config_json):
+def compute_initialization(config_json):
+    """
+    Compute demcompare initialization process :
+    Configuration copy, checking, create output dir tree
+    and initial output content.
+
+    :param config_json: Config json file
+    """
 
     # read the json configuration file
-    with open(config_json, "r") as f:
-        cfg = json.load(f)
+    with open(config_json, "r") as config_json_file:
+        cfg = json.load(config_json_file)
 
     # create output directory
     cfg["outputDir"] = os.path.abspath(cfg["outputDir"])
@@ -269,17 +284,15 @@ def computeInitialization(config_json):
     except shutil.Error:
         # file exists or file is the same
         pass
-    except Exception:
+    except Exception:  # pylint: disable=try-except-raise
         raise
 
     # checks config
     initialization.check_parameters(cfg)
 
-    # create output tree dirs
-    [
+    # create output tree dirs for each directory
+    for directory in get_otd_dirs(cfg["otd"]):
         initialization.mkdir_p(os.path.join(cfg["outputDir"], directory))
-        for directory in get_otd_dirs(cfg["otd"])
-    ]
 
     initialization.initialization_plani_opts(cfg)
     initialization.initialization_alti_opts(cfg)
@@ -288,20 +301,23 @@ def computeInitialization(config_json):
     return cfg
 
 
-def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False):
+def run_tile(json_file, steps=None, display=False):
     """
     DEMcompare execution for a single tile
 
     :param json_file: Input Json configuration file (mandatory)
     :param steps: Steps to execute (default: all)
     :param display: Choose Plot show or plot save (default).
-    :param debug: Debug mode (default: false)
     """
+
+    # Set steps to default if None
+    if steps is None:
+        steps = DEFAULT_STEPS
 
     #
     # Initialization
     #
-    cfg = computeInitialization(json_file)
+    cfg = compute_initialization(json_file)
     print(
         (
             "*** DEMcompare : start processing into {} ***".format(
@@ -321,8 +337,8 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False):
     # Try to read json_file if exists and if a previous run was launched
     final_cfg = None
     if os.path.isfile(final_json_file):
-        with open(final_json_file, "r") as f:
-            final_cfg = json.load(f)
+        with open(final_json_file, "r") as file:
+            final_cfg = json.load(file)
 
     #
     # Create datasets
@@ -370,7 +386,7 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False):
     #
     # Coregister both DSMs together and compute final differences
     #
-    coreg_dem, coreg_ref, final_dh = computeCoregistration(
+    coreg_dem, coreg_ref, final_dh = compute_coregistration(
         cfg,
         steps,
         dem,
@@ -392,7 +408,7 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False):
     #
     # Compute stats
     #
-    computeStats(
+    compute_stats(
         cfg,
         coreg_dem,
         coreg_ref,
@@ -404,10 +420,10 @@ def run_tile(json_file, steps=DEFAULT_STEPS, display=False, debug=False):
     #
     # Compute reports
     #
-    computeReport(cfg, steps, coreg_dem, coreg_ref)
+    compute_report(cfg, steps, coreg_dem, coreg_ref)
 
 
-def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False):
+def run(json_file, steps=None, display=False):
     """
     DEMcompare main execution for all tiles.
     Call run_tile() function for each tile.
@@ -415,13 +431,17 @@ def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False):
     :param json_file: Input Json configuration file (mandatory)
     :param steps: Steps to execute (default: all)
     :param display: Choose Plot show or plot save (default).
-    :param debug: Debug mode (default: false)
     """
+
+    # Set steps to default if None
+    if steps is None:
+        steps = DEFAULT_STEPS
+
     #
     # Initialization
     #
     setup_logging()
-    cfg = computeInitialization(json_file)
+    cfg = compute_initialization(json_file)
     if display is False:
         # if display is False we have to tell matplotlib to cancel it
         mpl.use("Agg")
@@ -444,11 +464,7 @@ def run(json_file, steps=DEFAULT_STEPS, display=False, debug=False):
                 tile["json"],
                 steps,
                 display=display,
-                debug=debug,
             )
-        except Exception as e:
-            import traceback
-
+        except Exception as error:
             traceback.print_exc()
-            print(("Error encountered for tile: {} -> {}".format(tile, e)))
-            pass
+            print("Error encountered for tile: {} -> {}".format(tile, error))

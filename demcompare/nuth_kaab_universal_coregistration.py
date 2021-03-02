@@ -49,16 +49,16 @@ def grad2d(dem):
     :param dem:
     :return: slope (fast forward style) and aspect
     """
-    g2, g1 = np.gradient(dem)  # in Python, x and y axis reversed
+    grad2, grad1 = np.gradient(dem)  # in Python, x and y axis reversed
 
-    slope = np.sqrt(g1 ** 2 + g2 ** 2)
-    aspect = np.arctan2(-g1, g2)  # aspect=0 when slope facing north
+    slope = np.sqrt(grad1 ** 2 + grad2 ** 2)
+    aspect = np.arctan2(-grad1, grad2)  # aspect=0 when slope facing north
     aspect = aspect + np.pi
 
     return slope, aspect
 
 
-def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
+def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
     """
     Compute the horizontal shift between 2 DEMs
     using the method presented in Nuth & Kaab 2011
@@ -66,13 +66,12 @@ def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
     Inputs :
     - dh : array, elevation difference master_dem - slave_dem
     - slope/aspect : array, slope and aspect for the same locations as the dh
-    - plotFile : file to where store plot.
+    - plot_file : file to where store plot.
         Set to None if plot is to be printed. Set to False for no plot at all.
     Returns :
     - east, north, c : f, estimated easting and northing of the shift,
         c is not used here but is related to the vertical shift
     """
-
     # The aim is to compute dh / tan(alpha) as a function of the aspect
     # -> hence we are going to be slice the aspect to average a value
     #     for dh / tan(alpha) on those sliced areas
@@ -137,15 +136,15 @@ def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
     yfit = peval(x_s, plsq[0])
 
     # plotting results
-    if plotFile is not False:
+    if plot_file is not False:
         pl.figure(1, figsize=(7.0, 8.0))
         pl.plot(x_s, mean, "b.")
         pl.plot(x_s, yfit, "k-")
         # ax.set_ylim([np.min(mean),])
         pl.xlabel("Terrain aspect (rad)")
         pl.ylabel(r"dh/tan($\alpha$)")
-        if plotFile:
-            pl.savefig(plotFile, dpi=100, bbox_inches="tight")
+        if plot_file:
+            pl.savefig(plot_file, dpi=100, bbox_inches="tight")
         else:
             pl.show()
         pl.close()
@@ -157,7 +156,7 @@ def nuth_kaab_single_iter(dh, slope, aspect, plotFile=None):
     return east, north, c
 
 
-def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
+def nuth_kaab_lib(dsm_dataset, ref_dataset, outdir_plot=None, nb_iters=6):
     """
     This is the lib api of nuth and kaab universal coregistration.
     It offers quite the same services as the classic main api
@@ -173,36 +172,39 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
 
     :param dsm_dataset: xarray Dataset
     :param ref_dataset: xarray Dataset
-    :param outputDirPlot: path to output Plot directory
+    :param outdir_plot: path to output Plot directory
         (plots are printed if set to None)
-    :param nb_iters:
+    :param nb_iters: default: 6
     :return: x and y shifts (as 'dsm_dataset + (x,y) = ref_dataset')
     """
 
     # Set target dsm grid for interpolation purpose
     xgrid = np.arange(dsm_dataset["im"].data.shape[1])
     ygrid = np.arange(dsm_dataset["im"].data.shape[0])
-    Xpixels, Ypixels = np.meshgrid(xgrid, ygrid)
-    trans = dsm_dataset["trans"].data
-    Xgeo = trans[0] + (Xpixels + 0.5) * trans[1] + (Ypixels + 0.5) * trans[2]
-    Ygeo = trans[3] + (Xpixels + 0.5) * trans[4] + (Ypixels + 0.5) * trans[5]
+    # TODO : not used, to clean
+    # x_pixels, y_pixels = np.meshgrid(xgrid, ygrid)
+    # trans = dsm_dataset["trans"].data
+    # Xgeo = trans[0] + (x_pixels + 0.5) * trans[1]
+    #       + (y_pixels + 0.5) * trans[2]
+    # Ygeo = trans[3] + (x_pixels + 0.5) * trans[4]
+    #       + (y_pixels + 0.5) * trans[5]
 
     initial_dh = ref_dataset["im"].data - dsm_dataset["im"].data
     coreg_ref = ref_dataset["im"].data
 
     # Display
     median = np.median(initial_dh[np.isfinite(initial_dh)])
-    NMAD_old = 1.4826 * np.median(
+    nmad_old = 1.4826 * np.median(
         np.abs(initial_dh[np.isfinite(initial_dh)] - median)
     )
-    maxval = 3 * NMAD_old
+    maxval = 3 * nmad_old
     pl.figure(1, figsize=(7.0, 8.0))
     pl.imshow(initial_dh, vmin=-maxval, vmax=maxval)
-    cb = pl.colorbar()
-    cb.set_label("Elevation difference (m)")
-    if outdirPlot:
+    color_bar = pl.colorbar()
+    color_bar.set_label("Elevation difference (m)")
+    if outdir_plot:
         pl.savefig(
-            os.path.join(outdirPlot, "ElevationDiff_BeforeCoreg.png"),
+            os.path.join(outdir_plot, "ElevationDiff_BeforeCoreg.png"),
             dpi=100,
             bbox_inches="tight",
         )
@@ -217,8 +219,8 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
     dsm_from_filled = np.where(nan_maskval, -9999, coreg_ref)
 
     # Create spline function for interpolation
-    f = RectBivariateSpline(ygrid, xgrid, dsm_from_filled, kx=1, ky=1)
-    f2 = RectBivariateSpline(ygrid, xgrid, nan_maskval, kx=1, ky=1)
+    spline_1 = RectBivariateSpline(ygrid, xgrid, dsm_from_filled, kx=1, ky=1)
+    spline_2 = RectBivariateSpline(ygrid, xgrid, nan_maskval, kx=1, ky=1)
     xoff, yoff, zoff = 0, 0, 0
 
     print("Nuth & Kaab iterations...")
@@ -232,14 +234,14 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
         slope, aspect = grad2d(coreg_dsm)
 
         # compute offset
-        if outdirPlot:
+        if outdir_plot:
             plotfile = os.path.join(
-                outdirPlot, "nuth_kaab_iter#{}.png".format(i)
+                outdir_plot, "nuth_kaab_iter#{}.png".format(i)
             )
         else:
             plotfile = None
         east, north, z = nuth_kaab_single_iter(
-            dh, slope, aspect, plotFile=plotfile
+            dh, slope, aspect, plot_file=plotfile
         )
         print(
             (
@@ -253,8 +255,9 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
         zoff += z
 
         # resample slave DEM in the new grid
-        znew = f(ygrid - yoff, xgrid + xoff)  # positive y shift moves south
-        nanval_new = f2(ygrid - yoff, xgrid + xoff)
+        # spline 1 : positive y shift moves south
+        znew = spline_1(ygrid - yoff, xgrid + xoff)
+        nanval_new = spline_2(ygrid - yoff, xgrid + xoff)
 
         # we created nan_maskval so that non nan values are set to 0.
         # interpolation "creates" values
@@ -287,17 +290,17 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
         # print some statistics
         diff = coreg_ref - coreg_dsm
         diff = diff[np.isfinite(diff)]
-        NMAD_new = 1.4826 * np.median(np.abs(diff - np.median(diff)))
+        nmad_new = 1.4826 * np.median(np.abs(diff - np.median(diff)))
         median = np.median(diff)
 
         print(
             (
                 "Median : {0:.2f}, NMAD = {1:.2f}, Gain : {2:.2f}".format(
-                    median, NMAD_new, (NMAD_new - NMAD_old) / NMAD_old * 100
+                    median, nmad_new, (nmad_new - nmad_old) / nmad_old * 100
                 )
             )
         )
-        NMAD_old = NMAD_new
+        nmad_old = nmad_new
 
     print(("Final Offset in pixels (east, north) : ({},{})".format(xoff, yoff)))
 
@@ -328,12 +331,12 @@ def a3D_libAPI(dsm_dataset, ref_dataset, outdirPlot=None, nb_iters=6):
     )
 
 
-def main(
+def run(
     dsm_to,
     dsm_from,
     outfile=None,
     nb_iters=6,
-    outputDirPlot=None,
+    outdir_plot=None,
     nan_dsm_to=None,
     nan_dsm_from=None,
     save_diff=False,
@@ -351,13 +354,13 @@ def main(
      - with dsm_to resolution
      - on the biggest common footprint
 
-    TODO: not used in code, Refactor with a3D_libAPI function.
+    TODO: not used in code, Refactor with nuth_kaab_lib function.
 
     :param dsm_to: path to dsm to coregister to
     :param dsm_from: path to dsm to coregister from
     :param outfile: path to dsm_from after coregistration to dsm_to
     :param nb_iters:
-    :param outputDirPlot: path to output Plot directory
+    :param outdir_plot: path to output Plot directory
         (plots are printed if set to None)
     :param nan_dsm_to:
     :param nan_dsm_from:
@@ -388,8 +391,8 @@ def main(
         coreg_ref_dataset,
         init_dh_dataset,
         final_dh_dataset,
-    ) = a3D_libAPI(
-        reproj_dem, reproj_ref, nb_iters=nb_iters, outdirPlot=outputDirPlot
+    ) = nuth_kaab_lib(
+        reproj_dem, reproj_ref, nb_iters=nb_iters, outdir_plot=outdir_plot
     )
 
     #
@@ -410,6 +413,10 @@ def main(
 
 
 def get_parser():
+    """
+    Parser of nuth kaab independent main
+    TODO: To clean with main. Keep independent main ?
+    """
     parser = argparse.ArgumentParser(
         os.path.basename(__file__),
         description="Universal co-registration method "
@@ -467,18 +474,24 @@ def get_parser():
     return parser
 
 
-if __name__ == "__main__":
-
+def main():
+    """
+    Main from Nuth Kaab API lib
+    """
     parser = get_parser()
     args = parser.parse_args()
 
-    main(
+    run(
         args.dsm_to,
         args.dsm_from,
         outfile=args.outfile,
         nb_iters=args.nb_iters,
-        outputDirPlot=args.plot,
+        outdir_plot=args.plot,
         nan_dsm_to=args.nodata1,
         nan_dsm_from=args.nodata2,
         save_diff=args.save_diff,
     )
+
+
+if __name__ == "__main__":
+    main()

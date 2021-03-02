@@ -19,7 +19,8 @@
 # limitations under the License.
 #
 """
-Stats module of dsm_compare offers routines for stats computation and plot viewing
+Stats module of dsm_compare offers routines
+for stats computation and plot viewing
 """
 
 # Standard imports
@@ -30,22 +31,21 @@ import json
 import logging
 import math
 import os
+import traceback
+
+import matplotlib as mpl
+import matplotlib.pyplot as mpl_pyplot
 
 # Third party imports
 import numpy as np
 from astropy import units as u
-from scipy import exp
+from matplotlib import gridspec
 from scipy.optimize import curve_fit
 
 # DEMcompare imports
 from .img_tools import read_image, read_img_from_array, save_tif
-from .output_tree_design import get_out_dir, get_out_file_path
-from .partition import (
-    Fusion_partition,
-    NotEnoughDataToPartitionError,
-    Partition,
-    getColor,
-)
+from .output_tree_design import get_out_file_path
+from .partition import FusionPartition, NotEnoughDataToPartitionError, Partition
 
 
 class NoPointsToPlot(Exception):
@@ -128,10 +128,10 @@ def compute_stats_array(
 
 
 def gaus(x, a, x_zero, sigma):
-    return a * exp(-((x - x_zero) ** 2) / (2 * sigma ** 2))
+    return a * np.exp(-((x - x_zero) ** 2) / (2 * sigma ** 2))
 
 
-def roundUp(x, y):
+def round_up(x, y):
     return int(math.ceil((x / float(y)))) * y
 
 
@@ -142,9 +142,13 @@ def get_nonan_mask(array, nan_value):
 
 
 def get_outliers_free_mask(array, no_data_value=None):
+    """
+    Get outliers free mask
+    """
+    # pylint: disable=singleton-comparison
     if no_data_value:
         no_data_free_mask = get_nonan_mask(array, no_data_value)
-    array_without_nan = array[np.where(no_data_free_mask == True)]
+    array_without_nan = array[np.where(no_data_free_mask == True)]  # noqa: E712
     mu = np.mean(array_without_nan)
     sigma = np.std(array_without_nan)
     return np.apply_along_axis(
@@ -167,7 +171,7 @@ def create_mode_masks(alti_map, partitions_sets_masks=None):
 
     Note that 'coherent-classification'
     and 'incoherent-classification' mode masks
-    can only be computed if len(list_of_sets_masks)==2
+    can only be computed if len(partitions_sets_masks)==2
 
     :param alti_map: xarray Dataset, alti differences
     :param partitions_sets_masks: [] (master and/or slave dsm)
@@ -186,12 +190,12 @@ def create_mode_masks(alti_map, partitions_sets_masks=None):
     )
     # -> remove nodata indices for every partitioning image
     if partitions_sets_masks:
-        for pImg in partitions_sets_masks:
+        for partition_img in partitions_sets_masks:
             # for a given partition,
             # nan values are flagged False for all sets hence
             # np.any return True for a pixel
             # if it belongs to at least one set (=it this is not a nodata pixel)
-            partition_nonan_mask = np.any(pImg, axis=0)
+            partition_nonan_mask = np.any(partition_img, axis=0)
             mode_masks[0] *= partition_nonan_mask
 
     # Carrying on with potentially
@@ -206,11 +210,11 @@ def create_mode_masks(alti_map, partitions_sets_masks=None):
         #    we know which pixels are coherent between both partitions
         # -> combine_sets[0].shape[0] = number of sets (classes)
         # -> combine_sets[0].shape[1] = number of pixels inside a single DSM
-        pImgs = partitions_sets_masks
+        partition_imgs = partitions_sets_masks
         combine_sets = np.array(
             [
-                pImgs[0][set_idx][:] == pImgs[1][set_idx][:]
-                for set_idx in range(0, len(pImgs[0]))
+                partition_imgs[0][set_idx][:] == partition_imgs[1][set_idx][:]
+                for set_idx in range(0, len(partition_imgs[0]))
             ]
         )
         coherent_mask = np.all(combine_sets, axis=0)
@@ -374,6 +378,7 @@ def get_stats(
     :return: list of dictionary
         (set_name, nbpts, %(out_of_all_pts), max, min, mean, std, rmse, ...)
     """
+    # pylint: disable=singleton-comparison
 
     def nighty_percentile(array):
         """
@@ -384,8 +389,8 @@ def get_stats(
         """
         if array.size:
             return np.nanpercentile(np.abs(array - np.nanmean(array)), 90)
-        else:
-            return np.nan
+        # else:
+        return np.nan
 
     # Init
     output_list = []
@@ -401,7 +406,11 @@ def get_stats(
     # -except the ones masked or the outliers-
     output_list.append(
         stats_computation(
-            dz_values[np.where(to_keep_mask * outliers_free_mask == True)],
+            dz_values[
+                np.where(
+                    to_keep_mask * outliers_free_mask == True  # noqa: E712
+                )
+            ],
             list_threshold,
         )
     )
@@ -414,15 +423,15 @@ def get_stats(
     # - we add computation of nighty percentile
     # (of course we keep outliers for that so we use dz_values as input array)
     output_list[0]["90p"] = nighty_percentile(
-        dz_values[np.where(to_keep_mask == True)]
+        dz_values[np.where(to_keep_mask == True)]  # noqa: E712
     )
 
     # Computing stats for all sets (sets are a partition of all values)
     if sets is not None and sets_labels is not None and sets_names is not None:
-        for set_idx in range(0, len(sets)):
-            set = sets[set_idx] * to_keep_mask * outliers_free_mask
+        for set_idx, _ in enumerate(sets):
+            set_item = sets[set_idx] * to_keep_mask * outliers_free_mask
 
-            data = dz_values[np.where(set == True)]
+            data = dz_values[np.where(set_item == True)]  # noqa: E712
             output_list.append(stats_computation(data, list_threshold))
             output_list[set_idx + 1]["set_label"] = sets_labels[set_idx]
             output_list[set_idx + 1]["set_name"] = sets_names[set_idx]
@@ -432,7 +441,11 @@ def get_stats(
                 / float(nb_total_points)
             )
             output_list[set_idx + 1]["90p"] = nighty_percentile(
-                dz_values[np.where((sets[set_idx] * to_keep_mask) == True)]
+                dz_values[
+                    np.where(
+                        (sets[set_idx] * to_keep_mask) == True  # noqa: E712
+                    )
+                ]
             )
 
     return output_list
@@ -454,33 +467,31 @@ def dem_diff_plot(dem_diff, title="", plot_file="dem_diff.png", display=False):
     # Plot initialization
     #
     # -> import what is necessary for plot purpose
-    import matplotlib as mpl
 
     mpl.rc("font", size=6)
-    import matplotlib.pyplot as P
 
     #
     # Plot
     #
-    P.figure(1, figsize=(7.0, 8.0))
-    P.title(title)
+    mpl_pyplot.figure(1, figsize=(7.0, 8.0))
+    mpl_pyplot.title(title)
     mu = np.nanmean(dem_diff["im"].data)
     sigma = np.nanstd(dem_diff["im"].data)
-    P.imshow(dem_diff["im"].data, vmin=mu - sigma, vmax=mu + sigma)
-    cb = P.colorbar()
-    cb.set_label("Elevation differences (m)")
+    mpl_pyplot.imshow(dem_diff["im"].data, vmin=mu - sigma, vmax=mu + sigma)
+    color_bar = mpl_pyplot.colorbar()
+    color_bar.set_label("Elevation differences (m)")
 
     #
     # Show or Save
     #
     if display is False:
-        P.savefig(plot_file, dpi=100, bbox_inches="tight")
+        mpl_pyplot.savefig(plot_file, dpi=100, bbox_inches="tight")
     else:
-        P.show()
-    P.close()
+        mpl_pyplot.show()
+    mpl_pyplot.close()
 
 
-def plot_histograms(
+def plot_histograms(  # noqa: C901
     input_array,
     bin_step=0.1,
     to_keep_mask=None,
@@ -521,29 +532,39 @@ def plot_histograms(
     :param plot_real_hist: plot or save (see display param) real histrograms
     :return: list saved files
     """
+    # pylint: disable=singleton-comparison
+
     saved_files = []
     saved_labels = []
     saved_colors = []
     #
     # Plot initialization
     #
-    # -> import what is necessary for plot purpose
-    import matplotlib as mpl
 
     mpl.rc("font", size=6)
     if display:
         mpl.use("TkAgg")
-    import matplotlib.pyplot as P
-    from matplotlib import gridspec
 
     # -> bins should rely on [-A;A],A being the higher absolute error value
     # (all histograms rely on the same bins range)
     if to_keep_mask is not None:
-        if input_array[np.where(to_keep_mask == True)].size != 0:
+        if input_array[np.where(to_keep_mask == True)].size != 0:  # noqa: E712
             borne = np.max(
                 [
-                    abs(np.nanmin(input_array[np.where(to_keep_mask == True)])),
-                    abs(np.nanmax(input_array[np.where(to_keep_mask == True)])),
+                    abs(
+                        np.nanmin(
+                            input_array[
+                                np.where(to_keep_mask == True)  # noqa: E712
+                            ]
+                        )
+                    ),
+                    abs(
+                        np.nanmax(
+                            input_array[
+                                np.where(to_keep_mask == True)  # noqa: E712
+                            ]
+                        )
+                    ),
                 ]
             )
         else:
@@ -553,7 +574,9 @@ def plot_histograms(
             [abs(np.nanmin(input_array)), abs(np.nanmax(input_array))]
         )
     bins = np.arange(
-        -roundUp(borne, bin_step), roundUp(borne, bin_step) + bin_step, bin_step
+        -round_up(borne, bin_step),
+        round_up(borne, bin_step) + bin_step,
+        bin_step,
     )
     np.savetxt(
         os.path.join(outhistdir, save_prefix + "bins" + ".txt"),
@@ -563,22 +586,24 @@ def plot_histograms(
     # Figure 1 : One plot of Normalized Histograms
     # -> set figures shape, titles and axes
     if plot_real_hist:
-        fig1 = P.figure(1, figsize=(7.0, 8.0))
+        fig1 = mpl_pyplot.figure(1, figsize=(7.0, 8.0))
         fig1.suptitle(plot_title)
         fig1_ax = fig1.add_subplot(111)
         fig1_ax.set_title("Data shown as normalized histograms")
         fig1_ax.set_xlabel("Errors (meter)")
         data = []
         full_color = []
-        for set_idx in range(0, len(sets)):
+        for set_idx, _ in enumerate(sets):
             # -> restricts to input data
             if to_keep_mask is not None:
                 sets[set_idx] = sets[set_idx] * to_keep_mask
             print(
                 "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} plot_histograms() : ",
-                np.where(sets[set_idx] == True),
+                np.where(sets[set_idx] == True),  # noqa: E712
             )
-            data.append(input_array[np.where(sets[set_idx] == True)])
+            data.append(
+                input_array[np.where(sets[set_idx] == True)]  # noqa: E712
+            )
             full_color.append(sets_colors[set_idx])
         fig1_ax.hist(
             data,
@@ -598,27 +623,27 @@ def plot_histograms(
                 bbox_inches="tight",
             )
         else:
-            P.figure(1)
-            P.show()
+            mpl_pyplot.figure(1)
+            mpl_pyplot.show()
 
         # Check fig1 to close
-        P.figure(1)
-        P.close()
+        mpl_pyplot.figure(1)
+        mpl_pyplot.close()
         # TODO : add in saved_files return ?
 
     # Figure 2 : Two plots fitted by gaussian histograms & classes contributions
     #    -> set figure shape, titles and axes
-    fig2 = P.figure(2, figsize=(7.0, 8.0))
+    fig2 = mpl_pyplot.figure(2, figsize=(7.0, 8.0))
     fig2.suptitle(plot_title)
-    gs = gridspec.GridSpec(
+    grid = gridspec.GridSpec(
         1, 2, width_ratios=[10, 1]
     )  # Specifies the geometry of the grid that a subplot will be placed
     # Create gaussian histograms errors axe
-    fig2_ax_errors = fig2.add_subplot(gs[0])
+    fig2_ax_errors = fig2.add_subplot(grid[0])
     fig2_ax_errors.set_title("Errors fitted by a gaussian")
     fig2_ax_errors.set_xlabel("Errors (in meter)")
     # Create classes contributions axe
-    fig2_ax_classes = fig2.add_subplot(gs[1])
+    fig2_ax_classes = fig2.add_subplot(grid[1])
     fig2_ax_classes.set_title("Classes contributions")
     fig2_ax_classes.set_xticks(np.arange(1), minor=False)
 
@@ -626,11 +651,11 @@ def plot_histograms(
     cumulative_percent = 0
     set_zero_size = 0
     if sets is not None and sets_labels is not None and sets_colors is not None:
-        for set_idx in range(0, len(sets)):
+        for set_idx, _ in enumerate(sets):
             # -> restricts to input data
             if to_keep_mask is not None:
                 sets[set_idx] = sets[set_idx] * to_keep_mask
-            data = input_array[np.where(sets[set_idx] == True)]
+            data = input_array[np.where(sets[set_idx] == True)]  # noqa: E712
 
             # -> empty data is not plotted
             if data.size:
@@ -649,12 +674,14 @@ def plot_histograms(
 
                 try:
                     n, bins = np.histogram(data, bins=bins, density=True)
-                    popt, pcov = curve_fit(
+                    fit_result = curve_fit(
                         gaus,
                         bins[0 : bins.shape[0] - 1] + int(bin_step / 2),
                         n,
                         p0=[1, mean, std],
                     )
+                    # get popt and avoid unbalanced-tuple-unpacking message
+                    popt, _ = fit_result[:2]
                     fig2_ax_errors.plot(
                         np.arange(
                             bins[0], bins[bins.shape[0] - 1], bin_step / 10
@@ -700,7 +727,6 @@ def plot_histograms(
                         "No fitted gaussian plot "
                         "created as curve_fit failed to converge"
                     )
-                    pass
 
                 # save outputs (plot files and name of labels kept)
                 saved_labels.append(sets_labels[set_idx])
@@ -727,12 +753,12 @@ def plot_histograms(
             bbox_inches="tight",
         )
     else:
-        P.figure(2)
-        P.show()
+        mpl_pyplot.figure(2)
+        mpl_pyplot.show()
 
     # Check figure2 to close
-    P.figure(2)
-    P.close()
+    mpl_pyplot.figure(2)
+    mpl_pyplot.close()
 
     return saved_files, saved_labels, saved_colors
 
@@ -776,7 +802,7 @@ def save_results(
                             labels_plotted.index(stats_elem["set_label"])
                         ]
                     )
-                except:
+                except Exception:
                     print(
                         "Error: plot_files and plot_colors "
                         "should have same dimension as labels_plotted"
@@ -816,17 +842,17 @@ def save_results(
             )
 
             writer.writeheader()
-            for set in csv_results:
-                writer.writerow(csv_results[set])
+            for set_item in csv_results:
+                writer.writerow(csv_results[set_item])
 
 
-def create_partitions(dsm, ref, outputDir, stats_opts, geo_ref=True):
+def create_partitions(dsm, ref, output_dir, stats_opts, geo_ref=True):
     """
     Create or adapt all classification supports for the stats.
     If the support is a slope,it's transformed into a classification support.
     :param dsm: xarray Dataset, dsm
     :param ref: xarray Dataset, coregistered ref
-    :param outputDir: ouput directory
+    :param output_dir: ouput directory
     :param stats_opts: TODO
     :param geo_ref: boolean, set to False if images are not georeferenced
     :return: dict, with partitions information {'
@@ -834,12 +860,14 @@ def create_partitions(dsm, ref, outputDir, stats_opts, geo_ref=True):
     to_be_clayers = stats_opts["to_be_classification_layers"].copy()
     clayers = stats_opts["classification_layers"].copy()
 
-    logging.debug("list of to be classification layers: ", to_be_clayers)
-    logging.debug("list of already classification layers: ", clayers)
+    logging.debug(
+        "list of to be classification layers: {}".format(to_be_clayers)
+    )
+    logging.debug("list of already classification layers: {}".format(clayers))
 
     # Create obj partition
     partitions = []
-    for layer_name, tbcl in to_be_clayers.items():
+    for layer_name, tbclayer in to_be_clayers.items():
         try:
             partitions.append(
                 Partition(
@@ -847,24 +875,22 @@ def create_partitions(dsm, ref, outputDir, stats_opts, geo_ref=True):
                     "to_be_classification_layers",
                     dsm,
                     ref,
-                    outputDir,
+                    output_dir,
                     geo_ref=geo_ref,
-                    **tbcl
+                    **tbclayer
                 )
             )
-        except Exception as e:
-            import traceback
-
+        except Exception as error:
             traceback.print_exc()
             print(
                 (
                     "Cannot create partition for {}:{} -> {}".format(
-                        layer_name, tbcl, e
+                        layer_name, tbclayer, error
                     )
                 )
             )
-            pass
-    for layer_name, cl in clayers.items():
+
+    for layer_name, clayer in clayers.items():
         try:
             partitions.append(
                 Partition(
@@ -872,56 +898,49 @@ def create_partitions(dsm, ref, outputDir, stats_opts, geo_ref=True):
                     "classification_layers",
                     dsm,
                     ref,
-                    outputDir,
+                    output_dir,
                     geo_ref=geo_ref,
-                    **cl
+                    **clayer
                 )
             )
-        except Exception as e:
-            import traceback
-
+        except Exception as error:
             traceback.print_exc()
             print(
                 (
                     "Cannot create partition for {}:{} -> {}".format(
-                        layer_name, cl, e
+                        layer_name, clayer, error
                     )
                 )
             )
-            pass
 
     # Create the fusion partition
     if len(partitions) > 1:
         try:
             partitions.append(
-                Fusion_partition(partitions, outputDir, geo_ref=geo_ref)
+                FusionPartition(partitions, output_dir, geo_ref=geo_ref)
             )
         except NotEnoughDataToPartitionError:
             logging.info("Partitions could ne be created")
-            pass
 
     if len(partitions) == 0:
         try:
-            cl = {}
+            clayer = {}
             partitions.append(
                 Partition(
                     "global",
                     "classification_layers",
                     dsm,
                     ref,
-                    outputDir,
+                    output_dir,
                     geo_ref=geo_ref,
-                    **cl
+                    **clayer
                 )
             )
         except NotEnoughDataToPartitionError:
-            logging.info("Partitions could ne be created")
-            pass
+            logging.info("Partitions could not be created")
 
-    [
-        logging.debug("list of already classification layers: ", p)
-        for p in partitions
-    ]
+    for p in partitions:
+        logging.debug("list of already classification layers: {}".format(p))
 
     return partitions
 
@@ -1131,7 +1150,7 @@ def save_as_graphs_and_tables(
     else:
         sets_colors = np.array([(0, 0, 0)])
 
-    for mode in range(0, len(mode_names)):
+    for mode_idx, mode_name_item in enumerate(mode_names):
         #
         # Create plots for the actual mode and for all sets
         #
@@ -1142,31 +1161,31 @@ def save_as_graphs_and_tables(
                 plot_files, labels, colors = plot_histograms(
                     data_array,
                     bin_step=bin_step,
-                    to_keep_mask=mode_masks[mode],
+                    to_keep_mask=mode_masks[mode_idx],
                     sets=[np.ones(data_array.shape, dtype=bool)] + sets_masks,
                     sets_labels=sets_labels,
                     sets_colors=sets_colors,
                     plot_title=plot_title,
                     outplotdir=outplotdir,
                     outhistdir=outhistdir,
-                    save_prefix=mode_names[mode],
+                    save_prefix=mode_name_item,
                     display=display,
                     plot_real_hist=plot_real_hist,
                 )
-            except NoPointsToPlot as e:
-                print(("Nothing to plot for mode {} ".format(mode_names[mode])))
+            except NoPointsToPlot:
+                print(("Nothing to plot for mode {} ".format(mode_name_item)))
                 continue
 
         #
         # Save results as .json and .csv file
         #
-        mode_output_json_files[mode_names[mode]] = os.path.join(
-            stats_dir, "stats_results_" + mode_names[mode] + ".json"
+        mode_output_json_files[mode_name_item] = os.path.join(
+            stats_dir, "stats_results_" + mode_name_item + ".json"
         )
         if geo_ref:
             save_results(
-                mode_output_json_files[mode_names[mode]],
-                mode_stats[mode],
+                mode_output_json_files[mode_name_item],
+                mode_stats[mode_idx],
                 labels_plotted=labels,
                 plot_files=plot_files,
                 plot_colors=colors,
@@ -1174,8 +1193,8 @@ def save_as_graphs_and_tables(
             )
         else:
             save_results(
-                mode_output_json_files[mode_names[mode]],
-                mode_stats[mode],
+                mode_output_json_files[mode_name_item],
+                mode_stats[mode_idx],
                 to_csv=True,
             )
 
@@ -1224,13 +1243,13 @@ def get_stats_per_mode(
 
     # Next is done for all modes
     mode_stats = []
-    for mode in range(0, len(mode_names)):
+    for mode_idx, _ in enumerate(mode_names):
 
         # Compute stats for all sets of a single mode
         mode_stats.append(
             get_stats(
                 data["im"].data,
-                to_keep_mask=mode_masks[mode],
+                to_keep_mask=mode_masks[mode_idx],
                 outliers_free_mask=outliers_free_mask,
                 sets=sets_masks[
                     0
@@ -1244,7 +1263,7 @@ def get_stats_per_mode(
     return mode_stats, mode_masks, mode_names
 
 
-def wave_detection(cfg, dh, display=False):
+def wave_detection(cfg, dh):
     """
     Detect potential oscillations inside dh
 

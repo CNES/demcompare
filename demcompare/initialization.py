@@ -52,7 +52,7 @@ def mkdir_p(path):
             raise
 
 
-def check_parameters(cfg):
+def check_parameters(cfg):  # noqa: C901
     """
     Checks parameters
     """
@@ -72,12 +72,12 @@ def check_parameters(cfg):
     else:
         try:
             unit = u.Unit(cfg["inputDSM"]["zunit"])
-        except ValueError:
+        except ValueError as value_error:
             raise NameError(
                 "ERROR: input DSM zunit ({}) not a supported unit".format(
                     cfg["inputDSM"]["zunit"]
                 )
-            )
+            ) from value_error
         if unit.physical_type != u.m.physical_type:
             raise NameError(
                 "ERROR: input DSM zunit ({}) not a lenght unit".format(
@@ -89,12 +89,12 @@ def check_parameters(cfg):
     else:
         try:
             unit = u.Unit(cfg["inputRef"]["zunit"])
-        except ValueError:
+        except ValueError as value_error:
             raise NameError(
                 "ERROR: input Ref zunit ({}) not a supported unit".format(
                     cfg["inputRef"]["zunit"]
                 )
-            )
+            ) from value_error
         if unit.physical_type != u.m.physical_type:
             raise NameError(
                 "ERROR: input Ref zunit ({}) not a lenght unit".format(
@@ -130,10 +130,10 @@ def check_parameters(cfg):
     if "otd" in cfg and cfg["otd"] not in supported_OTD:
         raise NameError(
             "ERROR: output tree design set by user ({}) is not supported"
-            " (available options are)".format(cfg["otd"], supported_OTD)
+            " (available options are {})".format(cfg["otd"], supported_OTD)
         )
-    else:
-        cfg["otd"] = "default_OTD"
+    # else
+    cfg["otd"] = "default_OTD"
 
 
 def initialization_plani_opts(cfg):
@@ -170,6 +170,11 @@ def initialization_plani_opts(cfg):
 
 
 def initialization_alti_opts(cfg):
+    """
+    Init Altitude options from configuration
+
+    :param cfg: Input demcompare configuration
+    """
     default_alti_opts = {
         "egm96-15": {"path": "demcompare/geoid/egm96_15.gtx", "zunit": "meter"},
         "deramping": False,
@@ -185,6 +190,11 @@ def initialization_alti_opts(cfg):
 
 
 def initialization_stats_opts(cfg):
+    """
+    Init Stats options from configuration
+
+    :param cfg: Input demcompare configuration
+    """
     # slope_range defines the intervals
     # to classify the classification type image from
     default_stats_opts = {
@@ -202,17 +212,17 @@ def initialization_stats_opts(cfg):
         "slope": {"ranges": [0, 10, 25, 50, 90], "ref": None, "dsm": None}
     }
 
-    default_classification_layer = {
-        "ref": None,
-        "dsm": None,
-        "classes": {},
-    }  # {}
+    # default_classification_layer = {
+    #     "ref": None,
+    #     "dsm": None,
+    #     "classes": {},
+    # }  # {}
 
     # TODO Refactor to be more generic on each part !
     # TODO If all is empty, empty classification_layers,
     #      if not empty for each element
 
-    if not "stats_opts" in cfg:
+    if "stats_opts" not in cfg:
         cfg["stats_opts"] = default_stats_opts
     else:
         cfg["stats_opts"] = dict(
@@ -278,9 +288,15 @@ def initialization_stats_opts(cfg):
         #              **cfg['stats_opts']['classification_layers'][key]}
 
 
-def get_tile_dir(cfg, c, r, w, h):
+def get_tile_dir(cfg, col_1, row_1, width, height):
     """
     Get the name of a tile directory
+
+    :param cfg: Input demcompare configuration
+    :param col: value of tile first column
+    :param row: value of tile first row
+    :param width: width of tile
+    :param height: height of tile
     """
     max_digit_row = 0
     max_digit_col = 0
@@ -291,8 +307,8 @@ def get_tile_dir(cfg, c, r, w, h):
     return os.path.join(
         cfg["outputDir"],
         "tiles",
-        "row_{:0{}}_height_{}".format(r, max_digit_row, h),
-        "col_{:0{}}_width_{}".format(c, max_digit_col, w),
+        "row_{:0{}}_height_{}".format(row_1, max_digit_row, height),
+        "col_{:0{}}_width_{}".format(col_1, max_digit_col, width),
     )
 
 
@@ -314,14 +330,21 @@ def adjust_tile_size(image_size, tile_size):
     return tile_w, tile_h
 
 
-def compute_tiles_coordinates(roi, tile_size_w, tile_size_h):
-    """"""
+def compute_tiles_coordinates(roi, tile_width, tile_height):
+    """
+    Compute tiles coordinates
+
+    :param roi: Region of interest
+    :param tile_width: width of tile
+    :param tile_height:  height of tile
+
+    """
     out = []
-    for r in np.arange(roi["y"], roi["y"] + roi["h"], tile_size_h):
-        h = min(tile_size_h, roi["y"] + roi["h"] - r)
-        for c in np.arange(roi["x"], roi["x"] + roi["w"], tile_size_w):
-            w = min(tile_size_w, roi["x"] + roi["w"] - c)
-            out.append((c, r, w, h))
+    for row in np.arange(roi["y"], roi["y"] + roi["h"], tile_height):
+        height = min(tile_height, roi["y"] + roi["h"] - row)
+        for col in np.arange(roi["x"], roi["x"] + roi["w"], tile_width):
+            width = min(tile_width, roi["x"] + roi["w"] - col)
+            out.append((col, row, width, height))
 
     return out
 
@@ -365,10 +388,9 @@ def divide_images(cfg):
     tiles = []
     for coords in tiles_coords:
         tile = {}
-        c, r, w, h = coords
-        tile["dir"] = get_tile_dir(cfg, c, r, w, h)
+        col, row, width, height = coords
+        tile["dir"] = get_tile_dir(cfg, col, row, width, height)
         tile["coordinates"] = coords
-        key = str((c, r, w, h))
         tiles.append(tile)
 
     # make tiles directories and store json configuration
@@ -377,20 +399,20 @@ def divide_images(cfg):
 
         # save a json dump of the tile configuration
         tile_cfg = copy.deepcopy(cfg)
-        c, r, w, h = tile["coordinates"]
-        tile_cfg["roi"] = {"x": c, "y": r, "w": w, "h": h}
+        col, row, width, height = tile["coordinates"]
+        tile_cfg["roi"] = {"x": col, "y": row, "w": width, "h": height}
         tile_cfg["outputDir"] = tile["dir"]
 
         tile_json = os.path.join(tile["dir"], "config.json")
         tile["json"] = tile_json
 
-        with open(tile_json, "w") as f:
-            json.dump(tile_cfg, f, indent=2)
+        with open(tile_json, "w") as conf_json_file:
+            json.dump(tile_cfg, conf_json_file, indent=2)
 
     # Write the list of json files to outputDir/tiles.txt
-    with open(os.path.join(cfg["outputDir"], "tiles.txt"), "w") as f:
+    with open(os.path.join(cfg["outputDir"], "tiles.txt"), "w") as tile_file:
         for tile in tiles:
 
-            f.write(tile["json"] + os.linesep)
+            tile_file.write(tile["json"] + os.linesep)
 
     return tiles

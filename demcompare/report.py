@@ -45,7 +45,7 @@ def recursive_search(directory, pattern):
 
     if sys.version[0:3] < "3.5":
         matches = []
-        for root, dirnames, filenames in os.walk(directory):
+        for root, _, filenames in os.walk(directory):
             for filename in fnmatch.filter(filenames, pattern):
                 matches.append(os.path.join(root, filename))
     else:
@@ -56,33 +56,33 @@ def recursive_search(directory, pattern):
     return matches
 
 
-def generate_report(
-    workingDir,
-    dsmName,
-    refName,
-    partitionsList=None,
-    docDir=".",
-    projectDir=".",
+def generate_report(  # noqa: C901
+    working_dir,
+    dsm_name,
+    ref_name,
+    partitions=None,
+    doc_dir=".",
+    project_dir=".",
 ):
     """
     Create pdf report from png graph and csv stats summary
 
-    :param workingDir: directory in which to find *mode*.png
+    :param working_dir: directory in which to find *mode*.png
                     and *mode*.csv files for each mode in modename
-    :param dsmName: name or path to the dsm to be compared against the ref
-    :param refName: name or path to the reference dsm
-    :param partitionsList: list of partition, contains modes by partition
-    :param docDir: directory in which to find the output documentation
-    :param projectDir:
+    :param dsm_name: name or path to the dsm to be compared against the ref
+    :param ref_name: name or path to the reference dsm
+    :param partitions: list of partition, contains modes by partition
+    :param doc_dir: directory in which to find the output documentation
+    :param project_dir:
     :return:
     """
 
-    if partitionsList is None:
-        partitionsList = ["standard"]
+    if partitions is None:
+        partitions = ["standard"]
 
     # Initialize the sphinx project
-    SPM = SphinxProjectManager(
-        projectDir, docDir, "demcompare_report", "DEM Compare Report"
+    spm = SphinxProjectManager(
+        project_dir, doc_dir, "demcompare_report", "DEM Compare Report"
     )
 
     # TODO modes_information[mode] overwritten , needs one per partition
@@ -91,7 +91,7 @@ def generate_report(
     # Initialize mode informations
     modes_information = collections.OrderedDict()
 
-    for partition_name, stats_results_d in partitionsList.items():
+    for partition_name, stats_results_d in partitions.items():
         # Initialize mode informations for partition
         modes_information[partition_name] = collections.OrderedDict()
         modes_information[partition_name]["standard"] = {
@@ -120,20 +120,20 @@ def generate_report(
             # find both graph and csv stats associated with the mode
             # - histograms
             result = recursive_search(
-                os.path.join(workingDir, "*", partition_name),
+                os.path.join(working_dir, "*", partition_name),
                 "*Real*_{}*.png".format(mode),
             )
-            if len(result):
+            if len(result) > 0:
                 modes_information[partition_name][mode]["histo"] = result[0]
             else:
                 modes_information[partition_name][mode]["histo"] = None
 
             # - graph
             result = recursive_search(
-                os.path.join(workingDir, "*", partition_name),
+                os.path.join(working_dir, "*", partition_name),
                 "*Fitted*_{}*.png".format(mode),
             )
-            if len(result):
+            if len(result) > 0:
                 modes_information[partition_name][mode][
                     "fitted_histo"
                 ] = result[0]
@@ -141,10 +141,10 @@ def generate_report(
                 modes_information[partition_name][mode]["fitted_histo"] = None
             # - csv
             result = recursive_search(
-                os.path.join(workingDir, "*", partition_name),
+                os.path.join(working_dir, "*", partition_name),
                 "*_{}*.csv".format(mode),
             )
-            if len(result):
+            if len(result) > 0:
                 if os.path.exists(result[0]):
                     csv_data = []
                     with open(result[0], "r") as csv_file:
@@ -156,7 +156,7 @@ def generate_report(
                                 ",".join(
                                     [
                                         item
-                                        if type(item) is str
+                                        if isinstance(item, str)
                                         else format(item, ".2f")
                                         for item in row
                                     ]
@@ -175,10 +175,10 @@ def generate_report(
 
     # Find DSMs differences
     dem_diff_without_coreg = recursive_search(
-        workingDir, "initial_dem_diff.png"
+        working_dir, "initial_dem_diff.png"
     )[0]
-    result = recursive_search(workingDir, "final_dem_diff.png")
-    if len(result):
+    result = recursive_search(working_dir, "final_dem_diff.png")
+    if len(result) > 0:
         dem_diff_with_coreg = result[0]
     else:
         dem_diff_with_coreg = None
@@ -194,8 +194,8 @@ def generate_report(
             "*********************" "",
             "**It shows comparison results between the following DSMs:**",
             "",
-            "* **The DSM to evaluate**: {}".format(dsmName),
-            "* **The Reference DSM**  : {}".format(refName),
+            "* **The DSM to evaluate**: {}".format(dsm_name),
+            "* **The Reference DSM**  : {}".format(ref_name),
             "",
         ]
     )
@@ -231,10 +231,12 @@ def generate_report(
         ]
     )
     for mode in modes:
-        src = "\n".join([src, "* The :ref:`{} <{}>` mode".format(mode, mode)])
+        src = "\n".join(
+            [src, "* The :ref:`{mode} <{mode}>` mode".format(mode=mode)]
+        )
 
     # -> the results
-    for partition_name, stats_results_d in partitionsList.items():
+    for partition_name, stats_results_d in partitions.items():
         src = "\n".join(
             [
                 src,
@@ -305,21 +307,22 @@ def generate_report(
                     ]
                 )
     # Add source to the project
-    SPM.write_body(src)
+    spm.write_body(src)
 
-    # Build & Install the project
+    # Build the project
     try:
-        SPM.build_project("html")
-    except:
+        spm.build_project("html")
+    except Exception:
         print(
             ("Error when building report as {} output (ignored)".format("html"))
         )
         raise
     try:
-        SPM.build_project("latexpdf")
-    except:
+        spm.build_project("latexpdf")
+    except Exception:
         print(
             ("Error when building report as {} output (ignored)".format("pdf"))
         )
-        pass
-    SPM.install_project()
+
+    # Sphinx project install
+    spm.install_project()

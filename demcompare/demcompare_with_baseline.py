@@ -38,16 +38,19 @@ from demcompare.output_tree_design import get_out_dir
 
 
 def load_json(json_file):
-    with open(json_file, "r") as f:
-        return json.load(f)
+    with open(json_file, "r") as file:
+        return json.load(file)
 
 
 def load_csv(csv_file):
-    with open(csv_file, "r") as f:
-        return f.readlines()
+    with open(csv_file, "r") as file:
+        return file.readlines()
 
 
 def check_csv(csv_ref, csv_test, csv_file, epsilon):
+    """
+    Check CSV function
+    """
     if csv_ref[0] != csv_test[0]:
         raise ValueError(
             "Inconsistent stats between baseline ({}) "
@@ -163,14 +166,14 @@ def run(baseline_dir, output_dir, epsilon=1.0e-6):
             differences
         )
         raise ValueError(error)
-    else:
-        print(
-            (
-                "No difference between tested files : {}".format(
-                    list(zip(baseline_csv_files, output_csv_files))
-                )
+
+    print(
+        (
+            "No difference between tested files : {}".format(
+                list(zip(baseline_csv_files, output_csv_files))
             )
         )
+    )
 
 
 def get_parser():

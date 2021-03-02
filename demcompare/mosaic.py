@@ -24,18 +24,13 @@ Mosaic part of demcompare
 
 # Standard imports
 import argparse
-import datetime
 import json
 import os
 import subprocess
-import sys
-
-# Third party imports
-import numpy as np
 
 
-def shellquote(s):
-    return "'%s'" % s.replace("'", "'\\''")
+def shellquote(string):
+    return "'%s'" % string.replace("'", "'\\''")
 
 
 garbage = list()
@@ -57,11 +52,14 @@ def garbage_cleanup():
 
 
 def read_tiles(tiles_file):
+    """
+    Read tiles function
+    """
     tiles = []
     outdir = os.path.dirname(tiles_file)
 
-    with open(tiles_file) as f:
-        tiles = f.readlines()
+    with open(tiles_file) as file:
+        tiles = file.readlines()
 
     # Strip trailing \n
     tiles = list(map(str.strip, tiles))
@@ -98,20 +96,23 @@ def vrt_body_source(
     return body
 
 
-def vrt_header(w, h, dataType="Float32", band=1, color=False):
+def vrt_header(size_w, size_h, data_type="Float32", band=1, color=False):
     """
     Generate vrt up header
 
     Args:
-        w,h: size of the corresponding raster
+        w, h: size of the corresponding raster
     """
-    header = '<VRTDataset rasterXSize="%i" rasterYSize="%i">\n' % (w, h)
-    header += vrt_bandheader(dataType=dataType, band=band, color=color)
+    header = '<VRTDataset rasterXSize="%i" rasterYSize="%i">\n' % (
+        size_w,
+        size_h,
+    )
+    header += vrt_bandheader(data_type=data_type, band=band, color=color)
 
     return header
 
 
-def vrt_bandheader(dataType="Float32", band=1, color=False):
+def vrt_bandheader(data_type="Float32", band=1, color=False):
     """
     Generate vrt header for a monoband image
 
@@ -119,11 +120,11 @@ def vrt_bandheader(dataType="Float32", band=1, color=False):
         w,h: size of the corresponding raster
         band: band id
         color: color gray activation
-        dataType: Type of the raster (default is Float32)
+        data_type: Type of the raster (default is Float32)
 
     """
-    header = '\t<VRTRasterBand dataType="%s" band="%d">\n' % (dataType, band)
-    if color == False:
+    header = '\t<VRTRasterBand dataType="%s" band="%d">\n' % (data_type, band)
+    if color is False:
         header += "\t\t<ColorInterp>Gray</ColorInterp>\n"
 
     return header
@@ -163,43 +164,43 @@ def global_extent(tiles):
 
     # First loop is to compute global extent
     for tile in tiles:
-        with open(tile, "r") as f:
+        with open(tile, "r") as file:
 
-            tile_cfg = json.load(f)
+            tile_cfg = json.load(file)
 
-            x = tile_cfg["roi"]["x"]
-            y = tile_cfg["roi"]["y"]
-            w = tile_cfg["roi"]["w"]
-            h = tile_cfg["roi"]["h"]
+            size_x = tile_cfg["roi"]["x"]
+            size_y = tile_cfg["roi"]["y"]
+            size_w = tile_cfg["roi"]["w"]
+            size_h = tile_cfg["roi"]["h"]
 
-            if min_x is None or x < min_x:
-                min_x = x
-            if min_y is None or y < min_y:
-                min_y = y
-            if max_x is None or x + w > max_x:
-                max_x = x + w
-            if max_y is None or y + h > max_y:
-                max_y = y + h
+            if min_x is None or size_x < min_x:
+                min_x = size_x
+            if min_y is None or size_y < min_y:
+                min_y = size_y
+            if max_x is None or size_x + size_w > max_x:
+                max_x = size_x + size_w
+            if max_y is None or size_y + size_h > max_y:
+                max_y = size_y + size_h
 
     return (min_x, max_x, min_y, max_y)
 
 
 def write_row_vrts(
-    outDir,
+    outdir,
     tiles,
     sub_img,
     vrt_basename,
     min_x,
     max_x,
-    nbBands=1,
-    dataType="Float32",
+    nb_bands=1,
+    data_type="Float32",
     color=False,
 ):
     """
     Write intermediate vrts (one per row)
 
     Args:
-        outDir : output directory in which to store the vrts
+        outdir : output directory in which to store the vrts
         tiles: list of config files loaded from json files
         sub_img: Relative path of the sub-image to mosaic
             (for ex. height_map.tif)
@@ -212,24 +213,24 @@ def write_row_vrts(
 
     # First loop, write all row vrts body section
     for tile in tiles:
-        with open(tile, "r") as f:
+        with open(tile, "r") as file:
 
-            tile_cfg = json.load(f)
+            tile_cfg = json.load(file)
 
-            x = tile_cfg["roi"]["x"]
-            y = tile_cfg["roi"]["y"]
-            w = tile_cfg["roi"]["w"]
-            h = tile_cfg["roi"]["h"]
+            size_x = tile_cfg["roi"]["x"]
+            size_y = tile_cfg["roi"]["y"]
+            size_w = tile_cfg["roi"]["w"]
+            size_h = tile_cfg["roi"]["h"]
 
             tile_dir = os.path.dirname(tile)
 
             vrt_row.setdefault(
-                y,
+                size_y,
                 {
                     "vrt_body": "",
-                    "vrt_dir": outDir,
-                    "vrt_name": "{}_row{}".format(vrt_basename, y),
-                    "th": h,
+                    "vrt_dir": outdir,
+                    "vrt_name": "{}_row{}".format(vrt_basename, size_y),
+                    "th": size_h,
                 },
             )
 
@@ -242,16 +243,25 @@ def write_row_vrts(
                 continue
 
             relative_sub_img_dir = os.path.relpath(
-                os.path.abspath(tile_sub_img), vrt_row[y]["vrt_dir"]
+                os.path.abspath(tile_sub_img), vrt_row[size_y]["vrt_dir"]
             )
-            vrt_row[y]["vrt_body"] += vrt_body_source(
-                relative_sub_img_dir, 1, 0, 0, w, h, x - min_x, 0, w, h
+            vrt_row[size_y]["vrt_body"] += vrt_body_source(
+                relative_sub_img_dir,
+                1,
+                0,
+                0,
+                size_w,
+                size_h,
+                size_x - min_x,
+                0,
+                size_w,
+                size_h,
             )
 
     # Second loop, write all row vrts
     # Do not use items()/iteritems() here because of python 2 and 3 compat
-    for y in vrt_row:
-        vrt_data = vrt_row[y]
+    for size_y in vrt_row:
+        vrt_data = vrt_row[size_y]
         row_vrt_filename = os.path.join(
             vrt_data["vrt_dir"], vrt_data["vrt_name"]
         )
@@ -262,16 +272,16 @@ def write_row_vrts(
                 vrt_header(
                     max_x - min_x,
                     vrt_data["th"],
-                    dataType=dataType,
+                    data_type=data_type,
                     color=color,
                 )
             )
 
-            for band in range(1, nbBands + 1):
+            for band in range(1, nb_bands + 1):
                 if band > 1:
                     row_vrt_file.write(
                         vrt_bandheader(
-                            band=band, dataType=dataType, color=color
+                            band=band, data_type=data_type, color=color
                         )
                     )
 
@@ -286,7 +296,7 @@ def write_row_vrts(
                 else:
                     row_vrt_file.write(vrt_data["vrt_body"])
 
-                if band != nbBands:
+                if band != nb_bands:
                     row_vrt_file.write(vrt_bandfooter())
 
             # Write vrt footer
@@ -304,8 +314,8 @@ def write_main_vrt(
     max_x,
     min_y,
     max_y,
-    nbBands=1,
-    dataType="Float32",
+    nb_bands=1,
+    data_type="Float32",
     color=False,
 ):
     """
@@ -316,25 +326,24 @@ def write_main_vrt(
         vrt_name: The output vrt_name
         min_x,max_x,min_y,max_y: Extent of the raster
     """
-    vrt_basename = os.path.basename(vrt_name)
     vrt_dirname = os.path.dirname(vrt_name) or "."
 
     with open(vrt_name, "w") as main_vrt_file:
         main_vrt_file.write(
             vrt_header(
-                max_x - min_x, max_y - min_y, dataType=dataType, color=color
+                max_x - min_x, max_y - min_y, data_type=data_type, color=color
             )
         )
 
-        for band in range(1, nbBands + 1):
+        for band in range(1, nb_bands + 1):
             if band > 1:
                 main_vrt_file.write(
-                    vrt_bandheader(band=band, dataType=dataType, color=color)
+                    vrt_bandheader(band=band, data_type=data_type, color=color)
                 )
             # Do not use items()/iteritems() here
             # because of python 2 and 3 compat
-            for y in vrt_row:
-                vrt_data = vrt_row[y]
+            for size_y in vrt_row:
+                vrt_data = vrt_row[size_y]
                 relative_vrt_dir = os.path.relpath(
                     vrt_data["vrt_dir"], vrt_dirname
                 )
@@ -350,20 +359,23 @@ def write_main_vrt(
                     max_x - min_x,
                     vrt_data["th"],
                     0,
-                    y - min_y,
+                    size_y - min_y,
                     max_x - min_x,
                     vrt_data["th"],
                 )
 
                 main_vrt_file.write(vrt_body_src)
-            if band != nbBands:
+            if band != nb_bands:
                 main_vrt_file.write(vrt_bandfooter())
         main_vrt_file.write(vrt_footer())
 
 
 def main(
-    tiles_file, outfile, sub_img, nbBands=1, dataType="Float32", color=False
+    tiles_file, outfile, sub_img, nb_bands=1, data_type="Float32", color=False
 ):
+    """
+    Main mosaic program
+    """
     outfile_basename = os.path.basename(outfile)
     outfile_dirname = os.path.dirname(outfile) or "."
 
@@ -373,7 +385,7 @@ def main(
     # with the same name
     vrt_basename = outfile_basename
 
-    if output_format == "tif" or output_format == "png":
+    if output_format in ("tif", "png"):
         vrt_basename = vrt_basename[:-3] + "vrt"
     elif output_format != "vrt":
         print(
@@ -400,9 +412,9 @@ def main(
         vrt_basename,
         min_x,
         max_x,
-        nbBands=nbBands,
+        nb_bands=nb_bands,
         color=color,
-        dataType=dataType,
+        data_type=data_type,
     )
 
     # Finally, write main vrt
@@ -413,9 +425,9 @@ def main(
         max_x,
         min_y,
         max_y,
-        nbBands=nbBands,
+        nb_bands=nb_bands,
         color=color,
-        dataType=dataType,
+        data_type=data_type,
     )
 
     # If Output format is tif, convert vrt file to tif
@@ -436,8 +448,8 @@ def main(
             subprocess.check_call(
                 cmd, stdout=devnull, stderr=subprocess.STDOUT, env=os.environ
             )
-        except:
-            raise
+        except Exception as error:
+            print("Error {}".format(error))
 
         garbage.append(vrt_name)
         garbage_cleanup()
@@ -479,6 +491,6 @@ if __name__ == "__main__":
         args.tiles,
         args.outfile,
         args.sub_img,
-        dataType=args.format,
+        data_type=args.format,
         color=args.color,
     )

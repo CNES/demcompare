@@ -30,12 +30,13 @@ import os
 import numpy as np
 
 # DEMcompare imports
-from .img_tools import save_tif, translate
+from .img_tools import save_tif, translate, translate_to_coregistered_geometry
+from .nuth_kaab_universal_coregistration import nuth_kaab_lib
 from .output_tree_design import get_out_dir, get_out_file_path
 
 
-def coregister_with_Nuth_and_Kaab(
-    dem1, dem2, init_disp_x=0, init_disp_y=0, tmpDir="."
+def coregister_with_nuth_and_kaab(
+    dem1, dem2, init_disp_x=0, init_disp_y=0, tmp_dir="."
 ):
     """
     Compute x and y offsets between two DEMs
@@ -48,30 +49,28 @@ def coregister_with_Nuth_and_Kaab(
     :param dem2: xarray Dataset, slave dem
     :param init_disp_x: initial x disparity in pixel
     :param init_disp_y: initial y disparity in pixel
-    :param tmpDir: directory path to temporay results (as Nuth & Kaab plots)
+    :param tmp_dir: directory path to temporay results (as Nuth & Kaab plots)
     :return: mean shifts (x and y), and coregistered DEMs
     """
 
     # Resample images to pre-coregistered geometry according to the initial disp
     if init_disp_x != 0 or init_disp_y != 0:
-        from .img_tools import translate_to_coregistered_geometry
 
         dem1, dem2 = translate_to_coregistered_geometry(
             dem1, dem2, init_disp_x, init_disp_y
         )
 
     # Compute nuth and kaab coregistration
-    from .nuth_kaab_universal_coregistration import a3D_libAPI as nk_a3D_libAPI
-
+    # TODO : check init_dh coherence in demcompare code (saved in __init__.py)
     (
         x_off,
         y_off,
         z_off,
         coreg_dem1,
         coreg_dem2,
-        init_dh,
+        _,
         final_dh,
-    ) = nk_a3D_libAPI(dem1, dem2, outdirPlot=tmpDir)
+    ) = nuth_kaab_lib(dem1, dem2, outdir_plot=tmp_dir)
 
     # Instead of taking nk_a3d_libAPI results we change their georef
     # -> this is because NK library takes two DEMs georeferenced
@@ -126,13 +125,13 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
             coreg_dem1,
             coreg_dem2,
             final_dh,
-        ) = coregister_with_Nuth_and_Kaab(
+        ) = coregister_with_nuth_and_kaab(
             dem1,
             dem2,
             init_disp_x=cfg["plani_opts"]["disp_init"]["x"],
             init_disp_y=cfg["plani_opts"]["disp_init"]["y"],
-            tmpDir=os.path.join(
-                cfg["outputDir"], get_out_dir("nuth_kaab_tmpDir")
+            tmp_dir=os.path.join(
+                cfg["outputDir"], get_out_dir("nuth_kaab_tmp_dir")
             ),
         )
         z_bias = np.nanmean(final_dh["im"].data)
