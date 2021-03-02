@@ -32,21 +32,29 @@ Only **Linux Plaforms** are supported (virtualenv or bare machine) with **Python
 
 ## Install
 
+The default install mode is via the pip package, typically through a [virtualenv](https://docs.python.org/3/library/venv):
+
+```
+python3 -m venv venv
+source venv/bin/activate
+pip install demcompare
+```
+
+#### Developer mode
 This package can be installed through the following commands:
 ```
     git clone https://github.com/CNES/demcompare
     cd demcompare
-    pip install .
+    make install
+    source venv/bin/activate # to go in installed dev environment
 ```
 Dependencies : **git**, **make**
 
 Be careful: **Rasterio** have its own embedded version of **GDAL** \
-Please use rasterio no-binary version if you want to use a GDAL local version:
+Please use rasterio no-binary version in Makefile `install` if you want to use a GDAL local version:
 ```
 python3 -m pip --no-cache-dir install --no-binary rasterio rasterio
 ```
-
-It is recommended to install DEMcompare in a [virtualenv](https://docs.python.org/3/library/venv) environment or use Docker (a Dockerfile is provided).
 
 #### Global autocompletion
 If global autocompletion is not configured in your environment, please use the following command to have completion:
@@ -55,7 +63,7 @@ eval "$(register-python-argcomplete demcompare)"
 ```
 See [Argcomplete documentation](https://kislyuk.github.io/argcomplete/#global-completion) for more details.
 
-### PDF generation
+#### PDF generation
 By default, html is available only: PDF report is not generated.
 You need to install Latex environment for Sphinx to be able to use latexpdf.
 
