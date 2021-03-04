@@ -35,8 +35,8 @@ DEMcompare Classical workflow is :
 * Create a Merge Request from the issue: a MR is created accordingly with "WIP:", "Closes xx" and associated "xx-name-issue" branch
 * Hack code from a local working directory or from the forge (less possibilities)
 * Git add, commit and push from local working clone directory or from the forge directly
+* Install pre-commit validation process (using black, isort, flake8 and pylint) and check errors
 * Follow [Conventional commits](https://www.conventionalcommits.org/) specifications for commit messages
-* Beware that [pylint](https://pypi.org/project/pylint/) pylint pre-commit tool is installed in continuous integration (see below pre-commit validation).
 * Launch the [test](./README.md) on your modifications.
 * When finished, change your Merge Request name (erase "WIP:" in title ) and ask to review the code (see below Merge request acceptation process)
 
@@ -52,7 +52,8 @@ Here are some rules to apply when developing a new functionality:
 * If major modifications of the user interface or of the tool's behaviour are done, update the user documentation (and the notebooks if necessary).
 * Do not add new dependencies unless it is absolutely necessary, and only if it has a permissive license.
 * Use the type hints provided by the `typing` python module.
-* Correct project pylint errors (see below)
+* Correct project quality code errors (see below) : isort, black, flake8, pylint
+* The line length is 80
 
 # Pre-commit validation
 
@@ -62,7 +63,8 @@ Here is the way to install it:
 ```
 pre-commit install
 ```
-This installs the pre-commit hook in `.git/hooks/pre-commit`  from `.pre-commit-config.yaml` file configuration.
+This installs the pre-commit hook in `.git/hooks/pre-commit` and `.git/hooks/pre-push`  from `.pre-commit-config.yaml` file configuration.
+The pre-commit checks different validation process: isort
 ```
 It is possible to test pre-commit before commiting:
 * pre-commit run --all-files                      # Run all hooks on all files
@@ -70,8 +72,31 @@ It is possible to test pre-commit before commiting:
 * pre-commit run pylint                           # Run only pylint hook
 ```
 
-# Pylint usage
+# Isort
+[Isort](https://pypi.org/project/isort/) checks python imports validity in source code.
+The configuration is in isort section [pyproject.toml](./pyproject.toml) file.
+It is configured with black profile.
 
+# Black
+[Black](https://pypi.org/project/black/) is the uncompromising Python code formatter.
+The configuration is in a black section in [pyproject.toml](./pyproject.toml) file.
+The default configuration is used.
+
+# Flake8
+[Flake8](https://pypi.org/project/flake8/) is a wrapper around PyFlakes, pycodestyle,  Ned Batchelder’s McCabe script.
+The configuration is put in a flake8 section in [setup.cfg](./setup.cfg)
+
+[flake8-copyright](https://pypi.org/project/flake8-copyright/) is installed to check copyright in added file.
+Flake8 messages can be avoided (if necessary !) adding "# noqa error-number"
+
+[flake8-bugbear](https://pypi.org/project/flake8-bugbear/) adds several rules to flake8
+
+[flake8-comprehensions](https://pypi.org/project/flake8-comprehensions/) is set for checking dict, set, list structures usage.
+
+
+# Pylint
+[pylint](https://pypi.org/project/pylint/) is well known global rules checker, complementary with flake8.
+The configuration is set in [.pylintrc](./.pylintrc) file.
 It is possible to run only pylint tool to check code modifications:
 ```
 * cd DEMCOMPARE_HOME

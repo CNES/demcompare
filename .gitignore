@@ -12,5 +12,8 @@
 /dist/
 /build/
 
+# Virtualenv
+/venv/
+
 # demcompare test outputs
 tests/test_output

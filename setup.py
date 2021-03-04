@@ -20,14 +20,14 @@
 #
 """
 Packaging setup.py for compatibility
-All packaging in setup.cfg, except setuptools_scm version
+All packaging in setup.cfg, except setuptools_scm version activation
 """
 
 import setuptools
 
 try:
     setuptools.setup(use_scm_version=True)
-except:
+except Exception:
     print(
         "\n\nAn error occurred while building the project, "
         "please ensure you have the most updated version of setuptools, "
