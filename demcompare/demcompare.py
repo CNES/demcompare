@@ -45,7 +45,9 @@ def get_parser():
     :param None
     :return parser
     """
-    parser = argparse.ArgumentParser(description=("Compares DSMs"))
+    parser = argparse.ArgumentParser(
+        description=("Compare Digital Elevation Models")
+    )
 
     parser.add_argument(
         "config",
