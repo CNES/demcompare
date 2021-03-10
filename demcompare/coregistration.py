@@ -36,7 +36,7 @@ from .output_tree_design import get_out_dir, get_out_file_path
 
 
 def coregister_with_nuth_and_kaab(
-    dem1, dem2, init_disp_x=0, init_disp_y=0, tmp_dir="."
+    dem1, dem2, init_disp_x=0, init_disp_y=0, tmp_dir=".", nb_iters=6
 ):
     """
     Compute x and y offsets between two DEMs
@@ -50,6 +50,7 @@ def coregister_with_nuth_and_kaab(
     :param init_disp_x: initial x disparity in pixel
     :param init_disp_y: initial y disparity in pixel
     :param tmp_dir: directory path to temporay results (as Nuth & Kaab plots)
+    :param nb_iters: Nuth and Kaab number of iterations (default 6)
     :return: mean shifts (x and y), and coregistered DEMs
     """
 
@@ -70,7 +71,7 @@ def coregister_with_nuth_and_kaab(
         coreg_dem2,
         _,
         final_dh,
-    ) = nuth_kaab_lib(dem1, dem2, outdir_plot=tmp_dir)
+    ) = nuth_kaab_lib(dem1, dem2, outdir_plot=tmp_dir, nb_iters=nb_iters)
 
     # Instead of taking nk_a3d_libAPI results we change their georef
     # -> this is because NK library takes two DEMs georeferenced
@@ -117,6 +118,13 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     :return: coreg_dem1, coreg_dem2 and alti differences
     """
 
+    # Get Nuth and Kaab method number of iterations if defined
+    if cfg["plani_opts"]["coregistration_iterations"] is not None:
+        nb_iters = cfg["plani_opts"]["coregistration_iterations"]
+    else:
+        # Default to 6 iterations
+        nb_iters = 6
+
     if cfg["plani_opts"]["coregistration_method"] == "nuth_kaab":
         (
             x_bias,
@@ -133,6 +141,7 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
             tmp_dir=os.path.join(
                 cfg["outputDir"], get_out_dir("nuth_kaab_tmp_dir")
             ),
+            nb_iters=nb_iters,
         )
         z_bias = np.nanmean(final_dh["im"].data)
     else:
