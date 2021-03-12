@@ -174,7 +174,7 @@ def nuth_kaab_lib(dsm_dataset, ref_dataset, outdir_plot=None, nb_iters=6):
     :param ref_dataset: xarray Dataset
     :param outdir_plot: path to output Plot directory
         (plots are printed if set to None)
-    :param nb_iters: default: 6
+    :param nb_iters: Nuth and Kaab method iterations number default: 6
     :return: x and y shifts (as 'dsm_dataset + (x,y) = ref_dataset')
     """
 
@@ -359,7 +359,7 @@ def run(
     :param dsm_to: path to dsm to coregister to
     :param dsm_from: path to dsm to coregister from
     :param outfile: path to dsm_from after coregistration to dsm_to
-    :param nb_iters:
+    :param nb_iters: Nuth and Kaab method iterations (default(6))
     :param outdir_plot: path to output Plot directory
         (plots are printed if set to None)
     :param nan_dsm_to:

@@ -157,6 +157,7 @@ def initialization_plani_opts(cfg):
 
     default_plani_opts = {
         "coregistration_method": "nuth_kaab",
+        "coregistration_iterations": 6,
         "disp_init": {"x": 0, "y": 0},
     }
 
