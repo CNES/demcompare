@@ -50,10 +50,18 @@ This package can be installed through the following commands:
 ```
 Dependencies : **git**, **make**
 
+#### Troubleshootings
+
+Depending on pip version, installation problems can happen with packages dependencies installation order. Install and upgrade pip, numpy and cython if demcompare installation crashes:
+```
+python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade numpy cython
+```
+
 Be careful: **Rasterio** have its own embedded version of **GDAL** \
 Please use rasterio no-binary version in Makefile `install` if you want to use a GDAL local version:
 ```
-python3 -m pip --no-cache-dir install --no-binary rasterio rasterio
+python3 -m pip install --no-binary rasterio rasterio
 ```
 
 #### Global autocompletion
@@ -221,7 +229,7 @@ One that would come with the `ref` DEM. And one that would come with the `dsm`. 
 
 Now here is how the modes are defined:
 1. the **standard mode** results on all valid pixels.
-  - This means nan values but also ouliers (if `remove_outliers` was set to True) and masked ones are discarded. Note that the nan values can be originated from the altitude differences image and / or the exogenous classification layers themselves.
+  - This means nan values but also outliers (if `remove_outliers` was set to True) and masked ones are discarded. Note that the nan values can be originated from the altitude differences image and / or the exogenous classification layers themselves.
 
 2. the **coherent mode** is the standard mode where only the pixels sharing the same label for both DEMs classification layers are kept.
   - Say after a coregistration, a pixel P is associated to a 'grass land' inside a `ref` classification layer named `land_cover` and a `road` inside the `dsm` classification layer also named `land_cover`, then P is not coherent for `demcompare`.
