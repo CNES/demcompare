@@ -91,6 +91,17 @@ The results can be observed with:
     firefox test_output/doc/published_report/html/demcompare_report.html &
 ```
 
+demcompare can be launched with a file containing its parameters (one per line) with "@" character: 
+```
+demcompare @opts.txt
+```
+
+`opts.txt` example file:
+```
+test_config.json
+--display
+```
+
 #### Conventions
 
 Inside the `json` file, the DEMs are referred to as **inputDSM** and **inputRef**.
