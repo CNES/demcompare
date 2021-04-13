@@ -205,7 +205,7 @@ def initialization_stats_opts(cfg):
         "classification_layers": {},
         "alti_error_threshold": {"value": 0.1, "unit": "meter"},
         "elevation_thresholds": {"list": [0.5, 1, 3], "zunit": "meter"},
-        "plot_real_hists": False,
+        "plot_real_hists": True,
         "remove_outliers": False,
     }
 
