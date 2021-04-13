@@ -116,8 +116,8 @@ def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
     # remove outliers
     p1 = np.percentile(yf, 1)
     p99 = np.percentile(yf, 99)
-    xf = xf[(p1 < yf) & (yf < p99)]
-    yf = yf[(p1 < yf) & (yf < p99)]
+    xf = xf[(p1 <= yf) & (yf <= p99)]
+    yf = yf[(p1 <= yf) & (yf <= p99)]
 
     # set the first guess
     p0 = (3 * np.std(yf) / (2 ** 0.5), 0, np.mean(yf))
