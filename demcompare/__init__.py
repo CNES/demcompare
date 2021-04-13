@@ -380,7 +380,16 @@ def run_tile(json_file, steps=None, display=False):
         plot_file=os.path.join(
             cfg["outputDir"], get_out_file_path("initial_dem_diff.png")
         ),
-        display=False,
+        display=display,
+    )
+
+    stats.dem_diff_cdf_plot(
+        initial_dh,
+        title="DSMs diff CDF without coregistration (REF - DSM)",
+        plot_file=os.path.join(
+            cfg["outputDir"], get_out_file_path("initial_dem_diff_cdf.png")
+        ),
+        display=display,
     )
 
     #
@@ -402,7 +411,15 @@ def run_tile(json_file, steps=None, display=False):
             plot_file=os.path.join(
                 cfg["outputDir"], get_out_file_path("final_dem_diff.png")
             ),
-            display=False,
+            display=display,
+        )
+        stats.dem_diff_cdf_plot(
+            final_dh,
+            title="DSMs diff CDF with coregistration (REF - DSM)",
+            plot_file=os.path.join(
+                cfg["outputDir"], get_out_file_path("final_dem_diff_cdf.png")
+            ),
+            display=display,
         )
 
     #

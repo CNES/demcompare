@@ -39,7 +39,9 @@ default_OTD = {
     # snapshots
     "snapshots_dir": "./snapshots",
     "initial_dem_diff.png": "./snapshots/",
+    "initial_dem_diff_cdf.png": "./snapshots/",
     "final_dem_diff.png": "./snapshots/",
+    "final_dem_diff_cdf.png": "./snapshots/",
     # histograms
     "histograms_dir": "./histograms",
     # stats
@@ -68,7 +70,9 @@ raw_OTD = {
     # snapshots
     "snapshots_dir": ".",
     "initial_dem_diff.png": ".",
+    "initial_dem_diff_cdf.png": ".",
     "final_dem_diff.png": ".",
+    "final_dem_diff_cdf.png": ".",
     # histograms
     "histograms_dir": ".",
     # stats
