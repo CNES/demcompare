@@ -46,7 +46,8 @@ def get_parser():
     :return parser
     """
     parser = argparse.ArgumentParser(
-        description=("Compare Digital Elevation Models")
+        description=("Compare Digital Elevation Models"),
+        fromfile_prefix_chars="@",
     )
 
     parser.add_argument(
