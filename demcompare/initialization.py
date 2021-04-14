@@ -21,7 +21,7 @@
 """
 Init part of dsm_compare
 This is where high level parameters are checked and default options are set
-
+TODO: move all init parts of __init__ here for consistency
 """
 
 # Standard imports
@@ -68,7 +68,7 @@ def check_parameters(cfg):  # noqa: C901
 
     # verify z units
     if "zunit" not in cfg["inputDSM"]:
-        cfg["inputDSM"]["zunit"] = "meter"
+        cfg["inputDSM"]["zunit"] = "m"
     else:
         try:
             unit = u.Unit(cfg["inputDSM"]["zunit"])
@@ -85,7 +85,7 @@ def check_parameters(cfg):  # noqa: C901
                 )
             )
     if "zunit" not in cfg["inputRef"]:
-        cfg["inputRef"]["zunit"] = "meter"
+        cfg["inputRef"]["zunit"] = "m"
     else:
         try:
             unit = u.Unit(cfg["inputRef"]["zunit"])
@@ -177,7 +177,7 @@ def initialization_alti_opts(cfg):
     :param cfg: Input demcompare configuration
     """
     default_alti_opts = {
-        "egm96-15": {"path": "demcompare/geoid/egm96_15.gtx", "zunit": "meter"},
+        "egm96-15": {"path": "demcompare/geoid/egm96_15.gtx", "zunit": "m"},
         "deramping": False,
     }
 
@@ -203,8 +203,8 @@ def initialization_stats_opts(cfg):
             "slope": {"ranges": [0, 10, 25, 50, 90], "ref": None, "dsm": None}
         },
         "classification_layers": {},
-        "alti_error_threshold": {"value": 0.1, "unit": "meter"},
-        "elevation_thresholds": {"list": [0.5, 1, 3], "zunit": "meter"},
+        "alti_error_threshold": {"value": 0.1, "unit": "m"},
+        "elevation_thresholds": {"list": [0.5, 1, 3], "zunit": "m"},
         "plot_real_hists": True,
         "remove_outliers": False,
     }
