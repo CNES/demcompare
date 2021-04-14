@@ -248,7 +248,7 @@ def compute_coregistration(
             cfg["alti_results"]["dzMap"] = {
                 "path": final_dh.attrs["ds_file"],
                 "zunit": coreg_ref.attrs["zunit"].name,
-                "nodata": final_dh.coords["no_data"],
+                "nodata": final_dh.attrs["no_data"],
                 "nb_points": final_dh["im"].data.size,
                 "nb_valid_points": np.count_nonzero(
                     ~np.isnan(final_dh["im"].data.size)
