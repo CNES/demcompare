@@ -665,10 +665,10 @@ def plot_histograms(  # noqa: C901
             # -> restricts to input data
             if to_keep_mask is not None:
                 sets[set_idx] = sets[set_idx] * to_keep_mask
-            print(
-                "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} plot_histograms() : ",
-                np.where(sets[set_idx] == True),  # noqa: E712
-            )
+            # print(
+            #     "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} plot_histograms() : ",
+            #     np.where(sets[set_idx] == True),  # noqa: E712
+            # )
             data.append(
                 input_array[np.where(sets[set_idx] == True)]  # noqa: E712
             )
