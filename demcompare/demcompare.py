@@ -65,7 +65,11 @@ def get_parser():
         nargs="+",
         choices=ALL_STEPS,
         default=DEFAULT_STEPS,
-        help="steps to choose. default: all steps",
+        help='choose steps to run: "{}". Default: all.'
+        " See README for details.".format(
+            '" "'.join(str(i) for i in ALL_STEPS)
+        ),
+        metavar="step_name",
     )
     parser.add_argument(
         "--display",
