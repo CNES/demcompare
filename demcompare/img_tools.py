@@ -700,7 +700,8 @@ def save_tif(
                 source_ds.write(data[:, :, dsp - 1], dsp)
 
     new_dataset = copy.deepcopy(dataset)
-    new_dataset.attrs["ds_file"] = filename
+    # update dataset input_img with new filename
+    new_dataset.attrs["input_img"] = filename
 
     return new_dataset
 

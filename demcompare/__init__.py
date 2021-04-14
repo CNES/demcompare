@@ -96,8 +96,8 @@ def compute_report(cfg, steps, dem, ref):
     if "report" in steps:
         report.generate_report(
             cfg["outputDir"],
-            dem.ds_file,
-            ref.ds_file,
+            dem.input_img,
+            ref.input_img,
             cfg["stats_results"]["partitions"],
             os.path.join(cfg["outputDir"], get_out_dir("sphinx_built_doc")),
             os.path.join(cfg["outputDir"], get_out_dir("sphinx_src_doc")),
@@ -228,10 +228,10 @@ def compute_coregistration(
                 ),
             )
             cfg["alti_results"]["rectifiedDSM"]["path"] = coreg_dem.attrs[
-                "ds_file"
+                "input_img"
             ]
             cfg["alti_results"]["rectifiedRef"]["path"] = coreg_ref.attrs[
-                "ds_file"
+                "input_img"
             ]
             cfg["alti_results"]["rectifiedDSM"]["nb_points"] = coreg_dem[
                 "im"
@@ -246,7 +246,7 @@ def compute_coregistration(
                 "nb_valid_points"
             ] = np.count_nonzero(~np.isnan(coreg_ref["im"].data))
             cfg["alti_results"]["dzMap"] = {
-                "path": final_dh.attrs["ds_file"],
+                "path": final_dh.attrs["input_img"],
                 "zunit": coreg_ref.attrs["zunit"].name,
                 "nodata": final_dh.attrs["no_data"],
                 "nb_points": final_dh["im"].data.size,

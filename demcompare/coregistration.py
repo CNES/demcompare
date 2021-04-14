@@ -176,8 +176,8 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     cfg["alti_results"] = {}
     cfg["alti_results"]["rectifiedDSM"] = copy.deepcopy(cfg["inputDSM"])
     cfg["alti_results"]["rectifiedRef"] = copy.deepcopy(cfg["inputRef"])
-    cfg["alti_results"]["rectifiedDSM"]["path"] = coreg_dem1.attrs["ds_file"]
-    cfg["alti_results"]["rectifiedRef"]["path"] = coreg_dem2.attrs["ds_file"]
+    cfg["alti_results"]["rectifiedDSM"]["path"] = coreg_dem1.attrs["input_img"]
+    cfg["alti_results"]["rectifiedRef"]["path"] = coreg_dem2.attrs["input_img"]
     cfg["alti_results"]["rectifiedDSM"]["nodata"] = coreg_dem1.attrs["no_data"]
     cfg["alti_results"]["rectifiedRef"]["nodata"] = coreg_dem2.attrs["no_data"]
     cfg["alti_results"]["dz"] = {
@@ -188,7 +188,7 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
         / final_dh["im"].data.size,
     }
     cfg["alti_results"]["dzMap"] = {
-        "path": final_dh.attrs["ds_file"],
+        "path": final_dh.attrs["input_img"],
         "zunit": coreg_dem1.attrs["zunit"].name,
         "nodata": final_dh.attrs["no_data"],
         "nb_points": final_dh["im"].data.size,
