@@ -56,39 +56,8 @@ default_OTD = {
     "sphinx_src_doc": "./doc/src",
 }
 
-raw_OTD = {
-    # first seen output
-    "initial_dh.tif": ".",
-    "final_dh.tif": ".",
-    "final_config.json": ".",
-    "dh_col_wise_wave_detection.tif": ".",
-    "dh_row_wise_wave_detection.tif": ".",
-    # coreg step
-    "coreg_DEM.tif": ".",
-    "coreg_REF.tif": ".",
-    "nuth_kaab_tmp_dir": ".",
-    # snapshots
-    "snapshots_dir": ".",
-    "initial_dem_diff.png": ".",
-    "initial_dem_diff_cdf.png": ".",
-    "final_dem_diff.png": ".",
-    "final_dem_diff_cdf.png": ".",
-    # histograms
-    "histograms_dir": ".",
-    # stats
-    "stats_dir": ".",
-    "DSM_support.tif": ".",
-    "Ref_support.tif": ".",
-    "Ref_support-DSM_support.tif": "./stats",
-    "DSM_support_classified.png": ".",
-    "Ref_support_classified.png": ".",
-    # doc
-    "sphinx_built_doc": "./report_documentation",
-    "sphinx_src_doc": "./tmpDir",
-}
 
-
-supported_OTD = {"raw_OTD": raw_OTD, "default_OTD": default_OTD}
+supported_OTD = {"default_OTD": default_OTD}
 
 
 def get_otd_dirs(design="default_OTD"):
