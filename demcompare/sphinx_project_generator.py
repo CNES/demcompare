@@ -20,7 +20,7 @@
 #
 # flake8: noqa: E501
 """
-sphinx_project_generator was built for dsm_compare.py and its 'report' step.
+sphinx_project_generator was built for demcompare and its 'report' step.
 As so, it is designed for this simple purpose, meaning only light version of
 the Makefile and the conf.py are proposed, and no way to control them.
 If somehow required, this project generator shall be improved to offer some
@@ -95,7 +95,7 @@ class SphinxProjectManager:
         cur_dir = os.curdir
         try:
             os.chdir(self._working_dir)
-            subprocess.check_call(
+            subprocess.check_output(
                 ["make", "clean"], stderr=subprocess.STDOUT, env=os.environ
             )
             os.chdir(cur_dir)
@@ -177,16 +177,19 @@ class SphinxProjectManager:
                     "source_encoding = 'utf-8'",
                     "master_doc = '{}'".format(self._index_name),
                     "project = u'{}'".format(self._project_name),
-                    "copyright = u'2017, CS, CNES'",
-                    "author = u'CS'",
+                    "copyright = u'2021 CNES'",
+                    "author = u'CNES, CS'",
                     "language = 'en'",
                     "pygments_style = 'sphinx'",
                     "# -- Options for HTML output ----------------------------------------------",
+                    "html_theme = 'alabaster'",
                     "#html_logo = 'Images/cs_cnes_200pixels.bmp'",
                     "html_show_copyright = False",
                     "html_search_language = 'en'",
-                    "htmlhelp_basename = 'dsm_compare_report'",
-                    "",
+                    "html_sidebars = {'**': ['about.html','localtoc.html', 'relations.html', 'searchbox.html']}",
+                    "htmlhelp_basename = 'demcompare_report'",
+                    "html_theme_options = {  'github_user': 'CNES', "
+                    "'github_repo': 'demcompare'}",
                     "# -- Options for LaTeX output ---------------------------------------------",
                     "latex_documents = [(master_doc, '{}.tex', u'{}', u'CS', 'manual')]".format(
                         self._index_name, self._project_name
@@ -242,13 +245,7 @@ class SphinxProjectManager:
         shutil.rmtree(self._output_dir, ignore_errors=True)
         # Copy build directory to install directory
         shutil.copytree(self._build_dir, self._output_dir)
-        print(
-            (
-                "Documentation installed under {} directory".format(
-                    self._output_dir
-                )
-            )
-        )
+        print(("Generated report: {}".format(self._output_dir)))
 
     @staticmethod
     def clean():

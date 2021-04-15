@@ -82,6 +82,13 @@ def get_parser():
         action="version",
         version="%(prog)s {version}".format(version=demcompare.__version__),
     )
+    parser.add_argument(
+        "--loglevel",
+        default="WARNING",
+        choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
+        help="Logger level (default: INFO. Should be one of "
+        "(DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
     return parser
 
 
@@ -92,7 +99,9 @@ def main():
     parser = get_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    demcompare.run(args.config, args.step, display=args.display)
+    demcompare.run(
+        args.config, args.step, display=args.display, loglevel=args.loglevel
+    )
 
 
 if __name__ == "__main__":

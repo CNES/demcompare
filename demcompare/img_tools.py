@@ -475,6 +475,8 @@ def load_dems(
 
     # reproject, crop, resample
     ref = reproject_dataset(full_ref, dem, interp="bilinear")
+    # update dataset input_img with ref old value
+    ref.attrs["input_img"] = full_ref.attrs["input_img"]
 
     return ref, dem
 

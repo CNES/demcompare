@@ -462,24 +462,25 @@ def dem_diff_plot(dem_diff, title="", plot_file="dem_diff.png", display=False):
     :param display: boolean, set to True if display is on,
         otherwise the plot is saved to plot_file location
     """
-
-    #
-    # Plot initialization
-    #
-    # -> import what is necessary for plot purpose
-
-    mpl.rc("font", size=6)
-
-    #
-    # Plot
-    #
-    mpl_pyplot.figure(1, figsize=(7.0, 8.0))
-    mpl_pyplot.title(title)
+    # Init mu and sigma from data to focus on little values
     mu = np.nanmean(dem_diff["im"].data)
     sigma = np.nanstd(dem_diff["im"].data)
-    mpl_pyplot.imshow(dem_diff["im"].data, vmin=mu - sigma, vmax=mu + sigma)
-    color_bar = mpl_pyplot.colorbar()
-    color_bar.set_label("Elevation differences (m)")
+
+    # Plot
+    fig, fig_ax = mpl_pyplot.subplots(figsize=(7.0, 8.0))
+    fig_ax.set_title(title, fontsize="large")
+    im1 = fig_ax.imshow(
+        dem_diff["im"].data, cmap="terrain", vmin=mu - sigma, vmax=mu + sigma
+    )
+    fig.colorbar(im1, label="Elevation differences (m)")
+    fig.text(
+        0.15,
+        0.15,
+        "Image diff view: [Min, Max]=[{:.2f}, {:.2f}]".format(
+            mu - sigma, mu + sigma
+        ),
+        fontsize="medium",
+    )
 
     #
     # Show or Save
@@ -536,20 +537,21 @@ def dem_diff_cdf_plot(
         writer = csv.writer(csv_file, delimiter=",")
         writer.writerows(map(lambda x: [x], cdf))
 
-    # Plot initialization
-    mpl.rc("font", size=6)
-
     # Plot
     fig, fig_ax = mpl_pyplot.subplots()
-    fig_ax.set_title(title)
+    fig_ax.set_title(title, fontsize="large")
     fig_ax.plot(bins_count[1:], cdf, label="CDF")
 
     # tidy up the figure and add axes titles
-    fig_ax.set_xlabel("Elevation differences (m)")
-    fig_ax.set_ylabel("Cumulative Probability")
+    fig_ax.set_xlabel(
+        "Elevation differences (m) \nmax_diff={} nb_bins={}".format(
+            max_diff, nb_bins
+        ),
+        fontsize="medium",
+    )
+    fig_ax.set_ylabel("Cumulative Probability [0,1]", fontsize="medium")
     fig_ax.set_ylim(0, 1.05)
     fig_ax.grid(True)
-    fig_ax.legend(loc="right")
 
     # Show or Save
     if display is False:
@@ -1058,7 +1060,7 @@ def alti_diff_stats(
     def get_title(cfg):
         if geo_ref:
             # Set future plot title with bias and % of nan values as part of it
-            title = ["MNT quality performance"]
+            title = ["DEM quality performance"]
             dx = cfg["plani_results"]["dx"]
             dy = cfg["plani_results"]["dy"]
             biases = {
@@ -1339,7 +1341,6 @@ def wave_detection(cfg, dh):
     :return:
 
     """
-
     # Compute mean dh row and mean dh col
     # -> then compute min between dh mean row (col) vector and dh rows (cols)
     res = {

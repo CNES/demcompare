@@ -208,12 +208,8 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
     )
 
     # Print report
-    print(
-        "Plani 2D shift between input dsm ({}) and input ref ({}) is".format(
-            cfg["inputDSM"]["path"], cfg["inputRef"]["path"]
-        )
-    )
-
+    print("# Coregistration results:")
+    print("\nPlanimetry 2D shift between DEM and REF:")
     print(
         " -> row : {}".format(
             cfg["plani_results"]["dy"]["bias_value"]
@@ -226,14 +222,9 @@ def coregister_and_compute_alti_diff(cfg, dem1, dem2):
             * coreg_dem1.attrs["plani_unit"]
         )
     )
-    print("")
-    print(
-        "Alti shift between coreg dsm ({}) and coreg ref ({}) is".format(
-            cfg["alti_results"]["rectifiedDSM"]["path"],
-            cfg["alti_results"]["rectifiedRef"]["path"],
-        )
-    )
-
+    print("DEM: {}".format(cfg["inputDSM"]["path"]))
+    print("REF: {}".format(cfg["inputRef"]["path"]))
+    print("\nAltimetry shift between COREG_DEM and COREG_REF")
     print((" -> alti : {}".format(z_bias * coreg_dem1.attrs["zunit"])))
 
     return coreg_dem1, coreg_dem2, final_dh
