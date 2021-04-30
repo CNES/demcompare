@@ -496,8 +496,7 @@ def dem_diff_cdf_plot(
     dem_diff,
     title="",
     plot_file="dem_diff_cdf.png",
-    max_diff=50,
-    bins_size=0.1,
+    bin_step=0.1,
     display=False,
 ):
     """
@@ -507,23 +506,25 @@ def dem_diff_cdf_plot(
     :param title: string, plot title
     :param plot_file: path and name for the saved plot
         (used when display if False)
-    :param max_diff: max diff in cdf shown in graphic, default 5O
-    :param bins_size: bin size
+    :param bin_step: bin size
     :param display: boolean, set to True if display is on,
         otherwise the plot is saved to plot_file location
     """
     # Get plot_file file base
     plot_file_base = os.path.splitext(plot_file)[0]
 
-    # Get bins number for histogram
-    nb_bins = int(max_diff / bins_size)
-
     # Generate absolute values array
     abs_dem_diff = np.abs(dem_diff["im"].data)
 
+    # Get max diff from data
+    max_diff = np.max(abs_dem_diff)
+
+    # Get bins number for histogram
+    nb_bins = int(max_diff / bin_step)
+
     # getting data of the histogram
     hist, bins_count = np.histogram(
-        abs_dem_diff, range=(0, max_diff), bins=nb_bins, density=True
+        abs_dem_diff, bins=nb_bins, range=(0, max_diff), density=True
     )
 
     # Normalized Probability Density Function of the histogram
@@ -535,7 +536,8 @@ def dem_diff_cdf_plot(
     # Save cdf in csv in same base file name.
     with open(plot_file_base + ".csv", "w", newline="") as csv_file:
         writer = csv.writer(csv_file, delimiter=",")
-        writer.writerows(map(lambda x: [x], cdf))
+        writer.writerow(["Bins", "CDF values"])
+        writer.writerows(zip(bins_count, cdf))
 
     # Plot
     fig, fig_ax = mpl_pyplot.subplots()
@@ -544,9 +546,8 @@ def dem_diff_cdf_plot(
 
     # tidy up the figure and add axes titles
     fig_ax.set_xlabel(
-        "Elevation differences (m) \nmax_diff={} nb_bins={}".format(
-            max_diff, nb_bins
-        ),
+        "Full absolute elevation differences (m) "
+        "\nmax_diff={} nb_bins={}".format(max_diff, nb_bins),
         fontsize="medium",
     )
     fig_ax.set_ylabel("Cumulative Probability [0,1]", fontsize="medium")

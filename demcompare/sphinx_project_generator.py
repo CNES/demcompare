@@ -183,15 +183,14 @@ class SphinxProjectManager:
                     "pygments_style = 'sphinx'",
                     "# -- Options for HTML output ----------------------------------------------",
                     "html_theme = 'alabaster'",
-                    "#html_logo = 'Images/cs_cnes_200pixels.bmp'",
                     "html_show_copyright = False",
                     "html_search_language = 'en'",
                     "html_sidebars = {'**': ['about.html','localtoc.html', 'relations.html', 'searchbox.html']}",
                     "htmlhelp_basename = 'demcompare_report'",
                     "html_theme_options = {  'github_user': 'CNES', "
-                    "'github_repo': 'demcompare'}",
+                    "'github_repo': 'demcompare',     'rightsidebar': 'true', }",
                     "# -- Options for LaTeX output ---------------------------------------------",
-                    "latex_documents = [(master_doc, '{}.tex', u'{}', u'CS', 'manual')]".format(
+                    "latex_documents = [(master_doc, '{}.tex', u'{}', u'', 'howto')]".format(
                         self._index_name, self._project_name
                     ),
                     "#latex_logo = None" "",
@@ -220,16 +219,17 @@ class SphinxProjectManager:
         cur_dir = os.curdir
         try:
             os.chdir(self._working_dir)
-            cr_build = open(
+            with open(
                 os.path.join(self._working_dir, "cr_build-{}.txt".format(mode)),
                 "w",
-            )
-            subprocess.check_call(
-                ["make", mode],
-                stdout=cr_build,
-                stderr=subprocess.STDOUT,
-                env=os.environ,
-            )
+            ) as cr_build:
+                # Call make "mode" and output in "cr_build" log ouput file
+                subprocess.check_call(
+                    ["make", mode],
+                    stdout=cr_build,
+                    stderr=subprocess.STDOUT,
+                    env=os.environ,
+                )
             os.chdir(cur_dir)
         except:
             os.chdir(cur_dir)
