@@ -1,4 +1,4 @@
-# **DEMcompare** **Contributing guide**.
+# **DEMCOMPARE** **Contributing guide**.
 
 1. [Bug report](#bug-report)
 2. [Contributing workflow](#contributing-workflow)
@@ -30,7 +30,8 @@ The Merge Request shall have a short description of the proposed changes. If it 
 
 Likewise, if you work on a branch (which is recommended), prefix the branch's name by `xx-` in order to link it to the xx issue.
 
-DEMcompare Classical workflow is :
+DEMCOMPARE Classical workflow is :
+* Check Licence and sign [Contributor Licence Agrement](#contribution-license-agreement) (Individual or Corporate)
 * Create an issue (or begin from an existing one)
 * Create a Merge Request from the issue: a MR is created accordingly with "WIP:", "Closes xx" and associated "xx-name-issue" branch
 * Hack code from a local working directory or from the forge (less possibilities)
@@ -39,6 +40,28 @@ DEMcompare Classical workflow is :
 * Follow [Conventional commits](https://www.conventionalcommits.org/) specifications for commit messages
 * Launch the [test](./README.md) on your modifications.
 * When finished, change your Merge Request name (erase "WIP:" in title ) and ask to review the code (see below Merge request acceptation process)
+
+
+# Contribution license agreement
+
+DEMCOMPARE requires that contributors sign out a [Contributor License
+Agreement](https://en.wikipedia.org/wiki/Contributor_License_Agreement). The
+purpose of this CLA is to ensure that the project has the necessary ownership or
+grants of rights over all contributions to allow them to distribute under the
+chosen license (Apache License Version 2.0)
+
+To accept your contribution, we need you to complete, sign and email to *cars [at]
+cnes [dot] fr* an [Individual Contributor Licensing
+Agreement](./CLA/ICLA-DEMCOMPARE.doc) (ICLA) form and a
+[Corporate Contributor Licensing
+Agreement](./CLA/CCLA-DEMCOMPARE.doc) (CCLA) form if you are
+contributing on behalf of your company or another entity which retains copyright
+for your contribution.
+
+The copyright owner (or owner's agent) must be mentioned in headers of all
+modified source files and also added to the [NOTICE
+file](./NOTICE).
+
 
 # Coding guide
 
