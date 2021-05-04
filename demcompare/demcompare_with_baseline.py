@@ -26,20 +26,10 @@ Tests : Compare results against baseline
 # Standard imports
 import argparse
 import glob
-import json
-import os
 from collections import OrderedDict
 
 # Third party imports
 import argcomplete
-
-# DEMcompare imports
-from demcompare.output_tree_design import get_out_dir
-
-
-def load_json(json_file):
-    with open(json_file, "r") as file:
-        return json.load(file)
 
 
 def load_csv(csv_file):
@@ -117,30 +107,15 @@ def run(baseline_dir, output_dir, epsilon=1.0e-6):
     :return:
     """
 
-    # read both json files
-    baseline_fjson = load_json(os.path.join(baseline_dir, "final_config.json"))
-    output_fjson = load_json(os.path.join(output_dir, "final_config.json"))
-
-    # get both stats dir
-    baseline_statsdir = os.path.join(
-        baseline_dir,
-        get_out_dir(
-            "stats_dir",
-            design=(
-                baseline_fjson["otd"] if "otd" in baseline_fjson else "raw_OTD"
-            ),
-        ),
-    )
-    output_statsdir = os.path.join(
-        output_dir,
-        get_out_dir("stats_dir", design=output_fjson["otd"]),
-        "slope",
-    )
-
-    # check csv files consistency
+    # Find csv files
     ext = ".csv"
-    baseline_csv_files = glob.glob("{}/*{}".format(baseline_statsdir, ext))
-    output_csv_files = glob.glob("{}/*{}".format(output_statsdir, ext))
+    baseline_csv_files = glob.glob(
+        "{}/**/*{}".format(baseline_dir, ext), recursive=True
+    )
+    output_csv_files = glob.glob(
+        "{}/**/*{}".format(output_dir, ext), recursive=True
+    )
+
     baseline_data = [load_csv(csv_file) for csv_file in baseline_csv_files]
     test_data = [load_csv(csv_file) for csv_file in output_csv_files]
 
@@ -148,11 +123,14 @@ def run(baseline_dir, output_dir, epsilon=1.0e-6):
     # and stats tested are the same between both versions
     if len(baseline_data) != len(test_data):
         raise ValueError(
-            "Inconsistent number of csv files between baseline ({}) "
-            "and tested output ({})".format(len(baseline_data), len(test_data))
+            "Demcompare tests with baseline: KO. "
+            "Inconsistent CSV files number. \nCSV baseline files: {} \n"
+            "CSV tested output files: {}".format(
+                len(baseline_data), len(test_data)
+            )
         )
 
-    # for each csv file
+    # Check csv consistency for each csv file
     differences = [
         check_csv(csv_ref, csv_test, csv_file, epsilon)
         for csv_ref, csv_test, csv_file in zip(
@@ -161,19 +139,21 @@ def run(baseline_dir, output_dir, epsilon=1.0e-6):
     ]
 
     if sum(len(diff) for diff in differences) != 0:
-        error = "Invalid results obtained with this version \
-                 of demcompare: \n{}".format(
-            differences
+        raise ValueError(
+            "Demcompare tests with baseline: KO."
+            " Invalid results : \n {}".format(differences)
         )
-        raise ValueError(error)
 
     print(
-        (
-            "No difference between tested files : {}".format(
-                list(zip(baseline_csv_files, output_csv_files))
-            )
-        )
+        "Demcompare tests with baseline: OK."
+        " No difference between tested files:"
     )
+    # Show CSV file table
+    row_format = "{:<72}  <--> {:<72}"
+    head_table = ["**  Baseline CSV files **", "**  Output CSV files **"]
+    print(row_format.format(*head_table))
+    for base_file, output_file in zip(baseline_csv_files, output_csv_files):
+        print(row_format.format(base_file, output_file))
 
 
 def get_parser():
@@ -205,7 +185,13 @@ def main():
     parser = get_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    run(args.baselinePath, args.currentRunPath)
+    try:
+        run(args.baselinePath, args.currentRunPath)
+    except ValueError as value_error:
+        print(value_error)
+    except Exception as error:
+        print("Demcompare unexpected error: {} \n".format(error))
+        raise
 
 
 if __name__ == "__main__":

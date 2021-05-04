@@ -116,8 +116,8 @@ def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
     # remove outliers
     p1 = np.percentile(yf, 1)
     p99 = np.percentile(yf, 99)
-    xf = xf[(p1 < yf) & (yf < p99)]
-    yf = yf[(p1 < yf) & (yf < p99)]
+    xf = xf[(p1 <= yf) & (yf <= p99)]
+    yf = yf[(p1 <= yf) & (yf <= p99)]
 
     # set the first guess
     p0 = (3 * np.std(yf) / (2 ** 0.5), 0, np.mean(yf))
@@ -223,7 +223,7 @@ def nuth_kaab_lib(dsm_dataset, ref_dataset, outdir_plot=None, nb_iters=6):
     spline_2 = RectBivariateSpline(ygrid, xgrid, nan_maskval, kx=1, ky=1)
     xoff, yoff, zoff = 0, 0, 0
 
-    print("Nuth & Kaab iterations...")
+    print("Nuth & Kaab iterations: {}".format(nb_iters))
     coreg_dsm = dsm_dataset["im"].data
     for i in range(nb_iters):
         # remove bias
@@ -244,12 +244,10 @@ def nuth_kaab_lib(dsm_dataset, ref_dataset, outdir_plot=None, nb_iters=6):
             dh, slope, aspect, plot_file=plotfile
         )
         print(
-            (
-                "#{} - Offset in pixels : ({},{}), -bias : ({})".format(
-                    i + 1, east, north, z
-                )
-            )
+            "# {} - Offset in pixels : "
+            "({:.2f},{:.2f}), -bias : ({:.2f})".format(i + 1, east, north, z)
         )
+
         xoff += east
         yoff += north
         zoff += z
@@ -295,14 +293,17 @@ def nuth_kaab_lib(dsm_dataset, ref_dataset, outdir_plot=None, nb_iters=6):
 
         print(
             (
-                "Median : {0:.2f}, NMAD = {1:.2f}, Gain : {2:.2f}".format(
+                "\tMedian : {0:.2f}, NMAD = {1:.2f}, Gain : {2:.2f}".format(
                     median, nmad_new, (nmad_new - nmad_old) / nmad_old * 100
                 )
             )
         )
         nmad_old = nmad_new
 
-    print(("Final Offset in pixels (east, north) : ({},{})".format(xoff, yoff)))
+    print(
+        "Nuth & Kaab Final Offset in pixels (east, north):"
+        "({:.2f},{:.2f})\n".format(xoff, yoff)
+    )
 
     #
     # Get geo raster from coreg_ref array

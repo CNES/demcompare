@@ -475,6 +475,8 @@ def load_dems(
 
     # reproject, crop, resample
     ref = reproject_dataset(full_ref, dem, interp="bilinear")
+    # update dataset input_img with ref old value
+    ref.attrs["input_img"] = full_ref.attrs["input_img"]
 
     return ref, dem
 
@@ -700,7 +702,8 @@ def save_tif(
                 source_ds.write(data[:, :, dsp - 1], dsp)
 
     new_dataset = copy.deepcopy(dataset)
-    new_dataset.attrs["ds_file"] = filename
+    # update dataset input_img with new filename
+    new_dataset.attrs["input_img"] = filename
 
     return new_dataset
 

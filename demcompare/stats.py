@@ -462,24 +462,25 @@ def dem_diff_plot(dem_diff, title="", plot_file="dem_diff.png", display=False):
     :param display: boolean, set to True if display is on,
         otherwise the plot is saved to plot_file location
     """
-
-    #
-    # Plot initialization
-    #
-    # -> import what is necessary for plot purpose
-
-    mpl.rc("font", size=6)
-
-    #
-    # Plot
-    #
-    mpl_pyplot.figure(1, figsize=(7.0, 8.0))
-    mpl_pyplot.title(title)
+    # Init mu and sigma from data to focus on little values
     mu = np.nanmean(dem_diff["im"].data)
     sigma = np.nanstd(dem_diff["im"].data)
-    mpl_pyplot.imshow(dem_diff["im"].data, vmin=mu - sigma, vmax=mu + sigma)
-    color_bar = mpl_pyplot.colorbar()
-    color_bar.set_label("Elevation differences (m)")
+
+    # Plot
+    fig, fig_ax = mpl_pyplot.subplots(figsize=(7.0, 8.0))
+    fig_ax.set_title(title, fontsize="large")
+    im1 = fig_ax.imshow(
+        dem_diff["im"].data, cmap="terrain", vmin=mu - sigma, vmax=mu + sigma
+    )
+    fig.colorbar(im1, label="Elevation differences (m)")
+    fig.text(
+        0.15,
+        0.15,
+        "Image diff view: [Min, Max]=[{:.2f}, {:.2f}]".format(
+            mu - sigma, mu + sigma
+        ),
+        fontsize="medium",
+    )
 
     #
     # Show or Save
@@ -488,6 +489,76 @@ def dem_diff_plot(dem_diff, title="", plot_file="dem_diff.png", display=False):
         mpl_pyplot.savefig(plot_file, dpi=100, bbox_inches="tight")
     else:
         mpl_pyplot.show()
+    mpl_pyplot.close()
+
+
+def dem_diff_cdf_plot(
+    dem_diff,
+    title="",
+    plot_file="dem_diff_cdf.png",
+    bin_step=0.1,
+    display=False,
+):
+    """
+    Simple img values absolute cdf view truncated by max_diff
+
+    :param dem_diff: xarray Dataset,
+    :param title: string, plot title
+    :param plot_file: path and name for the saved plot
+        (used when display if False)
+    :param bin_step: bin size
+    :param display: boolean, set to True if display is on,
+        otherwise the plot is saved to plot_file location
+    """
+    # Get plot_file file base
+    plot_file_base = os.path.splitext(plot_file)[0]
+
+    # Generate absolute values array
+    abs_dem_diff = np.abs(dem_diff["im"].data)
+
+    # Get max diff from data
+    max_diff = np.max(abs_dem_diff)
+
+    # Get bins number for histogram
+    nb_bins = int(max_diff / bin_step)
+
+    # getting data of the histogram
+    hist, bins_count = np.histogram(
+        abs_dem_diff, bins=nb_bins, range=(0, max_diff), density=True
+    )
+
+    # Normalized Probability Density Function of the histogram
+    pdf = hist / sum(hist)
+
+    # Generate Cumulative Probability Function
+    cdf = np.cumsum(pdf)
+
+    # Save cdf in csv in same base file name.
+    with open(plot_file_base + ".csv", "w", newline="") as csv_file:
+        writer = csv.writer(csv_file, delimiter=",")
+        writer.writerow(["Bins", "CDF values"])
+        writer.writerows(zip(bins_count, cdf))
+
+    # Plot
+    fig, fig_ax = mpl_pyplot.subplots()
+    fig_ax.set_title(title, fontsize="large")
+    fig_ax.plot(bins_count[1:], cdf, label="CDF")
+
+    # tidy up the figure and add axes titles
+    fig_ax.set_xlabel(
+        "Full absolute elevation differences (m) "
+        "\nmax_diff={} nb_bins={}".format(max_diff, nb_bins),
+        fontsize="medium",
+    )
+    fig_ax.set_ylabel("Cumulative Probability [0,1]", fontsize="medium")
+    fig_ax.set_ylim(0, 1.05)
+    fig_ax.grid(True)
+
+    # Show or Save
+    if display is False:
+        fig.savefig(plot_file, dpi=100, bbox_inches="tight")
+    else:
+        fig.show()
     mpl_pyplot.close()
 
 
@@ -529,7 +600,7 @@ def plot_histograms(  # noqa: C901
         (as numpy files) are to be saved
     :param save_prefix: prefix to the histogram files saved by this method
     :param display: set to False to save plot instead of actually plotting them
-    :param plot_real_hist: plot or save (see display param) real histrograms
+    :param plot_real_hist: plot or save (see display param) real histograms
     :return: list saved files
     """
     # pylint: disable=singleton-comparison
@@ -597,10 +668,10 @@ def plot_histograms(  # noqa: C901
             # -> restricts to input data
             if to_keep_mask is not None:
                 sets[set_idx] = sets[set_idx] * to_keep_mask
-            print(
-                "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} plot_histograms() : ",
-                np.where(sets[set_idx] == True),  # noqa: E712
-            )
+            # print(
+            #     "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}} plot_histograms() : ",
+            #     np.where(sets[set_idx] == True),  # noqa: E712
+            # )
             data.append(
                 input_array[np.where(sets[set_idx] == True)]  # noqa: E712
             )
@@ -778,7 +849,7 @@ def save_results(
     :param stats_list: all the stats to save (one element per label)
     :param labels_plotted: list of labels plotted
     :param plot_files: list of plot files associdated to the labels_plotted
-    :param plot_colors: list of plot colors associdated to the labels_plotted
+    :param plot_colors: list of plot colors associated to the labels_plotted
     :param to_csv: boolean, set to True to save to csv format as well
         (default False)
     :return:
@@ -990,7 +1061,7 @@ def alti_diff_stats(
     def get_title(cfg):
         if geo_ref:
             # Set future plot title with bias and % of nan values as part of it
-            title = ["MNT quality performance"]
+            title = ["DEM quality performance"]
             dx = cfg["plani_results"]["dx"]
             dy = cfg["plani_results"]["dy"]
             biases = {
@@ -1155,7 +1226,6 @@ def save_as_graphs_and_tables(
         # Create plots for the actual mode and for all sets
         #
         # -> we are then ready to do some plots !
-
         if geo_ref:
             try:
                 plot_files, labels, colors = plot_histograms(
@@ -1272,7 +1342,6 @@ def wave_detection(cfg, dh):
     :return:
 
     """
-
     # Compute mean dh row and mean dh col
     # -> then compute min between dh mean row (col) vector and dh rows (cols)
     res = {

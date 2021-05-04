@@ -13,7 +13,7 @@ CHECK_NUMPY = $(shell ${VENV}/bin/python -m pip list|grep numpy)
 # Uncomment Rasterio lines for local GDAL installation (typically OTB install)
 #CHECK_RASTERIO = $(shell ${VENV}/bin/python -m pip list|grep rasterio)
 
-.PHONY: help venv install lint format tests docs clean
+.PHONY: help venv install lint format tests docs docker clean
 
 help: ## this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -44,6 +44,10 @@ lint: install  ## run lint tools (depends install)
 format: install  ## run black and isort (depends install)
 	@${VENV}/bin/isort **/*.py
 	@${VENV}/bin/black **/*.py
+
+tests: install ## run tests
+	@cd tests;../${VENV}/bin/demcompare @opts.txt
+	@cd tests;../${VENV}/bin/demcompare_with_baseline
 
 docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"

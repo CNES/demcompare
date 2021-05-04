@@ -70,6 +70,8 @@ def setup_logging(
 ):
     """
     Setup the logging configuration
+    If logconf_path is found, set the json logging configuration
+    Else put default_level
 
     :param lo: path to the configuration file
     :type logconf_path: string
@@ -84,20 +86,27 @@ def setup_logging(
         logging.basicConfig(level=default_level)
 
 
-def compute_report(cfg, steps, dem, ref):
+def compute_report(
+    cfg, steps, dem_name, ref_name, coreg_dem_name, coreg_ref_name
+):
     """
-    Create html and pdf report
+    Create html and pdf report through sphinx generation
 
     :param cfg: configuration dictionary
-    :param dem: dem raster
-    :param ref: reference dem raster to be coregistered to dem raster
+    :param dem_name: dem raster name
+    :param ref_name: reference dem raster name
+    :coreg_dem_name: coreg_dem name
+    :coreg_ref_name: coreg_ref name
     :return:
     """
     if "report" in steps:
+        print("\n[Report]")
         report.generate_report(
             cfg["outputDir"],
-            dem.ds_file,
-            ref.ds_file,
+            dem_name,
+            ref_name,
+            coreg_dem_name,
+            coreg_ref_name,
             cfg["stats_results"]["partitions"],
             os.path.join(cfg["outputDir"], get_out_dir("sphinx_built_doc")),
             os.path.join(cfg["outputDir"], get_out_dir("sphinx_src_doc")),
@@ -116,13 +125,15 @@ def compute_stats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     :param final_json_file: filename of final_cfg
     :return:
     """
-
+    print("\n[Stats]")
     cfg["stats_results"] = {}
     cfg["stats_results"]["images"] = {}
     cfg["stats_results"]["images"]["list"] = []
 
+    print("# DEM diff wave detection")
     stats.wave_detection(cfg, final_dh)
 
+    print("# Altimetric error stats generation")
     stats.alti_diff_stats(
         cfg,
         dem,
@@ -132,6 +143,8 @@ def compute_stats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
         remove_outliers=cfg["stats_opts"]["remove_outliers"],
     )
     # save results
+    print("Save final results stats information file:")
+    print(final_json_file)
     with open(final_json_file, "w") as outfile:
         json.dump(cfg, outfile, indent=2)
 
@@ -140,7 +153,7 @@ def compute_coregistration(
     cfg, steps, dem, ref, initial_dh, final_cfg=None, final_json_file=None
 ):
     """
-    Coregister two DSMs together and compute alti differences
+    Coregister two DEMs together and compute alti differences
     (before and after coregistration).
 
     This can be view as a two step process:
@@ -154,8 +167,15 @@ def compute_coregistration(
     :param final_cfg: cfg from a previous run
     :param final_json_file: filename of final_cfg
     :return: coregistered dem and ref rasters + final alti differences
+             + coregistration state if launched or not
+             coreg_state = True : final_cfg different from initial_cfg
     """
+    print("[Coregistration]")
+    coreg_state = False
     if "coregistration" in steps:
+        print("# Nuth & Kaab coregistration")
+        coreg_state = True
+
         (
             coreg_dem,
             coreg_ref,
@@ -165,14 +185,18 @@ def compute_coregistration(
         # saves results here in case next step fails
         with open(final_json_file, "w") as outfile:
             json.dump(cfg, outfile, indent=2)
-
+        #
     else:
         # If cfg from a previous run, get previous conf
+        print("No coregistration step stated.")
         if (
             final_cfg is not None
             and "plani_results" in final_cfg
             and "alti_results" in final_cfg
         ):
+            print("Previous coregistration found: get configuration")
+            coreg_state = True
+
             cfg["plani_results"] = final_cfg["plani_results"]
             cfg["alti_results"] = final_cfg["alti_results"]
             coreg_dem = read_img(
@@ -199,6 +223,8 @@ def compute_coregistration(
         else:
             # Set a default config for following steps from initial DEMs
             # No coregistration done.
+            print("Set coregistration DEMs equal to input DEMs")
+            coreg_state = False
             coreg_ref = ref
             coreg_dem = dem
             final_dh = initial_dh
@@ -228,10 +254,10 @@ def compute_coregistration(
                 ),
             )
             cfg["alti_results"]["rectifiedDSM"]["path"] = coreg_dem.attrs[
-                "ds_file"
+                "input_img"
             ]
             cfg["alti_results"]["rectifiedRef"]["path"] = coreg_ref.attrs[
-                "ds_file"
+                "input_img"
             ]
             cfg["alti_results"]["rectifiedDSM"]["nb_points"] = coreg_dem[
                 "im"
@@ -246,16 +272,16 @@ def compute_coregistration(
                 "nb_valid_points"
             ] = np.count_nonzero(~np.isnan(coreg_ref["im"].data))
             cfg["alti_results"]["dzMap"] = {
-                "path": final_dh.attrs["ds_file"],
+                "path": final_dh.attrs["input_img"],
                 "zunit": coreg_ref.attrs["zunit"].name,
-                "nodata": final_dh.coords["no_data"],
+                "nodata": final_dh.attrs["no_data"],
                 "nb_points": final_dh["im"].data.size,
                 "nb_valid_points": np.count_nonzero(
                     ~np.isnan(final_dh["im"].data.size)
                 ),
             }
 
-    return coreg_dem, coreg_ref, final_dh
+    return coreg_dem, coreg_ref, final_dh, coreg_state
 
 
 def compute_initialization(config_json):
@@ -318,13 +344,11 @@ def run_tile(json_file, steps=None, display=False):
     # Initialization
     #
     cfg = compute_initialization(json_file)
-    print(
-        (
-            "*** DEMcompare : start processing into {} ***".format(
-                cfg["outputDir"]
-            )
-        )
-    )
+
+    print("*** DEMcompare ***")
+    print("Working directory: {}".format(cfg["outputDir"]))
+    logging.debug("Demcompare configuration: {}".format(cfg))
+
     sys.stdout.flush()
     if display is False:
         # if display is False we have to tell matplotlib to cancel it
@@ -362,9 +386,12 @@ def run_tile(json_file, steps=None, display=False):
         ),
         load_data=(cfg["roi"] if "roi" in cfg else True),
     )
+    print("\n# Input Elevation Models:")
+    print("Tested DEM (DEM): {}".format(dem.input_img))
+    print("Reference DEM (REF): {}".format(ref.input_img))
 
     #
-    # Compute initial dh and save it
+    # Compute initial dh, save it
     #
     initial_dh = read_img_from_array(
         ref["im"].data - dem["im"].data, from_dataset=dem, no_data=-32768
@@ -373,20 +400,32 @@ def run_tile(json_file, steps=None, display=False):
         initial_dh,
         os.path.join(cfg["outputDir"], get_out_file_path("initial_dh.tif")),
     )
+    print("-> Initial diff DEM (REF - DEM): {}\n".format(initial_dh.input_img))
 
+    #
+    #  Plot/Save initial dh img and cdf
+    #
     stats.dem_diff_plot(
         initial_dh,
-        title="DSMs diff without coregistration (REF - DSM)",
+        title="Initial [REF - DEM] differences",
         plot_file=os.path.join(
             cfg["outputDir"], get_out_file_path("initial_dem_diff.png")
         ),
-        display=False,
+        display=display,
+    )
+    stats.dem_diff_cdf_plot(
+        initial_dh,
+        title="Initial [REF - DEM] differences CDF",
+        plot_file=os.path.join(
+            cfg["outputDir"], get_out_file_path("initial_dem_diff_cdf.png")
+        ),
+        display=display,
     )
 
     #
     # Coregister both DSMs together and compute final differences
     #
-    coreg_dem, coreg_ref, final_dh = compute_coregistration(
+    coreg_dem, coreg_ref, final_dh, coreg_state = compute_coregistration(
         cfg,
         steps,
         dem,
@@ -395,14 +434,33 @@ def run_tile(json_file, steps=None, display=False):
         final_cfg=final_cfg,
         final_json_file=final_json_file,
     )
-    if final_dh is not initial_dh:
+    if coreg_state:
+        #
+        #  Plot/Save final dh img and cdf if exists
+        #
+        print("# Coregistered Elevation Models:")
+        print("Coreg Tested DEM (COREG_DEM): {}".format(coreg_dem.input_img))
+        print("Coreg Reference DEM (COREG_REF): {}".format(coreg_ref.input_img))
+        print(
+            "--> Final diff DEM (COREG_REF - COREG_DEM): {}".format(
+                final_dh.input_img
+            )
+        )
         stats.dem_diff_plot(
             final_dh,
-            title="DSMs diff with coregistration (REF - DSM)",
+            title="Final [COREG_REF - COREG_DEM] differences",
             plot_file=os.path.join(
                 cfg["outputDir"], get_out_file_path("final_dem_diff.png")
             ),
-            display=False,
+            display=display,
+        )
+        stats.dem_diff_cdf_plot(
+            final_dh,
+            title="Final [COREG_REF - COREG_DEM] differences CDF",
+            plot_file=os.path.join(
+                cfg["outputDir"], get_out_file_path("final_dem_diff_cdf.png")
+            ),
+            display=display,
         )
 
     #
@@ -420,10 +478,17 @@ def run_tile(json_file, steps=None, display=False):
     #
     # Compute reports
     #
-    compute_report(cfg, steps, coreg_dem, coreg_ref)
+    compute_report(
+        cfg,
+        steps,
+        dem.input_img,
+        ref.input_img,
+        coreg_dem.input_img,
+        coreg_ref.input_img,
+    )
 
 
-def run(json_file, steps=None, display=False):
+def run(json_file, steps=None, display=False, loglevel=logging.WARNING):
     """
     DEMcompare main execution for all tiles.
     Call run_tile() function for each tile.
@@ -431,6 +496,7 @@ def run(json_file, steps=None, display=False):
     :param json_file: Input Json configuration file (mandatory)
     :param steps: Steps to execute (default: all)
     :param display: Choose Plot show or plot save (default).
+    :param loglevel: Choose Loglevel (default: WARNING)
     """
 
     # Set steps to default if None
@@ -440,7 +506,7 @@ def run(json_file, steps=None, display=False):
     #
     # Initialization
     #
-    setup_logging()
+    setup_logging(default_level=loglevel)
     cfg = compute_initialization(json_file)
     if display is False:
         # if display is False we have to tell matplotlib to cancel it

@@ -46,7 +46,8 @@ def get_parser():
     :return parser
     """
     parser = argparse.ArgumentParser(
-        description=("Compare Digital Elevation Models")
+        description=("Compare Digital Elevation Models"),
+        fromfile_prefix_chars="@",
     )
 
     parser.add_argument(
@@ -64,7 +65,11 @@ def get_parser():
         nargs="+",
         choices=ALL_STEPS,
         default=DEFAULT_STEPS,
-        help="steps to choose. default: all steps",
+        help='choose steps to run: "{}". Default: all.'
+        " See README for details.".format(
+            '" "'.join(str(i) for i in ALL_STEPS)
+        ),
+        metavar="step_name",
     )
     parser.add_argument(
         "--display",
@@ -77,6 +82,13 @@ def get_parser():
         action="version",
         version="%(prog)s {version}".format(version=demcompare.__version__),
     )
+    parser.add_argument(
+        "--loglevel",
+        default="WARNING",
+        choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
+        help="Logger level (default: INFO. Should be one of "
+        "(DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
     return parser
 
 
@@ -87,7 +99,9 @@ def main():
     parser = get_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    demcompare.run(args.config, args.step, display=args.display)
+    demcompare.run(
+        args.config, args.step, display=args.display, loglevel=args.loglevel
+    )
 
 
 if __name__ == "__main__":

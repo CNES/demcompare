@@ -2,12 +2,12 @@
 	"outputDir" : "./test_output/",
 	"inputRef" : {
 		"path" : "./test_data/srtm_ref.tif",
-		"zunit" : "meter",
+		"zunit" : "m",
 		"georef" : "WGS84"
 	},
 	"inputDSM" : {
 		"path" : "./test_data/srtm_blurred_and_shifted.tif",
-		"zunit" : "meter",
+		"zunit" : "m",
 		"georef" : "WGS84",
 		"nodata" : -32768
 	},

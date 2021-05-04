@@ -91,6 +91,17 @@ The results can be observed with:
     firefox test_output/doc/published_report/html/demcompare_report.html &
 ```
 
+demcompare can be launched with a file containing its parameters (one per line) with "@" character: 
+```
+demcompare @opts.txt
+```
+
+`opts.txt` example file:
+```
+test_config.json
+--display
+```
+
 #### Conventions
 
 Inside the `json` file, the DEMs are referred to as **inputDSM** and **inputRef**.
@@ -133,11 +144,11 @@ the meantime one can deal with heavy DSMs by setting a ROI (see previous chapter
 #### Step by step processing
 
 `demcompare` allows one to execute only a subset of the whole process. As such, a `--step` command line argument is
-provided. It accepts values from `{coregistration, stats, report}` :
+provided. It accepts values in `"coregistration" "stats" "report"` :
 
     [user@machine] $ demcompare
     usage: demcompare [-h]
-      [--step {coregistration,stats,report} [{coregistration,stats,report} ...]]
+      [--step step_name [step_name ...]]
       [--display] [--version]
       config.json
 
@@ -146,7 +157,12 @@ provided. It accepts values from `{coregistration, stats, report}` :
   - This means that one can launch the report step only as long as the stats step has already been performed from a previous
 `demcompare` launch and the config.json remains the same.
 - **coregistration** step is not mandatory for stats and following steps as one can decide its DEMs are already coregistered.
-
+- The steps are space-separated (no comma)
+- Be careful: the positional config.json can be wrongly used as a step if used after the --step option. 
+```
+demcompare --step stats config.json : KO
+demcompare config.json --step stats : OK
+```
 
 #### The parameters
 
