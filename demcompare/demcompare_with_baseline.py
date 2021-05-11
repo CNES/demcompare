@@ -189,6 +189,7 @@ def main():
         run(args.baselinePath, args.currentRunPath)
     except ValueError as value_error:
         print(value_error)
+        raise
     except Exception as error:
         print("Demcompare unexpected error: {} \n".format(error))
         raise
