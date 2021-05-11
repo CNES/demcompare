@@ -540,11 +540,6 @@ def dem_diff_cdf_plot(
     # Save cdf in csv in same base file name.
     with open(plot_file_base + ".csv", "w", newline="") as csv_file:
         writer = csv.writer(csv_file, delimiter=",")
-        # Write nan infos
-        writer.writerow(["nb_pixels", nb_pixels])
-        writer.writerow(["nb_nans", nb_nans])
-        writer.writerow("")
-        # Write cdf infos
         writer.writerow(["Bins", "CDF values"])
         writer.writerows(zip(bins_count, cdf))
 
