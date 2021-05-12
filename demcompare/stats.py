@@ -517,7 +517,11 @@ def dem_diff_cdf_plot(
     abs_dem_diff = np.abs(dem_diff["im"].data)
 
     # Get max diff from data
-    max_diff = np.max(abs_dem_diff)
+    max_diff = np.nanmax(abs_dem_diff)
+
+    # Count nb nan
+    nb_nans = np.sum(np.isnan(abs_dem_diff))
+    nb_pixels = abs_dem_diff.shape[0] * abs_dem_diff.shape[1]
 
     # Get bins number for histogram
     nb_bins = int(max_diff / bin_step)
@@ -547,7 +551,10 @@ def dem_diff_cdf_plot(
     # tidy up the figure and add axes titles
     fig_ax.set_xlabel(
         "Full absolute elevation differences (m) "
-        "\nmax_diff={} nb_bins={}".format(max_diff, nb_bins),
+        "\nmax_diff={} nb_bins={}"
+        "\nnb_pixels={} nb_nans={}".format(
+            max_diff, nb_bins, nb_pixels, nb_nans
+        ),
         fontsize="medium",
     )
     fig_ax.set_ylabel("Cumulative Probability [0,1]", fontsize="medium")
