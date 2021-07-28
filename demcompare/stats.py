@@ -141,13 +141,18 @@ def get_nonan_mask(array, nan_value):
     )
 
 
-def get_outliers_free_mask(array, no_data_value=None):
+def get_outliers_free_mask(array, no_data_value):
     """
-    Get outliers free mask
+    Get outliers free mask (array of True where value is no outlier) with
+    values outside (mu + 3 sigma) and (mu - 3 sigma).
+    Nan and no_data_value are not considered in mu and sigma computation.
+
+    :param array: input array to compute outliers mask
+    :param no_data_value: value of no data to consider.
+    :return: outliers free mask (array of True where value is no outlier)
     """
     # pylint: disable=singleton-comparison
-    if no_data_value:
-        no_data_free_mask = get_nonan_mask(array, no_data_value)
+    no_data_free_mask = get_nonan_mask(array, no_data_value)
     array_without_nan = array[np.where(no_data_free_mask == True)]  # noqa: E712
     mu = np.mean(array_without_nan)
     sigma = np.std(array_without_nan)
