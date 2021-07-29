@@ -7,10 +7,16 @@ A new section Unreleased is opened then for next dev phase.
 ## Unreleased
 
 ### Added
+- Add Contributor Licence Agreement. [#37]
+- Add cumulative Density Function stats [#34]
+- Add Nuth/Kaab iterations number option [#13]
 
 ### Changed
 
 ### Fixed
+- Fix numpy, cython pip upgrade install [#37]
+- Fix remove_outliers no_data 0 bug. [#43]
+
 
 ## 0.1.0 First Open Source Official Release (July 2020)
 
