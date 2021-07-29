@@ -260,8 +260,8 @@ def write_row_vrts(
 
     # Second loop, write all row vrts
     # Do not use items()/iteritems() here because of python 2 and 3 compat
-    for size_y in vrt_row:
-        vrt_data = vrt_row[size_y]
+    for _, vrt_row_value in vrt_row.items():
+        vrt_data = vrt_row_value
         row_vrt_filename = os.path.join(
             vrt_data["vrt_dir"], vrt_data["vrt_name"]
         )
@@ -342,8 +342,8 @@ def write_main_vrt(
                 )
             # Do not use items()/iteritems() here
             # because of python 2 and 3 compat
-            for size_y in vrt_row:
-                vrt_data = vrt_row[size_y]
+            for size_y, vrt_row_value in vrt_row:
+                vrt_data = vrt_row_value
                 relative_vrt_dir = os.path.relpath(
                     vrt_data["vrt_dir"], vrt_dirname
                 )
@@ -433,21 +433,24 @@ def main(
     # If Output format is tif, convert vrt file to tif
     if output_format == "tif":
         try:
-            devnull = open(os.devnull, "w")
-            cmd = [
-                "gdal_translate",
-                "-ot",
-                "Float32",
-                "-co",
-                "TILES=YES",
-                "-co",
-                "BIGTIFF=IF_NEEDED",
-                "{}".format(vrt_name),
-                "{}".format(outfile),
-            ]
-            subprocess.check_call(
-                cmd, stdout=devnull, stderr=subprocess.STDOUT, env=os.environ
-            )
+            with open(os.devnull, "w") as devnull:
+                cmd = [
+                    "gdal_translate",
+                    "-ot",
+                    "Float32",
+                    "-co",
+                    "TILES=YES",
+                    "-co",
+                    "BIGTIFF=IF_NEEDED",
+                    "{}".format(vrt_name),
+                    "{}".format(outfile),
+                ]
+                subprocess.check_call(
+                    cmd,
+                    stdout=devnull,
+                    stderr=subprocess.STDOUT,
+                    env=os.environ,
+                )
         except Exception as error:
             print("Error {}".format(error))
 

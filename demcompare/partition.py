@@ -747,7 +747,7 @@ class FusionPartition(Partition):
             # creer le new label dans le dictionnaire new_classes
             new_label_name = "_&_".join(
                 [
-                    "_".join([name, str(label).split(":")[0]])
+                    "_".join([name, str(label).split(":", maxsplit=1)[0]])
                     for name, value, label in combi
                 ]
             )
