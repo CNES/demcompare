@@ -135,20 +135,30 @@ def round_up(x, y):
     return int(math.ceil((x / float(y)))) * y
 
 
-def get_nonan_mask(array, nan_value):
+def get_nonan_mask(array, no_data_value=None):
+    """
+    Get no data and nan mask value
+
+    :param array: input array to get the mask from
+    :no_data_value: no data value considered. Default: None
+    :return: nan and no_data_value if exists mask on array.
+    """
+    if no_data_value is None:
+        return np.apply_along_axis(lambda x: (~np.isnan(x)), 0, array)
+    # else no_data_value exists
     return np.apply_along_axis(
-        lambda x: (~np.isnan(x)) * (x != nan_value), 0, array
+        lambda x: (~np.isnan(x)) * (x != no_data_value), 0, array
     )
 
 
-def get_outliers_free_mask(array, no_data_value):
+def get_outliers_free_mask(array, no_data_value=None):
     """
     Get outliers free mask (array of True where value is no outlier) with
     values outside (mu + 3 sigma) and (mu - 3 sigma).
     Nan and no_data_value are not considered in mu and sigma computation.
 
     :param array: input array to compute outliers mask
-    :param no_data_value: value of no data to consider.
+    :param no_data_value: value of no data to consider. Default(None)
     :return: outliers free mask (array of True where value is no outlier)
     """
     # pylint: disable=singleton-comparison
