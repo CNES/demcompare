@@ -110,11 +110,14 @@ Note: **inputRef** DEM is supposed to be the denser one:
 - if any resampling process must be done, only **inputRef** DEM shall be resampled.
 - if the DEMs are uncoregistered, then the **inputRef** geographical location is supposedly the correct one.
 
-#### WGS84 and EGM96 references
+#### WGS84 and geoid references
 
 The DEMs altitudes can rely on both **ellipsoid** and **geoid** references. \
 However one shall use the `georef` parameter to set
 the reference assigned to the DEMs (the two DEMs can rely on different references).
+
+The default **geoid** reference is EGM96. However, the user can set another geoid using the parameter
+`geoid_path`.
 
 #### Altimetric unit
 
@@ -195,6 +198,25 @@ Where a valid `classification_layers` value could be:
                                                                      "dsm": 'None_or_path_to_land_cover_associated_with_the_dsm',
                                                                      "classes": {"forest": [31, 32], "urbain": [42]}}}
     }
+```
+
+If DEMs altitudes are to rely on **geoid**, configurations could be:
+
+```
+"inputDSM" : {  "path", "./inputDSM.tif"
+                        "zunit" : "meter",
+                        "georef" : "geoid",
+                        "nodata" : }
+```
+In this case, **EGM96 geoid** will be used by default.
+
+Otherwise, the absolute path to a locally available geoid model can be given, for instance:
+```
+"inputDSM" : {  "path", "./inputDSM.tif"
+                        "zunit" : "meter",
+                        "georef" : "geoid",
+                        "geoid_path": "path/to/egm08_25.gtx"
+                        "nodata" : }
 ```
 
 ## Outputs processing

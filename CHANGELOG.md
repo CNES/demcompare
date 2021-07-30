@@ -8,6 +8,8 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Added
 
+- Add option to give a local geoid model. [#33]
+
 ### Changed
 
 ### Fixed

@@ -378,6 +378,16 @@ def run_tile(json_file, steps=None, display=False):
         ),
         ref_georef=cfg["inputRef"]["georef"],
         dem_georef=cfg["inputDSM"]["georef"],
+        ref_geoid_path=(
+            cfg["inputRef"]["geoid_path"]
+            if "geoid_path" in cfg["inputRef"]
+            else None
+        ),
+        dem_geoid_path=(
+            cfg["inputDSM"]["geoid_path"]
+            if "geoid_path" in cfg["inputDSM"]
+            else None
+        ),
         ref_zunit=(
             cfg["inputRef"]["zunit"] if "zunit" in cfg["inputRef"] else "m"
         ),

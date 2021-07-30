@@ -162,6 +162,7 @@ def read_img(
     img: str,
     no_data: float = None,
     ref: str = "WGS84",
+    geoid_path: Union[str, None] = None,
     zunit: str = "m",
     load_data: bool = False,
 ) -> xr.Dataset:
@@ -170,7 +171,8 @@ def read_img(
 
     :param img: Path to the image
     :param no_data: no_data value in the image
-    :param ref: WGS84 or egm96
+    :param ref: WGS84 or geoid
+    :param geoid_path: optional, path to local geoid
     :param zunit: unit
     :param load_data: load as dem
     :return: dataset containing the variables :
@@ -187,6 +189,7 @@ def read_img(
         img,
         no_data=no_data,
         ref=ref,
+        geoid_path=geoid_path,
         zunit=zunit,
         load_data=load_data,
     )
@@ -200,6 +203,7 @@ def create_dataset(
     img: str,
     no_data: float = None,
     ref: str = "WGS84",
+    geoid_path: Union[str, None] = None,
     zunit: str = "m",
     load_data: bool = False,
 ) -> xr.Dataset:
@@ -211,7 +215,8 @@ def create_dataset(
     :param transform: image data
     :param img: image path
     :param no_data: no_data value in the image
-    :param ref: WGS84 or egm96
+    :param ref: WGS84 or geoid
+    :param geoid_path: optional path to local geoid, default is EGM96
     :param zunit: unit
     :param load_data: load as dem
     :return: xarray.DataSet containing the variables :
@@ -276,10 +281,10 @@ def create_dataset(
     }
 
     if load_data is not False:
-        if ref == "EGM96":
+        if ref == "geoid":
             # transform to ellipsoid
-            egm96_offset = get_egm96_offset(dataset)
-            dataset["im"].data += egm96_offset
+            geoid_offset = get_geoid_offset(dataset, geoid_path)
+            dataset["im"].data += geoid_offset
 
     return dataset
 
@@ -342,6 +347,8 @@ def load_dems(
     dem_nodata: float = None,
     ref_georef: str = "WGS84",
     dem_georef: str = "WGS84",
+    ref_geoid_path: Union[str, None] = None,
+    dem_geoid_path: Union[str, None] = None,
     ref_zunit: str = "m",
     dem_zunit: str = "m",
     load_data: Union[bool, dict, Tuple] = True,
@@ -355,8 +362,10 @@ def load_dems(
         (None by default and if set inside metadata)
     :param dem_nodata: dem no data value
         (None by default and if set inside metadata)
-    :param ref_georef: ref georef (either WGS84 -default- or EGM96)
-    :param dem_georef: dem georef (either WGS84 -default- or EGM96)
+    :param ref_georef: ref georef (either WGS84 -default- or geoid)
+    :param dem_georef: dem georef (either WGS84 -default- or geoid)
+    :param ref_geoid_path: optional path to local geoid, default is EGM96
+    :param dem_geoid_path: optional path to local geoid, default is EGM96
     :param ref_zunit: ref z unit
     :param dem_zunit: dem z unit
     :param load_data: True if dem are to be fully loaded,
@@ -458,6 +467,7 @@ def load_dems(
         dem_path,
         no_data=dem_nodata,
         ref=dem_georef,
+        geoid_path=dem_geoid_path,
         zunit=dem_zunit,
         load_data=load_data,
     )
@@ -469,6 +479,7 @@ def load_dems(
         ref_path,
         no_data=ref_nodata,
         ref=ref_georef,
+        geoid_path=ref_geoid_path,
         zunit=ref_zunit,
         load_data=load_data,
     )
@@ -827,21 +838,26 @@ def interpolate_geoid(
     return interp_geoid
 
 
-def get_egm96_offset(dataset: xr.Dataset) -> np.ndarray:
+def get_geoid_offset(
+    dataset: xr.Dataset, geoid_path: Union[str, None]
+) -> np.ndarray:
     """
     Get offset from geoid to ellipsoid
 
     :param dataset :  dataset
+    :param geoid_path :  optional absolut geoid_path, if None egm96 is used
     :return offset as array
     """
 
-    # Get Geoid path
-    # this returns the fully resolved path to the python installed module
-    module_path = os.path.dirname(__file__)
-    # Geoid relative Path as installed in setup.py
-    geoid_path = "geoid/egm96_15.gtx"
-    # Create full geoid path
-    geoid_path = os.path.join(module_path, geoid_path)
+    # If no geoid path has been given, use the default geoid egm96
+    # installed in setup.py
+    if geoid_path is None:
+        # this returns the fully resolved path to the python installed module
+        module_path = os.path.dirname(__file__)
+        # Geoid relative Path as installed in setup.py
+        geoid_path = "geoid/egm96_15.gtx"
+        # Create full geoid path
+        geoid_path = os.path.join(module_path, geoid_path)
 
     ny, nx = dataset["im"].data.shape
     xp = np.arange(nx)
