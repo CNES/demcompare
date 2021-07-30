@@ -11,6 +11,8 @@ A new section Unreleased is opened then for next dev phase.
 - Add cumulative Density Function stats [#34]
 - Add Nuth/Kaab iterations number option [#13]
 
+- Add option to give a local geoid model. [#33]
+
 ### Changed
 
 ### Fixed
