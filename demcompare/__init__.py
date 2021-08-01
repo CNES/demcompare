@@ -163,7 +163,7 @@ def compute_coregistration(
     :param cfg: configuration dictionary
     :param dem: xarray.Dataset, dem raster to compare
     :param ref: xarray.Dataset, reference dem raster coregistered with dem
-    :param initial_dh: xarray.Dataset, inital alti diff
+    :param initial_dh: xarray.Dataset, initial alti diff
     :param final_cfg: cfg from a previous run
     :param final_json_file: filename of final_cfg
     :return: coregistered dem and ref rasters + final alti differences

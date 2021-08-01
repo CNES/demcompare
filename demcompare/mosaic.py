@@ -207,7 +207,7 @@ def write_row_vrts(
         vrt_basename: basename of the output vrt
         min_x, max_x: col extent of the raster
     Returns:
-        A dictionnary of vrt files with sections vrt_body, th and vrt_dir
+        A dictionary of vrt files with sections vrt_body, th and vrt_dir
     """
     vrt_row = {}
 
@@ -322,7 +322,7 @@ def write_main_vrt(
     Write the main vrt file
 
     Args:
-        vrt_row: The vrt files dictionnary from write_row_vrts()
+        vrt_row: The vrt files dictionary from write_row_vrts()
         vrt_name: The output vrt_name
         min_x,max_x,min_y,max_y: Extent of the raster
     """

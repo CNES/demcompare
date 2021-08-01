@@ -767,7 +767,7 @@ def get_slope(dataset: xr.Dataset, degree: bool = False) -> np.ndarray:
         distx = get_orthodromic_distance(lon, lat, lonr, lat)
         disty = get_orthodromic_distance(lon, lat, lon, latl)
 
-        # deal withs ingularities at edges
+        # deal with singularities at edges
         distx[:, 0] = distx[:, 1]
         disty[0] = disty[1]
     else:
@@ -845,7 +845,7 @@ def get_geoid_offset(
     Get offset from geoid to ellipsoid
 
     :param dataset :  dataset
-    :param geoid_path :  optional absolut geoid_path, if None egm96 is used
+    :param geoid_path :  optional absolute geoid_path, if None egm96 is used
     :return offset as array
     """
 

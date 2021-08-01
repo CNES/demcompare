@@ -223,7 +223,7 @@ class SphinxProjectManager:
                 os.path.join(self._working_dir, "cr_build-{}.txt".format(mode)),
                 "w",
             ) as cr_build:
-                # Call make "mode" and output in "cr_build" log ouput file
+                # Call make "mode" and output in "cr_build" log output file
                 subprocess.check_call(
                     ["make", mode],
                     stdout=cr_build,

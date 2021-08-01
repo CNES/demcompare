@@ -49,7 +49,7 @@ def coregister_with_nuth_and_kaab(
     :param dem2: xarray Dataset, slave dem
     :param init_disp_x: initial x disparity in pixel
     :param init_disp_y: initial y disparity in pixel
-    :param tmp_dir: directory path to temporay results (as Nuth & Kaab plots)
+    :param tmp_dir: directory path to temporary results (as Nuth & Kaab plots)
     :param nb_iters: Nuth and Kaab number of iterations (default 6)
     :return: mean shifts (x and y), and coregistered DEMs
     """

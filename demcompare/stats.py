@@ -264,10 +264,10 @@ def create_masks(
        which is 'coherent-classification' complementary
 
     :param alti_map: xarray Dataset, alti differences
-    :param do_classification: wether or not the classification is activated
+    :param do_classification: whether or not the classification is activated
     :param ref_support: xarray Dataset
     :param do_cross_classification:
-        wether or not the cross classification is activated
+        whether or not the cross classification is activated
     :param ref_support_classified_desc:
         dict with 'path' and 'nodata' keys for the ref support image classified
     :param remove_outliers:
@@ -615,7 +615,7 @@ def plot_histograms(  # noqa: C901
         (boolean arrays that indicate which class a pixel belongs to)
     :param set_labels: name associated to the sets
     :param sets_colors: color set for plotting
-    :param sets_stats: where should be retrived mean and std values for all sets
+    :param sets_stats: where should be retrieved mean and std values for all sets
     :param plot_title: plot primary title
     :param outplotdir: directory where histograms are to be saved
     :param outhistdir: directory where histograms
@@ -870,7 +870,7 @@ def save_results(
     :param output_json_file: file in which to save
     :param stats_list: all the stats to save (one element per label)
     :param labels_plotted: list of labels plotted
-    :param plot_files: list of plot files associdated to the labels_plotted
+    :param plot_files: list of plot files associated to the labels_plotted
     :param plot_colors: list of plot colors associated to the labels_plotted
     :param to_csv: boolean, set to True to save to csv format as well
         (default False)
@@ -945,7 +945,7 @@ def create_partitions(dsm, ref, output_dir, stats_opts, geo_ref=True):
     If the support is a slope,it's transformed into a classification support.
     :param dsm: xarray Dataset, dsm
     :param ref: xarray Dataset, coregistered ref
-    :param output_dir: ouput directory
+    :param output_dir: output directory
     :param stats_opts: TODO
     :param geo_ref: boolean, set to False if images are not georeferenced
     :return: dict, with partitions information {'

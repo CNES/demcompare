@@ -80,7 +80,7 @@ def check_parameters(cfg):  # noqa: C901
             ) from value_error
         if unit.physical_type != u.m.physical_type:
             raise NameError(
-                "ERROR: input DSM zunit ({}) not a lenght unit".format(
+                "ERROR: input DSM zunit ({}) not a length unit".format(
                     cfg["inputDSM"]["zunit"]
                 )
             )
@@ -97,7 +97,7 @@ def check_parameters(cfg):  # noqa: C901
             ) from value_error
         if unit.physical_type != u.m.physical_type:
             raise NameError(
-                "ERROR: input Ref zunit ({}) not a lenght unit".format(
+                "ERROR: input Ref zunit ({}) not a length unit".format(
                     cfg["inputRef"]["zunit"]
                 )
             )

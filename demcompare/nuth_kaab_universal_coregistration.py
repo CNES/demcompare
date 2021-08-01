@@ -82,7 +82,7 @@ def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
 
     # function to be correlated with terrain aspect
     # NB : target = dh / tan(alpha) (see Fig. 2 of Nuth & Kaab 2011)
-    # Explicitely ignore divide by zero warning,
+    # Explicitly ignore divide by zero warning,
     #   as they will be processed as nan later.
     with np.errstate(divide="ignore", invalid="ignore"):
         target = dh / slope
@@ -162,7 +162,7 @@ def nuth_kaab_lib(dsm_dataset, ref_dataset, outdir_plot=None, nb_iters=6):
     It offers quite the same services as the classic main api
     but uses Xarray as input instead of raster files.
     This allows the user to pre-process the data
-    and / or avoid unecessary reload of the data.
+    and / or avoid unnecessary reload of the data.
 
     Output coregister DSM might be saved.
     Plots might be saved as well (and then not printed) if outputPlot is set.
