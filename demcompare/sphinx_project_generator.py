@@ -161,7 +161,7 @@ class SphinxProjectManager:
                 ]
             )
 
-            with open(self._makefile, "w") as makefile:
+            with open(self._makefile, "w", encoding="utf8") as makefile:
                 makefile.write(make_contents)
 
     def _create_confpy(self):
@@ -200,17 +200,25 @@ class SphinxProjectManager:
                 ]
             )
 
-            with open(self._confpy, "w") as confpy:
+            with open(self._confpy, "w", encoding="utf8") as confpy:
                 confpy.write(conf_contents)
 
     def write_body(self, body):
+        """
+        Write report body in class file.
+
+        :param body: body text
+        """
         with open(
-            os.path.join(self._src_dir, self._index_name + ".rst"), "w"
+            os.path.join(self._src_dir, self._index_name + ".rst"),
+            "w",
+            encoding="utf8",
         ) as rst_file:
             rst_file.write(body)
 
     def build_project(self, mode):
         """
+        Build project depending on mode.
 
         :param mode: 'html' or 'latex' or 'latexpdf'
         :return:
@@ -222,6 +230,7 @@ class SphinxProjectManager:
             with open(
                 os.path.join(self._working_dir, "cr_build-{}.txt".format(mode)),
                 "w",
+                encoding="utf8",
             ) as cr_build:
                 # Call make "mode" and output in "cr_build" log ouput file
                 subprocess.check_call(

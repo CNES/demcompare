@@ -123,7 +123,7 @@ def compute_stats_array(
         geo_ref=False,
     )
     # save results
-    with open(final_json_file, "w") as outfile:
+    with open(final_json_file, "w", encoding="utf8") as outfile:
         json.dump(cfg, outfile, indent=2)
 
 
@@ -553,7 +553,9 @@ def dem_diff_cdf_plot(
     cdf = np.cumsum(pdf)
 
     # Save cdf in csv in same base file name.
-    with open(plot_file_base + ".csv", "w", newline="") as csv_file:
+    with open(
+        plot_file_base + ".csv", "w", newline="", encoding="utf8"
+    ) as csv_file:
         writer = csv.writer(csv_file, delimiter=",")
         writer.writerow(["Bins", "CDF values"])
         writer.writerows(zip(bins_count, cdf))
@@ -902,7 +904,7 @@ def save_results(
                     )
                     raise
 
-    with open(output_json_file, "w") as outfile:
+    with open(output_json_file, "w", encoding="utf8") as outfile:
         json.dump(results, outfile, indent=4)
 
     if to_csv:
@@ -928,7 +930,7 @@ def save_results(
             csv_results[key]["NMAD"] = results[key]["nmad"]
             csv_results[key]["90 percentile"] = results[key]["90p"]
         # - writes the results down as csv format
-        with open(csv_filename, "w") as csvfile:
+        with open(csv_filename, "w", encoding="utf8") as csvfile:
             fieldnames = list(csv_results["0"].keys())
             writer = csv.DictWriter(
                 csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_NONNUMERIC
