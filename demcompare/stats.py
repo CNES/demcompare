@@ -49,7 +49,7 @@ from .partition import FusionPartition, NotEnoughDataToPartitionError, Partition
 
 
 class NoPointsToPlot(Exception):
-    pass
+    """Specific NoPointsToPlot Exception Class creation"""
 
 
 def compute_stats_array(
@@ -128,10 +128,12 @@ def compute_stats_array(
 
 
 def gaus(x, a, x_zero, sigma):
+    """Gauss math function"""
     return a * np.exp(-((x - x_zero) ** 2) / (2 * sigma ** 2))
 
 
 def round_up(x, y):
+    """Round up math function"""
     return int(math.ceil((x / float(y)))) * y
 
 
@@ -1083,6 +1085,7 @@ def alti_diff_stats(
     """
 
     def get_title(cfg):
+        """Create title for alti_diff_stats"""
         if geo_ref:
             # Set future plot title with bias and % of nan values as part of it
             title = ["DEM quality performance"]
@@ -1133,6 +1136,9 @@ def alti_diff_stats(
         return title
 
     def get_thresholds_in_meters(cfg):
+        """
+        Create list of threshold in meters.
+        """
         # If required, get list of altitude thresholds and adjust the unit
         list_threshold_m = None
         if cfg["stats_opts"]["elevation_thresholds"]["list"]:

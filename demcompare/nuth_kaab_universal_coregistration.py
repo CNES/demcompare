@@ -122,11 +122,13 @@ def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
     # set the first guess
     p0 = (3 * np.std(yf) / (2 ** 0.5), 0, np.mean(yf))
 
-    # least square fit : peval defines the model chosen
+    # least square fit
     def peval(x, p):
+        """peval defines the model chosen"""
         return p[0] * np.cos(p[1] - x) + p[2]
 
     def residuals(p, y, x):
+        """residuals function based on peval"""
         err = peval(x, p) - y
         return err
 

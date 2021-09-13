@@ -213,15 +213,9 @@ def initialization_stats_opts(cfg):
         "slope": {"ranges": [0, 10, 25, 50, 90], "ref": None, "dsm": None}
     }
 
-    # default_classification_layer = {
-    #     "ref": None,
-    #     "dsm": None,
-    #     "classes": {},
-    # }  # {}
-
     # TODO Refactor to be more generic on each part !
     # TODO If all is empty, empty classification_layers,
-    #      if not empty for each element
+    # TODO if not empty for each element
 
     if "stats_opts" not in cfg:
         cfg["stats_opts"] = default_stats_opts

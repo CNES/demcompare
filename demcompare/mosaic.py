@@ -30,6 +30,10 @@ import subprocess
 
 
 def shellquote(string):
+    """
+    shellquote function
+    TODO: seem unused in code ? Remove ?
+    """
     return "'%s'" % string.replace("'", "'\\''")
 
 
@@ -37,6 +41,9 @@ garbage = []
 
 
 def remove(target):
+    """
+    Remove a target with python os lib.
+    """
     try:
         os.remove(target)
     except OSError:

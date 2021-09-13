@@ -33,6 +33,9 @@ import argcomplete
 
 
 def load_csv(csv_file):
+    """
+    Load CSV function
+    """
     with open(csv_file, "r", encoding="utf8") as file:
         return file.readlines()
 

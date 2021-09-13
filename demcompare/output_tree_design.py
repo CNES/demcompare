@@ -61,12 +61,15 @@ supported_OTD = {"default_OTD": default_OTD}
 
 
 def get_otd_dirs(design="default_OTD"):
+    """Get All Output Tree Design directories"""
     return list(set(supported_OTD[design].values()))
 
 
 def get_out_dir(key, design="default_OTD"):
+    """Get key chosen Output Tree Design directory"""
     return supported_OTD[design][key]
 
 
 def get_out_file_path(key, design="default_OTD"):
+    """Get full path of get_out_dir from key in OTD"""
     return os.path.join(get_out_dir(key, design), key)
