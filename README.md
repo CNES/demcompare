@@ -1,3 +1,6 @@
+<div align="center">
+  <a href="https://github.com/CNES/demcompare"><img src="docs/source/images/demcompare_picto.png" alt="Demcompare" title="Demcompare"  width="10%" align="left"></a>
+
 <h4 align="center">DEMcompare, a DEM comparison tool  </h4>
 
 [![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
@@ -11,6 +14,7 @@
   <a href="#outputs-processing">Outputs processing</a> •
   <a href="#references">References</a>
 </p>
+</div>
 
 ## Overview
 
@@ -91,7 +95,7 @@ The results can be observed with:
     firefox test_output/doc/published_report/html/demcompare_report.html &
 ```
 
-demcompare can be launched with a file containing its parameters (one per line) with "@" character: 
+demcompare can be launched with a file containing its parameters (one per line) with "@" character:
 ```
 demcompare @opts.txt
 ```
@@ -161,7 +165,7 @@ provided. It accepts values in `"coregistration" "stats" "report"` :
 `demcompare` launch and the config.json remains the same.
 - **coregistration** step is not mandatory for stats and following steps as one can decide its DEMs are already coregistered.
 - The steps are space-separated (no comma)
-- Be careful: the positional config.json can be wrongly used as a step if used after the --step option. 
+- Be careful: the positional config.json can be wrongly used as a step if used after the --step option.
 ```
 demcompare --step stats config.json : KO
 demcompare config.json --step stats : OK
