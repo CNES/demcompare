@@ -79,7 +79,7 @@ def setup_logging(
     :type default_level: logging level
     """
     if os.path.exists(logconf_path):
-        with open(logconf_path, "rt") as logconf_file:
+        with open(logconf_path, "rt", encoding="utf8") as logconf_file:
             config = json.load(logconf_file)
         logging.config.dictConfig(config)
     else:
@@ -145,7 +145,7 @@ def compute_stats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     # save results
     print("Save final results stats information file:")
     print(final_json_file)
-    with open(final_json_file, "w") as outfile:
+    with open(final_json_file, "w", encoding="utf8") as outfile:
         json.dump(cfg, outfile, indent=2)
 
 
@@ -183,7 +183,7 @@ def compute_coregistration(
         ) = coregistration.coregister_and_compute_alti_diff(cfg, dem, ref)
 
         # saves results here in case next step fails
-        with open(final_json_file, "w") as outfile:
+        with open(final_json_file, "w", encoding="utf8") as outfile:
             json.dump(cfg, outfile, indent=2)
         #
     else:
@@ -294,7 +294,7 @@ def compute_initialization(config_json):
     """
 
     # read the json configuration file
-    with open(config_json, "r") as config_json_file:
+    with open(config_json, "r", encoding="utf8") as config_json_file:
         cfg = json.load(config_json_file)
 
     # create output directory
@@ -361,7 +361,7 @@ def run_tile(json_file, steps=None, display=False):
     # Try to read json_file if exists and if a previous run was launched
     final_cfg = None
     if os.path.isfile(final_json_file):
-        with open(final_json_file, "r") as file:
+        with open(final_json_file, "r", encoding="utf8") as file:
             final_cfg = json.load(file)
 
     #

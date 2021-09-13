@@ -407,11 +407,13 @@ def divide_images(cfg):
         tile_json = os.path.join(tile["dir"], "config.json")
         tile["json"] = tile_json
 
-        with open(tile_json, "w") as conf_json_file:
+        with open(tile_json, "w", encoding="utf8") as conf_json_file:
             json.dump(tile_cfg, conf_json_file, indent=2)
 
     # Write the list of json files to outputDir/tiles.txt
-    with open(os.path.join(cfg["outputDir"], "tiles.txt"), "w") as tile_file:
+    with open(
+        os.path.join(cfg["outputDir"], "tiles.txt"), "w", encoding="utf8"
+    ) as tile_file:
         for tile in tiles:
 
             tile_file.write(tile["json"] + os.linesep)

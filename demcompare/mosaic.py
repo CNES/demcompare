@@ -58,7 +58,7 @@ def read_tiles(tiles_file):
     tiles = []
     outdir = os.path.dirname(tiles_file)
 
-    with open(tiles_file) as file:
+    with open(tiles_file, encoding="utf8") as file:
         tiles = file.readlines()
 
     # Strip trailing \n
@@ -164,7 +164,7 @@ def global_extent(tiles):
 
     # First loop is to compute global extent
     for tile in tiles:
-        with open(tile, "r") as file:
+        with open(tile, "r", encoding="utf8") as file:
 
             tile_cfg = json.load(file)
 
@@ -213,7 +213,7 @@ def write_row_vrts(
 
     # First loop, write all row vrts body section
     for tile in tiles:
-        with open(tile, "r") as file:
+        with open(tile, "r", encoding="utf8") as file:
 
             tile_cfg = json.load(file)
 
@@ -266,7 +266,7 @@ def write_row_vrts(
             vrt_data["vrt_dir"], vrt_data["vrt_name"]
         )
 
-        with open(row_vrt_filename, "w") as row_vrt_file:
+        with open(row_vrt_filename, "w", encoding="utf8") as row_vrt_file:
             # Write vrt header
             row_vrt_file.write(
                 vrt_header(
@@ -328,7 +328,7 @@ def write_main_vrt(
     """
     vrt_dirname = os.path.dirname(vrt_name) or "."
 
-    with open(vrt_name, "w") as main_vrt_file:
+    with open(vrt_name, "w", encoding="utf8") as main_vrt_file:
         main_vrt_file.write(
             vrt_header(
                 max_x - min_x, max_y - min_y, data_type=data_type, color=color
@@ -433,7 +433,7 @@ def main(
     # If Output format is tif, convert vrt file to tif
     if output_format == "tif":
         try:
-            with open(os.devnull, "w") as devnull:
+            with open(os.devnull, "w", encoding="utf8") as devnull:
                 cmd = [
                     "gdal_translate",
                     "-ot",

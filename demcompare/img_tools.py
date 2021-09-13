@@ -877,7 +877,9 @@ def get_geoid_offset(
     if src_crs.is_projected:
         # convert to global coordinates
         proj = pyproj.Proj(src_crs)
-        lon, lat = proj(lon, lat, inverse=True)
+        lon, lat = proj(  # pylint: disable=unpacking-non-sequence
+            lon, lat, inverse=True
+        )
 
         # transform to list (2xN)
     lon_1d = np.reshape(

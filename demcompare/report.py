@@ -168,7 +168,7 @@ def generate_report(  # noqa: C901
             if len(result) > 0:
                 if os.path.exists(result[0]):
                     csv_data = []
-                    with open(result[0], "r") as csv_file:
+                    with open(result[0], "r", encoding="utf8") as csv_file:
                         csv_lines_reader = csv.reader(
                             csv_file, quoting=csv.QUOTE_NONNUMERIC
                         )

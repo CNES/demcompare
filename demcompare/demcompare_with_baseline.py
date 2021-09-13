@@ -33,7 +33,7 @@ import argcomplete
 
 
 def load_csv(csv_file):
-    with open(csv_file, "r") as file:
+    with open(csv_file, "r", encoding="utf8") as file:
         return file.readlines()
 
 
