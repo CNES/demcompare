@@ -112,6 +112,7 @@ def generate_report(  # noqa: C901
     # Initialize mode informations
     modes_information = collections.OrderedDict()
 
+    # Loop on demcompare partitions
     for partition_name, _ in partitions.items():
         # Initialize mode informations for partition
         modes_information[partition_name] = collections.OrderedDict()
@@ -136,6 +137,7 @@ def generate_report(  # noqa: C901
             "incoherent-classification",
         ]
 
+        # Loop on demcompare modes.
         for mode in modes:
             # for mode in modes_information:
             # find both graph and csv stats associated with the mode
@@ -168,7 +170,7 @@ def generate_report(  # noqa: C901
             if len(result) > 0:
                 if os.path.exists(result[0]):
                     csv_data = []
-                    with open(result[0], "r") as csv_file:
+                    with open(result[0], "r", encoding="utf8") as csv_file:
                         csv_lines_reader = csv.reader(
                             csv_file, quoting=csv.QUOTE_NONNUMERIC
                         )
@@ -193,6 +195,8 @@ def generate_report(  # noqa: C901
                     modes_information[partition_name][mode]["csv"] = None
             else:
                 modes_information[partition_name][mode]["csv"] = None
+        # End of mode loop
+    # End of partition loop
 
     # Find DSMs differences files
     dem_diff_without_coreg = first_recursive_search(
@@ -231,7 +235,7 @@ def generate_report(  # noqa: C901
             "",
         ]
     )
-    # -> DSM differences
+    # -> DSM differences without coregistration
     src = "\n".join(
         [
             src,
@@ -253,6 +257,7 @@ def generate_report(  # noqa: C901
             "",
         ]
     )
+    # if exists : -> DSM differences with coregistration
     if dem_diff_with_coreg:
         src = "\n".join(
             [
@@ -276,7 +281,7 @@ def generate_report(  # noqa: C901
                 "",
             ]
         )
-    # -> table of contents
+    # -> stats results table of contents
     src = "\n".join([src, "Stats Results", "===============", ""])
     if dem_diff_with_coreg:
         src = "\n".join(
@@ -347,7 +352,7 @@ def generate_report(  # noqa: C901
                 "",
             ]
         )
-
+        # loop for results for each mode
         for mode in modes:
             if mode in stats_results_d:
                 the_mode_histo = modes_information[partition_name][mode][
@@ -370,32 +375,35 @@ def generate_report(  # noqa: C901
                     "",
                 ]
             )
+            # Histogram
             if the_mode_histo:
                 src = "\n".join(
                     [
                         src,
-                        # 'Graph showing mean and standard deviation',
-                        # '-----------------------------------------',
+                        "Graph showing mean and standard deviation",
+                        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%",
                         ".. image:: /{}".format(the_mode_histo),
                         "",
                     ]
                 )
+            # Gaussian Fitted Histogram
             if the_mode_fitted_histo:
                 src = "\n".join(
                     [
                         src,
-                        # 'Fitted graph showing mean and standard deviation',
-                        # '-----------------------------------------',
+                        "Fitted graph showing mean and standard deviation",
+                        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%",
                         ".. image:: /{}".format(the_mode_fitted_histo),
                         "",
                     ]
                 )
+            # Table of results
             if the_mode_csv:
                 src = "\n".join(
                     [
                         src,
-                        # 'Table showing comparison metrics',
-                        # '--------------------------------',
+                        "Table showing comparison metrics",
+                        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%",
                         ".. csv-table::",
                         "",
                         "{}".format(the_mode_csv),

@@ -49,7 +49,7 @@ from .partition import FusionPartition, NotEnoughDataToPartitionError, Partition
 
 
 class NoPointsToPlot(Exception):
-    pass
+    """Specific NoPointsToPlot Exception Class creation"""
 
 
 def compute_stats_array(
@@ -123,15 +123,17 @@ def compute_stats_array(
         geo_ref=False,
     )
     # save results
-    with open(final_json_file, "w") as outfile:
+    with open(final_json_file, "w", encoding="utf8") as outfile:
         json.dump(cfg, outfile, indent=2)
 
 
 def gaus(x, a, x_zero, sigma):
+    """Gauss math function"""
     return a * np.exp(-((x - x_zero) ** 2) / (2 * sigma ** 2))
 
 
 def round_up(x, y):
+    """Round up math function"""
     return int(math.ceil((x / float(y)))) * y
 
 
@@ -553,7 +555,9 @@ def dem_diff_cdf_plot(
     cdf = np.cumsum(pdf)
 
     # Save cdf in csv in same base file name.
-    with open(plot_file_base + ".csv", "w", newline="") as csv_file:
+    with open(
+        plot_file_base + ".csv", "w", newline="", encoding="utf8"
+    ) as csv_file:
         writer = csv.writer(csv_file, delimiter=",")
         writer.writerow(["Bins", "CDF values"])
         writer.writerows(zip(bins_count, cdf))
@@ -902,7 +906,7 @@ def save_results(
                     )
                     raise
 
-    with open(output_json_file, "w") as outfile:
+    with open(output_json_file, "w", encoding="utf8") as outfile:
         json.dump(results, outfile, indent=4)
 
     if to_csv:
@@ -928,7 +932,7 @@ def save_results(
             csv_results[key]["NMAD"] = results[key]["nmad"]
             csv_results[key]["90 percentile"] = results[key]["90p"]
         # - writes the results down as csv format
-        with open(csv_filename, "w") as csvfile:
+        with open(csv_filename, "w", encoding="utf8") as csvfile:
             fieldnames = list(csv_results["0"].keys())
             writer = csv.DictWriter(
                 csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_NONNUMERIC
@@ -1081,6 +1085,7 @@ def alti_diff_stats(
     """
 
     def get_title(cfg):
+        """Create title for alti_diff_stats"""
         if geo_ref:
             # Set future plot title with bias and % of nan values as part of it
             title = ["DEM quality performance"]
@@ -1131,6 +1136,9 @@ def alti_diff_stats(
         return title
 
     def get_thresholds_in_meters(cfg):
+        """
+        Create list of threshold in meters.
+        """
         # If required, get list of altitude thresholds and adjust the unit
         list_threshold_m = None
         if cfg["stats_opts"]["elevation_thresholds"]["list"]:

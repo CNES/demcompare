@@ -213,15 +213,9 @@ def initialization_stats_opts(cfg):
         "slope": {"ranges": [0, 10, 25, 50, 90], "ref": None, "dsm": None}
     }
 
-    # default_classification_layer = {
-    #     "ref": None,
-    #     "dsm": None,
-    #     "classes": {},
-    # }  # {}
-
     # TODO Refactor to be more generic on each part !
     # TODO If all is empty, empty classification_layers,
-    #      if not empty for each element
+    # TODO if not empty for each element
 
     if "stats_opts" not in cfg:
         cfg["stats_opts"] = default_stats_opts
@@ -407,11 +401,13 @@ def divide_images(cfg):
         tile_json = os.path.join(tile["dir"], "config.json")
         tile["json"] = tile_json
 
-        with open(tile_json, "w") as conf_json_file:
+        with open(tile_json, "w", encoding="utf8") as conf_json_file:
             json.dump(tile_cfg, conf_json_file, indent=2)
 
     # Write the list of json files to outputDir/tiles.txt
-    with open(os.path.join(cfg["outputDir"], "tiles.txt"), "w") as tile_file:
+    with open(
+        os.path.join(cfg["outputDir"], "tiles.txt"), "w", encoding="utf8"
+    ) as tile_file:
         for tile in tiles:
 
             tile_file.write(tile["json"] + os.linesep)
