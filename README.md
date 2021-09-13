@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://github.com/CNES/demcompare"><img src="docs/source/images/demcompare_picto.png" alt="Demcompare" title="Demcompare"  width="10%" align="right"></a>
+  <a href="https://github.com/CNES/demcompare"><img src="docs/source/images/demcompare_picto.png" alt="Demcompare" title="Demcompare"  width="10%" align="left"></a>
 
 <h4 align="center">DEMcompare, a DEM comparison tool  </h4>
 
@@ -14,6 +14,7 @@
   <a href="#outputs-processing">Outputs processing</a> •
   <a href="#references">References</a>
 </p>
+</div>
 
 ## Overview
 
