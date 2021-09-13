@@ -23,10 +23,10 @@ Packaging setup.py for compatibility
 All packaging in setup.cfg, except setuptools_scm version activation
 """
 
-import setuptools
+from setuptools import setup
 
 try:
-    setuptools.setup(use_scm_version=True)
+    setup(use_scm_version=True)
 except Exception:
     print(
         "\n\nAn error occurred while building the project, "
