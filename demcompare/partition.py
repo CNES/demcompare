@@ -48,7 +48,7 @@ from .output_tree_design import get_out_dir
 
 
 class NotEnoughDataToPartitionError(Exception):
-    pass
+    """Define a specific NotEnoughDataToPartitionError Exception"""
 
 
 class Partition:
@@ -60,6 +60,8 @@ class Partition:
     # pylint: disable=too-many-instance-attributes
 
     class LackOfPartitionDataError(Exception):
+        """Define a specific LackOfPartitionDataError Exception"""
+
         def __init__(self):
             super().__init__()
             logging.error(
