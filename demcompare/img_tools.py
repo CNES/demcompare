@@ -381,6 +381,18 @@ def load_dems(
     dem_trans = src_dem.transform
     bounds_dem = src_dem.bounds
 
+    # Reproject if input image is inversed top bottom or left right
+    # to have the same consistent (left, bottom, right, top) reference
+    # than ref projected bounds (orientation bug otherwise)
+    transformed_dem_bounds = rasterio.warp.transform_bounds(
+        dem_crs,
+        dem_crs,
+        bounds_dem[0],
+        bounds_dem[1],
+        bounds_dem[2],
+        bounds_dem[3],
+    )
+
     if load_data is not True:
         # Use ROI
         if isinstance(load_data, (tuple, list)):
@@ -426,6 +438,7 @@ def load_dems(
 
     bounds_ref = src_ref.bounds
 
+    # Project bounds to dem_crs reference
     transformed_ref_bounds = rasterio.warp.transform_bounds(
         ref_crs,
         dem_crs,
@@ -436,13 +449,15 @@ def load_dems(
     )
 
     # intersect roi
-    if rasterio.coords.disjoint_bounds(bounds_dem, transformed_ref_bounds):
+    if rasterio.coords.disjoint_bounds(
+        transformed_dem_bounds, transformed_ref_bounds
+    ):
         raise NameError("ERROR: ROIs do not intersect")
     intersection_roi = (
-        max(bounds_dem[0], transformed_ref_bounds[0]),
-        max(bounds_dem[1], transformed_ref_bounds[1]),
-        min(bounds_dem[2], transformed_ref_bounds[2]),
-        min(bounds_dem[3], transformed_ref_bounds[3]),
+        max(transformed_dem_bounds[0], transformed_ref_bounds[0]),
+        max(transformed_dem_bounds[1], transformed_ref_bounds[1]),
+        min(transformed_dem_bounds[2], transformed_ref_bounds[2]),
+        min(transformed_dem_bounds[3], transformed_ref_bounds[3]),
     )
 
     # get  crop
