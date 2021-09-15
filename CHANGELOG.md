@@ -30,6 +30,7 @@ A new section Unreleased is opened then for next dev phase.
 - Fix remove_outliers no_data 0 bug. [#43]
 - Clean Makefile [#44]
 - Fix install numpy, cython and upgrade pip [#35]
+- Fix input images orientation possible bug [#49]
 
 ## 0.1.0 First Open Source Official Release (July 2020)
 
