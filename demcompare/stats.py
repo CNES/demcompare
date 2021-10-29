@@ -1167,6 +1167,7 @@ def alti_diff_stats(
         dsm, ref, cfg["outputDir"], cfg["stats_opts"], geo_ref=geo_ref
     )
 
+    plot_histogram_new(alti_map["im"].data, display, cfg["outputDir"])
     # For every partition get stats and save them as plots and tables
     cfg["stats_results"]["partitions"] = {}
     for p in partitions:
@@ -1299,6 +1300,48 @@ def save_as_graphs_and_tables(
             )
 
     return mode_output_json_files
+
+
+def plot_histogram_new(elev_diff, display, outplotdir):
+    """
+
+    :param elev_diff: elevation differences between both MNS
+    :type elev_diff: np.ndarray
+    :param display: whether to display the histogram
+    :type display: boolean
+    :param outplotdir: output plot directory
+    :type outplotdir: str
+    :return: None
+    """
+    # Histogram creation
+    hist, bins = np.histogram(
+        elev_diff[~np.isnan(elev_diff)], bins=np.arange(-5, 5, 0.1)
+    )
+    # Define histogram's bins width
+    width = 0.7 * (bins[1] - bins[0])
+    center = (bins[:-1] + bins[1:]) / 2
+    fig0 = mpl_pyplot.figure()
+    # Define axes labels and title
+    fig0_ax = fig0.add_subplot(111)
+    fig0_ax.set_title("Elevation difference Histogram", fontsize=12)
+    fig0_ax.set_xlabel("Elevation difference", fontsize=12)
+    fig0_ax.set_ylabel("Frequency", fontsize=12)
+    mpl_pyplot.grid(True)
+    mpl_pyplot.bar(center, hist, align="center", width=width)
+
+    if display is False:
+        # Save histogram to .png image
+        mpl_pyplot.savefig(
+            os.path.join(
+                outplotdir,
+                "final_dh_histogram.png",
+            ),
+            dpi=100,
+            bbox_inches="tight",
+        )
+    else:
+        mpl_pyplot.show()
+    mpl_pyplot.close(fig0)
 
 
 def get_stats_per_mode(

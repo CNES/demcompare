@@ -21,7 +21,6 @@
 """
 Create sphinx report and compile it for html and pdf format
 """
-
 # Standard imports
 import collections
 import csv
@@ -281,7 +280,7 @@ def generate_report(  # noqa: C901
                 "",
             ]
         )
-    # -> stats results table of contents
+    # -> stats results
     src = "\n".join([src, "Stats Results", "===============", ""])
     if dem_diff_with_coreg:
         src = "\n".join(
@@ -300,10 +299,27 @@ def generate_report(  # noqa: C901
                 "",
             ]
         )
+
+    # -> Elevation Difference Histogram
+    # Find histogram file
+    final_dh_histogram = first_recursive_search(
+        working_dir, "final_dh_histogram.png"
+    )
     src = "\n".join(
         [
             src,
-            "Stats are organized around classification layers and modes.\n",
+            "**Elevation difference histogram on all pixels**",
+            "-----------------------",
+            ".. image:: /{}".format(final_dh_histogram),
+            "",
+        ]
+    )
+
+    src = "\n".join(
+        [
+            src,
+            "The following stats are organized around "
+            + "classification layers and modes.\n",
             "See `README Documentation "
             "<https://github.com/CNES/demcompare>`_ for details.",
             "\n",
