@@ -206,13 +206,19 @@ def generate_report(  # noqa: C901
     )
 
     # Find DSMs CDF differences
-    dem_diff_cdf_without_coreg = first_recursive_search(
-        working_dir, "initial_dem_diff_cdf.png"
+    dem_diff_pdf_without_coreg = first_recursive_search(
+        working_dir, "initial_dem_diff_pdf.png"
     )
-    dem_diff_cdf_with_coreg = first_recursive_search(
-        working_dir, "final_dem_diff_cdf.png"
+    dem_diff_pdf_with_coreg = first_recursive_search(
+        working_dir, "final_dem_diff_pdf.png"
     )
-
+    # Find histogram files
+    initial_dh_histogram = first_recursive_search(
+        working_dir, "initial_dh_histogram.png"
+    )
+    final_dh_histogram = first_recursive_search(
+        working_dir, "final_dh_histogram.png"
+    )
     # Get ref_name
     dsm_name_dir, dsm_name = os.path.split(dsm_name)
     ref_name_dir, ref_name = os.path.split(ref_name)
@@ -245,7 +251,7 @@ def generate_report(  # noqa: C901
             "**Without coregistration**",
             "--------------------------",
             ".. image:: /{}".format(dem_diff_without_coreg),
-            ".. image:: /{}".format(dem_diff_cdf_without_coreg),
+            ".. image:: /{}".format(dem_diff_pdf_without_coreg),
             "",
             "*Input Initial DEMs:*",
             "",
@@ -256,6 +262,18 @@ def generate_report(  # noqa: C901
             "",
         ]
     )
+    # -> Elevation Difference Histogram without coregistration
+    src = "\n".join(
+        [
+            src,
+            "**Elevation difference histogram on all pixels"
+            + " without coregistration**",
+            "-----------------------",
+            ".. image:: /{}".format(initial_dh_histogram),
+            "",
+        ]
+    )
+
     # if exists : -> DSM differences with coregistration
     if dem_diff_with_coreg:
         src = "\n".join(
@@ -264,7 +282,7 @@ def generate_report(  # noqa: C901
                 "**With coregistration**",
                 "-----------------------",
                 ".. image:: /{}".format(dem_diff_with_coreg),
-                ".. image:: /{}".format(dem_diff_cdf_with_coreg),
+                ".. image:: /{}".format(dem_diff_pdf_with_coreg),
                 "",
             ]
         )
@@ -280,14 +298,27 @@ def generate_report(  # noqa: C901
                 "",
             ]
         )
-    # -> stats results
+
+        # -> Elevation Difference Histogram with coregistration
+        src = "\n".join(
+            [
+                src,
+                "**Elevation difference histogram on all pixels "
+                + "with coregistration**",
+                "-----------------------",
+                ".. image:: /{}".format(final_dh_histogram),
+                "",
+            ]
+        )
+
+    # -> stats results table of contents
     src = "\n".join([src, "Stats Results", "===============", ""])
     if dem_diff_with_coreg:
         src = "\n".join(
             [
                 src,
                 "*Important: stats are generated on "
-                "COREG_REF - COREG_DEM difference*",
+                + "COREG_REF - COREG_DEM difference*",
                 "",
             ]
         )
@@ -300,25 +331,10 @@ def generate_report(  # noqa: C901
             ]
         )
 
-    # -> Elevation Difference Histogram
-    # Find histogram file
-    final_dh_histogram = first_recursive_search(
-        working_dir, "final_dh_histogram.png"
-    )
     src = "\n".join(
         [
             src,
-            "**Elevation difference histogram on all pixels**",
-            "-----------------------",
-            ".. image:: /{}".format(final_dh_histogram),
-            "",
-        ]
-    )
-
-    src = "\n".join(
-        [
-            src,
-            "The following stats are organized around "
+            "The stats are organized around "
             + "classification layers and modes.\n",
             "See `README Documentation "
             "<https://github.com/CNES/demcompare>`_ for details.",
@@ -331,8 +347,10 @@ def generate_report(  # noqa: C901
         src = "\n".join(
             [
                 src,
-                "* The :ref:`{partition_name} <{partition_name}>` "
-                "classification layer".format(partition_name=partition_name),
+                "* The :ref:`{partition_name} <{partition_name}>` ".format(
+                    partition_name=partition_name
+                )
+                + "classification layer"
                 "",
             ]
         )

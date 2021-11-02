@@ -509,10 +509,10 @@ def dem_diff_plot(dem_diff, title="", plot_file="dem_diff.png", display=False):
     mpl_pyplot.close()
 
 
-def dem_diff_cdf_plot(
+def dem_diff_pdf_plot(
     dem_diff,
     title="",
-    plot_file="dem_diff_cdf.png",
+    plot_file="dem_diff_pdf.png",
     bin_step=0.1,
     display=False,
 ):
@@ -1167,7 +1167,6 @@ def alti_diff_stats(
         dsm, ref, cfg["outputDir"], cfg["stats_opts"], geo_ref=geo_ref
     )
 
-    plot_histogram_new(alti_map["im"].data, display, cfg["outputDir"])
     # For every partition get stats and save them as plots and tables
     cfg["stats_results"]["partitions"] = {}
     for p in partitions:
@@ -1302,7 +1301,7 @@ def save_as_graphs_and_tables(
     return mode_output_json_files
 
 
-def plot_histogram_new(elev_diff, display, outplotdir):
+def plot_histogram_new(elev_diff, display, outplotdir, name):
     """
 
     :param elev_diff: elevation differences between both MNS
@@ -1311,6 +1310,8 @@ def plot_histogram_new(elev_diff, display, outplotdir):
     :type display: boolean
     :param outplotdir: output plot directory
     :type outplotdir: str
+    :param name: output plot file name
+    :type name: str
     :return: None
     """
     # Histogram creation
@@ -1334,7 +1335,7 @@ def plot_histogram_new(elev_diff, display, outplotdir):
         mpl_pyplot.savefig(
             os.path.join(
                 outplotdir,
-                "final_dh_histogram.png",
+                name + ".png",
             ),
             dpi=100,
             bbox_inches="tight",
