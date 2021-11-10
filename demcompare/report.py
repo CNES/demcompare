@@ -206,18 +206,19 @@ def generate_report(  # noqa: C901
     )
 
     # Find DSMs CDF differences
-    dem_diff_pdf_without_coreg = first_recursive_search(
+    dem_diff_cdf_without_coreg = first_recursive_search(
+        working_dir, "initial_dem_diff_cdf.png"
+    )
+    dem_diff_cdf_with_coreg = first_recursive_search(
+        working_dir, "final_dem_diff_cdf.png"
+    )
+
+    # Find histogram files
+    initial_dem_diff_pdf = first_recursive_search(
         working_dir, "initial_dem_diff_pdf.png"
     )
-    dem_diff_pdf_with_coreg = first_recursive_search(
+    final_dem_diff_pdf = first_recursive_search(
         working_dir, "final_dem_diff_pdf.png"
-    )
-    # Find histogram files
-    initial_dh_histogram = first_recursive_search(
-        working_dir, "initial_dh_histogram.png"
-    )
-    final_dh_histogram = first_recursive_search(
-        working_dir, "final_dh_histogram.png"
     )
     # Get ref_name
     dsm_name_dir, dsm_name = os.path.split(dsm_name)
@@ -251,7 +252,7 @@ def generate_report(  # noqa: C901
             "**Without coregistration**",
             "--------------------------",
             ".. image:: /{}".format(dem_diff_without_coreg),
-            ".. image:: /{}".format(dem_diff_pdf_without_coreg),
+            ".. image:: /{}".format(dem_diff_cdf_without_coreg),
             "",
             "*Input Initial DEMs:*",
             "",
@@ -269,7 +270,7 @@ def generate_report(  # noqa: C901
             "**Elevation difference histogram on all pixels"
             + " without coregistration**",
             "-----------------------",
-            ".. image:: /{}".format(initial_dh_histogram),
+            ".. image:: /{}".format(initial_dem_diff_pdf),
             "",
         ]
     )
@@ -282,7 +283,7 @@ def generate_report(  # noqa: C901
                 "**With coregistration**",
                 "-----------------------",
                 ".. image:: /{}".format(dem_diff_with_coreg),
-                ".. image:: /{}".format(dem_diff_pdf_with_coreg),
+                ".. image:: /{}".format(dem_diff_cdf_with_coreg),
                 "",
             ]
         )
@@ -306,7 +307,7 @@ def generate_report(  # noqa: C901
                 "**Elevation difference histogram on all pixels "
                 + "with coregistration**",
                 "-----------------------",
-                ".. image:: /{}".format(final_dh_histogram),
+                ".. image:: /{}".format(final_dem_diff_pdf),
                 "",
             ]
         )

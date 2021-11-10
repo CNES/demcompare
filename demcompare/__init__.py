@@ -423,7 +423,7 @@ def run_tile(json_file, steps=None, display=False):
         ),
         display=display,
     )
-    stats.dem_diff_pdf_plot(
+    stats.dem_diff_cdf_plot(
         initial_dh,
         title="Initial [REF - DEM] differences CDF",
         plot_file=os.path.join(
@@ -431,8 +431,8 @@ def run_tile(json_file, steps=None, display=False):
         ),
         display=display,
     )
-    stats.plot_histogram_new(
-        initial_dh["im"].data, display, cfg["outputDir"], "initial_dh_histogram"
+    stats.dem_diff_pdf_plot(
+        initial_dh["im"].data, display, cfg["outputDir"], "initial_dem_diff_pdf"
     )
     #
     # Coregister both DSMs together and compute final differences
@@ -466,7 +466,7 @@ def run_tile(json_file, steps=None, display=False):
             ),
             display=display,
         )
-        stats.dem_diff_pdf_plot(
+        stats.dem_diff_cdf_plot(
             final_dh,
             title="Final [COREG_REF - COREG_DEM] differences CDF",
             plot_file=os.path.join(
@@ -474,8 +474,8 @@ def run_tile(json_file, steps=None, display=False):
             ),
             display=display,
         )
-        stats.plot_histogram_new(
-            final_dh["im"].data, display, cfg["outputDir"], "final_dh_histogram"
+        stats.dem_diff_pdf_plot(
+            final_dh["im"].data, display, cfg["outputDir"], "final_dem_diff_pdf"
         )
 
     #

@@ -509,10 +509,10 @@ def dem_diff_plot(dem_diff, title="", plot_file="dem_diff.png", display=False):
     mpl_pyplot.close()
 
 
-def dem_diff_pdf_plot(
+def dem_diff_cdf_plot(
     dem_diff,
     title="",
-    plot_file="dem_diff_pdf.png",
+    plot_file="dem_diff_cdf.png",
     bin_step=0.1,
     display=False,
 ):
@@ -1301,7 +1301,9 @@ def save_as_graphs_and_tables(
     return mode_output_json_files
 
 
-def plot_histogram_new(elev_diff, display, outplotdir, name):
+def dem_diff_pdf_plot(
+    elev_diff, display, outplotdir, name, bin_step=0.2, max_diff=10, width=0.7
+):
     """
 
     :param elev_diff: elevation differences between both MNS
@@ -1311,15 +1313,22 @@ def plot_histogram_new(elev_diff, display, outplotdir, name):
     :param outplotdir: output plot directory
     :type outplotdir: str
     :param name: output plot file name
+    :type bin_step: float
+    :param bin_step: bin size
+    :type max_diff: int
+    :param max_diff: maximum altitude difference
+    :type width: float
+    :param width: plot's bin width
     :type name: str
     :return: None
     """
     # Histogram creation
     hist, bins = np.histogram(
-        elev_diff[~np.isnan(elev_diff)], bins=np.arange(-5, 5, 0.1)
+        elev_diff[~np.isnan(elev_diff)],
+        bins=np.arange(-max_diff, max_diff, bin_step),
     )
     # Define histogram's bins width
-    width = 0.7 * (bins[1] - bins[0])
+    width = width * (bins[1] - bins[0])
     center = (bins[:-1] + bins[1:]) / 2
     fig0 = mpl_pyplot.figure()
     # Define axes labels and title
