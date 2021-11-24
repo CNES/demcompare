@@ -588,6 +588,83 @@ def dem_diff_cdf_plot(
     mpl_pyplot.close()
 
 
+def dem_diff_pdf_plot(
+    dem_diff, title, plot_file, display, bin_step=0.2, width=0.7
+):
+    """
+    Computes the difference histogram
+
+    :param dem_diff: xarray Dataset,
+    :param title: string, plot title
+    :param plot_file: path and name for the saved plot
+        (used when display if False)
+    :param display: boolean, set to True if display is on,
+        otherwise the plot is saved to plot_file location
+    :param bin_step: float, bin size
+    :param width: float, plot's bin width
+    """
+
+    # Get plot_file file base
+    plot_file_base = os.path.splitext(plot_file)[0]
+
+    # Generate values array
+    dem_diff = dem_diff["im"].data
+
+    # Histogram creation.
+    # The histogram is centered around 0
+    # and bounded over [-percentile98, percentile98]
+    p98 = np.nanpercentile(dem_diff, 98)
+
+    hist, bins = np.histogram(
+        dem_diff[~np.isnan(dem_diff)],
+        bins=np.arange(-p98, p98, bin_step),
+    )
+
+    # Normalized Probability Density Function of the histogram
+    pdf = hist / sum(hist)
+
+    # Define histogram's bins width
+    width = width * (bins[1] - bins[0])
+    center = (bins[:-1] + bins[1:]) / 2
+    fig0 = mpl_pyplot.figure()
+    # Define axes labels and title
+    fig0_ax = fig0.add_subplot(111)
+    fig0_ax.set_title(title, fontsize=12)
+    fig0_ax.set_xlabel("Elevation difference (m) from -p98 to p98", fontsize=12)
+    fig0_ax.set_ylabel("Normalized frequency", fontsize=12)
+    mpl_pyplot.grid(True)
+    mpl_pyplot.bar(center, pdf, align="center", width=width)
+
+    # Generate histogram with all data to save in csv
+    max_diff = np.nanmax(dem_diff)
+    full_hist, bins = np.histogram(
+        dem_diff[~np.isnan(dem_diff)],
+        bins=np.arange(-max_diff, max_diff, bin_step),
+    )
+
+    # Normalized Probability Density Function of the histogram
+    pdf = full_hist / sum(full_hist)
+
+    # Save pdf in csv in same base file name.
+    with open(
+        plot_file_base + ".csv", "w", newline="", encoding="utf8"
+    ) as csv_file:
+        writer = csv.writer(csv_file, delimiter=",")
+        writer.writerow(["Bins", "Normalized PDF values"])
+        writer.writerows(zip(bins, pdf))
+
+    if display is False:
+        # Save histogram to .png image
+        mpl_pyplot.savefig(
+            plot_file,
+            dpi=100,
+            bbox_inches="tight",
+        )
+    else:
+        mpl_pyplot.show()
+    mpl_pyplot.close(fig0)
+
+
 def plot_histograms(  # noqa: C901
     input_array,
     bin_step=0.1,
@@ -1299,59 +1376,6 @@ def save_as_graphs_and_tables(
             )
 
     return mode_output_json_files
-
-
-def dem_diff_pdf_plot(
-    elev_diff, display, outplotdir, name, bin_step=0.2, max_diff=10, width=0.7
-):
-    """
-
-    :param elev_diff: elevation differences between both MNS
-    :type elev_diff: np.ndarray
-    :param display: whether to display the histogram
-    :type display: boolean
-    :param outplotdir: output plot directory
-    :type outplotdir: str
-    :param name: output plot file name
-    :type bin_step: float
-    :param bin_step: bin size
-    :type max_diff: int
-    :param max_diff: maximum altitude difference
-    :type width: float
-    :param width: plot's bin width
-    :type name: str
-    :return: None
-    """
-    # Histogram creation
-    hist, bins = np.histogram(
-        elev_diff[~np.isnan(elev_diff)],
-        bins=np.arange(-max_diff, max_diff, bin_step),
-    )
-    # Define histogram's bins width
-    width = width * (bins[1] - bins[0])
-    center = (bins[:-1] + bins[1:]) / 2
-    fig0 = mpl_pyplot.figure()
-    # Define axes labels and title
-    fig0_ax = fig0.add_subplot(111)
-    fig0_ax.set_title("Elevation difference Histogram", fontsize=12)
-    fig0_ax.set_xlabel("Elevation difference", fontsize=12)
-    fig0_ax.set_ylabel("Frequency", fontsize=12)
-    mpl_pyplot.grid(True)
-    mpl_pyplot.bar(center, hist, align="center", width=width)
-
-    if display is False:
-        # Save histogram to .png image
-        mpl_pyplot.savefig(
-            os.path.join(
-                outplotdir,
-                name + ".png",
-            ),
-            dpi=100,
-            bbox_inches="tight",
-        )
-    else:
-        mpl_pyplot.show()
-    mpl_pyplot.close(fig0)
 
 
 def get_stats_per_mode(

@@ -432,7 +432,10 @@ def run_tile(json_file, steps=None, display=False):
         display=display,
     )
     stats.dem_diff_pdf_plot(
-        initial_dh["im"].data, display, cfg["outputDir"], "initial_dem_diff_pdf"
+        initial_dh,
+        title="Elevation difference Histogram",
+        plot_file=os.path.join(cfg["outputDir"], "initial_dem_diff_pdf.png"),
+        display=display,
     )
     #
     # Coregister both DSMs together and compute final differences
@@ -475,7 +478,10 @@ def run_tile(json_file, steps=None, display=False):
             display=display,
         )
         stats.dem_diff_pdf_plot(
-            final_dh["im"].data, display, cfg["outputDir"], "final_dem_diff_pdf"
+            final_dh,
+            title="Elevation difference Histogram",
+            plot_file=os.path.join(cfg["outputDir"], "final_dem_diff_pdf.png"),
+            display=display,
         )
 
     #
