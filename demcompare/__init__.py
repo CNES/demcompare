@@ -18,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# pylint:disable=consider-using-f-string
 """
 DEMcompare init module file.
 DEMcompare aims at coregistering and comparing two Digital Elevation Models(DEM)
@@ -376,8 +377,8 @@ def run_tile(json_file, steps=None, display=False):
         dem_nodata=(
             cfg["inputDSM"]["nodata"] if "nodata" in cfg["inputDSM"] else None
         ),
-        ref_georef=cfg["inputRef"]["georef"],
-        dem_georef=cfg["inputDSM"]["georef"],
+        ref_georef_grid=cfg["inputRef"]["georef"],
+        dem_georef_grid=cfg["inputDSM"]["georef"],
         ref_geoid_path=(
             cfg["inputRef"]["geoid_path"]
             if "geoid_path" in cfg["inputRef"]
