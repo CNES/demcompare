@@ -637,7 +637,7 @@ def translate_to_coregistered_geometry(
     geom_like_polygon = {"type": "Polygon", "coordinates": [polygon_roi]}
 
     # crop dem
-    srs_dem1 = rasterio.open(
+    srs_dem = rasterio.open(
         " ",
         mode="w+",
         driver="GTiff",
@@ -648,16 +648,16 @@ def translate_to_coregistered_geometry(
         crs=dem.attrs["georef"],
         transform=transform_dem,
     )
-    srs_dem1.write(dem["im"].data, 1)
-    new_cropped_dem1, new_cropped_dem1_transform = rasterio.mask.mask(
-        srs_dem1, [geom_like_polygon], all_touched=True, crop=True
+    srs_dem.write(dem["im"].data, 1)
+    new_cropped_dem, new_cropped_dem_transform = rasterio.mask.mask(
+        srs_dem, [geom_like_polygon], all_touched=True, crop=True
     )
 
     # create datasets
     reproj_dem = copy.copy(dem)
-    reproj_dem["trans"].data = np.array(new_cropped_dem1_transform.to_gdal())
+    reproj_dem["trans"].data = np.array(new_cropped_dem_transform.to_gdal())
     reproj_dem = read_img_from_array(
-        new_cropped_dem1[0, :, :],
+        new_cropped_dem[0, :, :],
         from_dataset=reproj_dem,
         no_data=dem.attrs["no_data"],
     )

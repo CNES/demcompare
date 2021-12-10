@@ -18,7 +18,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# pylint:disable=consider-using-f-string
 """
 DEMcompare init module file.
 DEMcompare aims at coregistering and comparing two Digital Elevation Models(DEM)

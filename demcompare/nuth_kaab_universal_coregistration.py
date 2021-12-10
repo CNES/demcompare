@@ -18,7 +18,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# pylint:disable=consider-using-f-string
 """
 Nuth and Kaab universal co-registration
 (Correcting elevation data for glacier change detection 2011).
