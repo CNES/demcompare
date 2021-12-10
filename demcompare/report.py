@@ -21,7 +21,6 @@
 """
 Create sphinx report and compile it for html and pdf format
 """
-
 # Standard imports
 import collections
 import csv
@@ -214,6 +213,13 @@ def generate_report(  # noqa: C901
         working_dir, "final_dem_diff_cdf.png"
     )
 
+    # Find histogram files
+    initial_dem_diff_pdf = first_recursive_search(
+        working_dir, "initial_dem_diff_pdf.png"
+    )
+    final_dem_diff_pdf = first_recursive_search(
+        working_dir, "final_dem_diff_pdf.png"
+    )
     # Get ref_name
     dsm_name_dir, dsm_name = os.path.split(dsm_name)
     ref_name_dir, ref_name = os.path.split(ref_name)
@@ -257,6 +263,18 @@ def generate_report(  # noqa: C901
             "",
         ]
     )
+    # -> Elevation Difference Histogram without coregistration
+    src = "\n".join(
+        [
+            src,
+            "**Elevation difference histogram on all pixels"
+            + " without coregistration**",
+            "-----------------------",
+            ".. image:: /{}".format(initial_dem_diff_pdf),
+            "",
+        ]
+    )
+
     # if exists : -> DSM differences with coregistration
     if dem_diff_with_coreg:
         src = "\n".join(
@@ -281,6 +299,19 @@ def generate_report(  # noqa: C901
                 "",
             ]
         )
+
+        # -> Elevation Difference Histogram with coregistration
+        src = "\n".join(
+            [
+                src,
+                "**Elevation difference histogram on all pixels "
+                + "with coregistration**",
+                "-----------------------",
+                ".. image:: /{}".format(final_dem_diff_pdf),
+                "",
+            ]
+        )
+
     # -> stats results table of contents
     src = "\n".join([src, "Stats Results", "===============", ""])
     if dem_diff_with_coreg:
@@ -288,7 +319,7 @@ def generate_report(  # noqa: C901
             [
                 src,
                 "*Important: stats are generated on "
-                "COREG_REF - COREG_DEM difference*",
+                + "COREG_REF - COREG_DEM difference*",
                 "",
             ]
         )
@@ -300,10 +331,12 @@ def generate_report(  # noqa: C901
                 "",
             ]
         )
+
     src = "\n".join(
         [
             src,
-            "Stats are organized around classification layers and modes.\n",
+            "The stats are organized around "
+            + "classification layers and modes.\n",
             "See `README Documentation "
             "<https://github.com/CNES/demcompare>`_ for details.",
             "\n",
@@ -315,8 +348,10 @@ def generate_report(  # noqa: C901
         src = "\n".join(
             [
                 src,
-                "* The :ref:`{partition_name} <{partition_name}>` "
-                "classification layer".format(partition_name=partition_name),
+                "* The :ref:`{partition_name} <{partition_name}>` ".format(
+                    partition_name=partition_name
+                )
+                + "classification layer"
                 "",
             ]
         )
