@@ -307,9 +307,7 @@ def nuth_kaab_lib(dsm_dataset, ref_dataset, outdir_plot=None, nb_iters=6):
         "({:.2f},{:.2f})\n".format(xoff, yoff)
     )
 
-    #
-    # Get geo raster from coreg_ref array
-    #
+    # Generate datasets, use the georef-grid from the dsm
     coreg_dsm_dataset = read_img_from_array(
         coreg_dsm, from_dataset=dsm_dataset, no_data=-32768
     )

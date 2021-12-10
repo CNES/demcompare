@@ -376,8 +376,8 @@ def run_tile(json_file, steps=None, display=False):
         dem_nodata=(
             cfg["inputDSM"]["nodata"] if "nodata" in cfg["inputDSM"] else None
         ),
-        ref_georef=cfg["inputRef"]["georef"],
-        dem_georef=cfg["inputDSM"]["georef"],
+        ref_georef_grid=cfg["inputRef"]["georef"],
+        dem_georef_grid=cfg["inputDSM"]["georef"],
         ref_geoid_path=(
             cfg["inputRef"]["geoid_path"]
             if "geoid_path" in cfg["inputRef"]

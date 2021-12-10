@@ -161,7 +161,7 @@ def reproject_dataset(
 def read_img(
     img: str,
     no_data: float = None,
-    ref: str = "WGS84",
+    georef_grid: str = "WGS84",
     geoid_path: Union[str, None] = None,
     zunit: str = "m",
     load_data: bool = False,
@@ -171,7 +171,7 @@ def read_img(
 
     :param img: Path to the image
     :param no_data: no_data value in the image
-    :param ref: WGS84 or geoid
+    :param ref_georef_grid: WGS84 or geoid
     :param geoid_path: optional, path to local geoid
     :param zunit: unit
     :param load_data: load as dem
@@ -188,7 +188,7 @@ def read_img(
         transform,
         img,
         no_data=no_data,
-        ref=ref,
+        georef_grid=georef_grid,
         geoid_path=geoid_path,
         zunit=zunit,
         load_data=load_data,
@@ -202,7 +202,7 @@ def create_dataset(
     transform: np.ndarray,
     img: str,
     no_data: float = None,
-    ref: str = "WGS84",
+    georef_grid: str = "WGS84",
     geoid_path: Union[str, None] = None,
     zunit: str = "m",
     load_data: bool = False,
@@ -215,7 +215,7 @@ def create_dataset(
     :param transform: image data
     :param img: image path
     :param no_data: no_data value in the image
-    :param ref: WGS84 or geoid
+    :param georef_grid: WGS84 or geoid
     :param geoid_path: optional path to local geoid, default is EGM96
     :param zunit: unit
     :param load_data: load as dem
@@ -224,7 +224,6 @@ def create_dataset(
     """
 
     img_ds = rasterio.open(img)
-    georef = img_ds.crs
 
     # Manage nodata
     if no_data is None:
@@ -262,8 +261,11 @@ def create_dataset(
     dataset.coords["trans_len"] = trans_len
     dataset["trans"] = xr.DataArray(data=transform, dims=["trans_len"])
 
+    # The image's crs is used as georef. The georef_grid
+    # argument is used to add an offset if necessary
+    img_crs = img_ds.crs
     # get plani unit
-    if georef.is_geographic:
+    if img_crs.is_geographic:
         plani_unit = u.deg
     else:
         plani_unit = u.m
@@ -273,7 +275,7 @@ def create_dataset(
     dataset.attrs = {
         "no_data": no_data,
         "input_img": img,
-        "georef": georef,
+        "georef": img_crs,
         "xres": transform[1],
         "yres": transform[5],
         "plani_unit": plani_unit,
@@ -281,7 +283,7 @@ def create_dataset(
     }
 
     if load_data is not False:
-        if ref == "geoid":
+        if georef_grid == "geoid":
             # transform to ellipsoid
             geoid_offset = get_geoid_offset(dataset, geoid_path)
             dataset["im"].data += geoid_offset
@@ -345,8 +347,8 @@ def load_dems(
     dem_path: str,
     ref_nodata: float = None,
     dem_nodata: float = None,
-    ref_georef: str = "WGS84",
-    dem_georef: str = "WGS84",
+    ref_georef_grid: str = "WGS84",
+    dem_georef_grid: str = "WGS84",
     ref_geoid_path: Union[str, None] = None,
     dem_geoid_path: Union[str, None] = None,
     ref_zunit: str = "m",
@@ -362,8 +364,8 @@ def load_dems(
         (None by default and if set inside metadata)
     :param dem_nodata: dem no data value
         (None by default and if set inside metadata)
-    :param ref_georef: ref georef (either WGS84 -default- or geoid)
-    :param dem_georef: dem georef (either WGS84 -default- or geoid)
+    :param ref_georef_grid: ref georef (either WGS84 -default- or geoid)
+    :param dem_georef_grid: dem georef (either WGS84 -default- or geoid)
     :param ref_geoid_path: optional path to local geoid, default is EGM96
     :param dem_geoid_path: optional path to local geoid, default is EGM96
     :param ref_zunit: ref z unit
@@ -374,7 +376,6 @@ def load_dems(
     """
 
     # Get roi of dem
-
     src_dem = rasterio.open(dem_path)
     dem_crs = src_dem.crs
 
@@ -481,7 +482,7 @@ def load_dems(
         new_cropped_dem_transform,
         dem_path,
         no_data=dem_nodata,
-        ref=dem_georef,
+        georef_grid=dem_georef_grid,
         geoid_path=dem_geoid_path,
         zunit=dem_zunit,
         load_data=load_data,
@@ -493,13 +494,14 @@ def load_dems(
         src_ref.transform,
         ref_path,
         no_data=ref_nodata,
-        ref=ref_georef,
+        georef_grid=ref_georef_grid,
         geoid_path=ref_geoid_path,
         zunit=ref_zunit,
         load_data=load_data,
     )
 
-    # reproject, crop, resample
+    # Reference DEM is reprojected into the sec DEM's georef-grid
+    # Crop and resample are done in the reference DEM
     ref = reproject_dataset(full_ref, dem, interp="bilinear")
     # update dataset input_img with ref old value
     ref.attrs["input_img"] = full_ref.attrs["input_img"]
@@ -551,8 +553,8 @@ def translate(
 
 
 def translate_to_coregistered_geometry(
-    dem1: xr.Dataset,
-    dem2: xr.Dataset,
+    dem: xr.Dataset,
+    ref: xr.Dataset,
     dx: int,
     dy: int,
     interpolator: str = "bilinear",
@@ -561,14 +563,17 @@ def translate_to_coregistered_geometry(
     Translate both DSMs to their coregistered geometry.
 
     Note that :
-    a) The dem2 georef is assumed to be the reference
-    b) The dem2 shall be the one resampled as it supposedly is the cleaner one.
+    a) The ref georef-origin is assumed to be the reference
+    b) The ref shall be the one resampled at dem's georef-grid
+     as it supposedly is the cleaner one.
 
-    Hence, dem1 is only cropped, dem2 is the only one that might be resampled.
-    However, as dem2 is the ref, dem1 georef is translated to dem2 georef.
+    Hence, dem is only cropped, and ref is projected on dem's georef-grid,
+     so it might be resampled.
+    However, the dem's georef-origin is translated to the ref's georef-origin,
+    which is considered the reference.
 
-    :param dem1: dataset, master dem
-    :param dem2: dataset, slave dem
+    :param dem: dataset, master dem
+    :param ref: dataset, slave dem
     :param dx: f, dx value in pixels
     :param dy: f, dy value in pixels
     :param interpolator: gdal interpolator
@@ -576,50 +581,50 @@ def translate_to_coregistered_geometry(
     """
 
     #
-    # Translate the georef of dem1 based on dx and dy values
-    #   -> this makes dem1 coregistered on dem2
+    # Translate the georef-origin of dem based on dx and dy values
+    #   -> this makes dem coregistered on ref
     #
     # note the -0.5 since the (0,0) pixel coord is pixel centered
-    dem1 = translate(dem1, dx - 0.5, dy - 0.5)
+    dem = translate(dem, dx - 0.5, dy - 0.5)
 
     #
     # Intersect and reproject both dsms.
     #   -> intersect them to the biggest common grid
     #       now that they have been shifted
-    #   -> dem1 is then cropped with intersect so that it lies within intersect
+    #   -> dem is then cropped with intersect so that it lies within intersect
     #       but is not resampled in the process
-    #   -> reproject dem2 to dem1 grid,
-    #       the intersection grid sampled on dem1 grid
+    #   -> reproject ref to dem's georef-grid,
+    #       the intersection grid sampled on dem's grid
     #
-    transform_dem1 = Affine.from_gdal(
-        dem1["trans"].data[0],
-        dem1["trans"].data[1],
-        dem1["trans"].data[2],
-        dem1["trans"].data[3],
-        dem1["trans"].data[4],
-        dem1["trans"].data[5],
+    transform_dem = Affine.from_gdal(
+        dem["trans"].data[0],
+        dem["trans"].data[1],
+        dem["trans"].data[2],
+        dem["trans"].data[3],
+        dem["trans"].data[4],
+        dem["trans"].data[5],
     )
-    bounds_dem1 = rasterio.transform.array_bounds(
-        dem1["im"].data.shape[1], dem1["im"].data.shape[0], transform_dem1
+    bounds_dem = rasterio.transform.array_bounds(
+        dem["im"].data.shape[1], dem["im"].data.shape[0], transform_dem
     )
 
-    transform_dem2 = Affine.from_gdal(
-        dem2["trans"].data[0],
-        dem2["trans"].data[1],
-        dem2["trans"].data[2],
-        dem2["trans"].data[3],
-        dem2["trans"].data[4],
-        dem2["trans"].data[5],
+    transform_ref = Affine.from_gdal(
+        ref["trans"].data[0],
+        ref["trans"].data[1],
+        ref["trans"].data[2],
+        ref["trans"].data[3],
+        ref["trans"].data[4],
+        ref["trans"].data[5],
     )
-    bounds_dem2 = rasterio.transform.array_bounds(
-        dem2["im"].data.shape[1], dem2["im"].data.shape[0], transform_dem2
+    bounds_ref = rasterio.transform.array_bounds(
+        ref["im"].data.shape[1], ref["im"].data.shape[0], transform_ref
     )
 
     intersection_roi = (
-        max(bounds_dem1[0], bounds_dem2[0]),
-        max(bounds_dem1[1], bounds_dem2[1]),
-        min(bounds_dem1[2], bounds_dem2[2]),
-        min(bounds_dem1[3], bounds_dem2[3]),
+        max(bounds_dem[0], bounds_ref[0]),
+        max(bounds_dem[1], bounds_ref[1]),
+        min(bounds_dem[2], bounds_ref[2]),
+        min(bounds_dem[3], bounds_ref[3]),
     )
 
     # get  crop
@@ -632,35 +637,36 @@ def translate_to_coregistered_geometry(
     geom_like_polygon = {"type": "Polygon", "coordinates": [polygon_roi]}
 
     # crop dem
-    srs_dem1 = rasterio.open(
+    srs_dem = rasterio.open(
         " ",
         mode="w+",
         driver="GTiff",
-        width=dem1["im"].data.shape[1],
-        height=dem1["im"].data.shape[0],
+        width=dem["im"].data.shape[1],
+        height=dem["im"].data.shape[0],
         count=1,
-        dtype=dem1["im"].data.dtype,
-        crs=dem1.attrs["georef"],
-        transform=transform_dem1,
+        dtype=dem["im"].data.dtype,
+        crs=dem.attrs["georef"],
+        transform=transform_dem,
     )
-    srs_dem1.write(dem1["im"].data, 1)
-    new_cropped_dem1, new_cropped_dem1_transform = rasterio.mask.mask(
-        srs_dem1, [geom_like_polygon], all_touched=True, crop=True
+    srs_dem.write(dem["im"].data, 1)
+    new_cropped_dem, new_cropped_dem_transform = rasterio.mask.mask(
+        srs_dem, [geom_like_polygon], all_touched=True, crop=True
     )
 
     # create datasets
-    reproj_dem1 = copy.copy(dem1)
-    reproj_dem1["trans"].data = np.array(new_cropped_dem1_transform.to_gdal())
-    reproj_dem1 = read_img_from_array(
-        new_cropped_dem1[0, :, :],
-        from_dataset=reproj_dem1,
-        no_data=dem1.attrs["no_data"],
+    reproj_dem = copy.copy(dem)
+    reproj_dem["trans"].data = np.array(new_cropped_dem_transform.to_gdal())
+    reproj_dem = read_img_from_array(
+        new_cropped_dem[0, :, :],
+        from_dataset=reproj_dem,
+        no_data=dem.attrs["no_data"],
     )
 
-    # reproject, crop, resample
-    reproj_dem2 = reproject_dataset(dem2, reproj_dem1, interp=interpolator)
+    # Reference DEM is reprojected into the sec DEM's georef-grid
+    # Crop and resample are performed on the reference DEM
+    reproj_ref = reproject_dataset(ref, reproj_dem, interp=interpolator)
 
-    return reproj_dem1, reproj_dem2
+    return reproj_dem, reproj_ref
 
 
 def save_tif(

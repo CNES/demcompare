@@ -18,7 +18,7 @@
 
 ## Overview
 
-This python software aims at **comparing two DEMs** together.
+This python software aims at **comparing two DEMs** together.   
 
 A DEM is a 3D computer graphics representation of elevation data to represent terrain.
 
@@ -31,10 +31,10 @@ planimetric resolution, and altimetric unit.
 * the default behavior classifies the stats by slope ranges but one can provide any other data to classify the stats.
 * A comparison report can be compiled as html or pdf documentation with statistics printed as tables and plots.
 
-Only **Linux Plaforms** are supported (virtualenv or bare machine) with **Python 3** installed.
-
 
 ## Install
+
+Only **Linux Plaforms** are supported (virtualenv or bare machine) with **Python 3** installed.
 
 The default install mode is via the pip package, typically through a [virtualenv](https://docs.python.org/3/library/venv):
 
@@ -111,8 +111,21 @@ test_config.json
 Inside the `json` file, the DEMs are referred to as **inputDSM** and **inputRef**.
 
 Note: **inputRef** DEM is supposed to be the denser one:
-- if any resampling process must be done, only **inputRef** DEM shall be resampled.
-- if the DEMs are uncoregistered, then the **inputRef** geographical location is supposedly the correct one.
+- If any resampling process must be done because the input DEMs have different georerefence **grids** (different resolutions),
+only **inputRef** DEM will be resampled.
+- If the DEMs are uncoregistered, then the **inputRef** geographical location is supposedly the correct one, which means
+that the output coregistred DEMs will have the **inputRef**'s georeference **origin**. 
+
+
+#### Coregistration 
+
+Inside Demcompare's code, the two input DEMs are refered to as **ref** (reference DEM) and **dem** and (secondary DEM).
+If the DEMs are uncoregistered, **DEMcompare** will perform the following steps: 
+
+- The **ref** is reprojected to the **dem**'s georeference **grid**, so that it's resolution will be the same as **dem**'s. The **ref** is the one to be adapted as it supposedly is the cleaner one.
+- The Nuth et Kaab corregistration algorithm performs the corregistration between both DEMs by interpolating and resampling the **ref**, so that it will compute two coregistred DEMs that have the **dem**'s georeference **grid** and georeference **origin**. 
+- Since in DEMcompare the **ref**'s georeference **origin** is considered the correct location, both coregistred DEM's are then translated to the **ref**'s georeference **origin** by a simple transform using the offsets obtained by Nuth et Kaab. 
+- With both coregistred DEMs having the **dem**'s georeference **grid** and the **ref**'s georeference **origin**, DEMcompare is ready to compare both DEMs computing a wide variety of standard metrics and statistics.
 
 #### WGS84 and geoid references
 
