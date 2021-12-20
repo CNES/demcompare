@@ -1,0 +1,5 @@
+[run]
+source = demcompare
+omit =
+    # Omit tests
+    /tests/*
