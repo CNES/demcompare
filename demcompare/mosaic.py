@@ -246,8 +246,7 @@ def write_row_vrts(
     :type outdir: str
     :param tiles: list of config files loaded from json files
     :type tiles: List[dict]
-    :param sub_img: Relative path of the
-    sub-image to mosaic (for ex. height_map.tif)
+    :param sub_img: Relative path of the sub-image to mosaic (for ex. height_map.tif)
     :type sub_img: str
     :param vrt_basename: basename of the output vrt
     :type vrt_basename: str

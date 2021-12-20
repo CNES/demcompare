@@ -393,30 +393,23 @@ def load_dems(
     :type ref_path: str
     :param dem_path: path to sec dem
     :type dem_path: str
-    :param ref_nodata: ref no data value
-    (None by default and if set inside metadata)
+    :param ref_nodata: ref no data value (None by default and if set inside metadata)
     :type ref_nodata: float or None
-    :param dem_nodata: dem no data value
-    (None by default and if set inside metadata)
+    :param dem_nodata: dem no data value (None by default and if set inside metadata)
     :type dem_nodata: float or None
-    :param ref_georef_grid: ref georef
-    (either WGS84 -default- or geoid)
+    :param ref_georef_grid: ref georef (either WGS84 -default- or geoid)
     :type ref_georef_grid: str
-    :param dem_georef_grid: dem georef
-    (either WGS84 -default- or geoid)
+    :param dem_georef_grid: dem georef (either WGS84 -default- or geoid)
     :type dem_georef_grid: str
-    :param ref_geoid_path: optional path to
-    local geoid, default is EGM96
+    :param ref_geoid_path: optional path to local geoid, default is EGM96
     :type ref_geoid_path: str or None
-    :param dem_geoid_path: optional path to
-    local geoid, default is EGM96
+    :param dem_geoid_path: optional path to local geoid, default is EGM96
     :type dem_geoid_path: str or None
     :param ref_zunit: ref z unit
     :type ref_zunit: str
     :param dem_zunit: dem z unit
     :type dem_zunit: str
-    :param load_data: True if dem are to be fully loaded,
-        other options are False or a dict roi
+    :param load_data: True if dem are to be fully loaded, other options are False or a dict roi
     :type load_data: bool, dict or Tuple
     :return: ref and dem datasets
     :rtype: xr.Dataset, xr.Dataset
@@ -620,8 +613,7 @@ def translate_to_coregistered_geometry(
 
     Note that :
     a) The ref georef-origin is assumed to be the reference
-    b) The ref shall be the one resampled at dem's
-    georef-grid as it supposedly is the cleaner one.
+    b) The ref shall be the one resampled at dem's georef-grid as it supposedly is the cleaner one.
 
     Hence, dem is only cropped, and ref is
     projected on dem's georef-grid, so it might be resampled.
