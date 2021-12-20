@@ -32,12 +32,14 @@ import logging
 import math
 import os
 import traceback
+from typing import Dict, List, Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.pyplot as mpl_pyplot
 
 # Third party imports
 import numpy as np
+import xarray as xr
 from astropy import units as u
 from matplotlib import gridspec
 from scipy.optimize import curve_fit
@@ -53,25 +55,32 @@ class NoPointsToPlot(Exception):
 
 
 def compute_stats_array(
-    cfg,
-    dem,
-    ref,
-    dem_nodata=None,
-    ref_nodata=None,
-    display=False,
-    final_json_file=None,
+    cfg: Dict,
+    dem: np.ndarray,
+    ref: np.ndarray,
+    dem_nodata: Union[int, float, None] = None,
+    ref_nodata: Union[int, float, None] = None,
+    display: bool = False,
+    final_json_file: Union[str, None] = None,
 ):
     """
     Compute Stats from numpy arrays
 
     :param cfg: configuration dictionary
-    :param dem: numpy array, dem raster
-    :param ref: numpy array, reference dem raster to be coregistered to dem
-    :param dem_nodata: int/float, nodata value in dem
-    :param ref_nodata: int/float, nodata value in ref
-    :param display: boolean, choose between plot show and plot save
+    :type cfg: dict
+    :param dem: dem raster
+    :type dem: numpy array
+    :param ref: reference dem raster to be coregistered to dem
+    :type ref: numpy array
+    :param dem_nodata: inodata value in dem
+    :type dem_nodata: int, float or None
+    :param ref_nodata: nodata value in ref
+    :type ref_nodata: int, float or None
+    :param display: choose between plot show and plot save
+    :type display: boolean
     :param final_json_file: filename of final_cfg
-    :return:
+    :type final_json_file: str or None
+    :return: None
     """
 
     if "stats_opts" not in cfg:
@@ -128,22 +137,47 @@ def compute_stats_array(
 
 
 def gaus(x, a, x_zero, sigma):
-    """Gauss math function"""
+    """Gauss math function
+
+    :param x:
+    :type x:
+    :param a:
+    :type a:
+    :param x_zero:
+    :type x_zero:
+    :param sigma:
+    :type sigma:
+    :return: gauss function
+    :rtype:
+    """
     return a * np.exp(-((x - x_zero) ** 2) / (2 * sigma ** 2))
 
 
 def round_up(x, y):
-    """Round up math function"""
+    """Round up math function
+
+    :param x:
+    :type x:
+    :param y:
+    :type y:
+    :return:
+    :rtype:
+    """
     return int(math.ceil((x / float(y)))) * y
 
 
-def get_nonan_mask(array, no_data_value=None):
+def get_nonan_mask(
+    array: np.ndarray, no_data_value: Union[int, None] = None
+) -> np.ndarray:
     """
     Get no data and nan mask value
 
     :param array: input array to get the mask from
+    :type array: np.ndarray
     :no_data_value: no data value considered. Default: None
+    :type no_data_value: int or None
     :return: nan and no_data_value if exists mask on array.
+    :rtype: np.ndarray
     """
     if no_data_value is None:
         return np.apply_along_axis(lambda x: (~np.isnan(x)), 0, array)
@@ -153,15 +187,20 @@ def get_nonan_mask(array, no_data_value=None):
     )
 
 
-def get_outliers_free_mask(array, no_data_value=None):
+def get_outliers_free_mask(
+    array: np.ndarray, no_data_value: Union[int, None] = None
+) -> np.ndarray:
     """
     Get outliers free mask (array of True where value is no outlier) with
     values outside (mu + 3 sigma) and (mu - 3 sigma).
     Nan and no_data_value are not considered in mu and sigma computation.
 
-    :param array: input array to compute outliers mask
-    :param no_data_value: value of no data to consider. Default(None)
+    :param array: input array to get the mask from
+    :type array: np.ndarray
+    :no_data_value: no data value considered. Default: None
+    :type no_data_value: int or None
     :return: outliers free mask (array of True where value is no outlier)
+    :rtype: np.ndarray
     """
     # pylint: disable=singleton-comparison
     no_data_free_mask = get_nonan_mask(array, no_data_value)
@@ -173,27 +212,31 @@ def get_outliers_free_mask(array, no_data_value=None):
     )
 
 
-def create_mode_masks(alti_map, partitions_sets_masks=None):
+def create_mode_masks(alti_map: xr.Dataset, partitions_sets_masks=None):
     """
     Compute Masks for every required modes :
     -> the 'standard' mode
-       where the mask stands for nan values inside the error image
-       with the nan values inside the ref_support_desc
-       when do_classification is on & it also stands for outliers free values
+    where the mask stands for nan values inside the error image
+    with the nan values inside the ref_support_desc
+    when do_classification is on & it also stands for outliers free values
     -> the 'coherent-classification' mode
-       which is the 'standard' mode where only the pixels
-       for which both sets (dsm and reference) are coherent
+    which is the 'standard' mode where only the pixels
+    for which both sets (dsm and reference) are coherent
     -> the 'incoherent-classification' mode
-       which is 'coherent-classification' complementary
+    which is 'coherent-classification' complementary
 
     Note that 'coherent-classification'
     and 'incoherent-classification' mode masks
     can only be computed if len(partitions_sets_masks)==2
 
-    :param alti_map: xarray Dataset, alti differences
+    :param alti_map: alti differences
+    :type alti_map: xr.Dataset
     :param partitions_sets_masks: [] (master and/or slave dsm)
-        of [] of boolean array (sets for each dsm)
-    :return: list of masks, associated modes, and error_img read as array
+    of [] of boolean array (sets for each dsm)
+    :type partitions_sets_masks: List[bool]
+    :return: list of masks, associated modes,
+    and error_img read as array
+    :rtype: List[np.ndarray]
     """
 
     mode_names = []
@@ -245,36 +288,46 @@ def create_mode_masks(alti_map, partitions_sets_masks=None):
 
 
 def create_masks(
-    alti_map,
-    do_classification=False,
-    ref_support=None,
-    do_cross_classification=False,
-    ref_support_classified_desc=None,
+    alti_map: xr.Dataset,
+    do_classification: bool = False,
+    ref_support: xr.Dataset = None,
+    do_cross_classification: bool = False,
+    ref_support_classified_desc: Dict = None,
     remove_outliers=True,
-):
+) -> List[np.ndarray]:
     """
     Compute Masks for every required modes :
     -> the 'standard' mode
-       where the mask stands for nan values
-       inside the error image with the nan values
-       inside the ref_support_desc when do_classification is on
-       & it also stands for outliers free values
+    where the mask stands for nan values
+    inside the error image with the nan values
+    inside the ref_support_desc when do_classification is on
+    & it also stands for outliers free values
     -> the 'coherent-classification' mode
-       which is the 'standard' mode where only the pixels for which both sets
-       (dsm and reference) are coherent
+    which is the 'standard' mode where only the
+    pixels for which both sets
+    (dsm and reference) are coherent
     -> the 'incoherent-classification' mode
-       which is 'coherent-classification' complementary
+    which is 'coherent-classification' complementary
 
-    :param alti_map: xarray Dataset, alti differences
-    :param do_classification: wether or not the classification is activated
-    :param ref_support: xarray Dataset
+    :param alti_map: alti differences
+    :type alti_map: xr.Dataset
+    :param do_classification: wether or not the
+    classification is activated
+    :type do_classification: bool
+    :param ref_support: reference support dataset
+    :type ref_support: xr.Dataset
     :param do_cross_classification:
-        wether or not the cross classification is activated
-    :param ref_support_classified_desc:
-        dict with 'path' and 'nodata' keys for the ref support image classified
-    :param remove_outliers:
-        boolean, set to True (default) to return a no_outliers mask
-    :return: list of masks, associated modes, and error_img read as array
+        whether or not the cross classification is activated
+    :type do_cross_classification: bool
+    :param ref_support_classified_desc: dict with
+    'path' and 'nodata' keys for the ref support image classified
+    :type ref_support_classified_desc: dict
+    :param remove_outliers: boolean, set to True
+    (default) to return a no_outliers mask
+    :type remove_outliers: bool
+    :return: list of masks, associated modes,
+    and error_img read as array
+    :rtype: List[np.ndarray]
     """
 
     modes = []
@@ -318,14 +371,19 @@ def create_masks(
     return masks, modes, no_outliers
 
 
-def stats_computation(array, list_threshold=None):
+def stats_computation(
+    array: np.ndarray, list_threshold: List[int] = None
+) -> Dict:
     """
     Compute stats for a specific array
 
     :param array: numpy array
-    :param list_threshold: list, defines thresholds to be used
-        for pixels above thresholds ratio computation
+    :type array: np.ndarray
+    :param list_threshold: list, defines thresholds
+    to be used for pixels above thresholds ratio computation
+    :type list_threshold: List[int]
     :return: dict with stats name and values
+    :rtype: Dict
     """
     if array.size:
         res = {
@@ -373,27 +431,38 @@ def stats_computation(array, list_threshold=None):
 
 
 def get_stats(
-    dz_values,
-    to_keep_mask=None,
-    sets=None,
-    sets_labels=None,
-    sets_names=None,
-    list_threshold=None,
+    dz_values: np.ndarray,
+    to_keep_mask: np.ndarray = None,
+    sets: List[np.ndarray] = None,
+    sets_labels: List[str] = None,
+    sets_names: List[str] = None,
+    list_threshold: List[int] = None,
     outliers_free_mask=None,
-):
+) -> List[Dict]:
     """
-    Get Stats for a specific array, considering potentially subsets of it
+    Get Stats for a specific array, considering
+    potentially subsets of it
 
     :param dz_values: errors
-    :param to_keep_mask: boolean mask with True values for pixels to use
-    :param sets: list of sets
-        (boolean arrays that indicate which class a pixel belongs to)
-    :param sets_labels: label associated to the sets
+    :type dz_values: np.ndarray
+    :param to_keep_mask: boolean mask with True
+    values for pixels to use
+    :type to_keep_mask: List[bool]
+    :param sets: list of sets (boolean arrays that
+    indicate which class a pixel belongs to)
+    :type sets: List[np.ndarray]
+    :type sets_labels: label associated to the sets
+    :param sets_labels: List[str]
     :param sets_names: name associated to the sets
-    :param list_threshold: list, defines thresholds to be used
-        for pixels above thresholds ratio computation
-    :return: list of dictionary
-        (set_name, nbpts, %(out_of_all_pts), max, min, mean, std, rmse, ...)
+    :type sets_names: List[str]
+    :param list_threshold: list, defines thresholds
+    to be used for pixels above thresholds ratio computation
+    :type list_threshold: List[int]
+    :param outliers_free_mask:
+    :type outliers_free_mask:
+    :return: list of dictionary (set_name, nbpts,
+    %(out_of_all_pts), max, min, mean, std, rmse, ...)
+    :rtype: List[Dict]
     """
     # pylint: disable=singleton-comparison
 
@@ -468,16 +537,25 @@ def get_stats(
     return output_list
 
 
-def dem_diff_plot(dem_diff, title="", plot_file="dem_diff.png", display=False):
+def dem_diff_plot(
+    dem_diff: xr.Dataset,
+    title: str = "",
+    plot_file: str = "dem_diff.png",
+    display: bool = False,
+):
     """
     Simple img show after outliers removal
 
-    :param dem_diff: xarray Dataset,
-    :param title: string, plot title
-    :param plot_file: path and name for the saved plot
-        (used when display if False)
-    :param display: boolean, set to True if display is on,
-        otherwise the plot is saved to plot_file location
+    :param dem_diff: difference dem
+    :type dem_diff: xr.Dataset
+    :param title: plot title
+    :type title: str
+    :param plot_file: path and name for the
+    saved plot (used when display if False)
+    :type plot_file: str
+    :param display: boolean, set to True if display
+    is on, otherwise the plot is saved to plot_file location
+    :type display: bool
     """
     # Init mu and sigma from data to focus on little values
     mu = np.nanmean(dem_diff["im"].data)
@@ -510,22 +588,28 @@ def dem_diff_plot(dem_diff, title="", plot_file="dem_diff.png", display=False):
 
 
 def dem_diff_cdf_plot(
-    dem_diff,
-    title="",
-    plot_file="dem_diff_cdf.png",
-    bin_step=0.1,
-    display=False,
+    dem_diff: xr.Dataset,
+    title: str = "",
+    plot_file: str = "dem_diff_cdf.png",
+    bin_step: float = 0.1,
+    display: bool = False,
 ):
     """
-    Simple img values absolute cdf view truncated by max_diff
+    Simple img values absolute cdf view truncated
+    by max_diff
 
-    :param dem_diff: xarray Dataset,
-    :param title: string, plot title
-    :param plot_file: path and name for the saved plot
-        (used when display if False)
+    :param dem_diff: difference dem,
+    :type dem_diff: xarray Dataset
+    :param title: plot title
+    :type title: str
+    :param plot_file: path and name for the saved
+    plot (used when display if False)
+    :type plot_file: str
     :param bin_step: bin size
-    :param display: boolean, set to True if display is on,
-        otherwise the plot is saved to plot_file location
+    :type bin_step: float
+    :param display: set to True if display is on,
+    otherwise the plot is saved to plot_file location
+    :type display: bool
     """
     # Get plot_file file base
     plot_file_base = os.path.splitext(plot_file)[0]
@@ -589,19 +673,31 @@ def dem_diff_cdf_plot(
 
 
 def dem_diff_pdf_plot(
-    dem_diff, title, plot_file, display, bin_step=0.2, width=0.7
+    dem_diff: xr.Dataset,
+    title: str,
+    plot_file: str,
+    display: bool,
+    bin_step: float = 0.2,
+    width: float = 0.7,
 ):
     """
     Computes the difference histogram
 
-    :param dem_diff: xarray Dataset,
-    :param title: string, plot title
-    :param plot_file: path and name for the saved plot
-        (used when display if False)
-    :param display: boolean, set to True if display is on,
-        otherwise the plot is saved to plot_file location
-    :param bin_step: float, bin size
-    :param width: float, plot's bin width
+    :param dem_diff: difference dem
+    :type dem_diff: xarray Dataset
+    :param title: plot title
+    :type title: str
+    :param plot_file: path and name for the
+    saved plot (used when display if False)
+    :type plot_file: str
+    :param display: bset to True if display is on,
+    otherwise the plot is saved to plot_file location
+    :type display: bool
+    :param bin_step: bin size
+    :type bin_step: float
+    :param width: plot's bin width
+    :type bin_step: float
+    :return: None
     """
 
     # Get plot_file file base
@@ -666,18 +762,18 @@ def dem_diff_pdf_plot(
 
 
 def plot_histograms(  # noqa: C901
-    input_array,
-    bin_step=0.1,
-    to_keep_mask=None,
-    sets=None,
-    sets_labels=None,
-    sets_colors=None,
-    plot_title="",
-    outplotdir=".",
-    outhistdir=".",
-    save_prefix="",
-    display=False,
-    plot_real_hist=False,
+    input_array: np.ndarray,
+    bin_step: float = 0.1,
+    to_keep_mask: np.ndarray = None,
+    sets: List = None,
+    sets_labels: np.ndarray = None,
+    sets_colors: np.ndarray = None,
+    plot_title: str = "",
+    outplotdir: str = ".",
+    outhistdir: str = ".",
+    save_prefix: str = "",
+    display: bool = False,
+    plot_real_hist: bool = False,
 ):
     """
     Creates a histogram plot for all sets given and saves them on disk.
@@ -690,20 +786,34 @@ def plot_histograms(  # noqa: C901
     within the first set (which is supposed to contain them all)
 
     :param input_array: data to plot
+    :type input_array: np.ndarray
     :param bin_step: histogram bin step
+    :type bin_step: float
     :param to_keep_mask: boolean mask with True values for pixels to use
-    :param sets: list of sets
-        (boolean arrays that indicate which class a pixel belongs to)
+    :type to_keep_mask: np.ndarray
+    :param sets: list of sets (boolean arrays that
+    indicate which class a pixel belongs to)
+    :type sets: List
     :param set_labels: name associated to the sets
+    :type set_labels: np.ndarray
     :param sets_colors: color set for plotting
-    :param sets_stats: where should be retrived mean and std values for all sets
-    :param plot_title: plot primary title
+    :type sets_colors: np.ndarray
+    :param plot_title: plot title
+    :type plot_title: str
     :param outplotdir: directory where histograms are to be saved
+    :type outplotdir: str
     :param outhistdir: directory where histograms
         (as numpy files) are to be saved
-    :param save_prefix: prefix to the histogram files saved by this method
-    :param display: set to False to save plot instead of actually plotting them
-    :param plot_real_hist: plot or save (see display param) real histograms
+    :type outhistdir: str
+    :param save_prefix: prefix to the histogram
+    files saved by this method
+    :type save_prefix: str
+    :param display: set to False to save plot
+    instead of actually plotting them
+    :type display: bool
+    :param plot_real_hist: plot or save
+    (see display param) real histograms
+    :type plot_real_hist: bool
     :return: list saved files
     """
     # pylint: disable=singleton-comparison
@@ -938,23 +1048,29 @@ def plot_histograms(  # noqa: C901
 
 
 def save_results(
-    output_json_file,
-    stats_list,
-    labels_plotted=None,
-    plot_files=None,
-    plot_colors=None,
-    to_csv=False,
+    output_json_file: str,
+    stats_list: List[str],
+    labels_plotted: List[str] = None,
+    plot_files: List[str] = None,
+    plot_colors: List[str] = None,
+    to_csv: bool = False,
 ):
     """
     Saves stats into specific json file (and optionally to csv file)
 
     :param output_json_file: file in which to save
+    :type output_json_file: str
     :param stats_list: all the stats to save (one element per label)
+    :type stats_list: List[str]
     :param labels_plotted: list of labels plotted
+    :type labels_plotted: List[str]
     :param plot_files: list of plot files associdated to the labels_plotted
+    :type plot_files: List[str]
     :param plot_colors: list of plot colors associated to the labels_plotted
-    :param to_csv: boolean, set to True to save to csv format as well
-        (default False)
+    :type plot_colors: List[str]
+    :param to_csv: boolean, set to True to save
+    to csv format as well (default False)
+    :type to_csv: List[str]
     :return:
     """
 
@@ -1020,15 +1136,26 @@ def save_results(
                 writer.writerow(csv_results[set_item])
 
 
-def create_partitions(dsm, ref, output_dir, stats_opts, geo_ref=True):
+def create_partitions(
+    dsm: xr.Dataset,
+    ref: xr.Dataset,
+    output_dir: str,
+    stats_opts,
+    geo_ref: bool = True,
+):
     """
     Create or adapt all classification supports for the stats.
     If the support is a slope,it's transformed into a classification support.
-    :param dsm: xarray Dataset, dsm
-    :param ref: xarray Dataset, coregistered ref
+    :param dsm: dsm
+    :type dsm: xr.Dataset
+    :param ref: coregistered ref
+    :type ref: xr.Dataset
     :param output_dir: ouput directory
+    :type output_dir: str
     :param stats_opts: TODO
+    :type stats_opts:
     :param geo_ref: boolean, set to False if images are not georeferenced
+    :type geo_ref: bool
     :return: dict, with partitions information {'
     """
     to_be_clayers = stats_opts["to_be_classification_layers"].copy()
@@ -1120,7 +1247,13 @@ def create_partitions(dsm, ref, output_dir, stats_opts, geo_ref=True):
 
 
 def alti_diff_stats(
-    cfg, dsm, ref, alti_map, display=False, remove_outliers=False, geo_ref=True
+    cfg: Dict,
+    dsm: xr.Dataset,
+    ref: xr.Dataset,
+    alti_map: xr.Dataset,
+    display: bool = False,
+    remove_outliers: bool = False,
+    geo_ref: bool = True,
 ):
     """
     Computes alti error stats with graphics and tables support.
@@ -1143,21 +1276,28 @@ def alti_diff_stats(
     then two images to classify are required
     (one associated with the reference DEM and one with the other one).
     The results will be presented through 3 modes:
-        - standard mode,
-        - coherent mode
-            where only alti errors values associated with coherent classes
-            between both classified images are used
-        - incoherent mode (the coherent complementary one).
+    - standard mode,
+    - coherent mode
+    where only alti errors values associated with coherent classes
+    between both classified images are used
+    - incoherent mode (the coherent complementary one).
 
     :param cfg: config file
-    :param dsm: xarray Dataset, dsm
+    :type cfg: Dict
+    :param dsm: dsm
+    :type dsm: xr.Dataset
     :param ref: xarray Dataset, coregistered ref
+    :type ref: xr.Dataset
     :param alti_map: xarray Dataset, dsm - ref
+    :type alti_map: xr.Datast
     :param display: boolean, display option
-        (set to False to save plot on file system)
-    :param remove_outliers: boolean, set to True to remove outliers
-        ( x < mu - 3sigma ; x > mu + 3sigma)
+    (set to False to save plot on file system)
+    :type display: bool
+    :param remove_outliers: boolean, set to True to
+    remove outliers ( x < mu - 3sigma ; x > mu + 3sigma)
+    :type remove_outliers: bool
     :param geo_ref: boolean, set to False if images are not georeferenced
+    :type geo_ref: bool
     :return:
     """
 
@@ -1286,37 +1426,50 @@ def alti_diff_stats(
 
 
 def save_as_graphs_and_tables(
-    data_array,
-    stats_dir,
-    outplotdir,
-    outhistdir,
-    mode_masks,
-    mode_names,
+    data_array: np.ndarray,
+    stats_dir: str,
+    outplotdir: str,
+    outhistdir: str,
+    mode_masks: List,
+    mode_names: List[str],
     mode_stats,
     sets_masks,
     sets_labels,
     sets_colors,
-    plot_title="Title",
-    bin_step=0.1,
-    display=False,
-    plot_real_hist=True,
-    geo_ref=True,
+    plot_title: str = "Title",
+    bin_step: float = 0.1,
+    display: bool = False,
+    plot_real_hist: bool = True,
+    geo_ref: bool = True,
 ):
     """
 
     :param data_array:
+    :type data_array: np.ndarray
     :param out_dir:
+    :type out_dir: str
     :param mode_masks:
-    :param mode_names:
+    :type mode_masks:
+    :param mode_names: List[str]
+    :type mode_names:
     :param mode_stats:
+    :type mode_stats:
     :param sets_masks:
+    :type sets_masks:
     :param sets_labels:
+    :type sets_labels:
     :param sets_colors:
+    :type sets_colors:
     :param plot_title:
+    :type plot_title: str
     :param bin_step:
+    :type bin_step: float
     :param display:
+    :type display: bool
     :param plot_real_hist:
+    :type plot_real_hist: bool
     :param geo_ref: boolean, set to False if images are not georeferenced
+    :type geo_ref:
     :return:
     """
     mode_output_json_files = {}
@@ -1379,13 +1532,13 @@ def save_as_graphs_and_tables(
 
 
 def get_stats_per_mode(
-    data,
-    sets_masks=None,
-    sets_labels=None,
-    sets_names=None,
-    elevation_thresholds=None,
+    data: np.ndarray,
+    sets_masks: List = None,
+    sets_labels: List = None,
+    sets_names: List = None,
+    elevation_thresholds: List[float] = None,
     outliers_free_mask=None,
-):
+) -> Tuple[List, List, List]:
     """
     Generates alti error stats with graphics and csv tables.
 
@@ -1398,20 +1551,27 @@ def get_stats_per_mode(
     of supports_sets. Both arguments being lists.
     If two such classification layers are given,
     then this method also produces stats based on 3 modes:
-        - standard mode,
-        - coherent mode
-            where only alti errors values associated
-            with coherent classes between both classified images are used
-        - incoherent mode (the coherent complementary one).
+    - standard mode,
+    - coherent mode
+    where only alti errors values associated
+    with coherent classes between both classified images are used
+    - incoherent mode (the coherent complementary one).
 
     :param data: array to compute stats from
+    :type data: np.ndarray
     :param sets_masks: [] of one or two array
-        (sets partitioning the support_img) of size equal to data ones
+    (sets partitioning the support_img) of size equal to data ones
+    :type sets_masks: List
     :param sets_labels: sets labels
+    :type sets_labels: List
     :param sets_names: sets names
+    :type sets_names: List
     :param elevation_thresholds: list of elevation thresholds
+    :type elevation_thresholds: List[float]
     :param outliers_free_mask:
+    :type outliers_free_mask:
     :return: stats, masks, names per mode
+    :rtype: List, List List
     """
 
     # Get mode masks and names
@@ -1440,14 +1600,15 @@ def get_stats_per_mode(
     return mode_stats, mode_masks, mode_names
 
 
-def wave_detection(cfg, dh):
+def wave_detection(cfg: Dict, dh):
     """
     Detect potential oscillations inside dh
 
     :param cfg: config file
-    :param dh: xarray Dataset, dsm - ref
-    :return:
-
+    :type cfg: Dict
+    :param dh: dsm - ref
+    :type dh: xr.Dataset
+    :return: None
     """
     # Compute mean dh row and mean dh col
     # -> then compute min between dh mean row (col) vector and dh rows (cols)

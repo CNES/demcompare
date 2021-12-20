@@ -49,8 +49,11 @@ def read_image(path: str, band: int = 1) -> np.ndarray:
     Read image as array
 
     :param path: path
+    :type path: str
     :param band: numero of band to extract
+    :type band: int
     :return: band array
+    :rtype: np.ndarray
     """
     img_ds = rasterio.open(path)
     data = img_ds.read(band)
@@ -61,14 +64,18 @@ def pix_to_coord(
     transform_array: Union[List, np.ndarray],
     row: Union[int, np.ndarray],
     col: Union[List, np.ndarray],
-) -> Union[Tuple[Tuple[np.ndarray, np.ndarray], float, float]]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Transform pixels to coordinates
 
     :param transform_array: Transform
+    :type transform_array: List or np.ndarray
     :param row: row
+    :type row: int or np.ndarray
     :param col: column
+    :type col: List or np.ndarray
     :return: x,y
+    :rtype: np.ndarray, np.ndarray
     """
     transform = Affine.from_gdal(
         transform_array[0],
@@ -95,9 +102,13 @@ def reproject_dataset(
     Reproject dataset, and return the corresponding xarray.DataSet
 
     :param dataset: Dataset to reproject
+    :type dataset: xr.Dataset
     :param from_dataset: Dataset to get projection from
+    :type from_dataset: xr.Dataset
     :param interp: interpolation method
+    :type interp: str
     :return: reprojected dataset
+    :rtype: xr.Dataset
     """
 
     # Copy dataset
@@ -170,14 +181,21 @@ def read_img(
     Read image and transform and return the corresponding xarray.DataSet
 
     :param img: Path to the image
+    :type img: str
     :param no_data: no_data value in the image
+    :type no_data: float
     :param ref_georef_grid: WGS84 or geoid
+    :type ref_georef_grid: str
     :param geoid_path: optional, path to local geoid
+    :type ref_georef_grid: str or None
     :param zunit: unit
+    :type zunit: str
     :param load_data: load as dem
+    :type load_data: bool
     :return: dataset containing the variables :
             - im : 2D (row, col) xarray.DataArray float32
             - trans 1D xarray.DataArray float32
+    :rtype: xr.Dataset
     """
     img_ds = rasterio.open(img)
     data = img_ds.read(1)
@@ -212,15 +230,24 @@ def create_dataset(
     and return the corresponding xarray.DataSet
 
     :param data: image data
+    :type data: np.ndarray
     :param transform: image data
+    :type transform: np.ndarray
     :param img: image path
+    :type img: str
     :param no_data: no_data value in the image
+    :type no_data: float or None
     :param georef_grid: WGS84 or geoid
+    :type georef_grid: str
     :param geoid_path: optional path to local geoid, default is EGM96
+    :type geoid_path: str or None
     :param zunit: unit
+    :type zunit: str
     :param load_data: load as dem
+    :type load_data: bool
     :return: xarray.DataSet containing the variables :
             - im : 2D (row, col) xarray.DataArray float32
+    :type data: xr.Dataset
     """
 
     img_ds = rasterio.open(img)
@@ -301,10 +328,14 @@ def read_img_from_array(
     If from_dataset is None defaults attributes are set.
 
     :param img_array: array
-    :param no_data: no_data value in the image
+    :type img_array: np.ndarray
     :param from_dataset: dataset to copy
+    :type from_dataset: xr.Dataset or None
+    :param no_data: no_data value in the image
+    :type no_data: float or None
     :return: xarray.DataSet containing the variables :
             - im : 2D (row, col) xarray.DataArray float32
+    :rtype: xr.Dataset
     """
 
     data = np.copy(img_array)
@@ -359,20 +390,36 @@ def load_dems(
     Loads both DEMs
 
     :param ref_path:  path to ref dem
-    :param dem_path:path to sec dem
+    :type ref_path: str
+    :param dem_path: path to sec dem
+    :type dem_path: str
     :param ref_nodata: ref no data value
-        (None by default and if set inside metadata)
+    (None by default and if set inside metadata)
+    :type ref_nodata: float or None
     :param dem_nodata: dem no data value
-        (None by default and if set inside metadata)
-    :param ref_georef_grid: ref georef (either WGS84 -default- or geoid)
-    :param dem_georef_grid: dem georef (either WGS84 -default- or geoid)
-    :param ref_geoid_path: optional path to local geoid, default is EGM96
-    :param dem_geoid_path: optional path to local geoid, default is EGM96
+    (None by default and if set inside metadata)
+    :type dem_nodata: float or None
+    :param ref_georef_grid: ref georef
+    (either WGS84 -default- or geoid)
+    :type ref_georef_grid: str
+    :param dem_georef_grid: dem georef
+    (either WGS84 -default- or geoid)
+    :type dem_georef_grid: str
+    :param ref_geoid_path: optional path to
+    local geoid, default is EGM96
+    :type ref_geoid_path: str or None
+    :param dem_geoid_path: optional path to
+    local geoid, default is EGM96
+    :type dem_geoid_path: str or None
     :param ref_zunit: ref z unit
+    :type ref_zunit: str
     :param dem_zunit: dem z unit
+    :type dem_zunit: str
     :param load_data: True if dem are to be fully loaded,
         other options are False or a dict roi
+    :type load_data: bool, dict or Tuple
     :return: ref and dem datasets
+    :rtype: xr.Dataset, xr.Dataset
     """
 
     # Get roi of dem
@@ -516,10 +563,15 @@ def bounding_box_to_polygon(
     Transform bounding box to polygon
 
     :param left: left bound
+    :type left: float
     :param bottom: bottom bound
+    :type bottom: float
     :param right: right bound
+    :type right: float
     :param top: top bound
+    :type top: float
     :return: polygon
+    :rtype: List[List[float]]
     """
 
     polygon = [
@@ -539,9 +591,13 @@ def translate(
     """
     Modify transform from dataset
     :param dataset:
+    :type dataset: xr.Dataset
     :param x_offset: x offset
+    :type x_offset: float
     :param y_offset: y offset
+    :type y_offset: float
     :return translated dataset
+    :rtype: xr.Dataset
     """
     dataset_translated = copy.copy(dataset)
 
@@ -564,20 +620,26 @@ def translate_to_coregistered_geometry(
 
     Note that :
     a) The ref georef-origin is assumed to be the reference
-    b) The ref shall be the one resampled at dem's georef-grid
-     as it supposedly is the cleaner one.
+    b) The ref shall be the one resampled at dem's
+    georef-grid as it supposedly is the cleaner one.
 
-    Hence, dem is only cropped, and ref is projected on dem's georef-grid,
-     so it might be resampled.
-    However, the dem's georef-origin is translated to the ref's georef-origin,
-    which is considered the reference.
+    Hence, dem is only cropped, and ref is
+    projected on dem's georef-grid, so it might be resampled.
+    However, the dem's georef-origin is translated
+    to the ref's georef-origin, which is considered the reference.
 
     :param dem: dataset, master dem
+    :type dem: xr.Dataset
     :param ref: dataset, slave dem
+    :type ref: xr.Dataset
     :param dx: f, dx value in pixels
+    :type dx: int
     :param dy: f, dy value in pixels
+    :type dy: int
     :param interpolator: gdal interpolator
+    :type interpolator: str
     :return: coregistered DEM as datasets
+    :rtype: xr.Dataset, xr.Dataset
     """
 
     #
@@ -748,8 +810,11 @@ def get_slope(dataset: xr.Dataset, degree: bool = False) -> np.ndarray:
             fr/pro-app/tool-reference/spatial-analyst/how-aspect-works.htm
 
     :param dataset: dataset
+    :type dataset: xr.Dataset
     :param degree:  True if is in degree
+    :type degree: bool
     :return: slope
+    :rtype: np.ndarray
     """
 
     def get_orthodromic_distance(
@@ -821,10 +886,14 @@ def interpolate_geoid(
     """
     Bilinear interpolation of geoid
 
-    :param geoid_filename :  coord geoid_filename
-    :param coords :  coords matrix 2xN [lon,lat]
-    :param interpol_method  :  interpolation type
-    :return interpolated position  : [lon,lat,estimate geoid] (3D np.array)
+    :param geoid_filename: coord geoid_filename
+    :type geoid_filename: str
+    :param coords: coords matrix 2xN [lon,lat]
+    :type coords: np.ndarray
+    :param interpol_method: interpolation type
+    :type interpol_method: str
+    :return interpolated position: [lon,lat,estimate geoid]
+    :rtype: 3D np.array
     """
     dataset = rasterio.open(geoid_filename)
 
@@ -865,9 +934,12 @@ def get_geoid_offset(
     """
     Get offset from geoid to ellipsoid
 
-    :param dataset :  dataset
-    :param geoid_path :  optional absolut geoid_path, if None egm96 is used
-    :return offset as array
+    :param dataset: dataset
+    :type dataset: xr.Dataset
+    :param geoid_path: optional absolut geoid_path, if None egm96 is used
+    :type geoid_path: str or None
+    :return: offset as array
+    :rtype: np.ndarray
     """
 
     # If no geoid path has been given, use the default geoid egm96

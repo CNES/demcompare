@@ -25,9 +25,11 @@ Coregistration part of dsm_compare
 # Standard imports
 import copy
 import os
+from typing import Dict
 
 # Third party imports
 import numpy as np
+import xarray as xr
 
 # DEMcompare imports
 from .img_tools import save_tif, translate, translate_to_coregistered_geometry
@@ -36,7 +38,12 @@ from .output_tree_design import get_out_dir, get_out_file_path
 
 
 def coregister_with_nuth_and_kaab(
-    dem, ref, init_disp_x=0, init_disp_y=0, tmp_dir=".", nb_iters=6
+    dem: xr.Dataset,
+    ref: xr.Dataset,
+    init_disp_x: int = 0,
+    init_disp_y: int = 0,
+    tmp_dir: str = ".",
+    nb_iters: int = 6,
 ):
     """
     Compute x and y offsets between two DEMs
@@ -45,10 +52,14 @@ def coregister_with_nuth_and_kaab(
     Note that dem will not be resampled in the process
     Note that the dem's georef-origin might be shifted in the process
 
-    :param dem: xarray Dataset, master dem
+    :param dem: master dem
+    :type dem: demxarray Dataset
     :param ref: xarray Dataset, slave dem
+    :type ref: demxarray Dataset
     :param init_disp_x: initial x disparity in pixel
+    :type init_disp_x: int
     :param init_disp_y: initial y disparity in pixel
+    :type init_disp_y: int
     :param tmp_dir: directory path to temporay results (as Nuth & Kaab plots)
     :param nb_iters: Nuth and Kaab number of iterations (default 6)
     :return: mean shifts (x and y), and coregistered DEMs
@@ -104,7 +115,9 @@ def coregister_with_nuth_and_kaab(
     )
 
 
-def coregister_and_compute_alti_diff(cfg, dem, ref):
+def coregister_and_compute_alti_diff(
+    cfg: Dict, dem: xr.Dataset, ref: xr.Dataset
+):
     """
     Coregister two DSMs together
     and compute alti differences (before and after coregistration).
@@ -116,9 +129,13 @@ def coregister_and_compute_alti_diff(cfg, dem, ref):
     - alti differences computation
 
     :param cfg: configuration dictionary
+    :type cfg: Dict
     :param dem: dem raster
+    :type dem: xr.Dataset
     :param ref: reference dem raster
+    :type ref: xr.Dataset
     :return: coreg_dem, coreg_ref and alti differences
+    :rtype: xr.Dataset, xr.Dataset, Dict
     """
 
     # Get Nuth and Kaab method number of iterations if defined

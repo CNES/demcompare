@@ -29,6 +29,7 @@ import copy
 import errno
 import json
 import os
+from typing import Dict, List, Tuple
 
 # Third party imports
 import numpy as np
@@ -52,9 +53,12 @@ def mkdir_p(path):
             raise
 
 
-def check_parameters(cfg):  # noqa: C901
+def check_parameters(cfg: Dict):  # noqa: C901
     """
     Checks parameters
+
+    :param cfg: configuration dictionary
+    :type cfg: Dict
     """
     # verify that input files are defined
     if "inputDSM" not in cfg or "inputRef" not in cfg:
@@ -136,23 +140,23 @@ def check_parameters(cfg):  # noqa: C901
     cfg["otd"] = "default_OTD"
 
 
-def initialization_plani_opts(cfg):
+def initialization_plani_opts(cfg: Dict):
     """
     Initialize the plan2DShift step used
     to compute plani (x,y) shift between the two DSMs.
 
-    'auto_disp_first_guess' :
-        when set to True, PRO_DecMoy is used to guess disp init and disp range
+    'auto_disp_first_guess' : when set to True,
+    PRO_DecMoy is used to guess disp init and disp range
     'coregistration_method' : 'correlation' or 'nuth_kaab'
-    if 'correlation' :
-        'correlator' : 'PRO_Medicis'
-        'disp_init' and 'disp_range' define the area to explore
-            when 'auto_disp_first_guess' is set to False
+    if 'correlation' :   'correlator' : 'PRO_Medicis'
+    'disp_init' and 'disp_range' define the area
+    to explore when 'auto_disp_first_guess' is set to False
 
     Note that disp_init and disp_range are used
     to define margin when the process is tiled.
 
-    :param cfg:
+    :param cfg: configuration dictionary
+    :type cfg: Dict
     """
 
     default_plani_opts = {
@@ -170,11 +174,12 @@ def initialization_plani_opts(cfg):
         )
 
 
-def initialization_alti_opts(cfg):
+def initialization_alti_opts(cfg: Dict):
     """
     Init Altitude options from configuration
 
     :param cfg: Input demcompare configuration
+    :type cfg: Dict
     """
     default_alti_opts = {
         "egm96-15": {"path": "demcompare/geoid/egm96_15.gtx", "zunit": "m"},
@@ -190,11 +195,12 @@ def initialization_alti_opts(cfg):
         )
 
 
-def initialization_stats_opts(cfg):
+def initialization_stats_opts(cfg: Dict):
     """
     Init Stats options from configuration
 
     :param cfg: Input demcompare configuration
+    :type cfg: Dict
     """
     # slope_range defines the intervals
     # to classify the classification type image from
@@ -283,15 +289,21 @@ def initialization_stats_opts(cfg):
         #              **cfg['stats_opts']['classification_layers'][key]}
 
 
-def get_tile_dir(cfg, col_1, row_1, width, height):
+def get_tile_dir(cfg: Dict, col_1: int, row_1: int, width: int, height: int):
     """
     Get the name of a tile directory
 
     :param cfg: Input demcompare configuration
+    :type cfg: Dict
     :param col: value of tile first column
+    :type col: int
     :param row: value of tile first row
+    :type row: int
     :param width: width of tile
+    :type width: int
     :param height: height of tile
+    :type height: int
+    :return: None
     """
     max_digit_row = 0
     max_digit_col = 0
@@ -307,9 +319,16 @@ def get_tile_dir(cfg, col_1, row_1, width, height):
     )
 
 
-def adjust_tile_size(image_size, tile_size):
+def adjust_tile_size(image_size: int, tile_size: int) -> Tuple[int, int]:
     """
     Adjust the size of the tiles.
+
+    :param image_size: Input demcompare configuration
+    :type image_size: Dict
+    :param tile_size: value of tile first column
+    :type tile_size: int
+    :return: tile_w, tile_h
+    :rtype: int, int
     """
     tile_w = min(image_size["w"], tile_size)  # tile width
     ntx = int(np.round(float(image_size["w"]) / tile_w))
@@ -325,14 +344,20 @@ def adjust_tile_size(image_size, tile_size):
     return tile_w, tile_h
 
 
-def compute_tiles_coordinates(roi, tile_width, tile_height):
+def compute_tiles_coordinates(
+    roi: dict, tile_width: int, tile_height: int
+) -> List[Tuple[int, int, int, int]]:
     """
     Compute tiles coordinates
 
     :param roi: Region of interest
+    :type roi: dict
     :param tile_width: width of tile
+    :type tile_width: int
     :param tile_height:  height of tile
-
+    :type tile_height: int
+    :return: out
+    :rtype: List[Tuple[int, int, int, int]]
     """
     out = []
     for row in np.arange(roi["y"], roi["y"] + roi["h"], tile_height):
@@ -344,13 +369,15 @@ def compute_tiles_coordinates(roi, tile_width, tile_height):
     return out
 
 
-def divide_images(cfg):
+def divide_images(cfg: dict):
     """
     List the tiles to process and prepare their output directories structures.
 
-    Returns:
-        a list of dictionaries. Each dictionary contains the image coordinates
-        and the output directory path of a tile.
+    :param cfg: cfg
+    :type cfg: dict
+    :return: tiles: a list of dictionaries. Each dictionary
+    contains the image coordinates and the output directory path of a tile.
+    :rtype: List[dict]
     """
 
     # compute biggest roi

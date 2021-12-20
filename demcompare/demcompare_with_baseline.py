@@ -27,22 +27,39 @@ Tests : Compare results against baseline
 import argparse
 import glob
 from collections import OrderedDict
+from typing import List
 
 # Third party imports
 import argcomplete
 
 
-def load_csv(csv_file):
+def load_csv(csv_file: str):
     """
     Load CSV function
+
+    :param csv_file: csv file name
+    :type csv_file: str
     """
     with open(csv_file, "r", encoding="utf8") as file:
         return file.readlines()
 
 
-def check_csv(csv_ref, csv_test, csv_file, epsilon):
+def check_csv(
+    csv_ref: List[str], csv_test: List[str], csv_file: str, epsilon: float
+):
     """
     Check CSV function
+
+    :param csv_ref: refence csv data
+    :type csv_ref: List[str]
+    :param csv_test: test csv data
+    :type csv_test: List[str]
+    :param csv_file: csv file name
+    :type csv_file: str
+    :param epsilon: maximum allowed difference
+    :type epsilon: float
+    :return: csv_differences
+    :rtype: List[str]
     """
     if csv_ref[0] != csv_test[0]:
         raise ValueError(
@@ -100,14 +117,17 @@ def check_csv(csv_ref, csv_test, csv_file, epsilon):
     return csv_differences
 
 
-def run(baseline_dir, output_dir, epsilon=1.0e-6):
+def run(baseline_dir: str, output_dir: str, epsilon: float = 1.0e-6):
     """
     Compare output_dir results to baseline_dir ones
 
-    :param baseline_dir:
-    :param output_dir:
-    :param epsilon:
-    :return:
+    :param baseline_dir: baseline directory name
+    :type baseline_dir: str
+    :param output_dir: output directory name
+    :type output_dir: str
+    :param epsilon: maximum allowed difference
+    :type epsilon: float
+    :return: None
     """
 
     # Find csv files

@@ -32,10 +32,12 @@ License : MIT
 # Standard imports
 import argparse
 import os
+from typing import Tuple
 
 # Third party imports
 import matplotlib.pyplot as pl
 import numpy as np
+import xarray as xr
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
 
@@ -43,11 +45,13 @@ from scipy.optimize import leastsq
 from .img_tools import load_dems, read_img_from_array, save_tif
 
 
-def grad2d(dem):
+def grad2d(dem: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
 
-    :param dem:
+    :param dem: input dem
+    :type dem: np.ndarray
     :return: slope (fast forward style) and aspect
+    :rtype: np.ndarray, np.ndarray
     """
     grad2, grad1 = np.gradient(dem)  # in Python, x and y axis reversed
 
@@ -66,11 +70,11 @@ def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
     Inputs :
     - dh : array, elevation difference master_dem - slave_dem
     - slope/aspect : array, slope and aspect for the same locations as the dh
-    - plot_file : file to where store plot.
-        Set to None if plot is to be printed. Set to False for no plot at all.
+    - plot_file : file to where store plot. Set to
+    None if plot is to be printed. Set to False for no plot at all.
     Returns :
-    - east, north, c : f, estimated easting and northing of the shift,
-        c is not used here but is related to the vertical shift
+    - east, north, c : f, estimated easting and northing
+    of the shift, c is not used here but is related to the vertical shift
     """
     # The aim is to compute dh / tan(alpha) as a function of the aspect
     # -> hence we are going to be slice the aspect to average a value
@@ -158,7 +162,12 @@ def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
     return east, north, c
 
 
-def nuth_kaab_lib(dsm_dataset, ref_dataset, outdir_plot=None, nb_iters=6):
+def nuth_kaab_lib(
+    dsm_dataset: xr.Dataset,
+    ref_dataset: xr.Dataset,
+    outdir_plot: str = None,
+    nb_iters: int = 6,
+) -> Tuple[float, float, float, xr.Dataset, xr.Dataset, xr.Dataset, xr.Dataset]:
     """
     This is the lib api of nuth and kaab universal coregistration.
     It offers quite the same services as the classic main api
@@ -172,11 +181,15 @@ def nuth_kaab_lib(dsm_dataset, ref_dataset, outdir_plot=None, nb_iters=6):
     NB : it is assumed that both dem3Draster have np.nan values inside
     the '.r' field as masked values
 
-    :param dsm_dataset: xarray Dataset
-    :param ref_dataset: xarray Dataset
-    :param outdir_plot: path to output Plot directory
-        (plots are printed if set to None)
+    :param dsm_dataset: dsm dataset
+    :type dsm_dataset: xarray Dataset
+    :param ref_dataset: ref dataset
+    :type ref_dataset: xarray Dataset
+    :param outdir_plot: path to output Plot
+    directory (plots are printed if set to None)
+    :type outdir_plot: str
     :param nb_iters: Nuth and Kaab method iterations number default: 6
+    :type nb_iters: int
     :return: x and y shifts (as 'dsm_dataset + (x,y) = ref_dataset')
     """
 
@@ -333,15 +346,15 @@ def nuth_kaab_lib(dsm_dataset, ref_dataset, outdir_plot=None, nb_iters=6):
 
 
 def run(
-    dsm_to,
-    dsm_from,
-    outfile=None,
-    nb_iters=6,
-    outdir_plot=None,
-    nan_dsm_to=None,
-    nan_dsm_from=None,
-    save_diff=False,
-):
+    dsm_to: str,
+    dsm_from: str,
+    outfile: str = None,
+    nb_iters: int = 6,
+    outdir_plot: str = None,
+    nan_dsm_to: str = None,
+    nan_dsm_from: str = None,
+    save_diff: bool = False,
+) -> Tuple[float, float, float]:
     """
     Coregister dsm_from to dsm_to using Nuth & Kaab (2011) algorithm.
 
@@ -358,16 +371,25 @@ def run(
     TODO: not used in code, Refactor with nuth_kaab_lib function.
 
     :param dsm_to: path to dsm to coregister to
+    :type dsm_to: str
     :param dsm_from: path to dsm to coregister from
+    :type dsm_from: str
     :param outfile: path to dsm_from after coregistration to dsm_to
+    :type outfile: str
     :param nb_iters: Nuth and Kaab method iterations (default(6))
-    :param outdir_plot: path to output Plot directory
-        (plots are printed if set to None)
+    :type nb_iters: int
+    :param outdir_plot: path to output Plot
+    directory (plots are printed if set to None)
+    :type outdir_plot: str
     :param nan_dsm_to:
+    :type nan_dsm_to: str
     :param nan_dsm_from:
+    :type nan_dsm_from: str
     :param save_diff: save ./initial_dh.tiff and ./final_dh.tiff
-        with dsms diff before and after coregistration
+    with dsms diff before and after coregistration
+    :type save_diff: bool
     :return: x and y shifts (as 'dsm_from + (x,y) = dsm_to')
+    :rtype: float, float, float
     """
 
     #

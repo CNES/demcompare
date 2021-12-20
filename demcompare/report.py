@@ -28,6 +28,7 @@ import fnmatch
 import glob
 import os
 import sys
+from typing import List
 
 # DEMcompare imports
 from .sphinx_project_generator import SphinxProjectManager
@@ -62,7 +63,9 @@ def first_recursive_search(directory: str, pattern: str):
     if no results return None
 
     :param directory:
+    :type directory: str
     :param pattern:
+    :type pattern: str
     :return: matches_number matches result
     """
     result = recursive_search(directory, pattern)
@@ -73,27 +76,35 @@ def first_recursive_search(directory: str, pattern: str):
 
 
 def generate_report(  # noqa: C901
-    working_dir,
-    dsm_name,
-    ref_name,
-    coreg_dsm_name,
-    coreg_ref_name,
-    partitions=None,
-    doc_dir=".",
-    project_dir=".",
+    working_dir: str,
+    dsm_name: str,
+    ref_name: str,
+    coreg_dsm_name: str,
+    coreg_ref_name: str,
+    partitions: List[str] = None,
+    doc_dir: str = ".",
+    project_dir: str = ".",
 ):
     """
     Create pdf report from png graph and csv stats summary
 
-    :param working_dir: directory in which to find *mode*.png
-                    and *mode*.csv files for each mode in modename
+    :param working_dir: directory in which to find
+    *mode*.png and *mode*.csv files for each mode in modename
+    :type working_dir: str
     :param dsm_name: name or path to the dsm to be compared against the ref
+    :type dsm_name: str
     :param ref_name: name or path to the reference dsm
+    :type ref_name: str
     :coreg_dsm_name: name or path to the coreg dsm
+    :type coreg_dsm_name: str
     :coreg_ref_name: name or path to the ref dsm
+    :type coreg_ref_name: str
     :param partitions: list of partition, contains modes by partition
+    :type partitions: List[str]
     :param doc_dir: directory in which to find the output documentation
+    :type doc_dir: str
     :param project_dir:
+    :type project_dir: str
     :return:
     """
 
