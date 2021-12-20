@@ -4,11 +4,14 @@ Contributing guide
 
 Developer mode
 This package can be installed through the following commands:
+
 .. code-block:: bash
+
     git clone https://github.com/CNES/demcompare
     cd demcompare
     make install
-    source venv/bin/activate # to go in installed dev environment
+    source venv/bin/activate
+
 Dependencies : git, make
 
 
@@ -71,7 +74,7 @@ Here are some rules to apply when developing a new functionality:
 Pre-commit validation
 ---------------------
 
-Pre-commit hooks (black, pylint, mypy, sphinx-checking, nbstripout) for code analysis can be installed:
+Pre-commit hooks (black, pylint, mypy, sphinx-checking, nbstripout, flake8) for code analysis can be installed:
 
 .. code-block:: bash
 

@@ -1,6 +1,19 @@
-Generated output documentation
-==============================
+.. _report:
 
-The output <test_output>/doc/published_report/ directory contains a full generated sphinx documentation with all the results presented
+Generated output report
+=======================
+
+The output `<test_output>/doc/published_report/` directory contains a full generated sphinx documentation with all the results presented
 for each mode and each set, in html or latex format.
-It can be regenerated using make html or make latexpdf in <test_output>/doc/src/ directory
+
+It can be regenerated using
+
+.. code-block:: bash
+
+    make html
+
+or
+
+.. code-block:: bash
+
+    make latexpdf in <test_output>/doc/src/ directory

@@ -8,7 +8,9 @@ Configuration and parameters
 
 
 Here is the list of the parameters and the associated default value when it exists:
+
 .. sourcecode:: text
+
     {
         "outputDir" : "./test_output/"
         "inputDSM" : {  "path", "./inputDSM.tif"
@@ -32,6 +34,7 @@ Here is the list of the parameters and the associated default value when it exis
 Where a valid `classification_layers` value could be:
 
 .. sourcecode:: text
+
                             "classification_layers": {"land_cover": {"ref": 'None_or_path_to_land_cover_associated_with_the_ref',
                                                                      "dsm": 'None_or_path_to_land_cover_associated_with_the_dsm',
                                                                      "classes": {"forest": [31, 32], "urbain": [42]}}}
@@ -41,20 +44,22 @@ Where a valid `classification_layers` value could be:
 If DEMs altitudes are to rely on **geoid**, configurations could be:
 
 .. sourcecode:: text
-"inputDSM" : {  "path", "./inputDSM.tif"
-                        "zunit" : "meter",
-                        "georef" : "geoid",
-                        "nodata" : }
+
+    "inputDSM" : {  "path", "./inputDSM.tif"
+                            "zunit" : "meter",
+                            "georef" : "geoid",
+                            "nodata" : }
 
 In this case, **EGM96 geoid** will be used by default.
 
 Otherwise, the absolute path to a locally available geoid model can be given, for instance:
 
 .. sourcecode:: text
-"inputDSM" : {  "path", "./inputDSM.tif"
-                        "zunit" : "meter",
-                        "georef" : "geoid",
-                        "geoid_path": "path/to/egm08_25.gtx"
-                        "nodata" : }
+
+    "inputDSM" : {  "path", "./inputDSM.tif"
+                            "zunit" : "meter",
+                            "georef" : "geoid",
+                            "geoid_path": "path/to/egm08_25.gtx"
+                            "nodata" : }
 
 

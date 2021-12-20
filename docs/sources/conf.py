@@ -103,6 +103,21 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
+# Title
+html_title = "Demcompare Documentation"
+html_short_title = "Demcompare Documentation"
+
+# Logo
+html_logo = "images/demcompare_picto.png"
+
+# Favicon
+html_favicon = "images/favicon.ico"
+
+# Theme options
+html_theme_options = {
+    "logo_only": True,
+    "navigation_depth": 3,
+}
 
 # html_logo = 'Images/logo/logo_typo_large.png'
 
