@@ -170,22 +170,22 @@ def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
             target,
             ".",
             color="silver",
-            markersize=1,
+            markersize=3,
             label="target",
         )
         pl.plot(
             aspect * 180 / np.pi,
             target_filt,
             "c.",
-            markersize=1,
+            markersize=3,
             label="target filtered",
         )
         pl.plot(
             aspect_bounds * 180 / np.pi, slice_filt_median, "k.", label="median"
         )
-        pl.plot(aspect_bounds * 180 / np.pi, yfit, "b-", label="fit")
-        pl.xlabel("Terrain aspect (rad)")
-        pl.ylabel(r"dh/tan($\alpha$)")
+        pl.plot(aspect_bounds * 180 / np.pi, yfit, "b-", label="median fit")
+        pl.xlabel("Terrain aspect (deg)")
+        pl.ylabel(r"dh/tan($\alpha$) (meters)")
         # set axes limit on twice the min/max of the median,
         # or +-2 if the value is below it
         axes = pl.gca()
