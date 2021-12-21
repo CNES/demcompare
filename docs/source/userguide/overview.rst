@@ -16,9 +16,7 @@ Example
 
 1. Install
 
-.. code-block:: bash
-
-    pip install demcompare
+For information about Demcompare's installation please refer to: :ref:`install`
 
 2. Run demcompare with the example configuration file
 

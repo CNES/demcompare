@@ -47,4 +47,4 @@ Depending on pip version, installation problems can happen with packages depende
 
 Dependencies
 ************
-The full list of dependencies can be observed from the *[setup.cfg](./setup.cfg)* file.
+The full list of dependencies can be observed from the [setup.cfg](./setup.cfg) file.

@@ -3,8 +3,8 @@
 Inputs
 ======
 
-Configuration and parameters
-****************************
+Configuration parameters
+************************
 
 
 Here is the list of the parameters and the associated default value when it exists:
