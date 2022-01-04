@@ -375,7 +375,8 @@ def divide_images(cfg: dict):
 
     :param cfg: cfg
     :type cfg: dict
-    :return: tiles, contains the image coordinates and the output directory path of a tile.
+    :return: tiles, contains the image coordinates
+            and the output directory path of a tile.
     :rtype: List[dict]
     """
 

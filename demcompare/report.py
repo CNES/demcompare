@@ -88,7 +88,8 @@ def generate_report(  # noqa: C901
     """
     Create pdf report from png graph and csv stats summary
 
-    :param working_dir: directory in which to find *mode*.png and *mode*.csv files for each mode in modename
+    :param working_dir: directory in which to find *mode*.png
+            and *mode*.csv files for each mode in modename
     :type working_dir: str
     :param dsm_name: name or path to the dsm to be compared against the ref
     :type dsm_name: str

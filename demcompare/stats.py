@@ -231,7 +231,8 @@ def create_mode_masks(alti_map: xr.Dataset, partitions_sets_masks=None):
 
     :param alti_map: alti differences
     :type alti_map: xr.Dataset
-    :param partitions_sets_masks: [] (master and/or slave dsm) of [] of boolean array (sets for each dsm)
+    :param partitions_sets_masks: [] (master and/or slave dsm)
+            of [] of boolean array (sets for each dsm)
     :type partitions_sets_masks: List[bool]
     :return: list of masks, associated modes, and error_img read as array
     :rtype: List[np.ndarray]
@@ -313,11 +314,14 @@ def create_masks(
     :type do_classification: bool
     :param ref_support: reference support dataset
     :type ref_support: xr.Dataset
-    :param do_cross_classification: whether or not the cross classification is activated
+    :param do_cross_classification: whether or not
+            the cross classification is activated
     :type do_cross_classification: bool
-    :param ref_support_classified_desc: dict with 'path' and 'nodata' keys for the ref support image classified
+    :param ref_support_classified_desc: dict with
+            'path' and 'nodata' keys for the ref support image classified
     :type ref_support_classified_desc: dict
-    :param remove_outliers: boolean, set to True (default) to return a no_outliers mask
+    :param remove_outliers: boolean, set to
+            True (default) to return a no_outliers mask
     :type remove_outliers: bool
     :return: list of masks, associated modes, and error_img read as array
     :rtype: List[np.ndarray]
@@ -372,7 +376,8 @@ def stats_computation(
 
     :param array: numpy array
     :type array: np.ndarray
-    :param list_threshold: list, defines thresholds to be used for pixels above thresholds ratio computation
+    :param list_threshold: list, defines thresholds
+            to be used for pixels above thresholds ratio computation
     :type list_threshold: List[int]
     :return: dict with stats name and values
     :rtype: Dict
@@ -437,19 +442,23 @@ def get_stats(
 
     :param dz_values: errors
     :type dz_values: np.ndarray
-    :param to_keep_mask: boolean mask with True values for pixels to use
+    :param to_keep_mask: boolean mask with
+            True values for pixels to use
     :type to_keep_mask: List[bool]
-    :param sets: list of sets (boolean arrays that indicate which class a pixel belongs to)
+    :param sets: list of sets (boolean arrays
+            that indicate which class a pixel belongs to)
     :type sets: List[np.ndarray]
     :type sets_labels: label associated to the sets
     :param sets_labels: List[str]
     :param sets_names: name associated to the sets
     :type sets_names: List[str]
-    :param list_threshold: list, defines thresholds to be used for pixels above thresholds ratio computation
+    :param list_threshold: list, defines thresholds to
+            be used for pixels above thresholds ratio computation
     :type list_threshold: List[int]
     :param outliers_free_mask:
     :type outliers_free_mask:
-    :return: list of dictionary (set_name, nbpts, %(out_of_all_pts), max, min, mean, std, rmse, ...)
+    :return: list of dictionary (set_name, nbpts,
+             %(out_of_all_pts), max, min, mean, std, rmse, ...)
     :rtype: List[Dict]
     """
     # pylint: disable=singleton-comparison
@@ -538,9 +547,11 @@ def dem_diff_plot(
     :type dem_diff: xr.Dataset
     :param title: plot title
     :type title: str
-    :param plot_file: path and name for the saved plot (used when display if False)
+    :param plot_file: path and name for
+            the saved plot (used when display if False)
     :type plot_file: str
-    :param display: boolean, set to True if display is on, otherwise the plot is saved to plot_file location
+    :param display: boolean, set to True if display is on,
+            otherwise the plot is saved to plot_file location
     :type display: bool
     """
     # Init mu and sigma from data to focus on little values
@@ -588,11 +599,13 @@ def dem_diff_cdf_plot(
     :type dem_diff: xarray Dataset
     :param title: plot title
     :type title: str
-    :param plot_file: path and name for the saved plot (used when display if False)
+    :param plot_file: path and name for the
+            saved plot (used when display if False)
     :type plot_file: str
     :param bin_step: bin size
     :type bin_step: float
-    :param display: set to True if display is on, otherwise the plot is saved to plot_file location
+    :param display: set to True if display is on,
+            otherwise the plot is saved to plot_file location
     :type display: bool
     """
     # Get plot_file file base
@@ -671,9 +684,11 @@ def dem_diff_pdf_plot(
     :type dem_diff: xarray Dataset
     :param title: plot title
     :type title: str
-    :param plot_file: path and name for the saved plot (used when display if False)
+    :param plot_file: path and name for the saved
+            plot (used when display if False)
     :type plot_file: str
-    :param display: bset to True if display is on, otherwise the plot is saved to plot_file location
+    :param display: bset to True if display is on,
+            otherwise the plot is saved to plot_file location
     :type display: bool
     :param bin_step: bin size
     :type bin_step: float
@@ -773,7 +788,8 @@ def plot_histograms(  # noqa: C901
     :type bin_step: float
     :param to_keep_mask: boolean mask with True values for pixels to use
     :type to_keep_mask: np.ndarray
-    :param sets: list of sets (boolean arrays that indicate which class a pixel belongs to)
+    :param sets: list of sets (boolean arrays that
+            indicate which class a pixel belongs to)
     :type sets: List
     :param set_labels: name associated to the sets
     :type set_labels: np.ndarray
@@ -783,7 +799,8 @@ def plot_histograms(  # noqa: C901
     :type plot_title: str
     :param outplotdir: directory where histograms are to be saved
     :type outplotdir: str
-    :param outhistdir: directory where histograms (as numpy files) are to be saved
+    :param outhistdir: directory where
+            histograms (as numpy files) are to be saved
     :type outhistdir: str
     :param save_prefix: prefix to the histogram files saved by this method
     :type save_prefix: str
@@ -1045,7 +1062,8 @@ def save_results(
     :type plot_files: List[str]
     :param plot_colors: list of plot colors associated to the labels_plotted
     :type plot_colors: List[str]
-    :param to_csv: boolean, set to True to save to csv format as well (default False)
+    :param to_csv: boolean, set to True
+            to save to csv format as well (default False)
     :type to_csv: List[str]
     :return:
     """
@@ -1266,9 +1284,11 @@ def alti_diff_stats(
     :type ref: xr.Dataset
     :param alti_map: xarray Dataset, dsm - ref
     :type alti_map: xr.Datast
-    :param display: boolean, display option (set to False to save plot on file system)
+    :param display: boolean, display option
+            (set to False to save plot on file system)
     :type display: bool
-    :param remove_outliers: boolean, set to True to remove outliers ( x < mu - 3sigma ; x > mu + 3sigma)
+    :param remove_outliers: boolean, set to True to
+            remove outliers ( x < mu - 3sigma ; x > mu + 3sigma)
     :type remove_outliers: bool
     :param geo_ref: boolean, set to False if images are not georeferenced
     :type geo_ref: bool
@@ -1533,7 +1553,8 @@ def get_stats_per_mode(
 
     :param data: array to compute stats from
     :type data: np.ndarray
-    :param sets_masks: [] of one or two array (sets partitioning the support_img) of size equal to data ones
+    :param sets_masks: [] of one or two array
+            (sets partitioning the support_img) of size equal to data ones
     :type sets_masks: List
     :param sets_labels: sets labels
     :type sets_labels: List

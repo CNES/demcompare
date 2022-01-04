@@ -307,12 +307,12 @@ class Partition:
         return stats_results
 
     @property
-    def sets_masks(self) -> List[List[np.ndarray], List[np.ndarray]]:
+    def sets_masks(self) -> List[List[np.ndarray]]:
         """
         Set masks for partition.
 
         :return: masks set
-        :rtype: List[List[np.ndarray], List[np.ndarray]]
+        :rtype: List[List[np.ndarray]]
         """
         if self._sets_masks is None:
             all_masks = []

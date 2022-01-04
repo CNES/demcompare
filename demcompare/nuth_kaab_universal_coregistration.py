@@ -72,19 +72,20 @@ def nuth_kaab_single_iter(
     Compute the horizontal shift between 2 DEMs
     using the method presented in Nuth & Kaab 2011
 
-    :param dh : elevation difference master_dem - slave_dem
+    :param dh: elevation difference master_dem - slave_dem
     :type dh: np.ndarray
-    :param slope : slope for the same locations as the dh
+    :param slope: slope for the same locations as the dh
     :type slope: np.ndarray
-    :param aspect : aspect for the same locations as the dh
+    :param aspect: aspect for the same locations as the dh
     :type aspect: np.ndarray
-    :param plot_file : file to where store plot. Set to None if plot is to be printed. Set to False for no plot at all.
+    :param plot_file: file to where store plot. Set to None if
+            plot is to be printed. Set to False for no plot at all.
     :type plot_file: str or bool
     :return: east, north, c
     :rtype: float, float, float
-    -
     """
-    # Compute estimated easting and northing of the shift, c is not used here but is related to the vertical shift
+    # Compute estimated easting and northing of the shift,
+    #         c is not used here but is related to the vertical shift
     # The aim is to compute dh / tan(alpha) as a function of the aspect
     # -> hence we are going to be slice the aspect to average a value
     #     for dh / tan(alpha) on those sliced areas
@@ -194,7 +195,8 @@ def nuth_kaab_lib(
     :type dsm_dataset: xarray Dataset
     :param ref_dataset: ref dataset
     :type ref_dataset: xarray Dataset
-    :param outdir_plot: path to output Plot directory (plots are printed if set to None)
+    :param outdir_plot: path to output Plot directory
+            (plots are printed if set to None)
     :type outdir_plot: str
     :param nb_iters: Nuth and Kaab method iterations number default: 6
     :type nb_iters: int
@@ -386,13 +388,15 @@ def run(
     :type outfile: str
     :param nb_iters: Nuth and Kaab method iterations (default(6))
     :type nb_iters: int
-    :param outdir_plot: path to output Plot directory (plots are printed if set to None)
+    :param outdir_plot: path to output Plot directory
+            (plots are printed if set to None)
     :type outdir_plot: str
     :param nan_dsm_to:
     :type nan_dsm_to: str
     :param nan_dsm_from:
     :type nan_dsm_from: str
-    :param save_diff: save initial_dh, final_dh and diff before and after coregistration
+    :param save_diff: save initial_dh, final_dh
+            and diff before and after coregistration
     :type save_diff: bool
     :return: x and y shifts (as 'dsm_from + (x,y) = dsm_to')
     :rtype: float, float, float
