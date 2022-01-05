@@ -22,182 +22,134 @@
 This module contains functions to test Demcompare.
 """
 
-import json
 import os
-import unittest
-from typing import Dict
 
 import numpy as np
-import rasterio
+import pytest
 
-import demcompare
+from .helpers import (
+    assert_same_images,
+    demcompare_gt_data_path,
+    demcompare_output_data_path,
+    read_config_file,
+    read_csv_file,
+    run_demcompare,
+)
 
 
-class TestPandora(unittest.TestCase):
+@pytest.mark.end2end_tests
+def test_demcompare_outputs():
     """
-    TestPandora class allows to test the pandora pipeline
+    Test that all the outputs given by the Demcompare execution
+    on test_output are the same as the ones on test_baseline
+
     """
 
-    def setUp(self):
-        """
-        Method called to prepare the test fixture
+    # Baseline directory with ground truths
+    baseline_dir = demcompare_gt_data_path()
+    # Output test directory with ground truths
+    output_test_dir = demcompare_output_data_path()
+    # Tests config name
+    test_cfg = "test_config.json"
+    # Run demcompare
+    run_demcompare(test_cfg)
 
-        """
-        # Baseline directory with ground truths
-        self.baseline_dir = os.path.join(os.getcwd(), "tests/test_baseline")
-        # Output test directory with ground truths
-        self.output_test_dir = os.path.join(os.getcwd(), "tests/test_output")
-        # Set current directory on tests for execution
-        os.chdir(os.path.join(os.getcwd(), "tests"))
-        # Execute Demcompare on test_config.json
-        test_cfg = "test_config.json"
-        demcompare.run(test_cfg)
+    # Test initial_dh.tif
+    img = "/initial_dh.tif"
+    baseline_data = os.path.join(baseline_dir + img)
+    output_data = os.path.join(output_test_dir + img)
+    assert_same_images(baseline_data, output_data, atol=1e-05)
 
-    @staticmethod
-    def read_config_file(config_file: str) -> Dict[str, dict]:
-        """
-        Read a json configuration file
+    # Test final_dh.tif
+    img = "/final_dh.tif"
+    baseline_data = os.path.join(baseline_dir + img)
+    output_data = os.path.join(output_test_dir + img)
+    assert_same_images(baseline_data, output_data, atol=1e-05)
 
-        :param config_file: path to a json file
-        :type config_file: string
-        :return user_cfg: configuration dictionary
-        :rtype: dict
-        """
-        with open(
-            config_file, "r"  # pylint: disable=bad-option-value
-        ) as file_:
-            user_cfg = json.load(file_)
-        return user_cfg
+    # Test initial_dem_diff_pdf.png
+    img = "/initial_dem_diff_pdf.png"
+    baseline_data = os.path.join(baseline_dir + img)
+    output_data = os.path.join(output_test_dir + img)
+    assert_same_images(baseline_data, output_data, atol=1e-05)
 
-    @staticmethod
-    def read_csv_file(csv_file: str):
-        """
-        Read a csv file and save its number values to float
+    # Test initial_dem_diff_pdf.png
+    img = "/initial_dem_diff_pdf.png"
+    baseline_data = os.path.join(baseline_dir + img)
+    output_data = os.path.join(output_test_dir + img)
+    assert_same_images(baseline_data, output_data, atol=1e-05)
 
-        :param csv_file: path to a csv file
-        :type csv_file: string
-        """
-        lines = open(csv_file, "r").readlines()
-        output_file = []
+    # Test final_dem_diff_pdf.png
+    img = "/final_dem_diff_pdf.png"
+    baseline_data = os.path.join(baseline_dir + img)
+    output_data = os.path.join(output_test_dir + img)
+    assert_same_images(baseline_data, output_data, atol=1e-05)
 
-        for idx, line in enumerate(lines):
-            # Obtain colums
-            cols = line.split(",")
-            # Last column ends with \n
-            cols[-1] = cols[-1].split("\n")[0]
-            # First line are titles
-            if idx == 0:
-                continue
-            # If it is the stats csv, do not convert to float first col
-            if len(cols) > 2:
-                output_file.append(np.array(cols[1:], dtype=float))
-                continue
-            # Convert to float
-            output_file.append(np.array(cols, dtype=float))
-        return output_file
+    # Test final_config.json
+    cfg = "/final_config.json"
+    baseline_cfg = read_config_file(baseline_dir + cfg)
+    output_cfg = read_config_file(output_test_dir + cfg)
+    np.testing.assert_allclose(
+        baseline_cfg["plani_results"]["dx"]["bias_value"],
+        output_cfg["plani_results"]["dx"]["bias_value"],
+    )
+    np.testing.assert_allclose(
+        baseline_cfg["plani_results"]["dy"]["bias_value"],
+        output_cfg["plani_results"]["dy"]["bias_value"],
+    )
+    np.testing.assert_allclose(
+        baseline_cfg["alti_results"]["dz"]["bias_value"],
+        output_cfg["alti_results"]["dz"]["bias_value"],
+    )
 
-    def test_demcompare(self):
-        """
-        Test that all the outputs given by the Demcompare execution
-        on test_output are the same as the ones on test_baseline
+    # Test test_config.json
+    cfg = "/test_config.json"
+    baseline_cfg = read_config_file(baseline_dir + cfg)
+    output_cfg = read_config_file(output_test_dir + cfg)
+    np.testing.assert_equal(
+        baseline_cfg["stats_opts"], output_cfg["stats_opts"]
+    )
+    np.testing.assert_equal(
+        baseline_cfg["plani_opts"], output_cfg["plani_opts"]
+    )
 
-        """
-        # Test initial_dh.tif
-        img = "/initial_dh.tif"
-        baseline_data = rasterio.open(self.baseline_dir + img).read(1)
-        output_data = rasterio.open(self.output_test_dir + img).read(1)
-        np.testing.assert_allclose(baseline_data, output_data, atol=1e-05)
+    # Test final_dem_diff_pdf.csv
+    file = "/final_dem_diff_pdf.csv"
+    baseline_csv = read_csv_file(baseline_dir + file)
+    output_csv = read_csv_file(output_test_dir + file)
+    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
 
-        # Test final_dh.tif
-        img = "/final_dh.tif"
-        baseline_data = rasterio.open(self.baseline_dir + img).read(1)
-        output_data = rasterio.open(self.output_test_dir + img).read(1)
-        np.testing.assert_allclose(baseline_data, output_data, atol=1e-05)
+    # Test initial_dem_diff_pdf.csv
+    file = "/initial_dem_diff_pdf.csv"
+    baseline_csv = read_csv_file(baseline_dir + file)
+    output_csv = read_csv_file(output_test_dir + file)
+    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
 
-        # Test initial_dem_diff_pdf.png
-        img = "/initial_dem_diff_pdf.png"
-        baseline_data = rasterio.open(self.baseline_dir + img).read(1)
-        output_data = rasterio.open(self.output_test_dir + img).read(1)
-        np.testing.assert_allclose(baseline_data, output_data, atol=1e-05)
+    # Test stats/slope/stats_results_standard.csv
+    file = "/stats/slope/stats_results_standard.csv"
+    baseline_csv = read_csv_file(baseline_dir + file)
+    output_csv = read_csv_file(output_test_dir + file)
+    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
 
-        # Test initial_dem_diff_pdf.png
-        img = "/initial_dem_diff_pdf.png"
-        baseline_data = rasterio.open(self.baseline_dir + img).read(1)
-        output_data = rasterio.open(self.output_test_dir + img).read(1)
-        np.testing.assert_allclose(baseline_data, output_data, atol=1e-05)
+    # Test stats/slope/stats_results_incoherent-classification.csv
+    file = "/stats/slope/stats_results_incoherent-classification.csv"
+    baseline_csv = read_csv_file(baseline_dir + file)
+    output_csv = read_csv_file(output_test_dir + file)
+    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
 
-        # Test final_dem_diff_pdf.png
-        img = "/final_dem_diff_pdf.png"
-        baseline_data = rasterio.open(self.baseline_dir + img).read(1)
-        output_data = rasterio.open(self.output_test_dir + img).read(1)
-        np.testing.assert_allclose(baseline_data, output_data, atol=1e-05)
+    # Test stats/slope/stats_results_coherent-classification.csv
+    file = "/stats/slope/stats_results_coherent-classification.csv"
+    baseline_csv = read_csv_file(baseline_dir + file)
+    output_csv = read_csv_file(output_test_dir + file)
+    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
 
-        # Test final_config.json
-        cfg = "/final_config.json"
-        baseline_cfg = self.read_config_file(self.baseline_dir + cfg)
-        output_cfg = self.read_config_file(self.output_test_dir + cfg)
-        np.testing.assert_allclose(
-            baseline_cfg["plani_results"]["dx"]["bias_value"],
-            output_cfg["plani_results"]["dx"]["bias_value"],
-        )
-        np.testing.assert_allclose(
-            baseline_cfg["plani_results"]["dy"]["bias_value"],
-            output_cfg["plani_results"]["dy"]["bias_value"],
-        )
-        np.testing.assert_allclose(
-            baseline_cfg["alti_results"]["dz"]["bias_value"],
-            output_cfg["alti_results"]["dz"]["bias_value"],
-        )
+    # Test snapshots/final_dem_diff_cdf.csv
+    file = "/snapshots/final_dem_diff_cdf.csv"
+    baseline_csv = read_csv_file(baseline_dir + file)
+    output_csv = read_csv_file(output_test_dir + file)
+    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
 
-        # Test test_config.json
-        cfg = "/test_config.json"
-        baseline_cfg = self.read_config_file(self.baseline_dir + cfg)
-        output_cfg = self.read_config_file(self.output_test_dir + cfg)
-        np.testing.assert_equal(
-            baseline_cfg["stats_opts"], output_cfg["stats_opts"]
-        )
-        np.testing.assert_equal(
-            baseline_cfg["plani_opts"], output_cfg["plani_opts"]
-        )
-
-        # Test final_dem_diff_pdf.csv
-        file = "/final_dem_diff_pdf.csv"
-        baseline_csv = self.read_csv_file(self.baseline_dir + file)
-        output_csv = self.read_csv_file(self.output_test_dir + file)
-        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
-
-        # Test initial_dem_diff_pdf.csv
-        file = "/initial_dem_diff_pdf.csv"
-        baseline_csv = self.read_csv_file(self.baseline_dir + file)
-        output_csv = self.read_csv_file(self.output_test_dir + file)
-        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
-
-        # Test stats/slope/stats_results_standard.csv
-        file = "/stats/slope/stats_results_standard.csv"
-        baseline_csv = self.read_csv_file(self.baseline_dir + file)
-        output_csv = self.read_csv_file(self.output_test_dir + file)
-        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
-
-        # Test stats/slope/stats_results_incoherent-classification.csv
-        file = "/stats/slope/stats_results_incoherent-classification.csv"
-        baseline_csv = self.read_csv_file(self.baseline_dir + file)
-        output_csv = self.read_csv_file(self.output_test_dir + file)
-        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
-
-        # Test stats/slope/stats_results_coherent-classification.csv
-        file = "/stats/slope/stats_results_coherent-classification.csv"
-        baseline_csv = self.read_csv_file(self.baseline_dir + file)
-        output_csv = self.read_csv_file(self.output_test_dir + file)
-        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
-
-        # Test snapshots/final_dem_diff_cdf.csv
-        file = "/snapshots/final_dem_diff_cdf.csv"
-        baseline_csv = self.read_csv_file(self.baseline_dir + file)
-        output_csv = self.read_csv_file(self.output_test_dir + file)
-        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
-
-        # Test snapshots/initial_dem_diff_cdf.csv
-        file = "/snapshots/initial_dem_diff_cdf.csv"
-        baseline_csv = self.read_csv_file(self.baseline_dir + file)
-        output_csv = self.read_csv_file(self.output_test_dir + file)
-        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+    # Test snapshots/initial_dem_diff_cdf.csv
+    file = "/snapshots/initial_dem_diff_cdf.csv"
+    baseline_csv = read_csv_file(baseline_dir + file)
+    output_csv = read_csv_file(output_test_dir + file)
+    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
