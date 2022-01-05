@@ -80,6 +80,9 @@ def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
     #    - b will be its orientation
     #    - c will be a vertical mean shift
 
+    # To avoid nearly-zero division, filter slope values below 0.001
+    slope[np.where(slope < 0.001)] = np.nan
+
     # function to be correlated with terrain aspect
     # NB : target = dh / tan(alpha) (see Fig. 2 of Nuth & Kaab 2011)
     # Explicitely ignore divide by zero warning,
@@ -88,36 +91,55 @@ def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
         target = dh / slope
     target = target[np.isfinite(dh)]
     aspect = aspect[np.isfinite(dh)]
-
-    # compute median value of target for different aspect slices
-    slice_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
-    mean = np.zeros([len(slice_bounds)])
-    x_s = np.zeros([len(slice_bounds)])
-    j = 0
-    for i in slice_bounds:
-        target_slice = target[
-            (i < aspect) & (aspect < i + np.pi / 36)
-        ]  # select target in the slice
-        target_slice = target_slice[
-            (target_slice < 200) & (target_slice > -200)
-        ]  # avoid target>200 and target<-200
-        mean[j] = np.median(target_slice)
-        x_s[j] = i
-        j = j + 1
+    # Define sigma to filter each target slice outliers
+    # and improve Nuth et kaab fit.
+    # All target values slice outside
+    # [mean_slice-sigma_filter*std_slice, mean_slice+sigma_filter*std_slice]
+    # are considered outliers and will be set to NaN
+    sigma_filter = 3
+    # Compute bounds for different aspect slices
+    aspect_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
+    # Initialize filtered target
+    target_filt = np.full(target.shape, np.nan)
+    # Initialize slice filtered median
+    slice_filt_median = []
+    for bounds in aspect_bounds:
+        # Slice indexes within aspect
+        slice_idxes = np.where(
+            (bounds < aspect) & (aspect < bounds + np.pi / 36)
+        )
+        # If no aspect values are within the slice,
+        # fill mean with Nan and continue
+        if len(slice_idxes[0]) == 0:
+            # Set slice filtered median for Nuth et kaab as NaN
+            slice_filt_median.append(np.nan)
+            continue
+        # Obtain target values in the slice
+        target_slice = target[slice_idxes]
+        # Obtain target slice's mean and std before filtering
+        slice_mean = np.nanmean(target_slice)
+        # numpy's std cannot handle nan
+        slice_sigma = np.std(target_slice[np.isfinite(target_slice)])
+        # Target slice values outside
+        # [mean_slice-sigma_filter*std_slice, mean_slice+sigma_filter*std_slice]
+        # are considered outliers and set to NaN
+        inv_idx = np.logical_or(
+            (target_slice < (slice_mean - sigma_filter * slice_sigma)),
+            (target_slice > (slice_mean + sigma_filter * slice_sigma)),
+        )
+        # Filter target_slice
+        target_slice[inv_idx] = np.nan
+        target_slice[inv_idx] = np.nan
+        # Filter target
+        target_filt[slice_idxes] = target_slice
+        # Compute slice filtered median for Nuth et kaab
+        slice_filt_median.append(np.nanmedian(target_slice))
 
     # function to fit according to Nuth & Kaab
     x = aspect.ravel()
-    y = target.ravel()
-
+    y = target_filt.ravel()
     # remove non-finite values
-    xf = x[(np.isfinite(x)) & (np.isfinite(y))]
     yf = y[(np.isfinite(x)) & (np.isfinite(y))]
-
-    # remove outliers
-    p1 = np.percentile(yf, 1)
-    p99 = np.percentile(yf, 99)
-    xf = xf[(p1 <= yf) & (yf <= p99)]
-    yf = yf[(p1 <= yf) & (yf <= p99)]
 
     # set the first guess
     p0 = (3 * np.std(yf) / (2 ** 0.5), 0, np.mean(yf))
@@ -134,17 +156,43 @@ def nuth_kaab_single_iter(dh, slope, aspect, plot_file=None):
 
     # we run the least square fit
     # by minimizing the "distance" between y and peval (see residuals())
-    plsq = leastsq(residuals, p0, args=(mean, x_s), full_output=1)
-    yfit = peval(x_s, plsq[0])
+    plsq = leastsq(
+        residuals, p0, args=(slice_filt_median, aspect_bounds), full_output=1
+    )
+    yfit = peval(aspect_bounds, plsq[0])
 
     # plotting results
     if plot_file is not False:
+
         pl.figure(1, figsize=(7.0, 8.0))
-        pl.plot(x_s, mean, "b.")
-        pl.plot(x_s, yfit, "k-")
-        # ax.set_ylim([np.min(mean),])
-        pl.xlabel("Terrain aspect (rad)")
-        pl.ylabel(r"dh/tan($\alpha$)")
+        pl.plot(
+            aspect * 180 / np.pi,
+            target,
+            ".",
+            color="silver",
+            markersize=3,
+            label="target",
+        )
+        pl.plot(
+            aspect * 180 / np.pi,
+            target_filt,
+            "c.",
+            markersize=3,
+            label="target filtered",
+        )
+        pl.plot(
+            aspect_bounds * 180 / np.pi, slice_filt_median, "k.", label="median"
+        )
+        pl.plot(aspect_bounds * 180 / np.pi, yfit, "b-", label="median fit")
+        pl.xlabel("Terrain aspect (deg)")
+        pl.ylabel(r"dh/tan($\alpha$) (meters)")
+        # set axes limit on twice the min/max of the median,
+        # or +-2 if the value is below it
+        axes = pl.gca()
+        ax_min = np.min([np.nanmin(slice_filt_median) * 2, -2])
+        ax_max = np.max([np.nanmax(slice_filt_median) * 2, 2])
+        axes.set_ylim([ax_min, ax_max])
+        pl.legend(loc="upper left")
         if plot_file:
             pl.savefig(plot_file, dpi=100, bbox_inches="tight")
         else:
