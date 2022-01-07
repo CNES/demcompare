@@ -4,8 +4,8 @@ Developer guide
 ===============
 
 
-Install
-*******
+Developer Install
+*****************
 
 This package can be installed through the following commands:
 
@@ -18,25 +18,135 @@ This package can be installed through the following commands:
 
 Dependencies : **git**, **make**
 
-Contributing guide
-******************
+Coding guide
+************
+
+Here are some rules to apply when developing a new functionality:
+
+* **Comments:** Include a comments ratio high enough and use explicit variables names. A comment by code block of several lines is necessary to explain a new functionality.
+* **Test**: Each new functionality shall have a corresponding test in its module's test file. This test shall, if possible, check the function's outputs and the corresponding degraded cases.
+* **Documentation**: All functions shall be documented (object, parameters, return values).
+* **Use type hints**: Use the type hints provided by the `typing` python module.
+* **Use doctype**: Follow sphinx default doctype for automatic API
+* **Quality code**: Correct project quality code errors with pre-commit automatic workflow (see below)
+* **Factorization**: Factorize the code as much as possible. The command line tools shall only include the main workflow and rely on the demcompare python modules.
+* **Be careful with user interface upgrade:** If major modifications of the user interface or of the tool's behaviour are done, update the user documentation (and the notebooks if necessary).
+* **Logging and no print**: The usage of the `print()` function is forbidden: use the `logging` python standard module instead.
+* **Limit classes**: If possible, limit the use of classes as much as possible and opt for a functional approach. The classes are reserved for data modelling if it is impossible to do so using `xarray` and for the good level of modularity.
+* **Limit new dependencies**: Do not add new dependencies unless it is absolutely necessary, and only if it has a **permissive license**.
 
 
-Developer mode
-This package can be installed through the following commands:
+Pre-commit validation
+*********************
 
-.. code-block:: bash
+A pre-commit validation is installed with code quality tools (see below).
+It is installed automatically by `make install-dev` command.
 
-    git clone https://github.com/CNES/demcompare
-    cd demcompare
-    make install
-    source venv/bin/activate
+Here is the way to install it manually:
 
-Dependencies : git, make
+.. code-block:: console
+
+  $ pre-commit install
+
+This installs the pre-commit hook in `.git/hooks/pre-commit`  from `.pre-commit-config.yaml <https://raw.githubusercontent.com/CNES/demcompare/master/.pre-commit-config.yaml>`_ file configuration.
+
+It is possible to test pre-commit before commiting:
+
+.. code-block:: console
+
+  $ pre-commit run --all-files                # Run all hooks on all files
+  $ pre-commit run --files demcompare/__init__.py   # Run all hooks on one file
+  $ pre-commit run pylint                     # Run only pylint hook
+
+
+Code quality
+************
+
+Demcompare uses `Isort`_, `Black`_, `Flake8`_ and `Pylint`_ quality code checking.
+
+Use the following command in Demcompare `virtualenv` to check the code with these tools:
+
+.. code-block:: console
+
+    $ make lint
+
+Use the following command to format the code with isort and black:
+
+.. code-block:: console
+
+    $ make format
+
+Isort
+-----
+`Isort`_ is a Python utility / library to sort imports alphabetically, and automatically separated into sections and by type.
+
+Demcompare ``isort`` configuration is done in `.pyproject.toml <https://raw.githubusercontent.com/CNES/demcompare/master/pyproject.toml>`_
+`Isort`_ manual usage examples:
+
+.. code-block:: console
+
+    $ cd DEMCOMPARE_HOME
+    $ isort --check demcompare tests  # Check code with isort, does nothing
+    $ isort --diff demcompare tests   # Show isort diff modifications
+    $ isort demcompare tests          # Apply modifications
+
+`Isort`_ messages can be avoided when really needed with *"# isort:skip"* on the incriminated line.
+
+Black
+-----
+`Black`_ is a quick and deterministic code formatter to help focus on the content.
+
+Demcompare's ``black`` configuration is done in `.pyproject.toml <https://raw.githubusercontent.com/CNES/demcompare/master/pyproject.toml>`_
+
+If necessary, Black doesn’t reformat blocks that start with "# fmt: off" and end with # fmt: on, or lines that ends with "# fmt: skip". "# fmt: on/off" have to be on the same level of indentation.
+
+`Black`_ manual usage examples:
+
+.. code-block:: console
+
+    $ cd DEMCOMPARE_HOME
+    $ black --check demcompare tests  # Check code with black with no modifications
+    $ black --diff demcompare tests   # Show black diff modifications
+    $ black demcompare tests          # Apply modifications
+
+Flake8
+------
+`Flake8`_ is a command-line utility for enforcing style consistency across Python projects. By default it includes lint checks provided by the PyFlakes project, PEP-0008 inspired style checks provided by the PyCodeStyle project, and McCabe complexity checking provided by the McCabe project. It will also run third-party extensions if they are found and installed.
+
+Demcompare's ``flake8`` configuration is done in `setup.cfg <https://raw.githubusercontent.com/CNES/Demcompare/master/setup.cfg>`_
+
+`Flake8`_ messages can be avoided (in particular cases !) adding "# noqa" in the file or line for all messages.
+It is better to choose filter message with "# noqa: E731" (with E371 example being the error number).
+Look at examples in source code.
+
+Flake8 manual usage examples:
+
+.. code-block:: console
+
+  $ cd DEMCOMPARE_HOME
+  $ flake8 demcompare tests           # Run all flake8 tests
+
+
+Pylint
+------
+`Pylint`_ is a global linting tool which helps to have many information on source code.
+
+Demcompare's ``pylint`` configuration is done in dedicated `.pylintrc <https://raw.githubusercontent.com/CNES/demcompare/master/.pylintrc>`_ file.
+
+`Pylint`_ messages can be avoided (in particular cases !) adding "# pylint: disable=error-message-name" in the file or line.
+Look at examples in source code.
+
+Pylint manual usage examples:
+
+.. code-block:: console
+
+  $ cd DEMCOMPARE_HOME
+  $ pylint tests demcompare       # Run all pylint tests
+  $ pylint --list-msgs          # Get pylint detailed errors informations
 
 
 Bug report
-----------
+**********
 
 Any proven or suspected malfunction should be traced in a bug report, the latter being an issue in the Demcompare github repository.
 
@@ -49,7 +159,7 @@ In the problem description, be as accurate as possible. Include:
  - The content of the input and output configuration files (*content.json*)
 
 Contributing workflow
----------------------
+*********************
 
 Any code modification requires a Merge Request. It is forbidden to push patches directly into master (this branch is protected).
 
@@ -74,49 +184,19 @@ Demcompare's Classical workflow is :
 .. _contribution_license_agreement:
 
 Contribution license agreement
-------------------------------
+******************************
 
-Coding guide
-------------
+Demcompare requires that contributors sign out a `Contributor LicenseAgreement <https://en.wikipedia.org/wiki/Contributor_License_Agreement>`_.
+The purpose of this CLA is to ensure that the project has the necessary ownership or
+grants of rights over all contributions to allow them to distribute under the
+chosen license (Apache License Version 2.0)
 
-Here are some rules to apply when developing a new functionality:
- - Include a comments ratio high enough and use explicit variables names. A comment by code block of several lines is necessary to explain a new functionality.
- - The usage of the *print()* function is forbidden: use the *logging* python standard module instead.
- - Each new functionality shall have a corresponding test in its module's test file. This test shall, if possible, check the function's outputs and the corresponding degraded cases.
- - All functions shall be documented (object, parameters, return values).
- - Factorize the code as much as possible. The command line tools shall only include the main workflow and rely on the Demcompare python modules.
- - If major modifications of the user interface or of the tool's behaviour are done, update the user documentation (and the notebooks if necessary).
- - Do not add new dependencies unless it is absolutely necessary, and only if it has a permissive license.
- - Use the type hints provided by the *typing* python module.
- - Correct project pylint errors (see below)
+To accept your contribution, we need you to complete, sign and email to *cars@cnes.fr* an
+`Individual Contributor LicensingAgreement <https://github.com/CNES/Demcompare/blob/master/doc/sources/CLA/ICLA_DEMCOMPARE.doc>`_ (ICLA) form and a
+`Corporate Contributor Licensing Agreement <https://github.com/CNES/Demcompare/blob/master/doc/sources/CLA/CCLA_DEMCOMPARE.doc>`_ (CCLA) form if you are
+contributing on behalf of your company or another entity which retains copyright
+for your contribution.
 
+The copyright owner (or owner's agent) must be mentioned in headers of all
+modified source files and also added to the `NOTICE file <https://github.com/CNES/Demcompare/blob/master/NOTICE>`_.
 
-Pre-commit validation
----------------------
-
-Pre-commit hooks (black, pylint, mypy, sphinx-checking, nbstripout, flake8) for code analysis can be installed:
-
-.. code-block:: bash
-
-    pre-commit install
-
-This command installs the pre-commit hooks in `.git/hooks/pre-commit`  from `.pre-commit-config.yaml` file configuration.
-
-It is possible to test pre-commit before commiting:
-
-.. code-block:: bash
-
-    pre-commit run --all-files                # Run all hooks on all files
-    pre-commit run --files Demcompare/__init__.py   # Run all hooks on one file
-    pre-commit run pylint                     # Run only pylint hook
-
-It is possible to run only pylint tool to check code modifications:
-
-.. code-block:: bash
-
-    cd DEMCOMPARE_HOME
-    pylint *.py demcompare/*.py tests/*.py        # Run all pylint tests
-    pylint --list-msgs                      # Get pylint detailed errors informations
-
-Pylint messages can be avoided (in particular cases !) adding "#pylint: disable=error-message-name" in the file or line.
-Look at examples in code.

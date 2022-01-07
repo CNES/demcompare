@@ -39,6 +39,12 @@ install-deps: venv ## install demcompare dependencies
 	@[ "${CHECK_NUMPY}" ] ||${VENV}/bin/python -m pip install --upgrade numpy
 #	@[ "${CHECK_RASTERIO}" ] ||${VENV}/bin/python -m pip install --no-binary rasterio rasterio
 
+install-doc: install-deps  ## install demcompare with Sphinx documentation dependencies
+	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install --verbose .[doc]
+	@chmod +x ${VENV}/bin/register-python-argcomplete
+	@echo "Demcompare ${DEMCOMPARE_VERSION} in virtualenv ${VENV} installed with Sphinx docs dependencies"
+	@echo "Demcompare venv usage : source ${VENV}/bin/activate"
+
 install: install-deps  ## install environment for development target (depends venv)
 	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install -e .[dev]
 	@test -f .git/hooks/pre-commit || ${VENV}/bin/pre-commit install -t pre-commit
@@ -63,6 +69,11 @@ format: install  ## run black and isort formatting (depends install)
 tests: install ## run tests
 	@cd tests;../${VENV}/bin/demcompare @opts.txt
 	@cd tests;../${VENV}/bin/demcompare_with_baseline
+
+doc: install-doc ## build sphinx documentation
+	@${VENV}/bin/sphinx-build -M clean docs/source/ docs/build
+	@${VENV}/bin/sphinx-apidoc -o docs/source/apidoc/ demcompare # si apidoc
+	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build
 
 docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"

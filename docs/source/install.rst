@@ -19,4 +19,4 @@ For developer installation, please refer to :ref:`developer_guide`
 
 Dependencies
 ************
-The full list of dependencies can be observed from the [setup.cfg](./setup.cfg) file.
+The full list of dependencies can be observed from the `setup.cfg <https://raw.githubusercontent.com/CNES/Demcompare/master/setup.cfg>`_ file.
