@@ -69,6 +69,9 @@ format: install  ## run black and isort formatting (depends install)
 tests: install ## run all tests + coverage html
 	@${VENV}/bin/pytest -o log_cli=true -o log_cli_level=${LOGLEVEL} --junitxml=pytest-report.xml --cov-config=.coveragerc --cov-report xml --cov
 
+tests-tox: ## run tests in python3.7 and python3.8 with tox
+	@tox
+
 docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"
 	@docker pull hadolint/hadolint
