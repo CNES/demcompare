@@ -8,6 +8,12 @@ SHELL := /bin/bash
 # Set Virtualenv directory name
 VENV = "venv"
 
+# Set LOGLEVEL if not defined in command line
+# Example: LOGLEVEL="DEBUG" make help
+ifndef LOGLEVEL
+	LOGLEVEL = "INFO"
+endif
+
 CHECK_CMAKE = $(shell command -v cmake 2> /dev/null)
 CHECK_GIT = $(shell command -v git 2> /dev/null)
 
@@ -60,9 +66,8 @@ format: install  ## run black and isort formatting (depends install)
 	@${VENV}/bin/isort demcompare
 	@${VENV}/bin/black demcompare
 
-tests: install ## run tests
-	@cd tests;../${VENV}/bin/demcompare @opts.txt
-	@cd tests;../${VENV}/bin/demcompare_with_baseline
+tests: install ## run all tests + coverage html
+	@${VENV}/bin/pytest -o log_cli=true -o log_cli_level=${LOGLEVEL} --junitxml=pytest-report.xml --cov-config=.coveragerc --cov-report xml --cov
 
 docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"

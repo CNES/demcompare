@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# coding: utf8
+# pylint:disable=unspecified-encoding
 # pylint:disable=consider-using-with
-#
+# coding: utf8
 # Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
@@ -34,42 +34,13 @@ from typing import Dict
 import numpy as np
 import rasterio as rio
 
-import demcompare
 
-
-def run_demcompare(test_cfg: str):
+def demcompare_test_data_path(test_name: str):
     """
-    Method called to prepare the test fixture
-    :param test_cfg: name of cfg file. The file shall be
-            inside the demcompare/tests folder
-    :type test_cfg: string
+    Return full absolute path to demcompare's tests data
     """
-    # Set current directory on tests for execution
-    tests_dir = demcompare_tests_path()
-    os.chdir(tests_dir)
-    # Execute Demcompare with test_cfg
-    demcompare.run(test_cfg)
-
-
-def demcompare_tests_path():
-    """
-    Return full absolute path to demcompare's tests directory
-    """
-    return os.path.join(os.getcwd(), "tests")
-
-
-def demcompare_gt_data_path():
-    """
-    Return full absolute path to demcompare's tests gt
-    """
-    return os.path.join(os.getcwd(), "tests/test_baseline")
-
-
-def demcompare_output_data_path():
-    """
-    Return full absolute path to demcompare's tests output directory
-    """
-    return os.path.join(os.getcwd(), "tests/test_output")
+    half_path = os.path.join("tests/tests_data", test_name)
+    return os.path.join(os.getcwd(), half_path)
 
 
 def read_config_file(config_file: str) -> Dict[str, dict]:
@@ -81,7 +52,7 @@ def read_config_file(config_file: str) -> Dict[str, dict]:
     :return user_cfg: configuration dictionary
     :rtype: dict
     """
-    with open(config_file, "r") as file_:  # pylint:disable=unspecified-encoding
+    with open(config_file, "r") as file_:
         user_cfg = json.load(file_)
     return user_cfg
 
@@ -93,9 +64,7 @@ def read_csv_file(csv_file: str):
     :param csv_file: path to a csv file
     :type csv_file: string
     """
-    lines = open(  # pylint:disable=unspecified-encoding
-        csv_file, "r"
-    ).readlines()
+    lines = open(csv_file, "r").readlines()
     output_file = []
 
     for idx, line in enumerate(lines):

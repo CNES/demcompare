@@ -22,134 +22,153 @@
 This module contains functions to test Demcompare.
 """
 
+import json
 import os
+from tempfile import TemporaryDirectory
 
 import numpy as np
 import pytest
 
+import demcompare
+
 from .helpers import (
     assert_same_images,
-    demcompare_gt_data_path,
-    demcompare_output_data_path,
+    demcompare_test_data_path,
     read_config_file,
     read_csv_file,
-    run_demcompare,
 )
 
 
 @pytest.mark.end2end_tests
-def test_demcompare_outputs():
+def test_demcompare_standard_outputs():
     """
-    Test that all the outputs given by the Demcompare execution
-    on test_output are the same as the ones on test_baseline
+    Test that the outputs given by the Demcompare execution
+    of tests_data/standard are the same as the reference ones
 
     """
+    # Test name
+    test_name = "standard"
+    # Directory with test data
+    data_dir = demcompare_test_data_path(test_name)
+    # Load test_config
+    test_cfg = data_dir + "/test_config.json"
+    with open(test_cfg, "r") as file_:  # pylint: disable=unspecified-encoding
+        test_cfg = json.load(file_)
 
-    # Baseline directory with ground truths
-    baseline_dir = demcompare_gt_data_path()
-    # Output test directory with ground truths
-    output_test_dir = demcompare_output_data_path()
-    # Tests config name
-    test_cfg = "test_config.json"
-    # Run demcompare
-    run_demcompare(test_cfg)
+    # Create temporary directory
+    with TemporaryDirectory() as tmp_dir:
+        # Modify test_config's output dir
+        test_cfg["outputDir"] = tmp_dir
+        # Save the new configuration inside the tmp dir
+        with open(  # pylint:disable=unspecified-encoding
+            os.path.join(tmp_dir, "test_config.json"), "w"
+        ) as file_:
+            json.dump(test_cfg, file_, indent=2)
 
-    # Test initial_dh.tif
-    img = "/initial_dh.tif"
-    baseline_data = os.path.join(baseline_dir + img)
-    output_data = os.path.join(output_test_dir + img)
-    assert_same_images(baseline_data, output_data, atol=1e-05)
+        # Run demcompare
+        demcompare.run(os.path.join(tmp_dir, "test_config.json"))
 
-    # Test final_dh.tif
-    img = "/final_dh.tif"
-    baseline_data = os.path.join(baseline_dir + img)
-    output_data = os.path.join(output_test_dir + img)
-    assert_same_images(baseline_data, output_data, atol=1e-05)
+        # Test initial_dh.tif
+        img = "initial_dh.tif"
+        baseline_data = os.path.join(data_dir, img)
+        output_data = os.path.join(tmp_dir, img)
+        assert_same_images(baseline_data, output_data, atol=1e-05)
 
-    # Test initial_dem_diff_pdf.png
-    img = "/initial_dem_diff_pdf.png"
-    baseline_data = os.path.join(baseline_dir + img)
-    output_data = os.path.join(output_test_dir + img)
-    assert_same_images(baseline_data, output_data, atol=1e-05)
+        # Test final_dh.tif
+        img = "final_dh.tif"
+        baseline_data = os.path.join(data_dir, img)
+        output_data = os.path.join(tmp_dir, img)
+        assert_same_images(baseline_data, output_data, atol=1e-05)
 
-    # Test initial_dem_diff_pdf.png
-    img = "/initial_dem_diff_pdf.png"
-    baseline_data = os.path.join(baseline_dir + img)
-    output_data = os.path.join(output_test_dir + img)
-    assert_same_images(baseline_data, output_data, atol=1e-05)
+        # Test initial_dem_diff_pdf.png
+        img = "initial_dem_diff_pdf.png"
+        baseline_data = os.path.join(data_dir, img)
+        output_data = os.path.join(tmp_dir, img)
+        assert_same_images(baseline_data, output_data, atol=1e-05)
 
-    # Test final_dem_diff_pdf.png
-    img = "/final_dem_diff_pdf.png"
-    baseline_data = os.path.join(baseline_dir + img)
-    output_data = os.path.join(output_test_dir + img)
-    assert_same_images(baseline_data, output_data, atol=1e-05)
+        # Test initial_dem_diff_pdf.png
+        img = "initial_dem_diff_pdf.png"
+        baseline_data = os.path.join(data_dir, img)
+        output_data = os.path.join(tmp_dir, img)
+        assert_same_images(baseline_data, output_data, atol=1e-05)
 
-    # Test final_config.json
-    cfg = "/final_config.json"
-    baseline_cfg = read_config_file(baseline_dir + cfg)
-    output_cfg = read_config_file(output_test_dir + cfg)
-    np.testing.assert_allclose(
-        baseline_cfg["plani_results"]["dx"]["bias_value"],
-        output_cfg["plani_results"]["dx"]["bias_value"],
-    )
-    np.testing.assert_allclose(
-        baseline_cfg["plani_results"]["dy"]["bias_value"],
-        output_cfg["plani_results"]["dy"]["bias_value"],
-    )
-    np.testing.assert_allclose(
-        baseline_cfg["alti_results"]["dz"]["bias_value"],
-        output_cfg["alti_results"]["dz"]["bias_value"],
-    )
+        # Test final_dem_diff_pdf.png
+        img = "final_dem_diff_pdf.png"
+        baseline_data = os.path.join(data_dir, img)
+        output_data = os.path.join(tmp_dir, img)
+        assert_same_images(baseline_data, output_data, atol=1e-05)
 
-    # Test test_config.json
-    cfg = "/test_config.json"
-    baseline_cfg = read_config_file(baseline_dir + cfg)
-    output_cfg = read_config_file(output_test_dir + cfg)
-    np.testing.assert_equal(
-        baseline_cfg["stats_opts"], output_cfg["stats_opts"]
-    )
-    np.testing.assert_equal(
-        baseline_cfg["plani_opts"], output_cfg["plani_opts"]
-    )
+        # Test final_config.json
+        cfg = "final_config.json"
+        baseline_cfg = read_config_file(os.path.join(data_dir, cfg))
+        output_cfg = read_config_file(os.path.join(tmp_dir, cfg))
+        np.testing.assert_allclose(
+            baseline_cfg["plani_results"]["dx"]["bias_value"],
+            output_cfg["plani_results"]["dx"]["bias_value"],
+            atol=1e-05,
+        )
 
-    # Test final_dem_diff_pdf.csv
-    file = "/final_dem_diff_pdf.csv"
-    baseline_csv = read_csv_file(baseline_dir + file)
-    output_csv = read_csv_file(output_test_dir + file)
-    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(
+            baseline_cfg["plani_results"]["dy"]["bias_value"],
+            output_cfg["plani_results"]["dy"]["bias_value"],
+            atol=1e-05,
+        )
 
-    # Test initial_dem_diff_pdf.csv
-    file = "/initial_dem_diff_pdf.csv"
-    baseline_csv = read_csv_file(baseline_dir + file)
-    output_csv = read_csv_file(output_test_dir + file)
-    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(
+            baseline_cfg["alti_results"]["dz"]["bias_value"],
+            output_cfg["alti_results"]["dz"]["bias_value"],
+            atol=1e-05,
+        )
 
-    # Test stats/slope/stats_results_standard.csv
-    file = "/stats/slope/stats_results_standard.csv"
-    baseline_csv = read_csv_file(baseline_dir + file)
-    output_csv = read_csv_file(output_test_dir + file)
-    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+        # Test test_config.json
+        cfg = "test_config.json"
+        baseline_cfg = read_config_file(os.path.join(data_dir, cfg))
+        output_cfg = read_config_file(os.path.join(tmp_dir, cfg))
+        np.testing.assert_equal(
+            baseline_cfg["stats_opts"], output_cfg["stats_opts"]
+        )
+        np.testing.assert_equal(
+            baseline_cfg["plani_opts"], output_cfg["plani_opts"]
+        )
 
-    # Test stats/slope/stats_results_incoherent-classification.csv
-    file = "/stats/slope/stats_results_incoherent-classification.csv"
-    baseline_csv = read_csv_file(baseline_dir + file)
-    output_csv = read_csv_file(output_test_dir + file)
-    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+        # Test final_dem_diff_pdf.csv
+        file = "final_dem_diff_pdf.csv"
+        baseline_csv = read_csv_file(os.path.join(data_dir, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
 
-    # Test stats/slope/stats_results_coherent-classification.csv
-    file = "/stats/slope/stats_results_coherent-classification.csv"
-    baseline_csv = read_csv_file(baseline_dir + file)
-    output_csv = read_csv_file(output_test_dir + file)
-    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+        # Test initial_dem_diff_pdf.csv
+        file = "initial_dem_diff_pdf.csv"
+        baseline_csv = read_csv_file(os.path.join(data_dir, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
 
-    # Test snapshots/final_dem_diff_cdf.csv
-    file = "/snapshots/final_dem_diff_cdf.csv"
-    baseline_csv = read_csv_file(baseline_dir + file)
-    output_csv = read_csv_file(output_test_dir + file)
-    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+        # Test stats/slope/stats_results_standard.csv
+        file = "stats/slope/stats_results_standard.csv"
+        baseline_csv = read_csv_file(os.path.join(data_dir, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
 
-    # Test snapshots/initial_dem_diff_cdf.csv
-    file = "/snapshots/initial_dem_diff_cdf.csv"
-    baseline_csv = read_csv_file(baseline_dir + file)
-    output_csv = read_csv_file(output_test_dir + file)
-    np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+        # Test stats/slope/stats_results_incoherent-classification.csv
+        file = "stats/slope/stats_results_incoherent-classification.csv"
+        baseline_csv = read_csv_file(os.path.join(data_dir, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+
+        # Test stats/slope/stats_results_coherent-classification.csv
+        file = "stats/slope/stats_results_coherent-classification.csv"
+        baseline_csv = read_csv_file(os.path.join(data_dir, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+
+        # Test snapshots/final_dem_diff_cdf.csv
+        file = "snapshots/final_dem_diff_cdf.csv"
+        baseline_csv = read_csv_file(os.path.join(data_dir, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
+
+        # Test snapshots/initial_dem_diff_cdf.csv
+        file = "snapshots/initial_dem_diff_cdf.csv"
+        baseline_csv = read_csv_file(os.path.join(data_dir, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(baseline_csv, output_csv, atol=1e-05)
