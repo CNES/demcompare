@@ -8,6 +8,7 @@ A new section Unreleased is opened then for next dev phase.
 ## Unreleased
 
 ### Added
+- Add pytest tests. [#23]
 
 ### Changed
 
