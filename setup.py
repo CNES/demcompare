@@ -46,13 +46,6 @@ try:
     setup(
         use_scm_version=True,
         long_description=readme(),
-        command_options={
-            "build_sphinx": {
-                "build_dir": ("setup.py", "docs/build/"),
-                "source_dir": ("setup.py", "docs/source/"),
-                "warning_is_error": ("setup.py", True),
-            }
-        },
     )
 
 except Exception:
