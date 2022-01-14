@@ -8,12 +8,6 @@ SHELL := /bin/bash
 # Set Virtualenv directory name
 VENV = "venv"
 
-# Set LOGLEVEL if not defined in command line
-# Example: LOGLEVEL="DEBUG" make help
-ifndef LOGLEVEL
-	LOGLEVEL = "INFO"
-endif
-
 CHECK_CMAKE = $(shell command -v cmake 2> /dev/null)
 CHECK_GIT = $(shell command -v git 2> /dev/null)
 
@@ -66,11 +60,10 @@ format: install  ## run black and isort formatting (depends install)
 	@${VENV}/bin/isort demcompare
 	@${VENV}/bin/black demcompare
 
-tests: install ## run all tests + coverage html
-	@${VENV}/bin/pytest -o log_cli=true -o log_cli_level=${LOGLEVEL} --junitxml=pytest-report.xml --cov-config=.coveragerc --cov-report xml --cov
-
-tests-tox: ## run tests in python3.7 and python3.8 with tox
-	@tox
+test: install ## run all tests with python3.7 and python3.8 + coverage 
+	# Run tox (recreate venv (-r) and parallel mode (-p auto))
+	# with pytest launch : @${VENV}/bin/pytest -o log_cli=true --junitxml=pytest-report.xml --cov-config=.coveragerc --cov --cov-append --cov-report=term-missing
+	@${VENV}/bin/tox -r -p auto
 
 docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"
@@ -79,12 +72,26 @@ docker: ## Build docker image (and check Dockerfile)
 	@echo "Build Docker image Demcompare ${DEMCOMPARE_VERSION_MIN}"
 	@docker build -t cnes/demcompare:${DEMCOMPARE_VERSION_MIN} -t cnes/demcompare:latest .
 
-clean: ## clean: remove venv
-	@rm -rf ${VENV}
-	@rm -rf dist
-	@rm -rf build
-	@rm -rf demcompare.egg-info
+clean: ## clean: remove venv and all generated files
+	@find . -type f -name '*.pyc' -delete
+	@find . -type d -name '__pycache__' | xargs rm -rf	
 	@rm -rf .eggs/
-	@rm -rf demcompare/__pycache__
-	@rm -rf pylint-report.txt
-	@rm -rf tests/test_output/
+	@rm -rf demcompare.egg-info
+	@rm -rf dist/
+	@rm -rf build/
+	@rm -rf ${VENV}
+	@rm -rf .tox/
+	@rm -rf .pytest_cache/
+	@rm -f pytest-report.xml
+	@rm -f .coverage
+	@rm -rf .coverage.*
+	@rm -f coverage.xml
+	@rm -rf htmlcov/
+	@rm -f pylint-report.txt
+	@rm -f pylint-report.xml
+	@rm -f debug.log
+	@rm -rf docs/build/
+
+
+	
+	

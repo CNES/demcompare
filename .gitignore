@@ -1,13 +1,12 @@
 # Compiled python files
 *.pyc
 
+# Cache python
+__pycache__/
+
 # Python egg metadata, regenerated from source files by setuptools
 /*.egg-info
 /.eggs/
-
-# Python coverage output
-/cover/
-.coverage
 
 # Setuptools build and distribution directories
 /dist/
@@ -16,8 +15,24 @@
 # Virtualenv
 /venv/
 
-# demcompare test outputs
-tests/test_output
+# Tox 
+.tox
+
+# Pytest 
+.pytest_cache/
+pytest-report.xml
+
+# Python coverage output
+.coverage
+.coverage.*
+coverage.xml
+/htmlcov/
 
 # pylint report
 pylint-report.txt
+pytest-report.xml
+
+# Demcompare debug file logging
+debug.log
+
+
