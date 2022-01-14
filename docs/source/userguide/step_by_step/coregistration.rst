@@ -42,3 +42,8 @@ Tile processing
 ***************
 Tile processing is not available anymore. A future version might provide a better way to deal with very large data. In
 the meantime one can deal with heavy DSMs by setting a ROI (see previous chapter).
+
+
+For the Nuth & Kääb universal coregistration algorithm :
+
+.. [NuthKaab] Nuth, C. Kääb, 2011. A. Co-registration and bias corrections of satellite elevation data sets for quantifying glacier thickness change. Cryosphere 5, 271290.

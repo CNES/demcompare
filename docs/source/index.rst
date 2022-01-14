@@ -1,4 +1,4 @@
-.. Demcompare documentation master file, created by
+.. demcompare documentation master file, created by
    sphinx-quickstart on Fri Apr  3 16:11:03 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -6,20 +6,13 @@
 Welcome to DEMCOMPARE's documentation!
 ======================================
 
-
-**Demcompare is a python software for DEMs comparison.**
-
-Overview
-########
-
-DEMcompare is a python software that aims at **comparing two DEMs** together.
+demcompare is a python software that aims at **comparing two DEMs** together.
 
 A DEM is a 3D computer graphics representation of elevation data to represent terrain.
-DEMcompare has several characteristics:
+demcompare has several characteristics:
 
 - Provides a wide variety of standard metrics and allows one to classify the statistics.
-- Works whether or not the two DEMs share common format, projection system,
-- Planimetric resolution, and altimetric unit.
+- Works whether or not the two DEMs share common format, projection system, planimetric resolution, and altimetric unit.
 - The coregistration algorithm is based on the [NuthKaab]_ universal coregistration method.
 - The default behavior classifies the stats by slope ranges but one can provide any other data to classify the stats.
 
@@ -43,16 +36,6 @@ Related
 
 * `CARS <https://github.com/CNES/CARS>`_ - CNES 3D reconstruction software
 
-References
-##########
-
-For more details about the NMAD metric :
-
-.. [NMAD] Höhle, J., Höhle, M., 2009. Accuracy assessment of Digital Elevation Models by means of robust statistical methods. ISPRS Journal of Photogrammetry and Remote Sensing 64(4), 398-406.
-
-For the Nuth & Kääb universal coregistration algorithm :
-
-.. [NuthKaab] Nuth, C. Kääb, 2011. A. Co-registration and bias corrections of satellite elevation data sets for quantifying glacier thickness change. Cryosphere 5, 271290.
 
 Indices and tables
 ==================

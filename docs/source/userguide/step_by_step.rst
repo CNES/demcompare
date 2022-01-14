@@ -1,9 +1,17 @@
 .. _step_by_step:
 
+<<<<<<< HEAD
+
+Step by step
+============
+
+The following sections describe demcompare's DSM comparison steps.
+=======
 Step by step
 ============
 
 The following sections describe Demcompare's DSM comparaison steps.
+>>>>>>> parent of d08274f... doc: uniform demcompare naming, modify getting_started
 
 .. toctree::
 
@@ -11,6 +19,25 @@ The following sections describe Demcompare's DSM comparaison steps.
     step_by_step/statistics.rst
     step_by_step/report.rst
 
+<<<<<<< HEAD
+
+1. During the optional coregistration step, demcompare performs the Nuth et Kaab coregistration on two uncoregistered DEMs like the ones below :
+
+.. image:: /images/doc_ref.gif
+    :width: 300px
+
+In this example, the two uncoregistered DEMs had the initial altitude difference shown on the left image. After Nuth et Kaab coregistration, demcompare obtains the final altitude difference shown on the right image:
+
+.. image:: /images/initial_dh.png
+    :width: 260px
+
+.. image:: /images/final_dh.png
+    :width: 260px
+
+2. Once the DSMs are coregistered, demcompare is ready to compare both DEMs computing a wide variety of standard metrics and statistics.
+
+3. A report to better visualize the obtained statistics may be generated.
+=======
 Demcompare allows one to execute only a subset of the whole process. As such, a `--step` command line argument is
 provided. It accepts values in `coregistration` `stats` `report` :
 
@@ -36,3 +63,4 @@ provided. It accepts values in `coregistration` `stats` `report` :
 
     demcompare --step stats config.json : KO
     demcompare config.json --step stats : OK
+>>>>>>> parent of d08274f... doc: uniform demcompare naming, modify getting_started

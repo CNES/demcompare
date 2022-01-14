@@ -74,3 +74,9 @@ The tool allows to configure `elevation_thresholds` parameter with a list of thr
 For each threshold, Demcompare will compute the ratio  of pixels for which the altitude difference is larger than this particular threshold.
 
 .. note::  So far results are only visible inside `stats_results-*.json` output files (see next chapter). Please also note that the threshold is compared against the altitude differences being signed. This means that the result is not always relevant and this stats computation shall be used carefully.
+
+
+
+For more details about the NMAD metric :
+
+.. [NMAD] Höhle, J., Höhle, M., 2009. Accuracy assessment of Digital Elevation Models by means of robust statistical methods. ISPRS Journal of Photogrammetry and Remote Sensing 64(4), 398-406.
