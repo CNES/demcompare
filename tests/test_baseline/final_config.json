@@ -59,11 +59,11 @@
   },
   "plani_results": {
     "dx": {
-      "bias_value": 0.0025000009450460436,
+      "bias_value": 0.0025,
       "unit": "deg"
     },
     "dy": {
-      "bias_value": 0.004166666604655245,
+      "bias_value": 0.00417,
       "unit": "deg"
     }
   },
@@ -85,7 +85,7 @@
       "nb_valid_points": 983070
     },
     "dz": {
-      "bias_value": -0.017645403742790222,
+      "bias_value": -0.01765,
       "unit": "m",
       "percent": 100.0
     },
