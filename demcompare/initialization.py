@@ -29,6 +29,7 @@ import copy
 import errno
 import json
 import os
+from typing import Dict
 
 # Third party imports
 import numpy as np
@@ -50,6 +51,66 @@ def mkdir_p(path):
             pass
         else:
             raise
+
+
+def make_relative_path_absolute(path, directory):
+    """
+    If path is a valid relative path with respect to directory,
+    returns it as an absolute path
+
+    :param path: The relative path
+    :type path: string
+    :param directory: The directory path should be relative to
+    :type directory: string
+    :returns: os.path.join(directory,path)
+        if path is a valid relative path form directory, else path
+    :rtype: string
+    """
+    out = path
+    if not os.path.isabs(path):
+        abspath = os.path.join(directory, path)
+        if os.path.exists(abspath):
+            out = abspath
+    return out
+
+
+def read_config_file(config_file: str) -> Dict[str, dict]:
+    """
+    Read a demcompare input json config file.
+    Relative paths will be made absolute.
+
+    :param config_file: Path to json file
+    :type config_file: str
+
+    :returns: The json dictionary read from file
+    :rtype: dict
+    """
+    config = {}
+    with open(config_file, "r", encoding="utf-8") as _fstream:
+        # Load json file
+        config = json.load(_fstream)
+        config_dir = os.path.abspath(os.path.dirname(config_file))
+        # make potential relative paths absolute
+        config["inputRef"]["path"] = make_relative_path_absolute(
+            config["inputRef"]["path"], config_dir
+        )
+        config["inputDSM"]["path"] = make_relative_path_absolute(
+            config["inputDSM"]["path"], config_dir
+        )
+    return config
+
+
+def save_config_file(config_file: str, config: Dict[str, dict]):
+    """
+    Save a json configuration file
+
+    :param config_file: path to a json file
+    :type config_file: string
+    :param config_file: configuration json dictionary
+    :type config_file: dict
+    """
+    with open(config_file, "w", encoding="utf-8") as file_:
+        json.dump(config, file_, indent=2)
 
 
 def check_parameters(cfg):  # noqa: C901
@@ -401,8 +462,7 @@ def divide_images(cfg):
         tile_json = os.path.join(tile["dir"], "config.json")
         tile["json"] = tile_json
 
-        with open(tile_json, "w", encoding="utf8") as conf_json_file:
-            json.dump(tile_cfg, conf_json_file, indent=2)
+        save_config_file(tile_json, tile_cfg)
 
     # Write the list of json files to outputDir/tiles.txt
     with open(

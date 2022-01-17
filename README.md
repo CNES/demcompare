@@ -85,10 +85,9 @@ See [Specific Sphinx LatexBuilder documentation](https://www.sphinx-doc.org/en/m
 ## Usage
 
 Run the python script **demcompare** with a json configuration file as unique
-argument (see [`tests/tests_ref_input/standard/test_config.json`](./tests/tests_ref_input/standard/test_config.json) as an example):
+argument (see [`tests/data/standard/input/test_config.json`](./tests/tests_ref_input/standard/test_config.json) as an example):
 ```
-    cd tests/
-    demcompare tests_ref_input/standard/test_config.json
+    demcompare tests/data/standard/input/test_config.json
 ```
 The results can be observed with:
 ```

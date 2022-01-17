@@ -29,7 +29,6 @@ import json
 import logging
 import logging.config
 import os
-import shutil
 import sys
 import traceback
 
@@ -145,8 +144,7 @@ def compute_stats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
     # save results
     print("Save final results stats information file:")
     print(final_json_file)
-    with open(final_json_file, "w", encoding="utf8") as outfile:
-        json.dump(cfg, outfile, indent=2)
+    initialization.save_config_file(final_json_file, cfg)
 
 
 def compute_coregistration(
@@ -183,9 +181,8 @@ def compute_coregistration(
         ) = coregistration.coregister_and_compute_alti_diff(cfg, dem, ref)
 
         # saves results here in case next step fails
-        with open(final_json_file, "w", encoding="utf8") as outfile:
-            json.dump(cfg, outfile, indent=2)
-        #
+        initialization.save_config_file(final_json_file, cfg)
+
     else:
         # If cfg from a previous run, get previous conf
         print("No coregistration step stated.")
@@ -293,25 +290,17 @@ def compute_initialization(config_json):
     :param config_json: Config json file
     """
 
-    # read the json configuration file
-    with open(config_json, "r", encoding="utf8") as config_json_file:
-        cfg = json.load(config_json_file)
+    # read the json configuration file (and update inputs with absolute path)
+    cfg = initialization.read_config_file(config_json)
 
-    # create output directory
+    # create output directory and update config
     cfg["outputDir"] = os.path.abspath(cfg["outputDir"])
     initialization.mkdir_p(cfg["outputDir"])
 
-    # copy config into outputDir
-    try:
-        shutil.copy(
-            config_json,
-            os.path.join(cfg["outputDir"], os.path.basename(config_json)),
-        )
-    except shutil.Error:
-        # file exists or file is the same
-        pass
-    except Exception:  # pylint: disable=try-except-raise
-        raise
+    # Save initial config with inputs absolute paths into outputDir
+    initialization.save_config_file(
+        os.path.join(cfg["outputDir"], os.path.basename(config_json)), cfg
+    )
 
     # checks config
     initialization.check_parameters(cfg)
@@ -528,7 +517,9 @@ def run(json_file, steps=None, display=False, loglevel=logging.WARNING):
     # Initialization
     #
     setup_logging(default_level=loglevel)
+    print(json_file)
     cfg = compute_initialization(json_file)
+    print(cfg)
     if display is False:
         # if display is False we have to tell matplotlib to cancel it
         mpl.use("Agg")

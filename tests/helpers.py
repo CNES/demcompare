@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# pylint:disable=unspecified-encoding
-# pylint:disable=consider-using-with
 # coding: utf8
 # Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
 #
@@ -24,71 +22,70 @@ Helpers shared testing generic module:
 contains global shared generic functions for tests/*.py
 """
 
-import json
-
 # Standard imports
 import os
-from typing import Dict
+from typing import List
 
 # Third party imports
 import numpy as np
 import rasterio as rio
 
 
-def demcompare_test_data_path(test_name: str):
+def demcompare_test_data_path(test_name: str) -> str:
     """
     Return full absolute path to demcompare's tests data
+
+    :param test_name: name of test directory
+    :returns: full absolute path to demcompare test data.
     """
-    half_path = os.path.join("tests/tests_data", test_name)
-    return os.path.join(os.getcwd(), half_path)
+    # Get absolute path from this file in root_src_demcompare/tests/ + data
+    test_data_folder = os.path.join(os.path.dirname(__file__), "data")
+    return os.path.join(test_data_folder, test_name)
 
 
-def read_config_file(config_file: str) -> Dict[str, dict]:
-    """
-    Read a json configuration file
-
-    :param config_file: path to a json file
-    :type config_file: string
-    :return user_cfg: configuration dictionary
-    :rtype: dict
-    """
-    with open(config_file, "r") as file_:
-        user_cfg = json.load(file_)
-    return user_cfg
-
-
-def read_csv_file(csv_file: str):
+def read_csv_file(csv_file: str) -> List[float]:
     """
     Read a csv file and save its number values to float
 
     :param csv_file: path to a csv file
     :type csv_file: string
+    :returns: List of floats of input csv file
     """
-    lines = open(csv_file, "r").readlines()
     output_file = []
 
-    for idx, line in enumerate(lines):
-        # Obtain colums
-        cols = line.split(",")
-        # Last column ends with \n
-        cols[-1] = cols[-1].split("\n")[0]
-        # First line are titles
-        if idx == 0:
-            continue
-        # If it is the stats csv, do not convert to float first col
-        if len(cols) > 2:
-            output_file.append(np.array(cols[1:], dtype=float))
-            continue
-        # Convert to float
-        output_file.append(np.array(cols, dtype=float))
+    with open(csv_file, "r", encoding="utf-8") as file_handle:
+        lines = file_handle.readlines()
+
+        for idx, line in enumerate(lines):
+            # Obtain colums
+            cols = line.split(",")
+            # Last column ends with \n
+            cols[-1] = cols[-1].split("\n")[0]
+            # First line are titles
+            if idx == 0:
+                continue
+            # If it is the stats csv, do not convert to float first col
+            if len(cols) > 2:
+                output_file.append(np.array(cols[1:], dtype=float))
+                continue
+            # Convert to float
+            output_file.append(np.array(cols, dtype=float))
+
     return output_file
 
 
-def assert_same_images(actual, expected, rtol=0, atol=0):
+def assert_same_images(
+    actual: str, expected: str, rtol: float = 0, atol: float = 0
+):
     """
     Compare two image files with assertion:
     * same height, width, transform, crs
     * assert_allclose() on numpy buffers
+
+    :param actual: image to compare
+    :param expected: reference image to compare
+    :param rtol: relative tolerance
+    :param atol: absolute tolerance
     """
     with rio.open(actual) as rio_actual:
         with rio.open(expected) as rio_expected:
@@ -100,3 +97,16 @@ def assert_same_images(actual, expected, rtol=0, atol=0):
             np.testing.assert_allclose(
                 rio_actual.read(), rio_expected.read(), rtol=rtol, atol=atol
             )
+
+
+def temporary_dir() -> str:
+    """
+    Returns path to temporary dir from DEMCOMPARE_TMP_DIR environment
+    variable. Defaults to /tmp
+    :returns: path to tmp dir
+    """
+    if "DEMCOMPARE_TMP_DIR" not in os.environ:
+        # return default tmp dir
+        return "/tmp"
+    # return env defined tmp dir
+    return os.environ["DEMCOMPARE_TMP_DIR"]

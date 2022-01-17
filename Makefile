@@ -48,17 +48,17 @@ install: install-deps  ## install environment for development target (depends ve
 
 lint: install  ## run lint tools (depends install)
 	@echo "Demcompare linting isort check"
-	@${VENV}/bin/isort --check demcompare
+	@${VENV}/bin/isort --check demcompare tests
 	@echo "Demcompare linting black check"
-	@${VENV}/bin/black --check demcompare
+	@${VENV}/bin/black --check demcompare tests
 	@echo "Demcompare linting flake8 check"
-	@${VENV}/bin/flake8 demcompare
+	@${VENV}/bin/flake8 demcompare tests
 	@echo "Demcompare linting pylint check"
-	@set -o pipefail; ${VENV}/bin/pylint demcompare --rcfile=.pylintrc --output-format=parseable | tee pylint-report.txt # pipefail to propagate pylint exit code in bash
+	@set -o pipefail; ${VENV}/bin/pylint demcompare tests --rcfile=.pylintrc --output-format=parseable | tee pylint-report.txt # pipefail to propagate pylint exit code in bash
 
 format: install  ## run black and isort formatting (depends install)
-	@${VENV}/bin/isort demcompare
-	@${VENV}/bin/black demcompare
+	@${VENV}/bin/isort demcompare tests
+	@${VENV}/bin/black demcompare tests
 
 test: install ## run all tests with python3.7 and python3.8 + coverage 
 	# Run tox (recreate venv (-r) and parallel mode (-p auto))
