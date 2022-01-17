@@ -166,13 +166,15 @@ def coregister_and_compute_alti_diff(cfg, dem, ref):
 
     # Update cfg
     # -> for plani_results
+    dx_bias = x_bias * coreg_dem.attrs["xres"]
+    dy_bias = y_bias * abs(coreg_dem.attrs["yres"])
     cfg["plani_results"] = {}
     cfg["plani_results"]["dx"] = {
-        "bias_value": x_bias * coreg_dem.attrs["xres"],
+        "bias_value": round(dx_bias, 5),
         "unit": coreg_dem.attrs["plani_unit"].name,
     }
     cfg["plani_results"]["dy"] = {
-        "bias_value": y_bias * abs(coreg_dem.attrs["yres"]),
+        "bias_value": round(dy_bias, 5),
         "unit": coreg_dem.attrs["plani_unit"].name,
     }
     # -> for alti_results
@@ -183,8 +185,9 @@ def coregister_and_compute_alti_diff(cfg, dem, ref):
     cfg["alti_results"]["rectifiedRef"]["path"] = coreg_ref.attrs["input_img"]
     cfg["alti_results"]["rectifiedDSM"]["nodata"] = coreg_dem.attrs["no_data"]
     cfg["alti_results"]["rectifiedRef"]["nodata"] = coreg_ref.attrs["no_data"]
+    dz_bias = float(z_bias)
     cfg["alti_results"]["dz"] = {
-        "bias_value": float(z_bias),
+        "bias_value": round(dz_bias, 5),
         "unit": coreg_dem.attrs["zunit"].name,
         "percent": 100
         * np.count_nonzero(~np.isnan(final_dh["im"].data))
