@@ -30,9 +30,12 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import pytest
 
+# Demcompare imports
 import demcompare
 from demcompare.initialization import read_config_file, save_config_file
+from demcompare.output_tree_design import get_out_file_path
 
+# Tests helpers
 from .helpers import (
     assert_same_images,
     demcompare_test_data_path,
@@ -95,7 +98,7 @@ def test_demcompare_standard_outputs():
         )
 
         # Test final_config.json
-        cfg_file = "final_config.json"
+        cfg_file = get_out_file_path("final_config.json")
         ref_output_cfg = read_config_file(
             os.path.join(test_ref_output_path, cfg_file)
         )
@@ -121,13 +124,13 @@ def test_demcompare_standard_outputs():
         # TEST DIFF TIF
 
         # Test initial_dh.tif
-        img = "initial_dh.tif"
+        img = get_out_file_path("initial_dh.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=1e-05)
 
         # Test final_dh.tif
-        img = "final_dh.tif"
+        img = get_out_file_path("final_dh.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=1e-05)
@@ -135,25 +138,25 @@ def test_demcompare_standard_outputs():
         # TEST PNG SNAPSHOTS
 
         # Test initial_dem_diff_pdf.png
-        img = "initial_dem_diff_pdf.png"
+        img = get_out_file_path("initial_dem_diff_pdf.png")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=1e-05)
 
         # Test final_dem_diff_pdf.png
-        img = "final_dem_diff_pdf.png"
+        img = get_out_file_path("final_dem_diff_pdf.png")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=1e-05)
 
         # Test snapshots/initial_dem_diff_cdf.png
-        img = "snapshots/initial_dem_diff_cdf.png"
+        img = get_out_file_path("initial_dem_diff_cdf.png")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=1e-05)
 
         # Test snapshots/initial_dem_diff_cdf.png
-        img = "snapshots/final_dem_diff_cdf.png"
+        img = get_out_file_path("final_dem_diff_cdf.png")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=1e-05)
@@ -161,25 +164,25 @@ def test_demcompare_standard_outputs():
         # TESTS CSV SNAPSHOTS
 
         # Test initial_dem_diff_pdf.csv
-        file = "initial_dem_diff_pdf.csv"
+        file = get_out_file_path("initial_dem_diff_pdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
 
         # Test final_dem_diff_pdf.csv
-        file = "final_dem_diff_pdf.csv"
+        file = get_out_file_path("final_dem_diff_pdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
 
         # Test snapshots/initial_dem_diff_cdf.csv
-        file = "snapshots/initial_dem_diff_cdf.csv"
+        file = get_out_file_path("initial_dem_diff_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
 
         # Test snapshots/final_dem_diff_cdf.csv
-        file = "snapshots/final_dem_diff_cdf.csv"
+        file = get_out_file_path("final_dem_diff_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)

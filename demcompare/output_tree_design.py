@@ -39,9 +39,15 @@ default_OTD = {
     # snapshots
     "snapshots_dir": "./snapshots",
     "initial_dem_diff.png": "./snapshots/",
+    "initial_dem_diff_pdf.png": "./snapshots/",
+    "initial_dem_diff_pdf.csv": "./snapshots/",
     "initial_dem_diff_cdf.png": "./snapshots/",
+    "initial_dem_diff_cdf.csv": "./snapshots/",
     "final_dem_diff.png": "./snapshots/",
+    "final_dem_diff_pdf.png": "./snapshots/",
+    "final_dem_diff_pdf.csv": "./snapshots/",
     "final_dem_diff_cdf.png": "./snapshots/",
+    "final_dem_diff_cdf.csv": "./snapshots/",
     # histograms
     "histograms_dir": "./histograms",
     # stats
