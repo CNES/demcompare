@@ -11,6 +11,7 @@ A new section Unreleased is opened then for next dev phase.
 - Add pytest tests. [#23]
 
 ### Changed
+- Limit decimal number on output offsets. [#62]
 
 ### Fixed
 
