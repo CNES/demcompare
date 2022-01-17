@@ -60,7 +60,7 @@ format: install  ## run black and isort formatting (depends install)
 	@${VENV}/bin/isort demcompare tests
 	@${VENV}/bin/black demcompare tests
 
-test: install ## run all tests with python3.7 and python3.8 + coverage 
+tests: install ## run all tests with python3.7 and python3.8 + coverage 
 	# Run tox (recreate venv (-r) and parallel mode (-p auto))
 	# with pytest launch : @${VENV}/bin/pytest -o log_cli=true --junitxml=pytest-report.xml --cov-config=.coveragerc --cov --cov-append --cov-report=term-missing
 	@${VENV}/bin/tox -r -p auto
