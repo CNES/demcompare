@@ -521,9 +521,7 @@ def run(json_file, steps=None, display=False, loglevel=logging.WARNING):
     # Initialization
     #
     setup_logging(default_level=loglevel)
-    print(json_file)
     cfg = compute_initialization(json_file)
-    print(cfg)
     if display is False:
         # if display is False we have to tell matplotlib to cancel it
         mpl.use("Agg")
