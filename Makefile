@@ -43,10 +43,17 @@ format: install  ## run black and isort formatting (depends install)
 	@${VENV}/bin/isort demcompare tests
 	@${VENV}/bin/black demcompare tests
 
-test: install ## run all tests with python3.7 and python3.8 + coverage 
-	# Run tox (recreate venv (-r) and parallel mode (-p auto))
-	# with pytest launch : @${VENV}/bin/pytest -o log_cli=true --junitxml=pytest-report.xml --cov-config=.coveragerc --cov --cov-append --cov-report=term-missing
+test-ci: install ## tox run all tests with python3.7 and python3.8 + coverage
+	# Run tox (recreate venv (-r) and parallel mode (-p auto)) for CI
 	@${VENV}/bin/tox -r -p auto
+
+test: install ## run all tests + coverage 
+	# Run pytest directly
+	@${VENV}/bin/pytest -o log_cli=true --cov-config=.coveragerc --cov --cov-report=term-missing
+
+doc:
+	# TMP target for CI : add install-doc ([doc]) and sphinx-build,clean, autoapi...
+	@echo "Demcompare doc generation TODO"
 
 docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"
