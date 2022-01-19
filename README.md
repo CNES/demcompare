@@ -3,7 +3,7 @@
 
 <h4 align="center">DEMcompare, a DEM comparison tool  </h4>
 
-[![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![Python](https://img.shields.io/badge/python-v3.7+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](CONTRIBUTING.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0/)
 
@@ -84,15 +84,15 @@ See [Specific Sphinx LatexBuilder documentation](https://www.sphinx-doc.org/en/m
 
 ## Usage
 
-Run the python script **demcompare** with a json configuration file as unique
-argument (see [`tests/test_config.json`](./tests/test_config.json) as an example):
+Run the python script **demcompare** with a json configuration file as unique argument (see [`tests/data/standard/input/test_config.json`](./tests/data/standard/input/test_config.json) as an example). 
+
+From demcompare source root directory, run:
 ```
-    cd tests/
-    demcompare test_config.json
+    demcompare tests/data/standard/input/test_config.json
 ```
 The results can be observed with:
 ```
-    firefox test_output/doc/published_report/html/demcompare_report.html &
+    firefox test_standard_output/doc/published_report/html/demcompare_report.html &
 ```
 
 demcompare can be launched with a file containing its parameters (one per line) with "@" character:
@@ -102,7 +102,7 @@ demcompare @opts.txt
 
 `opts.txt` example file:
 ```
-test_config.json
+tests/data/standard/input/test_config.json
 --display
 ```
 

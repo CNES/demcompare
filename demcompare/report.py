@@ -19,8 +19,17 @@
 # limitations under the License.
 #
 """
-Create sphinx report and compile it for html and pdf format
+Generate demcompare report from DEM comparison results (graphs, stats, ...)
+
+Steps:
+- init SphinxProjectManager class structure
+- create all data and documentation needed structure for each partition and mode
+- create sphinx source rst report and add to SphinxProjectManager object
+- Compile SphinxProjectManager object to generate html and pdf report
+
+TODO: if this report part is kept "as is", split generate_report in subfunctions
 """
+
 # Standard imports
 import collections
 import csv
@@ -83,7 +92,7 @@ def generate_report(  # noqa: C901
     project_dir=".",
 ):
     """
-    Create pdf report from png graph and csv stats summary
+    Create pdf and html report from png graph and csv stats summary
 
     :param working_dir: directory in which to find *mode*.png
                     and *mode*.csv files for each mode in modename
@@ -92,8 +101,8 @@ def generate_report(  # noqa: C901
     :coreg_dsm_name: name or path to the coreg dsm
     :coreg_ref_name: name or path to the ref dsm
     :param partitions: list of partition, contains modes by partition
-    :param doc_dir: directory in which to find the output documentation
-    :param project_dir:
+    :param doc_dir: directory in which to find the builded output documentation
+    :param project_dir: directory of the sphinx src documentation
     :return:
     """
 
