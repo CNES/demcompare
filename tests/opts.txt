@@ -1,1 +1,1 @@
-tests_ref_input/standard/test_config.json
+tests/data/standard/input/test_config.json

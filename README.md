@@ -84,14 +84,15 @@ See [Specific Sphinx LatexBuilder documentation](https://www.sphinx-doc.org/en/m
 
 ## Usage
 
-Run the python script **demcompare** with a json configuration file as unique
-argument (see [`tests/data/standard/input/test_config.json`](./tests/tests_ref_input/standard/test_config.json) as an example):
+Run the python script **demcompare** with a json configuration file as unique argument (see [`tests/data/standard/input/test_config.json`](./tests/data/standard/input/test_config.json) as an example). 
+
+From demcompare source root directory, run:
 ```
     demcompare tests/data/standard/input/test_config.json
 ```
 The results can be observed with:
 ```
-    firefox test_output/doc/published_report/html/demcompare_report.html &
+    firefox test_standard_output/doc/published_report/html/demcompare_report.html &
 ```
 
 demcompare can be launched with a file containing its parameters (one per line) with "@" character:
@@ -101,7 +102,7 @@ demcompare @opts.txt
 
 `opts.txt` example file:
 ```
-tests_ref_input/standard/test_config.json
+tests/data/standard/input/test_config.json
 --display
 ```
 
