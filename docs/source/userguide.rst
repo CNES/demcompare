@@ -9,6 +9,7 @@ User guide
    userguide/inputs.rst
    userguide/step_by_step.rst
    userguide/outputs.rst
+   userguide/command_line_execution.rst
 
 
 

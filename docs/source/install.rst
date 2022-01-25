@@ -4,7 +4,7 @@ Install
 =======
 
 
-Only Linux Plaforms are supported (virtualenv or bare machine) with Python 3 installed.
+Only Linux plaforms are supported (virtualenv or bare machine) with Python >= 3.7 installed.
 The default install mode is via the pip package, typically through a virtualenv:
 
 .. code-block:: bash

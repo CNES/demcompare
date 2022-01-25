@@ -1,12 +1,16 @@
 .. _faq:
 
+.. role:: bash(code)
+   :language: bash
+
+
 Frenquently Asked Questions
 ===========================
 
 Installation troubleshootings
 *****************************
 
-Depending on pip version, installation problems can happen with packages dependencies installation order. Install and upgrade pip, numpy and cython if demcompare installation crashes:
+Depending on pip version, installation problems can happen with packages dependencies installation order. Install and upgrade pip and numpy if demcompare installation crashes:
 
 .. code-block:: bash
 

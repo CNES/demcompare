@@ -3,7 +3,7 @@
 Statistics
 ==========
 
-Demcompare's results display some altitude differences **statistics**:
+**Demcompare**'s results display some altitude differences **statistics**:
 
 - **Minimal and maximal values**
 - **Mean and the standard deviation**
@@ -16,43 +16,54 @@ Those stats are actually displayed by stats sets (see next section).
 The stats sets
 **************
 
-Demcompare can set how the stats shall be classified to look at particular areas compared together with `to_be_classification_layers`
-and / or the `classification_layers` parameters in the `stats_opts` stats section.
+**Demcompare** offers two types of stats sets to define how the stats shall be classified to look at particular areas compared together, and the statistics will then be displayed overall and by stats set :
 
-Slope default classification
-****************************
 
-The default behavior is to use the **slope** of both DEMs to classify the stats by slope range. The slope range can be set with the `ranges` argument. \
-The statistics will then be displayed overall and by stats set.
 
-Each set will contain all the pixels for whom the inputRef slope is contained inside the associated slope range.
 
-At the end, there is a stats set for each slope range and all the stats set form a partition of the altitude differences image in `final_dh.tif` file.
+To be classification layers
+---------------------------
 
-Other classifications
-*********************
+`to_be_classification_layers` are layers (exogenous rasters) that could be used as classification layers by the use of a `ranges` list. Hence, the slope layer **demcompare** computes itself belongs to this category.
 
-It is also possible not to classify the stats by slope range but to use instead any other exogenous data. \
-For that purpose, `to_be_classification_layers` and / or the `classification_layers` parameters have to be used:
 
-- `to_be_classification_layers` are layers (exogenous rasters) that could be use as classification layers by the use of a `ranges` list. Hence, the slope layer Demcompare computes itself belongs to this category.
-- `classification_layers` are layers (exogenous raster) such as segmentation or semantic segmentation for which pixels are gathered inside superpixels whose values are shared by every pixels in a superpixel and called a label value.
 
-For every exogenous layer (example above `land_cover`), the user ought to specify each superimposable DEM. **ref** and **dsm** keywords are then  designed to register the path of the exogenous layer, respectively superimposable to the **ref** or the **dsm**.
+- Slope default classification
+
+    The default behavior in **demcompare** is to use the **slope** of both DEMs to classify the stats by slope range. The slope range can be set with the `ranges` argument. Hence, the slope layer **demcompare** computes itself belongs to the *to_be_classification_layers* category.\
+
+    Each set will contain all the pixels for whom the **ref** slope is contained inside the associated slope range.
+
+    At the end, there is a stats set for each slope range and all the stats set form a partition of the altitude differences image in `final_dh.tif` file.
+
+
+Classification layers
+---------------------
+
+`classification_layers` are layers (exogenous raster) such as segmentation or semantic segmentation for which pixels are gathered inside superpixels whose values are shared by every pixels in a superpixel and called a label value.
 
 The user can set as many exogenous layers to classify the stats from: land cover map, validity masks, etc.
 All of them will be used separately to classify the stats, and then be merged into a full classification layer that will also be used to classify the stats
-(in that case Demcompare could display the results for 'elevated roads' for which pixels are 'valid pixels').
+(in that case **demcompare** could display the results for 'elevated roads' for which pixels are 'valid pixels').
+
+A valid classification_layers value could be:
+                            "classification_layers": {"land_cover": {"ref": 'None_or_path_to_land_cover_associated_with_the_ref',
+                                                                     "dsm": 'None_or_path_to_land_cover_associated_with_the_dsm',
+                                                                     "classes": {"forest": [31, 32], "urbain": [42]}}}
+    }
+
+
+For every exogenous layer (example above `land_cover`), the user ought to specify each superimposable DEM. **ref** and **dsm** keywords are then designed to register the path of the exogenous layer, respectively superimposable to the **ref** or the **sec**.
+
+
+
 
 The cross classification and the modes
 **************************************
 
-Along with classifying the statistics, Demcompare can display the stats in three different modes. A **mode** is
+As shown in previous section, **demcompare** will classify stats according to classification layers (computed slopes or exogenous data provided by the user).
+Along with classifying the statistics, **demcompare** displays the each of the stats sets in three different modes. A **mode** is
 a set of all the pixels of the altitude differences image.
-
-As shown in previous section, Demcompare will classify stats according to classification layers (computed slopes or exogenous data provided by the user).
-For each classification layer, Demcompare knows if it is superimposable to the **ref** or the **dsm** to be evaluated. Now one could provides two land cover classification layers to Demcompare.
-One that would come with the **ref** DEM. And one that would come with the **dsm**. In this case, Demcompare provides a three modes stats display.
 
 Now here is how the modes are defined:
 
@@ -62,16 +73,16 @@ Now here is how the modes are defined:
 
 2. The **coherent mode** is the standard mode where only the pixels sharing the same label for both DEMs classification layers are kept.
 
- - Say after a coregistration, a pixel *P* is associated to a 'grass land' inside a `ref` classification layer named `land_cover` and a `road` inside the `dsm` classification layer also named `land_cover`, then *P* is not coherent for Demcompare.
+ - Say after a coregistration, a pixel *P* is associated to a 'grass land' inside a `ref` classification layer named `land_cover` and a `road` inside the `dsm` classification layer also named `land_cover`, then *P* is not coherent for **demcompare**.
 
 3. The **incoherent mode** which is the coherent one complementary.
 
 The elevation thresholds (Experimental)
 ***************************************
 
-The tool allows to configure `elevation_thresholds` parameter with a list of thresholds.
+This functionality allows **demcompare** to compute the ratio  of pixels for which the altitude difference is larger than a particular given threshold.
 
-For each threshold, Demcompare will compute the ratio  of pixels for which the altitude difference is larger than this particular threshold.
+One can configure the `elevation_thresholds` parameter with a list of thresholds.
 
 .. note::  So far results are only visible inside `stats_results-*.json` output files (see next chapter). Please also note that the threshold is compared against the altitude differences being signed. This means that the result is not always relevant and this stats computation shall be used carefully.
 

@@ -3,10 +3,6 @@
 Inputs
 ======
 
-Configuration parameters
-************************
-
-
 
 Configuration and parameters
 ****************************
@@ -17,7 +13,7 @@ Here is the list of the parameters and the associated default value when it exis
 
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | Name                                                   | Description                                     | Type        | Default value       | Required |
-+==========================================================================================================+=============+=====================+==========+
++========================================================+=================================================+=============+=====================+==========+
 | *outputDir*                                            | Output directory path                           | string      |                     | Yes      |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *inputDSM path*                                        | Path of the input DSM                           | string      |                     | Yes      |
@@ -30,7 +26,7 @@ Here is the list of the parameters and the associated default value when it exis
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *inputDSM nodata*                                      | No data value of the input DSM                  | int         |        None         | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputRef*   path*                                     | Path of the input Ref                           | string      |                     | Yes      |
+| *inputRef path*                                        | Path of the input Ref                           | string      |                     | Yes      |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *inputRef zunit*                                       | Z axes unit of the input Ref                    | string      |       m             | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
@@ -44,21 +40,32 @@ Here is the list of the parameters and the associated default value when it exis
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *plani_opts corregistration_iterations*                | Planimetric corregistration method              | int         | 6                   | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *plani_opts disp_init x*                               | Planimetric corregistration initial disparity x | int         |  0                  | No       |
+| *plani_opts disp_init x*                               | | Planimetric corregistration                   | int         |  0                  | No       |
+|                                                        | | initial disparity x                           |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *plani_opts disp_init y*                               | Planimetric corregistration initial disparity y | int         |  0                  | No       |
+| *plani_opts disp_init y*                               | | Planimetric corregistration                   | int         |  0                  | No       |
+|                                                        | | initial disparity y                           |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts elevation_thresholds list*                 | List of elevation thresholds for statistics     | list[float] |[0.5, 1, 3]          | No       |
+| *stats_opts elevation_thresholds list*                 | | List of elevation thresholds for              | list[float] |[0.5, 1, 3]          | No       |
+|                                                        | | statistics                                    |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts elevation_thresholds zunit*                | zunit of the elevation thresholds               | string      | m                   | No       |
+| | *stats_opts elevation_thresholds*                    | zunit of the elevation thresholds               | string      | m                   | No       |
+| | *zunit*                                              |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts to_be_classification_layers slope ranges*  | Slope ranges for classification layers          | list[int]   | [0, 10, 25, 50, 90] | No       |
+| | *stats_opts*                                         | | Slope ranges for classification               | list[int]   | [0, 10, 25, 50, 90] | No       |
+| | *to_be_classification_layers*                        | | layers                                        |             |                     |          |
+| | *slope ranges*                                       |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts to_be_classification_layers slope ref*     | Slope reference for classification layers       | string      | None                | No       |
+| | *stats_opts*                                         | | Slope reference for classification            | string      | None                | No       |
+| | *to_be_classification_layers*                        | | layers                                        |             |                     |          |
+| | *slope ref*                                          |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts to_be_classification_layers slope dsm*     | Slope dsm for classification layers             | string      | None                | No       |
+| | *stats_opts*                                         | Slope dsm for classification layers             | string      | None                | No       |
+| | *to_be_classification_layers*                        |                                                 |             |                     |          |
+| | *slope dsm*                                          |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts remove_outliers*                           | Remove outliers during statistics computation   | bool        | False               | No       |
+| *stats_opts remove_outliers*                           | | Remove outliers during statistics             | bool        | False               | No       |
+|                                                        | | computation                                   |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *stats_opts plot_real_hists*                           | Plot histograms                                 | bool        | True                | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
@@ -66,15 +73,26 @@ Here is the list of the parameters and the associated default value when it exis
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *stats_opts alti_error_threshold unit*                 | Altimetric error threshold unit                 | string      | m                   | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts classification_layers *name* ref*          | Classification layer called *name* 's ref       | string      |                     | No       |
+| | *stats_opts*                                         | | Classification layer called                   | string      |                     | No       |
+| | *classification_layers*                              | | *name* 's ref                                 |             |                     |          |
+| | *name* *ref*                                         |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts classification_layers *name* dsm*          | Classification layer called *name* 's dsm       | string      |                     | No       |
+| | *stats_opts*                                         | | Classification layer called                   | string      |                     | No       |
+| | *classification_layers*                              | | *name* 's dsm                                 |             |                     |          |
+| | *name* *dsm*                                         |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts classification_layers *name* classes*      | Classification layer called *name* 's classes   | Dict        |                     | No       |
+| | *stats_opts*                                         | | Classification layer called                   | Dict        |                     | No       |
+| | *classification_layers*                              | | *name* 's classes                             |             |                     |          |
+| | *name* *classes*                                     |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 
+Input format and examples
+*************************
+.. _inputs_reference:
 
-If DEMs altitudes are to rely on **geoid**, configurations could be:
+**Demcompare** requires the input images to be a geotiff file *.tif* which contains the :term:`DSM` in the required cartographic projection.
+
+The DEMs altitudes can rely on both ellipsoid and geoid references. For instance, if DEMs altitudes are to rely on **geoid**, configurations could be:
 
 .. sourcecode:: text
 
@@ -85,7 +103,8 @@ If DEMs altitudes are to rely on **geoid**, configurations could be:
 
 In this case, **EGM96 geoid** will be used by default.
 
-Otherwise, the absolute path to a locally available geoid model can be given, for instance:
+Otherwise, the absolute path to a locally available geoid model can be given. The geoid local model should be either a *GTX*, *NRCAN* or *NTv2* file.
+ For instance, if DEMs altitudes are to rely on a local *.gtx* available **geoid** model, configurations could be:
 
 .. sourcecode:: text
 
@@ -94,5 +113,17 @@ Otherwise, the absolute path to a locally available geoid model can be given, fo
                             "georef" : "geoid",
                             "geoid_path": "path/to/egm08_25.gtx"
                             "nodata" : }
+
+Optional parameters file
+************************
+
+**Demcompare** can be launched with a file containing its parameters (one per line) with "@" character:
+
+.. code-block:: bash
+
+    demcompare @opts.txt
+    opts.txt example file:
+    test_config.json
+    --display
 
 

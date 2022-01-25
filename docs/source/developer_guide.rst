@@ -29,7 +29,7 @@ Here are some rules to apply when developing a new functionality:
 * **Use type hints**: Use the type hints provided by the `typing` python module.
 * **Use doctype**: Follow sphinx default doctype for automatic API
 * **Quality code**: Correct project quality code errors with pre-commit automatic workflow (see below)
-* **Factorization**: Factorize the code as much as possible. The command line tools shall only include the main workflow and rely on the demcompare python modules.
+* **Factorization**: Factorize the code as much as possible. The command line tools shall only include the main workflow and rely on the **demcompare** python modules.
 * **Be careful with user interface upgrade:** If major modifications of the user interface or of the tool's behaviour are done, update the user documentation (and the notebooks if necessary).
 * **Logging and no print**: The usage of the `print()` function is forbidden: use the `logging` python standard module instead.
 * **Limit classes**: If possible, limit the use of classes as much as possible and opt for a functional approach. The classes are reserved for data modelling if it is impossible to do so using `xarray` and for the good level of modularity.
@@ -62,9 +62,9 @@ It is possible to test pre-commit before commiting:
 Code quality
 ************
 
-Demcompare uses `Isort`_, `Black`_, `Flake8`_ and `Pylint`_ quality code checking.
+**Demcompare** uses `Isort`_, `Black`_, `Flake8`_ and `Pylint`_ quality code checking.
 
-Use the following command in Demcompare `virtualenv` to check the code with these tools:
+Use the following command in **demcompare** `virtualenv` to check the code with these tools:
 
 .. code-block:: console
 
@@ -80,7 +80,7 @@ Isort
 -----
 `Isort`_ is a Python utility / library to sort imports alphabetically, and automatically separated into sections and by type.
 
-Demcompare ``isort`` configuration is done in `.pyproject.toml <https://raw.githubusercontent.com/CNES/demcompare/master/pyproject.toml>`_
+**Demcompare** ``isort`` configuration is done in `.pyproject.toml <https://raw.githubusercontent.com/CNES/demcompare/master/pyproject.toml>`_
 `Isort`_ manual usage examples:
 
 .. code-block:: console
@@ -96,7 +96,7 @@ Black
 -----
 `Black`_ is a quick and deterministic code formatter to help focus on the content.
 
-Demcompare's ``black`` configuration is done in `.pyproject.toml <https://raw.githubusercontent.com/CNES/demcompare/master/pyproject.toml>`_
+**Demcompare**'s ``black`` configuration is done in `.pyproject.toml <https://raw.githubusercontent.com/CNES/demcompare/master/pyproject.toml>`_
 
 If necessary, Black doesn’t reformat blocks that start with "# fmt: off" and end with # fmt: on, or lines that ends with "# fmt: skip". "# fmt: on/off" have to be on the same level of indentation.
 
@@ -113,7 +113,7 @@ Flake8
 ------
 `Flake8`_ is a command-line utility for enforcing style consistency across Python projects. By default it includes lint checks provided by the PyFlakes project, PEP-0008 inspired style checks provided by the PyCodeStyle project, and McCabe complexity checking provided by the McCabe project. It will also run third-party extensions if they are found and installed.
 
-Demcompare's ``flake8`` configuration is done in `setup.cfg <https://raw.githubusercontent.com/CNES/Demcompare/master/setup.cfg>`_
+**Demcompare**'s ``flake8`` configuration is done in `setup.cfg <https://raw.githubusercontent.com/CNES/Demcompare/master/setup.cfg>`_
 
 `Flake8`_ messages can be avoided (in particular cases !) adding "# noqa" in the file or line for all messages.
 It is better to choose filter message with "# noqa: E731" (with E371 example being the error number).
@@ -131,7 +131,7 @@ Pylint
 ------
 `Pylint`_ is a global linting tool which helps to have many information on source code.
 
-Demcompare's ``pylint`` configuration is done in dedicated `.pylintrc <https://raw.githubusercontent.com/CNES/demcompare/master/.pylintrc>`_ file.
+**Demcompare**'s ``pylint`` configuration is done in dedicated `.pylintrc <https://raw.githubusercontent.com/CNES/demcompare/master/.pylintrc>`_ file.
 
 `Pylint`_ messages can be avoided (in particular cases !) adding "# pylint: disable=error-message-name" in the file or line.
 Look at examples in source code.
@@ -148,7 +148,7 @@ Pylint manual usage examples:
 Bug report
 **********
 
-Any proven or suspected malfunction should be traced in a bug report, the latter being an issue in the Demcompare github repository.
+Any proven or suspected malfunction should be traced in a bug report, the latter being an issue in the **demcompare** github repository.
 
 **Don't hesitate to do so: It is best to open a bug report and quickly resolve it than to let a problem remain in the project.**
 **Notifying the potential bugs is the first way for contributing to a software.**
@@ -170,11 +170,11 @@ The Merge Request shall have a short description of the proposed changes. If it 
 
 Likewise, if you work on a branch (which is recommended), prefix the branch's name by *xx-* in order to link it to the xx issue.
 
-Demcompare's Classical workflow is :
+**Demcompare**'s Classical workflow is :
  - Check Licence and sign :ref:`contribution_license_agreement` (Individual or Corporate)
  - Create an issue (or begin from an existing one)
  - Create a Merge Request from the issue: a MR is created accordingly with *WIP:*, *Closes xx* and associated *xx-name-issue* branch
- - Modify Demcompare's code from a local working directory or from the forge (less possibilities)
+ - Modify **demcompare**'s code from a local working directory or from the forge (less possibilities)
  - Git add, commit and push from local working clone directory or from the forge directly
  - Follow `Conventional commits <https://www.conventionalcommits.org/>`_ specifications for commit messages
  - Beware that pre-commit hooks can be installed for code analysis (see below pre-commit validation).
@@ -186,7 +186,7 @@ Demcompare's Classical workflow is :
 Contribution license agreement
 ******************************
 
-Demcompare requires that contributors sign out a `Contributor LicenseAgreement <https://en.wikipedia.org/wiki/Contributor_License_Agreement>`_.
+**Demcompare** requires that contributors sign out a `Contributor LicenseAgreement <https://en.wikipedia.org/wiki/Contributor_License_Agreement>`_.
 The purpose of this CLA is to ensure that the project has the necessary ownership or
 grants of rights over all contributions to allow them to distribute under the
 chosen license (Apache License Version 2.0)
