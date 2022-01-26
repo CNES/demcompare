@@ -14,6 +14,7 @@ A new section Unreleased is opened then for next dev phase.
 - Limit decimal number on output offsets. [#62]
 
 ### Fixed
+- Correct classification layers coregistration. [#58]
 
 ## 0.2.0 Fix Bugs, Clean and small functionalities Release (September 2021)
 

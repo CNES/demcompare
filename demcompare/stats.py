@@ -1139,8 +1139,7 @@ def save_results(
 def create_partitions(
     dsm: xr.Dataset,
     ref: xr.Dataset,
-    output_dir: str,
-    stats_opts,
+    cfg: Dict,
     geo_ref: bool = True,
 ):
     """
@@ -1148,14 +1147,13 @@ def create_partitions(
     If the support is a slope,it's transformed into a classification support.
     :param dsm: xarray Dataset, dsm
     :param ref: xarray Dataset, coregistered ref
-    :param output_dir: ouput directory
-    :type output_dir: str
-    :param stats_opts: TODO
-    :type stats_opts:
+    :param cfg: cfg
     :param geo_ref: boolean, set to False if images are not georeferenced
     :type geo_ref: bool
     :return: dict, with partitions information {'
     """
+    output_dir = cfg["outputDir"]
+    stats_opts = cfg["stats_opts"]
     to_be_clayers = stats_opts["to_be_classification_layers"].copy()
     clayers = stats_opts["classification_layers"].copy()
 
@@ -1175,7 +1173,6 @@ def create_partitions(
                     dsm,
                     ref,
                     output_dir,
-                    geo_ref=geo_ref,
                     **tbclayer
                 )
             )
@@ -1199,6 +1196,12 @@ def create_partitions(
                     ref,
                     output_dir,
                     geo_ref=geo_ref,
+                    dec_ref_path=cfg["inputRef"]["path"],
+                    dec_dem_path=cfg["inputDSM"]["path"],
+                    init_disp_x=cfg["plani_opts"]["disp_init"]["x"],
+                    init_disp_y=cfg["plani_opts"]["disp_init"]["y"],
+                    dx=cfg["plani_results"]["dx"]["nuth_offset"],
+                    dy=cfg["plani_results"]["dy"]["nuth_offset"],
                     **clayer
                 )
             )
@@ -1381,9 +1384,7 @@ def alti_diff_stats(
 
     # There can be multiple ways to partition the stats.
     # We gather them all inside a list here:
-    partitions = create_partitions(
-        dsm, ref, cfg["outputDir"], cfg["stats_opts"], geo_ref=geo_ref
-    )
+    partitions = create_partitions(dsm, ref, cfg, geo_ref=geo_ref)
 
     # For every partition get stats and save them as plots and tables
     cfg["stats_results"]["partitions"] = {}
