@@ -417,7 +417,6 @@ def load_dems(
     :return: ref and dem datasets
     :rtype: xr.Dataset, xr.Dataset
     """
-
     # Get roi of dem
     src_dem = rasterio.open(dem_path)
     dem_crs = src_dem.crs

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding: utf8
-# pylint:disable=invalid-name
 # Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
@@ -147,9 +146,9 @@ def coregister_and_compute_alti_diff(
 
     if cfg["plani_opts"]["coregistration_method"] == "nuth_kaab":
         (
-            dx,
-            dy,
-            dz,  # pylint:disable=unused-variable
+            dx_nuth,
+            dy_nuth,
+            dz_nuth,  # pylint:disable=unused-variable
             coreg_dem,
             coreg_ref,
             final_dh,
@@ -185,21 +184,21 @@ def coregister_and_compute_alti_diff(
     # -> for plani_results
     #  NB : -y_off because y_off from nk is north oriented
     #       we take into account initial disparity
-    dx_bias = (dx + cfg["plani_opts"]["disp_init"]["x"]) * coreg_dem.attrs[
+    dx_bias = (dx_nuth + cfg["plani_opts"]["disp_init"]["x"]) * coreg_dem.attrs[
         "xres"
     ]
-    dy_bias = (-dy + cfg["plani_opts"]["disp_init"]["y"]) * abs(
+    dy_bias = (-dy_nuth + cfg["plani_opts"]["disp_init"]["y"]) * abs(
         coreg_dem.attrs["yres"]
     )
     cfg["plani_results"] = {}
     cfg["plani_results"]["dx"] = {
-        "nuth_offset": round(dx, 5),
+        "nuth_offset": round(dx_nuth, 5),
         "unit_nuth_offset": "px",
         "bias_value": round(dx_bias, 5),
         "unit_bias_value": coreg_dem.attrs["plani_unit"].name,
     }
     cfg["plani_results"]["dy"] = {
-        "nuth_offset": round(dy, 5),
+        "nuth_offset": round(dy_nuth, 5),
         "unit_nuth_offset": "px",
         "bias_value": round(dy_bias, 5),
         "unit_bias_value": coreg_dem.attrs["plani_unit"].name,

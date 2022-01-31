@@ -636,7 +636,7 @@ class Partition:
         (which are coregistered together)
 
         """
-        # TODO : make distinction when in prencence of :
+        # TODO : make distinction when in presence of :
         #  - other coregistration modes
         #  - other Nuth et Kaab implementations
         #  - other coregistration algorithms

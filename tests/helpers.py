@@ -38,6 +38,10 @@ def demcompare_test_data_path(test_name: str) -> str:
     :param test_name: name of test directory
     :returns: full absolute path to demcompare test data.
     """
+    # TODO: find why the path is unset from the second test
+    # Verify that the current path is well set
+    os.chdir(os.path.dirname(__file__))
+
     # Get absolute path from this file in root_src_demcompare/tests/ + data
     test_data_folder = os.path.join(os.path.dirname(__file__), "data")
     return os.path.join(test_data_folder, test_name)

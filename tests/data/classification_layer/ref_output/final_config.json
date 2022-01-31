@@ -1,0 +1,185 @@
+{
+  "outputDir": "/output",
+  "inputRef": {
+    "path": "Gironde.tif",
+    "zunit": "m",
+    "georef": "WGS84"
+  },
+  "inputDSM": {
+    "path": "FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
+    "zunit": "m",
+    "georef": "EPSG:32630",
+    "nodata": -32768
+  },
+  "plani_opts": {
+    "coregistration_method": "nuth_kaab",
+    "coregistration_iterations": 6,
+    "disp_init": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  "stats_opts": {
+    "to_be_classification_layers": {
+      "slope": {
+        "ranges": [
+          0,
+          10,
+          25,
+          50,
+          90
+        ],
+        "ref": null,
+        "dsm": null
+      }
+    },
+    "classification_layers": {
+      "Status": {
+        "dsm": "FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF",
+        "classes": {
+          "valid": [
+            0
+          ],
+          "KO": [
+            1
+          ],
+          "Land": [
+            2
+          ],
+          "NoData": [
+            3
+          ],
+          "Outside_detector": [
+            4
+          ]
+        }
+      }
+    },
+    "alti_error_threshold": {
+      "value": 0.1,
+      "unit": "m"
+    },
+    "elevation_thresholds": {
+      "list": [
+        0.5,
+        1,
+        3
+      ],
+      "zunit": "m"
+    },
+    "plot_real_hists": true,
+    "remove_outliers": false
+  },
+  "otd": "default_OTD",
+  "alti_opts": {
+    "egm96-15": {
+      "path": "demcompare/geoid/egm96_15.gtx",
+      "zunit": "m"
+    },
+    "deramping": false
+  },
+  "plani_results": {
+    "dx": {
+      "nuth_offset": -1.43664,
+      "unit_nuth_offset": "px",
+      "bias_value": -718.31907,
+      "unit_bias_value": "m"
+    },
+    "dy": {
+      "nuth_offset": 0.41903,
+      "unit_nuth_offset": "px",
+      "bias_value": -209.51619,
+      "unit_bias_value": "m"
+    }
+  },
+  "alti_results": {
+    "rectifiedDSM": {
+      "path": "/output/./coregistration/coreg_DEM.tif",
+      "zunit": "m",
+      "georef": "EPSG:32630",
+      "nodata": -32768,
+      "nb_points": 35422,
+      "nb_valid_points": 10364
+    },
+    "rectifiedRef": {
+      "path": "/output/./coregistration/coreg_REF.tif",
+      "zunit": "m",
+      "georef": "WGS84",
+      "nodata": -32768,
+      "nb_points": 35422,
+      "nb_valid_points": 34057
+    },
+    "dz": {
+      "bias_value": -3.40256,
+      "unit": "m",
+      "percent": 28.70250127039693
+    },
+    "dzMap": {
+      "path": "/output/./final_dh.tif",
+      "zunit": "m",
+      "nodata": -32768,
+      "nb_points": 35422,
+      "nb_valid_points": 10167
+    }
+  },
+  "stats_results": {
+    "images": {
+      "list": [
+        "row_wise",
+        "col_wise"
+      ],
+      "row_wise": {
+        "path": "/output/./dh_row_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 10167
+      },
+      "col_wise": {
+        "path": "/output/./dh_col_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 10167
+      }
+    },
+    "partitions": {
+      "slope": {
+        "standard": {
+          "Ref_support": {
+            "nodata": -32768.0,
+            "path": "/output/./stats/slope/ref_support_map.tif"
+          },
+          "DSM_support": {
+            "nodata": -32768.0,
+            "path": "/output/./stats/slope/dsm_support_map.tif"
+          }
+        },
+        "coherent-classification": {
+          "Ref_support": null,
+          "DSM_support": null
+        },
+        "incoherent-classification": {
+          "Ref_support": null,
+          "DSM_support": null
+        }
+      },
+      "Status": {
+        "standard": {
+          "Ref_support": null,
+          "DSM_support": {
+            "nodata": -32768.0,
+            "path": "/FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF"
+          }
+        }
+      },
+      "fusion_layer": {
+        "standard": {
+          "Ref_support": null,
+          "DSM_support": {
+            "nodata": -32768.0,
+            "path": "/output/./stats/fusion_layer/dsm_fusion_layer.tif"
+          }
+        }
+      }
+    }
+  }
+}
