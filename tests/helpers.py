@@ -30,6 +30,9 @@ from typing import List
 import numpy as np
 import rasterio as rio
 
+# Define tests tolerance
+TEST_TOL = 1e-03
+
 
 def demcompare_test_data_path(test_name: str) -> str:
     """
@@ -95,7 +98,11 @@ def assert_same_images(
         with rio.open(expected) as rio_expected:
             np.testing.assert_equal(rio_actual.width, rio_expected.width)
             np.testing.assert_equal(rio_actual.height, rio_expected.height)
-            assert rio_actual.transform == rio_expected.transform
+            np.testing.assert_allclose(
+                np.array(rio_actual.transform),
+                np.array(rio_expected.transform),
+                atol=atol,
+            )
             assert rio_actual.crs == rio_expected.crs
             assert rio_actual.nodata == rio_expected.nodata
             np.testing.assert_allclose(

@@ -37,6 +37,7 @@ from demcompare.output_tree_design import get_out_file_path
 
 # Tests helpers
 from .helpers import (
+    TEST_TOL,
     assert_same_images,
     demcompare_test_data_path,
     read_csv_file,
@@ -106,19 +107,19 @@ def test_demcompare_standard_outputs():
         np.testing.assert_allclose(
             ref_output_cfg["plani_results"]["dx"]["bias_value"],
             output_cfg["plani_results"]["dx"]["bias_value"],
-            atol=1e-05,
+            atol=TEST_TOL,
         )
 
         np.testing.assert_allclose(
             ref_output_cfg["plani_results"]["dy"]["bias_value"],
             output_cfg["plani_results"]["dy"]["bias_value"],
-            atol=1e-05,
+            atol=TEST_TOL,
         )
 
         np.testing.assert_allclose(
             ref_output_cfg["alti_results"]["dz"]["bias_value"],
             output_cfg["alti_results"]["dz"]["bias_value"],
-            atol=1e-05,
+            atol=TEST_TOL,
         )
 
         # TEST DIFF TIF
@@ -127,13 +128,13 @@ def test_demcompare_standard_outputs():
         img = get_out_file_path("initial_dh.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test final_dh.tif
         img = get_out_file_path("final_dh.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TEST PNG SNAPSHOTS
 
@@ -141,25 +142,25 @@ def test_demcompare_standard_outputs():
         img = get_out_file_path("initial_dem_diff_pdf.png")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test final_dem_diff_pdf.png
         img = get_out_file_path("final_dem_diff_pdf.png")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test snapshots/initial_dem_diff_cdf.png
         img = get_out_file_path("initial_dem_diff_cdf.png")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test snapshots/initial_dem_diff_cdf.png
         img = get_out_file_path("final_dem_diff_cdf.png")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TESTS CSV SNAPSHOTS
 
@@ -167,25 +168,25 @@ def test_demcompare_standard_outputs():
         file = get_out_file_path("initial_dem_diff_pdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test final_dem_diff_pdf.csv
         file = get_out_file_path("final_dem_diff_pdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test snapshots/initial_dem_diff_cdf.csv
         file = get_out_file_path("initial_dem_diff_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test snapshots/final_dem_diff_cdf.csv
         file = get_out_file_path("final_dem_diff_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # TEST CSV STATS
 
@@ -193,19 +194,19 @@ def test_demcompare_standard_outputs():
         file = "stats/slope/stats_results_standard.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test stats/slope/stats_results_incoherent-classification.csv
         file = "stats/slope/stats_results_incoherent-classification.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test stats/slope/stats_results_coherent-classification.csv
         file = "stats/slope/stats_results_coherent-classification.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
 
 @pytest.mark.end2end_tests
@@ -281,19 +282,19 @@ def test_demcompare_with_classification_layer():
         np.testing.assert_allclose(
             ref_output_cfg["plani_results"]["dx"]["bias_value"],
             output_cfg["plani_results"]["dx"]["bias_value"],
-            atol=1e-05,
+            atol=TEST_TOL,
         )
 
         np.testing.assert_allclose(
             ref_output_cfg["plani_results"]["dy"]["bias_value"],
             output_cfg["plani_results"]["dy"]["bias_value"],
-            atol=1e-05,
+            atol=TEST_TOL,
         )
 
         np.testing.assert_allclose(
             ref_output_cfg["alti_results"]["dz"]["bias_value"],
             output_cfg["alti_results"]["dz"]["bias_value"],
-            atol=1e-05,
+            atol=TEST_TOL,
         )
 
         # TEST DIFF TIF
@@ -302,13 +303,13 @@ def test_demcompare_with_classification_layer():
         img = get_out_file_path("initial_dh.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test final_dh.tif
         img = get_out_file_path("final_dh.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TEST SLOPE STATS
 
@@ -316,25 +317,25 @@ def test_demcompare_with_classification_layer():
         file = "stats/slope/stats_results_standard.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test stats/slope/stats_results_coherent-classification.csv
         file = "stats/slope/stats_results_coherent-classification.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test dsm_support_map_rectif.tif
         img = "stats/slope/dsm_support_map_rectif.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test ref_support_map_rectif.tif
         img = "stats/slope/ref_support_map_rectif.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TEST STATUS CLASSIFICATION LAYER STATS
 
@@ -342,13 +343,13 @@ def test_demcompare_with_classification_layer():
         file = "stats/Status/stats_results_standard.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test dsm_support_map_rectif.tif
         img = "stats/Status/dsm_support_map_rectif.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TEST FUSION_LAYER STATS
 
@@ -356,10 +357,10 @@ def test_demcompare_with_classification_layer():
         file = "stats/fusion_layer/stats_results_standard.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=1e-05)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test dsm_fusion_layer.tif
         img = "stats/fusion_layer/dsm_fusion_layer.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=1e-05)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
