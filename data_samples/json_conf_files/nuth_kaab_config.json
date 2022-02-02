@@ -1,5 +1,5 @@
 {
-	"outputDir" : "./test_standard_output/",
+	"outputDir" : "./test_output/",
 	"inputRef" : {
 		"path" : "./srtm_ref.tif",
 		"zunit" : "m",

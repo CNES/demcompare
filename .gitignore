@@ -36,3 +36,9 @@ pytest-report.xml
 debug.log
 
 
+pytest-report.xml
+
+# Demcompare debug file logging
+debug.log
+
+

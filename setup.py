@@ -23,10 +23,31 @@ Packaging setup.py for compatibility
 All packaging in setup.cfg, except setuptools_scm version activation
 """
 
+from codecs import open as copen
+
 from setuptools import setup
 
+CMDCLASS = {}
+
 try:
-    setup(use_scm_version=True)
+    from sphinx.setup_command import BuildDoc
+
+    CMDCLASS["build_sphinx"] = BuildDoc
+except ImportError:
+    print("WARNING: sphinx not available. Doc cannot be built")
+
+
+def readme():
+    with copen("README.md", "r", "utf-8") as fstream:
+        return fstream.read()
+
+
+try:
+    setup(
+        use_scm_version=True,
+        long_description=readme(),
+    )
+
 except Exception:
     print(
         "\n\nAn error occurred while building the project, "

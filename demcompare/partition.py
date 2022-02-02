@@ -30,11 +30,13 @@ import itertools
 import logging
 import os
 from functools import reduce
+from typing import Dict, List
 
 # Third party imports
 import matplotlib
 import matplotlib.pyplot as mpl_pyplot
 import numpy as np
+import xarray as xr
 
 # DEMcompare imports
 from .img_tools import (
@@ -82,14 +84,33 @@ class Partition:
     #
     def __init__(
         self,
-        name,
-        partition_kind,
-        coreg_dsm,
-        coreg_ref,
-        output_dir,
-        geo_ref=True,
-        **cfg_layer
+        name: str,
+        partition_kind: str,
+        coreg_dsm: xr.Dataset,
+        coreg_ref: xr.Dataset,
+        output_dir: str,
+        geo_ref: bool = True,
+        **cfg_layer: Dict
     ):
+        """
+        Initialization of a partition object
+
+        :param name: partition name
+        :type name: str
+        :param partition_kind: partition kind
+        :type partition_kind: str
+        :param coreg_dsm: coregistered dsm
+        :type coreg_dsm: xr.Dataset
+        :param coreg_ref: coregistered ref
+        :type coreg_ref: xr.Dataset
+        :param output_dir: output directory
+        :type output_dir: str
+        :param geo_ref: georeference
+        :type geo_ref: bool
+        :param cfg_layer: cfg
+        :type cfg_layer: dict
+        :return: None
+        """
 
         # Sanity check
         if partition_kind in self.type:
@@ -142,9 +163,10 @@ class Partition:
 
     def _create_partition_sets(self, **cfg_layer):
         """
-
-        :param cfg_layer:
-        :return:
+        Create partition sets
+        :param cfg_layer: cfg
+        :type cfg_layer: dict
+        :return: None
         """
         if self.name == "global":
             # create default partition
@@ -160,6 +182,8 @@ class Partition:
     def _create_default_partition(self):
         """
         Create default partition.
+
+        :return: None
         """
         self._sets_masks = [
             ~(
@@ -239,9 +263,12 @@ class Partition:
         return self._sets_indexes["dsm"]
 
     @property
-    def stats_results(self):
+    def stats_results(self) -> Dict:
         """
         Return stats results of partition.
+
+        :return: stats_results
+        :type stats_results: Dict
         """
         stats_results = {}
         #
@@ -280,9 +307,12 @@ class Partition:
         return stats_results
 
     @property
-    def sets_masks(self):
+    def sets_masks(self) -> List[List[np.ndarray]]:
         """
         Set masks for partition.
+
+        :return: masks set
+        :rtype: List[List[np.ndarray]]
         """
         if self._sets_masks is None:
             all_masks = []
@@ -327,9 +357,14 @@ class Partition:
             ]
         )
 
-    def generate_classes(self, ranges):
+    def generate_classes(self, ranges) -> collections.OrderedDict:
         """
         Create classes from ranges
+
+        :param ranges: ranges
+        :type ranges: List
+        :return: classes
+        :rtype: collections.OrderedDict
         """
         # change the intervals into a list to make 'classes' generic
         classes = collections.OrderedDict()
@@ -351,8 +386,7 @@ class Partition:
     def create_output_dir(self):
         """
         Create folder stats results
-        :param name_layer: layer name
-        :return:
+        :return: None
         """
         os.makedirs(self.stats_dir, exist_ok=True)
         os.makedirs(self.histograms_dir, exist_ok=True)
@@ -361,10 +395,12 @@ class Partition:
     def create_slope(self, coreg_dsm, coreg_ref):
         """
         Create slope if not exist
-        :param coreg_dsm: xarray dataset, input coregistered DSM
-        :param coreg_ref: xarray dataset, input coregistered REF
-        :param name_layer: layer name
-        :return:
+
+        :param coreg_dsm: input coregistered DSM
+        :type coreg_ds: xr.Dataset
+        :param coreg_ref: input coregistered REF
+        :type coreg_ref: xr.Dataset
+        :return: None
         """
         # Compute ref slope
         self.ref_path = os.path.join(self.stats_dir, "Ref_support.tif")
@@ -382,13 +418,16 @@ class Partition:
         )
         save_tif(slope_dsm_georaster, self.dsm_path)
 
-    def create_map(self, slope_img, type_slope):
+    def create_map(self, slope_img: str, type_slope: str):
         """
         Create the map for each slope
         (value interval is transformed into 1 value (interval minimum value)
+
         :param slope_img: slope image path
+        :type slope_img: str
         :param type_slope: type of slope : 'ref' or 'dsm'
-        :return:
+        :type type_slope: str
+        :return: None
         """
         # use radiometric ranges to classify
         slope = read_img(slope_img, load_data=False)
@@ -424,15 +463,16 @@ class Partition:
 
     def _create_set_indices(self):
         """
-        Returns a list of numpy.where, by class. Each element defines a set.
+        Returns a list of numpy.where, by class.
+        Each element defines a set.
         The sets partition / classify the image.
-        Each numpy.where contains the coordinates of the sets of the class.
+        Each numpy.where contains the coordinates
+        of the sets of the class.
         Create list of coordinates arrays :
-            -> self.sets_indices = [(label_name, np.where(...)),
-                                ... label_name, np.where(...))] ,
+        -> self.sets_indices = [(label_name,
+        np.where(...)),... label_name, np.where(...))] ,
 
-        :param classes: ordered dict of labels and associated values
-        :return:
+        :return: None
         """
         dsm_supports = ["ref", "dsm"]
         sets_indices = {support: None for support in dsm_supports}
@@ -472,7 +512,7 @@ class Partition:
 
     def _fill_sets_names_labels(self):
         """
-
+        Fills the labels of the sets names
         :return:
         """
         # fill sets_labels & sets_names
@@ -497,6 +537,7 @@ class Partition:
 
     def _fill_sets_attributes(self):
         """
+        Fills the sets attributes
 
         :return:
         """
@@ -518,7 +559,12 @@ class Partition:
             ]
 
     def _create_labelled_map(self, **cfg_layer):
-
+        """
+        Creates labelled map
+        :param cfg_layer: cfg
+        :type cfg_layer: dict
+        :return: None
+        """
         # Store classes (TODO why?)
         self._classes = {}
         if "classes" in cfg_layer:
@@ -639,14 +685,18 @@ class FusionPartition(Partition):
 
     def _create_partition_sets(self, **_):
         """
-
+        Creates partitions sets
         :param kwargs:
-        :return:
+        :return: None
         """
         self._fill_sets_attributes()
         self._set_labelled_map()
 
     def _set_labelled_map(self):
+        """
+        Sets labelled map
+        :return: None
+        """
         for (
             df_k,
             df_v,
@@ -672,6 +722,10 @@ class FusionPartition(Partition):
                 )
 
     def _fill_sets_attributes(self):
+        """
+        Fills sets attributes
+        :return: None
+        """
         all_combi_labels, self._classes = self._create_merged_classes(
             self.partitions
         )
@@ -763,6 +817,8 @@ class FusionPartition(Partition):
 def get_color(nb_color=10):
     """
     Function to get matplotlib color possibilities.
+    :param nb_color: number of colors
+    :type nb_color: int
     """
 
     if 10 < nb_color < 21:
@@ -786,13 +842,22 @@ def get_color(nb_color=10):
     return np.array(x.colors[0:nb_color])
 
 
-def create_fusion(sets_masks, all_combi_labels, classes_fusion, layers_obj):
+def create_fusion(
+    sets_masks: Dict, all_combi_labels, classes_fusion, layers_obj
+):
     """
     TODO: create all maps fusion
     :param sets_masks: dict per layer (example 'slope', 'carte_occupation', ...)
-        contains a tuple list each,
-        where each tuple contains ('label_name', A3DGeoRaster_mask)
-    layers_obj: example layer to get size and georef
+    contains a tuple list each,
+    where each tuple contains ('label_name', A3DGeoRaster_mask)
+    :type sets_masks: Dict
+    :param all_combi_labels:
+    :type all_combi_labels: List
+    :param classes_fusion:
+    :type classes_fusion: List
+    :param layers_obj: example layer to get size and georef
+    :type layers_obj:
+    layers_obj:
     :return:
     """
     # create map which fusion all classes combinaisons

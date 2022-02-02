@@ -31,10 +31,12 @@ import logging.config
 import os
 import sys
 import traceback
+from typing import Dict, List
 
 # Third party imports
 import matplotlib as mpl
 import numpy as np
+import xarray as xr
 
 # DEMcompare imports
 from . import coregistration, initialization, report, stats
@@ -72,7 +74,7 @@ def setup_logging(
     If logconf_path is found, set the json logging configuration
     Else put default_level
 
-    :param lo: path to the configuration file
+    :param logconf_path: path to the configuration file
     :type logconf_path: string
     :param default_level: default level
     :type default_level: logging level
@@ -86,17 +88,29 @@ def setup_logging(
 
 
 def compute_report(
-    cfg, steps, dem_name, ref_name, coreg_dem_name, coreg_ref_name
+    cfg: Dict,
+    steps: List[str],
+    dem_name: str,
+    ref_name: str,
+    coreg_dem_name: str,
+    coreg_ref_name: str,
 ):
     """
     Create html and pdf report through sphinx generation
 
     :param cfg: configuration dictionary
+    :type cfg: dict
+    :param steps: pipeline steps
+    :type steps: List
     :param dem_name: dem raster name
+    :type dem_name: str
     :param ref_name: reference dem raster name
-    :coreg_dem_name: coreg_dem name
-    :coreg_ref_name: coreg_ref name
-    :return:
+    :type ref_name: str
+    :param coreg_dem_name: coreg_dem name
+    :type coreg_dem_name: str
+    :param coreg_ref_name: coreg_ref name
+    :type coreg_ref_name: str
+    :return: None
     """
     if "report" in steps:
         print("\n[Report]")
@@ -112,16 +126,29 @@ def compute_report(
         )
 
 
-def compute_stats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
+def compute_stats(
+    cfg: Dict[str, dict],
+    dem: xr.Dataset,
+    ref: xr.Dataset,
+    final_dh: xr.Dataset,
+    display: bool = False,
+    final_json_file: str = None,
+):
     """
     Compute Stats on final_dh
 
     :param cfg: configuration dictionary
+    :type cfg: dict
     :param dem: dem raster
+    :type dem: xr.Dataset
     :param ref: reference dem raster to be coregistered to dem raster
-    :param final_dh: xarray.Dataset, initial alti diff
-    :param display: boolean, choose between plot show and plot save
+    :type ref: xr.Dataset
+    :param final_dh: initial alti diff
+    :type final_dh: xr.Dataset
+    :param display: choose between plot show and plot save
+    :type display: boolean
     :param final_json_file: filename of final_cfg
+    :type final_json_file: str
     :return:
     """
     print("\n[Stats]")
@@ -148,7 +175,13 @@ def compute_stats(cfg, dem, ref, final_dh, display=False, final_json_file=None):
 
 
 def compute_coregistration(
-    cfg, steps, dem, ref, initial_dh, final_cfg=None, final_json_file=None
+    cfg: Dict,
+    steps: List[str],
+    dem: xr.Dataset,
+    ref: xr.Dataset,
+    initial_dh: xr.Dataset,
+    final_cfg: Dict[str, dict] = None,
+    final_json_file: str = None,
 ):
     """
     Coregister two DEMs together and compute alti differences
@@ -159,14 +192,21 @@ def compute_coregistration(
     - alti differences computation
 
     :param cfg: configuration dictionary
-    :param dem: xarray.Dataset, dem raster to compare
-    :param ref: xarray.Dataset, reference dem raster coregistered with dem
-    :param initial_dh: xarray.Dataset, inital alti diff
-    :param final_cfg: cfg from a previous run
-    :param final_json_file: filename of final_cfg
-    :return: coregistered dem and ref rasters + final alti differences
-             + coregistration state if launched or not
-             coreg_state = True : final_cfg different from initial_cfg
+    :type cfg: dict
+    :param steps: pipeline steps
+    :type steps: List
+    :param dem: dem raster
+    :type dem: xr.Dataset
+    :param ref: reference dem raster coregistered with dem
+    :type ref: xr.Dataset
+    :param initial_dh: initial difference raster
+    :type initial_dh: xr.Dataset
+    :param final_cfg: filename of final_cfg
+    :type final_cfg: dict
+    :param final_json_file: filename of final_json_file
+    :type final_json_file: str
+    :return: coreg_dem, coreg_ref, final_dh, coreg_state
+    :rtype: xr.Dataset, xr.Dataset, xr.Dataset, bool
     """
     print("[Coregistration]")
     coreg_state = False
@@ -281,13 +321,16 @@ def compute_coregistration(
     return coreg_dem, coreg_ref, final_dh, coreg_state
 
 
-def compute_initialization(config_json):
+def compute_initialization(config_json: str) -> Dict:
     """
     Compute demcompare initialization process :
     Configuration copy, checking, create output dir tree
     and initial output content.
 
-    :param config_json: Config json file
+    :param config_json: Config json file name
+    :type config_json: str
+    :return: cfg
+    :rtype: Dict[str, Dict]
     """
 
     # read the json configuration file (and update inputs with absolute path)
@@ -316,13 +359,16 @@ def compute_initialization(config_json):
     return cfg
 
 
-def run_tile(json_file, steps=None, display=False):
+def run_tile(json_file: str, steps: List[str] = None, display=False):
     """
     DEMcompare execution for a single tile
 
     :param json_file: Input Json configuration file (mandatory)
+    :type json_file: str
     :param steps: Steps to execute (default: all)
+    :type steps: List[str]
     :param display: Choose Plot show or plot save (default).
+    :type display: bool
     """
 
     # Set steps to default if None
@@ -502,15 +548,24 @@ def run_tile(json_file, steps=None, display=False):
     )
 
 
-def run(json_file, steps=None, display=False, loglevel=logging.WARNING):
+def run(
+    json_file: str,
+    steps: List[str] = None,
+    display: bool = False,
+    loglevel=logging.WARNING,
+):
     """
     DEMcompare main execution for all tiles.
     Call run_tile() function for each tile.
 
     :param json_file: Input Json configuration file (mandatory)
+    :type json_file: str
     :param steps: Steps to execute (default: all)
+    :type steps: List[str]
     :param display: Choose Plot show or plot save (default).
+    :type display: bool
     :param loglevel: Choose Loglevel (default: WARNING)
+    :type loglevel: logging.WARNING
     """
 
     # Set steps to default if None

@@ -28,3 +28,19 @@ repos:
     language: system
     entry: pylint --rcfile=.pylintrc
     files: \.py$
+
+  - id: sphinx-checking
+    name: Checking Sphinx building
+    entry: python setup.py build_sphinx
+    language: system
+    files: ^(docs/.*|demcompare/.*)$
+    pass_filenames: False
+    stages: [push]
+
+  - id: sphinx-checking
+    name: Checking Sphinx building
+    entry: python setup.py build_sphinx
+    language: system
+    files: ^(docs/.*|demcompare/.*)$
+    pass_filenames: False
+    stages: [push]

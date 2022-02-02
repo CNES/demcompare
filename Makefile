@@ -29,6 +29,12 @@ install: venv  ## install environment for development target (depends venv)
 	@echo "Demcompare ${DEMCOMPARE_VERSION} installed in dev mode in virtualenv ${VENV}"
 	@echo "Demcompare venv usage : source ${VENV}/bin/activate; demcompare -h"
 
+install-doc: install  ## install demcompare with Sphinx documentation dependencies
+	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install --verbose .[doc]
+	@chmod +x ${VENV}/bin/register-python-argcomplete
+	@echo "Demcompare ${DEMCOMPARE_VERSION} in virtualenv ${VENV} installed with Sphinx docs dependencies"
+	@echo "Demcompare venv usage : source ${VENV}/bin/activate"
+
 lint: install  ## run lint tools (depends install)
 	@echo "Demcompare linting isort check"
 	@${VENV}/bin/isort --check demcompare tests
@@ -47,13 +53,13 @@ test-ci: install ## tox run all tests with python3.7 and python3.8 + coverage
 	# Run tox (recreate venv (-r) and parallel mode (-p auto)) for CI
 	@${VENV}/bin/tox -r -p auto
 
-test: install ## run all tests + coverage 
+test: install ## run all tests + coverage
 	# Run pytest directly
 	@${VENV}/bin/pytest -o log_cli=true --cov-config=.coveragerc --cov --cov-report=term-missing
 
-doc:
-	# TMP target for CI : add install-doc ([doc]) and sphinx-build,clean, autoapi...
-	@echo "Demcompare doc generation TODO"
+doc: install-doc ## build sphinx documentation
+	@${VENV}/bin/sphinx-build -M clean docs/source/ docs/build
+	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build
 
 docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"
@@ -64,7 +70,7 @@ docker: ## Build docker image (and check Dockerfile)
 
 clean: ## clean: remove venv and all generated files
 	@find . -type f -name '*.pyc' -delete
-	@find . -type d -name '__pycache__' | xargs rm -rf	
+	@find . -type d -name '__pycache__' | xargs rm -rf
 	@rm -rf .eggs/
 	@rm -rf demcompare.egg-info
 	@rm -rf dist/
