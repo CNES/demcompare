@@ -30,7 +30,7 @@ install: venv  ## install environment for development target (depends venv)
 	@echo "Demcompare venv usage : source ${VENV}/bin/activate; demcompare -h"
 
 install-doc: install  ## install demcompare with Sphinx documentation dependencies
-	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install --verbose .[doc]
+	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install --verbose .[docs]
 	@chmod +x ${VENV}/bin/register-python-argcomplete
 	@echo "Demcompare ${DEMCOMPARE_VERSION} in virtualenv ${VENV} installed with Sphinx docs dependencies"
 	@echo "Demcompare venv usage : source ${VENV}/bin/activate"
