@@ -20,6 +20,7 @@ The following sections describe **demcompare**'s DSM comparaison steps.
 
 .. figure:: /images/doc_ref.gif
     :width: 300px
+    :align: center
 
     Superposition of two DSMs that need to be coregistered.
 
@@ -28,6 +29,7 @@ In this example, the two uncoregistered DEMs had the initial altitude difference
 .. figure:: /images/initial_dh.png
     :width: 260px
     :name: initial
+    :align: center
 
     Initial altitude difference between the two DSMs.
 
@@ -35,6 +37,7 @@ After Nuth et Kaab coregistration, **demcompare** obtains the final altitude dif
 
 .. figure:: /images/final_dh.png
     :width: 260px
+    :align: center
 
     Final altitude difference between the two coregistered DSMs.
 
