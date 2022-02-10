@@ -87,3 +87,5 @@ clean: ## clean: remove venv and all generated files
 	@rm -f pylint-report.xml
 	@rm -f debug.log
 	@rm -rf docs/build/
+	@rm -rf docs/source/api_reference/
+	@rm -rf docs/source/apidoc/

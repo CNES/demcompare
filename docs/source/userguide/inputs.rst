@@ -7,7 +7,7 @@ Inputs
 Configuration and parameters
 ****************************
 
-Here is the list of the parameters and the associated default value when it exists:
+Here is the list of the parameters of the input configuration file and its associated default value when it exists:
 
 
 
@@ -115,16 +115,5 @@ For instance, if DEMs altitudes are to rely on a local *.gtx* available **geoid*
                             "geoid_path": "path/to/egm08_25.gtx"
                             "nodata" : }
 
-Optional parameters file
-************************
-
-**Demcompare** can be launched with a file containing its parameters (one per line) with "@" character:
-
-.. code-block:: bash
-
-    demcompare @opts.txt
-    opts.txt example file:
-    test_config.json
-    --display
 
 

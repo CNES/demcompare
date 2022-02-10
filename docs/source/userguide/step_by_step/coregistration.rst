@@ -47,6 +47,8 @@ Tile processing
 Tile processing is not available anymore. A future version might provide a better way to deal with very large data. In
 the meantime one can deal with heavy DSMs by setting a :term:`ROI` (see previous chapter).
 
+References
+**********
 
 For the Nuth & Kääb universal coregistration algorithm :
 

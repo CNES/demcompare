@@ -4,7 +4,7 @@ Outputs
 =======
 
 
-**Demcompare** will store several data and here is a brief explanation for each one.
+**Demcompare** will store several data on the *"OutputDir"* folder which is specified on the input configuration file. Here is a brief explanation for each one.
 
 The images :
 
