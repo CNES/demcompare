@@ -27,6 +27,7 @@ import argparse
 import json
 import os
 import subprocess
+from typing import Dict, List, Tuple
 
 
 def shellquote(string):
@@ -76,17 +77,40 @@ def read_tiles(tiles_file):
 
 
 def vrt_body_source(
-    fname, band, src_x, src_y, src_w, src_h, dst_x, dst_y, dst_w, dst_h
+    fname: str,
+    band: int,
+    src_x: int,
+    src_y: int,
+    src_w: int,
+    src_h: int,
+    dst_x: int,
+    dst_y: int,
+    dst_w: int,
+    dst_h: int,
 ):
     """
     Generate a source section in vrt body.
 
-    Args:
-        fname: Relative path to the source image
-        band: index of the band to use as source
-        src_x, src_y, src_w, src_h: source window (cropped from source image)
-        dst_x, dst_y, dst_w, dst_h: destination window
-                                    (where crop will be pasted)
+    :param fname: Relative path to the source image
+    :type fname: str
+    :param band: index of the band to use as source
+    :type band: int
+    :param src_x: source window x(cropped from source image)
+    :type src_x: int
+    :param src_y: source window y(cropped from source image)
+    :type src_y: int
+    :param src_w: source window width (cropped from source image)
+    :type src_w: int
+    :param src_h: source window height (cropped from source image)
+    :type src_h: int
+    :param dst_x: destination window x (where crop will be pasted)
+    :type dst_x: int
+    :param dst_y: destination window y (where crop will be pasted)
+    :type dst_y: int
+    :param dst_w: destination window width (where crop will be pasted)
+    :type dst_w: int
+    :param dst_h: destination window height (where crop will be pasted)
+    :type dst_h: int
     """
 
     body = "\t\t<SimpleSource>\n"
@@ -103,12 +127,22 @@ def vrt_body_source(
     return body
 
 
-def vrt_header(size_w, size_h, data_type="Float32", band=1, color=False):
+def vrt_header(
+    size_w: int, size_h: int, data_type="Float32", band=1, color=False
+):
     """
     Generate vrt up header
 
-    Args:
-        w, h: size of the corresponding raster
+    :param size_w: width size
+    :type size_w: int
+    :param size_h: height size
+    :type size_h: int
+    :param data_type: type of raster
+    :type data_type: str
+    :param band: band id
+    :type band: int
+    :param color: color gray activation
+    :type color: bool
     """
     header = '<VRTDataset rasterXSize="%i" rasterYSize="%i">\n' % (
         size_w,
@@ -123,11 +157,12 @@ def vrt_bandheader(data_type="Float32", band=1, color=False):
     """
     Generate vrt header for a monoband image
 
-    Args:
-        w,h: size of the corresponding raster
-        band: band id
-        color: color gray activation
-        data_type: Type of the raster (default is Float32)
+    :param data_type: type of raster
+    :type data_type: str
+    :param band: band id
+    :type band: int
+    :param color: color gray activation
+    :type color: bool
 
     """
     header = '\t<VRTRasterBand dataType="%s" band="%d">\n' % (data_type, band)
@@ -156,13 +191,14 @@ def vrt_bandfooter():
     return footer
 
 
-def global_extent(tiles):
+def global_extent(tiles: List[dict]) -> Tuple[int, int, int, int]:
     """
     Compute the global raster extent from a list of tiles
-    Args:
-        tiles: list of config files loaded from json files
-    Returns:
-         (min_x,max_x,min_y,max_y) tuple
+
+    :param tiles: list of config files loaded from json files
+    :type tiles: List[dict]
+    :return: (min_x,max_x,min_y,max_y)
+    :rtype: Tuple[int, int, int, int]
     """
     min_x = None
     max_x = None
@@ -193,28 +229,34 @@ def global_extent(tiles):
 
 
 def write_row_vrts(
-    outdir,
-    tiles,
-    sub_img,
-    vrt_basename,
-    min_x,
-    max_x,
+    outdir: str,
+    tiles: List[dict],
+    sub_img: str,
+    vrt_basename: str,
+    min_x: int,
+    max_x: int,
     nb_bands=1,
-    data_type="Float32",
-    color=False,
+    data_type: str = "Float32",
+    color: bool = False,
 ):
     """
     Write intermediate vrts (one per row)
 
-    Args:
-        outdir : output directory in which to store the vrts
-        tiles: list of config files loaded from json files
-        sub_img: Relative path of the sub-image to mosaic
-            (for ex. height_map.tif)
-        vrt_basename: basename of the output vrt
-        min_x, max_x: col extent of the raster
-    Returns:
-        A dictionnary of vrt files with sections vrt_body, th and vrt_dir
+    :param outdir: output directory in which to store the vrts
+    :type outdir: str
+    :param tiles: list of config files loaded from json files
+    :type tiles: List[dict]
+    :param sub_img: Relative path of the
+            sub-image to mosaic (for ex. height_map.tif)
+    :type sub_img: str
+    :param vrt_basename: basename of the output vrt
+    :type vrt_basename: str
+    :param min_x: col extent of the raster
+    :type min_x: int
+    :param max_x: col extent of the raster
+    :type max_x: int
+    :return: A dictionnary of vrt files with sections vrt_body, th and vrt_dir
+    :rtype: dict
     """
     vrt_row = {}
 
@@ -315,23 +357,39 @@ def write_row_vrts(
 
 
 def write_main_vrt(
-    vrt_row,
-    vrt_name,
-    min_x,
-    max_x,
-    min_y,
-    max_y,
-    nb_bands=1,
-    data_type="Float32",
-    color=False,
+    vrt_row: Dict,
+    vrt_name: str,
+    min_x: int,
+    max_x: int,
+    min_y: int,
+    max_y: int,
+    nb_bands: int = 1,
+    data_type: str = "Float32",
+    color: bool = False,
 ):
     """
     Write the main vrt file
+    Write intermediate vrts (one per row)
 
-    Args:
-        vrt_row: The vrt files dictionnary from write_row_vrts()
-        vrt_name: The output vrt_name
-        min_x,max_x,min_y,max_y: Extent of the raster
+    :param vrt_row: The vrt files dictionnary from write_row_vrts()
+    :type vrt_row: dict
+    :param vrt_name: The output vrt_name
+    :type vrt_name: str
+    :param min_x: Extent of the raster
+    :type min_x: int
+    :param max_x: Extent of the raster
+    :type max_x: int
+    :param min_y: Extent of the raster
+    :type min_y: int
+    :param max_y: Extent of the raster
+    :type max_y: int
+    :param nb_bands: col extent of the raster
+    :type nb_bands: int
+    :param data_type: col extent of the raster
+    :type data_type: str
+    :param color: col extent of the raster
+    :type color: bool
+    :return: None
     """
     vrt_dirname = os.path.dirname(vrt_name) or "."
 
@@ -378,10 +436,29 @@ def write_main_vrt(
 
 
 def main(
-    tiles_file, outfile, sub_img, nb_bands=1, data_type="Float32", color=False
+    tiles_file: dict,
+    outfile: str,
+    sub_img: str,
+    nb_bands: int = 1,
+    data_type: str = "Float32",
+    color: bool = False,
 ):
     """
     Main mosaic program
+
+    :param tiles_file: The vrt files dictionnary from write_row_vrts()
+    :type tiles_file: dict
+    :param outfile: The output vrt_name
+    :type outfile: str
+    :param sub_img: The sub image
+    :type sub_img: str
+    :param nb_bands: Number of bands
+    :type nb_bands: int
+    :param data_type: Type of data
+    :type data_type: str
+    :param color: color gray activation
+    :type color: bool
+    :return: None
     """
     outfile_basename = os.path.basename(outfile)
     outfile_dirname = os.path.dirname(outfile) or "."

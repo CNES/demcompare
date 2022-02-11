@@ -71,10 +71,10 @@ class SphinxProjectManager:
         Create project architecture and configuration :
 
         _working_dir/build/
-                   /Makefile
-                   /source/
-                           conf.py
-                           _index_name.rst
+        _working_dir/Makefile
+        _working_dir/source/
+        _working_dir/source/conf.py
+        _working_dir/source/_index_name.rst
 
         :return:
         """

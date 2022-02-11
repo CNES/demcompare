@@ -11,7 +11,7 @@ VENV = "venv"
 DEMCOMPARE_VERSION = $(shell python3 setup.py --version)
 DEMCOMPARE_VERSION_MIN = $(shell echo ${DEMCOMPARE_VERSION} | cut -d . -f 1,2,3)
 
-.PHONY: help venv install lint format tests docs docker clean
+.PHONY: help venv install lint format test-ci test doc docker clean
 
 help: ## this help
 	@echo "      DEMCOMPARE MAKE HELP"
@@ -23,10 +23,11 @@ venv: ## create virtualenv in "venv" dir if not exists
 	@touch ${VENV}/bin/activate
 
 install: venv  ## install environment for development target (depends venv)
-	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install -e .[dev]
+	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install -e .[dev,doc]
 	@test -f .git/hooks/pre-commit || ${VENV}/bin/pre-commit install -t pre-commit
+	@test -f .git/hooks/pre-push || ${VENV}/bin/pre-commit install -t pre-push
 	@chmod +x ${VENV}/bin/register-python-argcomplete
-	@echo "Demcompare ${DEMCOMPARE_VERSION} installed in dev mode in virtualenv ${VENV}"
+	@echo "Demcompare ${DEMCOMPARE_VERSION} installed in dev mode in virtualenv ${VENV} with Sphinx docs"
 	@echo "Demcompare venv usage : source ${VENV}/bin/activate; demcompare -h"
 
 lint: install  ## run lint tools (depends install)
@@ -47,13 +48,13 @@ test-ci: install ## tox run all tests with python3.7 and python3.8 + coverage
 	# Run tox (recreate venv (-r) and parallel mode (-p auto)) for CI
 	@${VENV}/bin/tox -r -p auto
 
-test: install ## run all tests + coverage 
+test: install ## run all tests + coverage with one python version
 	# Run pytest directly
 	@${VENV}/bin/pytest -o log_cli=true --cov-config=.coveragerc --cov --cov-report=term-missing
 
-doc:
-	# TMP target for CI : add install-doc ([doc]) and sphinx-build,clean, autoapi...
-	@echo "Demcompare doc generation TODO"
+doc: install ## build sphinx documentation
+	@${VENV}/bin/sphinx-build -M clean docs/source/ docs/build
+	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build
 
 docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"
@@ -63,8 +64,10 @@ docker: ## Build docker image (and check Dockerfile)
 	@docker build -t cnes/demcompare:${DEMCOMPARE_VERSION_MIN} -t cnes/demcompare:latest .
 
 clean: ## clean: remove venv and all generated files
+	@rm -f .git/hooks/pre-commit
+	@rm -f .git/hooks/pre-push
 	@find . -type f -name '*.pyc' -delete
-	@find . -type d -name '__pycache__' | xargs rm -rf	
+	@find . -type d -name '__pycache__' | xargs rm -rf
 	@rm -rf .eggs/
 	@rm -rf demcompare.egg-info
 	@rm -rf dist/
@@ -81,3 +84,5 @@ clean: ## clean: remove venv and all generated files
 	@rm -f pylint-report.xml
 	@rm -f debug.log
 	@rm -rf docs/build/
+	@rm -rf docs/source/api_reference/
+	@rm -rf docs/source/apidoc/
