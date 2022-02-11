@@ -65,7 +65,7 @@ docker: ## Build docker image (and check Dockerfile)
 
 clean: ## clean: remove venv and all generated files
 	@rm -f .git/hooks/pre-commit
-	@rm -r .git/hooks/pre-push
+	@rm -f .git/hooks/pre-push
 	@find . -type f -name '*.pyc' -delete
 	@find . -type d -name '__pycache__' | xargs rm -rf
 	@rm -rf .eggs/
