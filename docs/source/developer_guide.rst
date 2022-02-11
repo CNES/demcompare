@@ -51,6 +51,22 @@ It launches the unit tests present in `demcompare/tests/test_demcompare.py` disp
 
 During the tests execution, demcompare will write the output data in a */tmp* directory.
 
+Documentation
+*************
+
+Demcompare documentation can be generated with following command in Demcompare source root directory:
+
+.. code-block:: bash
+
+    make test
+
+It cleans documentation from *docs/build/* directory and builds the sphinx documentation from *docs/source/* into *docs/build/*:
+
+.. code-block:: bash
+
+    sphinx-build -M clean docs/source/ docs/build
+    sphinx-build -M html docs/source/ docs/build
+
 Pre-commit validation
 *********************
 
