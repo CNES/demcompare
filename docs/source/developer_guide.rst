@@ -77,9 +77,10 @@ Here is the way to install it manually:
 
 .. code-block:: console
 
-  $ pre-commit install
+  $ pre-commit install -t pre-commit
+  $ pre-commit install -t pre-push
 
-This installs the pre-commit hook in `.git/hooks/pre-commit` from `.pre-commit-config.yaml <https://raw.githubusercontent.com/CNES/demcompare/master/.pre-commit-config.yaml>`_ file configuration.
+This installs the pre-commit hook in `.git/hooks/pre-commit` and `.git/hooks/pre-push` from `.pre-commit-config.yaml <https://raw.githubusercontent.com/CNES/demcompare/master/.pre-commit-config.yaml>`_ file configuration.
 
 It is possible to test pre-commit before commiting:
 
@@ -88,6 +89,7 @@ It is possible to test pre-commit before commiting:
   $ pre-commit run --all-files                # Run all hooks on all files
   $ pre-commit run --files demcompare/__init__.py   # Run all hooks on one file
   $ pre-commit run pylint                     # Run only pylint hook
+  $ pre-commit run --hook-stage push --all-files # Run with push hook
 
 
 Code quality

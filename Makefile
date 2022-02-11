@@ -25,6 +25,7 @@ venv: ## create virtualenv in "venv" dir if not exists
 install: venv  ## install environment for development target (depends venv)
 	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install -e .[dev,doc]
 	@test -f .git/hooks/pre-commit || ${VENV}/bin/pre-commit install -t pre-commit
+	@test -f .git/hooks/pre-push || ${VENV}/bin/pre-commit install -t pre-push
 	@chmod +x ${VENV}/bin/register-python-argcomplete
 	@echo "Demcompare ${DEMCOMPARE_VERSION} installed in dev mode in virtualenv ${VENV} with Sphinx docs"
 	@echo "Demcompare venv usage : source ${VENV}/bin/activate; demcompare -h"
@@ -64,6 +65,7 @@ docker: ## Build docker image (and check Dockerfile)
 
 clean: ## clean: remove venv and all generated files
 	@rm -f .git/hooks/pre-commit
+	@rm -r .git/hooks/pre-push
 	@find . -type f -name '*.pyc' -delete
 	@find . -type d -name '__pycache__' | xargs rm -rf
 	@rm -rf .eggs/
