@@ -63,6 +63,7 @@ docker: ## Build docker image (and check Dockerfile)
 	@docker build -t cnes/demcompare:${DEMCOMPARE_VERSION_MIN} -t cnes/demcompare:latest .
 
 clean: ## clean: remove venv and all generated files
+	@rm -f .git/hooks/pre-commit
 	@find . -type f -name '*.pyc' -delete
 	@find . -type d -name '__pycache__' | xargs rm -rf
 	@rm -rf .eggs/

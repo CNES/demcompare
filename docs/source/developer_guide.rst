@@ -54,11 +54,11 @@ During the tests execution, demcompare will write the output data in a */tmp* di
 Documentation
 *************
 
-Demcompare documentation can be generated with following command in Demcompare source root directory:
+Demcompare documentation can be generated with following command:
 
 .. code-block:: bash
 
-    make test
+    make doc
 
 It cleans documentation from *docs/build/* directory and builds the sphinx documentation from *docs/source/* into *docs/build/*:
 
@@ -79,7 +79,7 @@ Here is the way to install it manually:
 
   $ pre-commit install
 
-This installs the pre-commit hook in `.git/hooks/pre-commit`  from `.pre-commit-config.yaml <https://raw.githubusercontent.com/CNES/demcompare/master/.pre-commit-config.yaml>`_ file configuration.
+This installs the pre-commit hook in `.git/hooks/pre-commit` from `.pre-commit-config.yaml <https://raw.githubusercontent.com/CNES/demcompare/master/.pre-commit-config.yaml>`_ file configuration.
 
 It is possible to test pre-commit before commiting:
 
