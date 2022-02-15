@@ -92,12 +92,12 @@ class Partition:
         coreg_ref: xr.Dataset,
         output_dir: str,
         geo_ref: bool = True,
-        dec_ref_path=None,
-        dec_dem_path=None,
-        init_disp_x=None,
-        init_disp_y=None,
-        dx=None,
-        dy=None,
+        dec_ref_path: str = None,
+        dec_dem_path: str = None,
+        init_disp_x: int = None,
+        init_disp_y: int = None,
+        dx: float = 0.0,
+        dy: float = 0.0,
         **cfg_layer: Dict
     ):
         """
@@ -115,8 +115,18 @@ class Partition:
         :type output_dir: str
         :param geo_ref: georeference
         :type geo_ref: bool
-        :param cfg_layer: cfg
-        :type cfg_layer: dict
+        :param dec_ref_path: decorelated ref path
+        :type dec_ref_path: str or None
+        :param dec_dem_path: decorelated dem path
+        :type dec_dem_path: str or None
+        :param init_disp_x: intiial disparity x
+        :type init_disp_x: int or None
+        :param init_disp_y: initial disparity y
+        :type init_disp_y: int or None
+        :param dx: Nuth offset x
+        :type dx: float or None
+        :param dy: Nuth offset y
+        :type dy: float or None
         :return: None
         """
 

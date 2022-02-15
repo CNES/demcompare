@@ -104,9 +104,9 @@ def generate_report(  # noqa: C901
     :type dsm_name: str
     :param ref_name: name or path to the reference dsm
     :type ref_name: str
-    :coreg_dsm_name: name or path to the coreg dsm
+    :param coreg_dsm_name: name or path to the coreg dsm
     :type coreg_dsm_name: str
-    :coreg_ref_name: name or path to the ref dsm
+    :param coreg_ref_name: name or path to the ref dsm
     :type coreg_ref_name: str
     :param partitions: list of partition, contains modes by partition
     :type partitions: List[str]
