@@ -41,10 +41,12 @@ import xarray as xr
 # DEMcompare imports
 from .img_tools import (
     get_slope,
+    load_dems,
     read_img,
     read_img_from_array,
-    reproject_dataset,
     save_tif,
+    translate,
+    translate_to_coregistered_geometry,
 )
 from .output_tree_design import get_out_dir
 
@@ -90,6 +92,12 @@ class Partition:
         coreg_ref: xr.Dataset,
         output_dir: str,
         geo_ref: bool = True,
+        dec_ref_path: str = None,
+        dec_dem_path: str = None,
+        init_disp_x: int = None,
+        init_disp_y: int = None,
+        dx: float = 0.0,
+        dy: float = 0.0,
         **cfg_layer: Dict
     ):
         """
@@ -107,8 +115,18 @@ class Partition:
         :type output_dir: str
         :param geo_ref: georeference
         :type geo_ref: bool
-        :param cfg_layer: cfg
-        :type cfg_layer: dict
+        :param dec_ref_path: decorelated ref path
+        :type dec_ref_path: str or None
+        :param dec_dem_path: decorelated dem path
+        :type dec_dem_path: str or None
+        :param init_disp_x: intiial disparity x
+        :type init_disp_x: int or None
+        :param init_disp_y: initial disparity y
+        :type init_disp_y: int or None
+        :param dx: Nuth offset x
+        :type dx: float or None
+        :param dy: Nuth offset y
+        :type dy: float or None
         :return: None
         """
 
@@ -137,6 +155,16 @@ class Partition:
         # Store coreg path (TODO why?)
         self.coreg_path = {"ref": coreg_ref, "dsm": coreg_dsm}
         self._coreg_shape = coreg_ref["im"].data.shape
+
+        # Get coregistration offsets
+        self.dx = dx
+        self.dy = dy
+        self.init_disp_x = init_disp_x
+        self.init_disp_y = init_disp_y
+
+        # Get uncoregistred ref and dem path
+        self.dec_ref_path = dec_ref_path
+        self.dec_dem_path = dec_dem_path
 
         # Init input data path
         self.ref_path = ""
@@ -614,21 +642,111 @@ class Partition:
 
     def rectify_map(self):
         """
-        Reproject the layer maps on top of coreg dsm and coreg ref
+        Rectify the layer maps according to coreg dsm and coreg ref
         (which are coregistered together)
 
         """
+        # TODO : make distinction when in presence of :
+        #  - other coregistration modes
+        #  - other Nuth et Kaab implementations
+        #  - other coregistration algorithms
         for map_name, map_path in self.map_path.items():
             if map_path:
                 if self.geo_ref:
-                    map_img = read_img(map_path, load_data=False)
-                    rectified_map = reproject_dataset(
-                        map_img, self.coreg_path[map_name], interp="nearest"
-                    )
-                    self.reproject_path[map_name] = os.path.join(
-                        self.stats_dir, map_name + "_support_map_rectif.tif"
-                    )
-                    save_tif(rectified_map, self.reproject_path[map_name])
+                    # If to_be_classification_layers, the map has already
+                    # been computed with coreg dsm and coreg ref
+                    if self._type_layer == "to_be_classification_layers":
+                        map_img = read_img(map_path, load_data=False)
+                        self.reproject_path[map_name] = os.path.join(
+                            self.stats_dir, map_name + "_support_map_rectif.tif"
+                        )
+                        save_tif(map_img, self.reproject_path[map_name])
+                    # If classification_layers, we need to reproject and apply
+                    # the nuth et kaab offsets for the layer to be coregistered
+                    # with coreg dsm and coreg ref
+                    if self._type_layer == "classification_layers":
+                        if map_name == "dsm":
+                            # Crop dsm
+                            ref, rectified_map_dataset = load_dems(
+                                self.dec_ref_path, map_path
+                            )
+                            # Resample images to pre-coregistered geometry
+                            # according to the initial disp
+                            if self.init_disp_x != 0 or self.init_disp_y != 0:
+                                (
+                                    rectified_map_dataset,
+                                    ref,
+                                ) = translate_to_coregistered_geometry(
+                                    rectified_map_dataset,
+                                    ref,
+                                    self.init_disp_x,
+                                    self.init_disp_y,
+                                )
+                        elif map_name == "ref":
+                            # Crop and resample ref
+                            rectified_map_dataset, dsm = load_dems(
+                                map_path, self.dec_dem_path
+                            )
+                            # Resample images to pre-coregistered geometry
+                            # according to the initial disp
+                            if self.init_disp_x != 0 or self.init_disp_y != 0:
+                                (
+                                    dsm,
+                                    rectified_map_dataset,
+                                ) = translate_to_coregistered_geometry(
+                                    dsm,
+                                    rectified_map_dataset,
+                                    self.init_disp_x,
+                                    self.init_disp_y,
+                                )
+
+                        # Update map with Nuth et kaab offsets
+                        map_img = rectified_map_dataset.copy()
+                        if self.dx >= 0:
+                            rectified_map = rectified_map_dataset["im"].data[
+                                :,
+                                0 : map_img["im"].data.shape[1]
+                                - int(np.ceil(self.dx)),
+                            ]
+                        else:
+                            rectified_map = rectified_map_dataset["im"].data[
+                                :,
+                                int(np.floor(-self.dx)) : map_img[
+                                    "im"
+                                ].data.shape[1],
+                            ]
+                        if -self.dy >= 0:
+                            rectified_map = rectified_map[
+                                0 : map_img["im"].data.shape[0]
+                                - int(np.ceil(-self.dy)),
+                                :,
+                            ]
+                        else:
+                            rectified_map = rectified_map[
+                                int(np.floor(self.dy)) : map_img[
+                                    "im"
+                                ].data.shape[0],
+                                :,
+                            ]
+                        # Generate dataset
+                        rectified_map_dataset = read_img_from_array(
+                            rectified_map, from_dataset=map_img, no_data=-32768
+                        )
+                        # Translate the georef-origin of rectified_map based
+                        # on x_off and y_off values
+                        #   -> this makes dem coregistered on ref
+                        # note -0.5 since (0,0) pixel coord is pixel centered
+                        rectified_map_dataset = translate(
+                            rectified_map_dataset, self.dx - 0.5, -self.dy - 0.5
+                        )
+
+                        self.reproject_path[map_name] = os.path.join(
+                            self.stats_dir, map_name + "_support_map_rectif.tif"
+                        )
+
+                        save_tif(
+                            rectified_map_dataset, self.reproject_path[map_name]
+                        )
                 else:
                     self.reproject_path[map_name] = map_path
 
@@ -760,11 +878,12 @@ class FusionPartition(Partition):
                                 label_idx
                             ]
                         )
-
+                    for indexes2d in all_indexes:
+                        np.ravel_multi_index(indexes2d, self._coreg_shape)
                     # ravel indexes so we can merge them
                     all_indexes = [
-                        np.ravel_multi_index(indexes2D, self._coreg_shape)
-                        for indexes2D in all_indexes
+                        np.ravel_multi_index(indexes2d, self._coreg_shape)
+                        for indexes2d in all_indexes
                     ]
 
                     # merge indexes and unravel them

@@ -137,7 +137,8 @@ def compute_stats_array(
 
 
 def gaus(x, a, x_zero, sigma):
-    """Gauss math function
+    """
+    Gauss math function
 
     :param x:
     :type x:
@@ -391,22 +392,28 @@ def stats_computation(
     if array.size:
         res = {
             "nbpts": array.size,
-            "max": float(np.max(array)),
-            "min": float(np.min(array)),
-            "mean": float(np.mean(array)),
-            "std": float(np.std(array)),
-            "rmse": float(np.sqrt(np.mean(array * array))),
-            "median": float(np.nanmedian(array)),
-            "nmad": float(
-                1.4826 * np.nanmedian(np.abs(array - np.nanmedian(array)))
+            "max": round(float(np.max(array)), 5),
+            "min": round(float(np.min(array)), 5),
+            "mean": round(float(np.mean(array)), 5),
+            "std": round(float(np.std(array)), 5),
+            "rmse": round(float(np.sqrt(np.mean(array * array)))),
+            "median": round(float(np.nanmedian(array)), 5),
+            "nmad": round(
+                float(
+                    1.4826 * np.nanmedian(np.abs(array - np.nanmedian(array)))
+                ),
+                5,
             ),
-            "sum_err": float(np.sum(array)),
-            "sum_err.err": float(np.sum(array * array)),
+            "sum_err": round(float(np.sum(array)), 5),
+            "sum_err.err": round(float(np.sum(array * array)), 5),
         }
         if list_threshold:
             res["ratio_above_threshold"] = {
-                threshold: float(np.count_nonzero(array > threshold))
-                / float(array.size)
+                threshold: round(
+                    float(np.count_nonzero(array > threshold))
+                    / float(array.size),
+                    5,
+                )
                 for threshold in list_threshold
             }
         else:
@@ -506,13 +513,16 @@ def get_stats(
     # - we add standard information for later use
     output_list[0]["set_label"] = "all"
     output_list[0]["set_name"] = "All classes considered"
-    output_list[0]["%"] = (
-        100 * float(output_list[0]["nbpts"]) / float(nb_total_points)
+    output_list[0]["%"] = round(
+        ((100 * float(output_list[0]["nbpts"]) / float(nb_total_points))), 5
     )
     # - we add computation of nighty percentile
     # (of course we keep outliers for that so we use dz_values as input array)
-    output_list[0]["90p"] = nighty_percentile(
-        dz_values[np.where(to_keep_mask == True)]  # noqa: E712
+    output_list[0]["90p"] = round(
+        nighty_percentile(
+            dz_values[np.where(to_keep_mask == True)]  # noqa: E712
+        ),
+        5,
     )
 
     # Computing stats for all sets (sets are a partition of all values)
@@ -524,17 +534,23 @@ def get_stats(
             output_list.append(stats_computation(data, list_threshold))
             output_list[set_idx + 1]["set_label"] = sets_labels[set_idx]
             output_list[set_idx + 1]["set_name"] = sets_names[set_idx]
-            output_list[set_idx + 1]["%"] = (
-                100
-                * float(output_list[set_idx + 1]["nbpts"])
-                / float(nb_total_points)
+            output_list[set_idx + 1]["%"] = round(
+                (
+                    100
+                    * float(output_list[set_idx + 1]["nbpts"])
+                    / float(nb_total_points)
+                ),
+                5,
             )
-            output_list[set_idx + 1]["90p"] = nighty_percentile(
-                dz_values[
-                    np.where(
-                        (sets[set_idx] * to_keep_mask) == True  # noqa: E712
-                    )
-                ]
+            output_list[set_idx + 1]["90p"] = round(
+                nighty_percentile(
+                    dz_values[
+                        np.where(
+                            (sets[set_idx] * to_keep_mask) == True  # noqa: E712
+                        )
+                    ]
+                ),
+                5,
             )
 
     return output_list
@@ -862,6 +878,7 @@ def plot_histograms(  # noqa: C901
         round_up(borne, bin_step) + bin_step,
         bin_step,
     )
+
     np.savetxt(
         os.path.join(outhistdir, save_prefix + "bins" + ".txt"),
         [bins[0], bins[len(bins) - 1], bin_step],
@@ -1088,9 +1105,12 @@ def save_results(
                         labels_plotted.index(stats_elem["set_label"])
                     ]
                     results[str(stats_index)]["plot_color"] = tuple(
-                        plot_colors[
-                            labels_plotted.index(stats_elem["set_label"])
-                        ]
+                        np.round(
+                            plot_colors[
+                                labels_plotted.index(stats_elem["set_label"])
+                            ],
+                            decimals=5,
+                        )
                     )
                 except Exception:
                     print(
@@ -1139,8 +1159,7 @@ def save_results(
 def create_partitions(
     dsm: xr.Dataset,
     ref: xr.Dataset,
-    output_dir: str,
-    stats_opts,
+    cfg: Dict,
     geo_ref: bool = True,
 ):
     """
@@ -1148,14 +1167,13 @@ def create_partitions(
     If the support is a slope,it's transformed into a classification support.
     :param dsm: xarray Dataset, dsm
     :param ref: xarray Dataset, coregistered ref
-    :param output_dir: ouput directory
-    :type output_dir: str
-    :param stats_opts: TODO
-    :type stats_opts:
+    :param cfg: cfg
     :param geo_ref: boolean, set to False if images are not georeferenced
     :type geo_ref: bool
     :return: dict, with partitions information {'
     """
+    output_dir = cfg["outputDir"]
+    stats_opts = cfg["stats_opts"]
     to_be_clayers = stats_opts["to_be_classification_layers"].copy()
     clayers = stats_opts["classification_layers"].copy()
 
@@ -1175,7 +1193,6 @@ def create_partitions(
                     dsm,
                     ref,
                     output_dir,
-                    geo_ref=geo_ref,
                     **tbclayer
                 )
             )
@@ -1199,6 +1216,12 @@ def create_partitions(
                     ref,
                     output_dir,
                     geo_ref=geo_ref,
+                    dec_ref_path=cfg["inputRef"]["path"],
+                    dec_dem_path=cfg["inputDSM"]["path"],
+                    init_disp_x=cfg["plani_opts"]["disp_init"]["x"],
+                    init_disp_y=cfg["plani_opts"]["disp_init"]["y"],
+                    dx=cfg["plani_results"]["dx"]["nuth_offset"],
+                    dy=cfg["plani_results"]["dy"]["nuth_offset"],
                     **clayer
                 )
             )
@@ -1381,9 +1404,7 @@ def alti_diff_stats(
 
     # There can be multiple ways to partition the stats.
     # We gather them all inside a list here:
-    partitions = create_partitions(
-        dsm, ref, cfg["outputDir"], cfg["stats_opts"], geo_ref=geo_ref
-    )
+    partitions = create_partitions(dsm, ref, cfg, geo_ref=geo_ref)
 
     # For every partition get stats and save them as plots and tables
     cfg["stats_results"]["partitions"] = {}

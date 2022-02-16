@@ -30,6 +30,9 @@ from typing import List
 import numpy as np
 import rasterio as rio
 
+# Define tests tolerance
+TEST_TOL = 1e-03
+
 
 def demcompare_test_data_path(test_name: str) -> str:
     """
@@ -38,6 +41,10 @@ def demcompare_test_data_path(test_name: str) -> str:
     :param test_name: name of test directory
     :returns: full absolute path to demcompare test data.
     """
+    # TODO: find why the path is unset from the second test
+    # Verify that the current path is well set
+    os.chdir(os.path.dirname(__file__))
+
     # Get absolute path from this file in root_src_demcompare/tests/ + data
     test_data_folder = os.path.join(os.path.dirname(__file__), "data")
     return os.path.join(test_data_folder, test_name)
@@ -91,7 +98,11 @@ def assert_same_images(
         with rio.open(expected) as rio_expected:
             np.testing.assert_equal(rio_actual.width, rio_expected.width)
             np.testing.assert_equal(rio_actual.height, rio_expected.height)
-            assert rio_actual.transform == rio_expected.transform
+            np.testing.assert_allclose(
+                np.array(rio_actual.transform),
+                np.array(rio_expected.transform),
+                atol=atol,
+            )
             assert rio_actual.crs == rio_expected.crs
             assert rio_actual.nodata == rio_expected.nodata
             np.testing.assert_allclose(
