@@ -9,7 +9,8 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Added
 - Add pytest tests. [#23]
-- Add sphinx doc. [#30]
+- Add sphinx doc and readthedocs. [#30]
+
 ### Changed
 - Limit decimal number on output offsets. [#62]
 
