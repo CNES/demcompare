@@ -6,6 +6,7 @@
 [![Python](https://img.shields.io/badge/python-v3.7+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](CONTRIBUTING.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0/)
+[![Docs](https://readthedocs.org/projects/demcompare/badge/?version=latest)]('https://demcompare.readthedocs.io/?badge=latest)
 
 <p align="center">
   <a href="#overview">Overview</a> •
@@ -24,10 +25,10 @@ A DEM is a 3D computer graphics representation of elevation data to represent te
 
 **Demcompare** has several characteristics:
 
-* Provides a wide variety of standard metrics and allows one to classify the statistics.
 * Works whether or not the two DEMs share common format projection system, planimetric resolution, and altimetric unit.
 * Performs the coregistration based on the Nuth & Kääb universal coregistration method.
 * Offers two coregistration modes to choose which of both DEMs is to be adapted during coregistration. 
+* Provides a wide variety of standard metrics which can be classified.
 * Classifies the stats by slope ranges by default, but one can provide any other data to classify the stats.
 
 ## Install
@@ -49,11 +50,11 @@ Download our data sample and run the python script **demcompare**:
 
 ```bash
 # download data samples
-wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/images/strm_sample.zip  # input stereo pair
+wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/images/srtm_sample.zip  # input stereo pair
 wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/json_conf_files/nuth_kaab_config.json # configuration file
 
 # uncompress data
-unzip strm_sample.zip 
+unzip srtm_sample.zip 
 
 #run demcompare
 demcompare nuth_kaab_config.json
@@ -67,12 +68,12 @@ The results can be observed with:
 
 ## To go further
 
-Please consult [our online documentation](https://demcompare.readthedocs.io/index.html).
+Please consult [our online documentation](https://demcompare.readthedocs.io).
 
 You will learn:
-- Which steps you can [use and combine](https://demcompare.readthedocs.io/userguide/step_by_step.html)
-- How to quickly set up a [demcompare pipeline](https://pandora.readthedocs.io/userguide/inputs.html)
-- How to use the [Command line execution](https://demcompare.readthedocs.io/userguide/command_line_execution.html) 
+- Which steps you can [use and combine](https://demcompare.readthedocs.io/en/latest/userguide/step_by_step.html)
+- How to use the [command line execution](https://demcompare.readthedocs.io/en/latest/userguide/command_line_execution.html)
+- Which parameters you can set in the [input configuration](https://demcompare.readthedocs.io/en/latest/userguide/inputs.html)
 
 
 ## Licensing
@@ -86,4 +87,5 @@ Copyrights and authoring can be found in [NOTICE](./NOTICE) file.
 ## Related
 
 [CARS](https://github.com/CNES/CARS) - CNES 3D reconstruction software
+
 [Pandora](https://github.com/CNES/pandora) - CNES Stereo Matching framework
