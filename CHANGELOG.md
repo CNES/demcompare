@@ -13,6 +13,7 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Changed
 - Limit decimal number on output offsets. [#62]
+- Suppress the 0.5 offset on translate function. [#36]
 
 ### Fixed
 - Correct classification layers coregistration. [#58]

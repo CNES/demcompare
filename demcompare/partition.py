@@ -735,9 +735,8 @@ class Partition:
                         # Translate the georef-origin of rectified_map based
                         # on x_off and y_off values
                         #   -> this makes dem coregistered on ref
-                        # note -0.5 since (0,0) pixel coord is pixel centered
                         rectified_map_dataset = translate(
-                            rectified_map_dataset, self.dx - 0.5, -self.dy - 0.5
+                            rectified_map_dataset, self.dx, -self.dy
                         )
 
                         self.reproject_path[map_name] = os.path.join(

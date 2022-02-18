@@ -85,8 +85,8 @@ def pix_to_coord(
         transform_array[4],
         transform_array[5],
     )
-
-    x, y = rasterio.transform.xy(transform, row, col, offset="center")
+    # Set the offset to ul (upper left)
+    x, y = rasterio.transform.xy(transform, row, col, offset="ul")
 
     if not isinstance(x, int):
         x = np.array(x)
