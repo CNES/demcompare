@@ -24,9 +24,9 @@ Example of a basic DSM comparison execution with the sample images and input con
 
 .. code-block:: bash
 
-    wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/images/strm_sample.zip  # input stereo pair
+    wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/images/srtm_sample.zip  # input stereo pair
     wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/json_conf_files/nuth_kaab_config.json # configuration file
-    unzip strm_sample.zip #uncompress data
+    unzip srtm_sample.zip #uncompress data
     demcompare nuth_kaab_config.json #run demcompare
 
 
