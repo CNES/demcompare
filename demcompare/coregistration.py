@@ -98,10 +98,9 @@ def coregister_with_nuth_and_kaab(
     # Translate the georef-origin of coreg DEMs based on x_off and y_off values
     #   -> this makes dem coregistered on ref
     #
-    # note the -0.5 since the (0,0) pixel coord is pixel centered
-    coreg_dem = translate(coreg_dem, x_off - 0.5, -y_off - 0.5)
-    coreg_ref = translate(coreg_ref, x_off - 0.5, -y_off - 0.5)
-    final_dh = translate(final_dh, x_off - 0.5, -y_off - 0.5)
+    coreg_dem = translate(coreg_dem, x_off, -y_off)
+    coreg_ref = translate(coreg_ref, x_off, -y_off)
+    final_dh = translate(final_dh, x_off, -y_off)
 
     # Eventually we return nuth and kaab results :
     return (
