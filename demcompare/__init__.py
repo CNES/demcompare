@@ -429,7 +429,9 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
         dem_zunit=(
             cfg["inputDSM"]["zunit"] if "zunit" in cfg["inputDSM"] else "m"
         ),
-        load_data=(cfg["roi"] if "roi" in cfg else True),
+        load_data=(
+            cfg["inputDSM"]["roi"] if "roi" in cfg["inputDSM"] else True
+        ),
     )
     print("\n# Input Elevation Models:")
     print("Tested DEM (DEM): {}".format(dem.input_img))
