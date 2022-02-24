@@ -1,0 +1,158 @@
+{
+  "outputDir": "TO/PATH/demcompare/test_output",
+  "inputRef": {
+    "path": "TO/PATH/demcompare/test_data/srtm_ref.tif",
+    "zunit": "m",
+    "georef": "WGS84"
+  },
+  "inputDSM": {
+    "path": "TO/PATH/demcompare/test_data/srtm_blurred_and_shifted.tif",
+    "zunit": "m",
+    "georef": "WGS84",
+    "nodata": -32768,
+    "roi": {
+      "left": 40.5,
+      "bottom": 38.0,
+      "right": 44.0,
+      "top": 41.0
+    }
+  },
+  "plani_opts": {
+    "coregistration_method": "nuth_kaab",
+    "coregistration_iterations": 6,
+    "disp_init": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  "stats_opts": {
+    "to_be_classification_layers": {
+      "slope": {
+        "ranges": [
+          0,
+          5,
+          10,
+          25,
+          45
+        ],
+        "ref": null,
+        "dsm": null
+      }
+    },
+    "classification_layers": {},
+    "alti_error_threshold": {
+      "value": 0.1,
+      "unit": "m"
+    },
+    "elevation_thresholds": {
+      "list": [
+        0.5,
+        1,
+        3
+      ],
+      "zunit": "m"
+    },
+    "plot_real_hists": true,
+    "remove_outliers": true
+  },
+  "otd": "default_OTD",
+  "alti_opts": {
+    "egm96-15": {
+      "path": "demcompare/geoid/egm96_15.gtx",
+      "zunit": "m"
+    },
+    "deramping": false
+  },
+  "plani_results": {
+    "dx": {
+      "nuth_offset": 3.0,
+      "unit_nuth_offset": "px",
+      "bias_value": 0.0025,
+      "unit_bias_value": "deg"
+    },
+    "dy": {
+      "nuth_offset": -5.0,
+      "unit_nuth_offset": "px",
+      "bias_value": 0.00417,
+      "unit_bias_value": "deg"
+    }
+  },
+  "alti_results": {
+    "rectifiedDSM": {
+      "path": "TO/PATH/demcompare/test_output/coregistration/coreg_DEM.tif",
+      "zunit": "m",
+      "georef": "WGS84",
+      "nodata": -32768,
+      "roi": {
+        "left": 40.5,
+        "bottom": 38.0,
+        "right": 44.0,
+        "top": 41.0
+      },
+      "nb_points": 389070,
+      "nb_valid_points": 389070
+    },
+    "rectifiedRef": {
+      "path": "TO/PATH/demcompare/test_output/coregistration/coreg_REF.tif",
+      "zunit": "m",
+      "georef": "WGS84",
+      "nodata": -32768,
+      "nb_points": 389070,
+      "nb_valid_points": 389070
+    },
+    "dz": {
+      "bias_value": -0.01813,
+      "unit": "m",
+      "percent": 100.0
+    },
+    "dzMap": {
+      "path": "TO/PATH/demcompare/test_output/final_dh.tif",
+      "zunit": "m",
+      "nodata": -32768,
+      "nb_points": 389070,
+      "nb_valid_points": 389070
+    }
+  },
+  "stats_results": {
+    "images": {
+      "list": [
+        "row_wise",
+        "col_wise"
+      ],
+      "row_wise": {
+        "path": "TO/PATH/demcompare/test_output/dh_row_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 389070
+      },
+      "col_wise": {
+        "path": "TO/PATH/demcompare/test_output/dh_col_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 389070
+      }
+    },
+    "partitions": {
+      "slope": {
+        "standard": {
+          "Ref_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/slope/ref_support_map.tif"
+          },
+          "DSM_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/slope/dsm_support_map.tif"
+          }
+        },
+        "coherent-classification": {
+          "Ref_support": null,
+          "DSM_support": null
+        },
+        "incoherent-classification": {
+          "Ref_support": null,
+          "DSM_support": null
+        }
+      }
+    }
+  }
+}

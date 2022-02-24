@@ -1,0 +1,42 @@
+{
+  "outputDir" : "./test_output/",
+  "inputRef": {
+    "path" : "tests/tests_data/standard/srtm_ref.tif",
+    "zunit": "m",
+    "georef": "WGS84"
+  },
+  "inputDSM": {
+    "path" : "tests/tests_data/standard/srtm_blurred_and_shifted.tif",
+    "zunit": "m",
+    "georef": "WGS84",
+    "nodata": -32768,
+    "roi": {
+      "left": 40.5,
+      "bottom": 38.0,
+      "right": 44.0,
+      "top": 39.0
+    }
+  },
+  "plani_opts": {
+    "coregistration_method": "nuth_kaab",
+    "coregistration_iterations": 6,
+    "disp_init": {
+      "x": 0,
+      "y": 0
+    }
+  },
+  "stats_opts": {
+    "to_be_classification_layers": {
+      "slope": {
+        "ranges": [
+          0,
+          5,
+          10,
+          25,
+          45
+        ]
+      }
+    },
+    "remove_outliers": true
+  }
+}

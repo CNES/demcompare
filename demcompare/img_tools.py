@@ -425,18 +425,6 @@ def load_dems(
     dem_trans = src_dem.transform
     bounds_dem = src_dem.bounds
 
-    # Reproject if input image is inversed top bottom or left right
-    # to have the same consistent (left, bottom, right, top) reference
-    # than ref projected bounds (orientation bug otherwise)
-    transformed_dem_bounds = rasterio.warp.transform_bounds(
-        dem_crs,
-        dem_crs,
-        bounds_dem[0],
-        bounds_dem[1],
-        bounds_dem[2],
-        bounds_dem[3],
-    )
-
     if load_data is not True:
         # Use ROI
         if isinstance(load_data, (tuple, list)):
@@ -470,10 +458,21 @@ def load_dems(
                     load_data["h"],
                 )
                 bounds_dem = rasterio.windows.bounds(window_dem, dem_trans)
-                print(bounds_dem)
 
             else:
                 print("Not he right conventions for ROI")
+
+    # Reproject if input image is inversed top bottom or left right
+    # to have the same consistent (left, bottom, right, top) reference
+    # than ref projected bounds (orientation bug otherwise)
+    transformed_dem_bounds = rasterio.warp.transform_bounds(
+        dem_crs,
+        dem_crs,
+        bounds_dem[0],
+        bounds_dem[1],
+        bounds_dem[2],
+        bounds_dem[3],
+    )
 
     # Get roi of ref
 
