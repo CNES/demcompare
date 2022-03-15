@@ -3,13 +3,11 @@
 		"outputDir" : "./test_classification_layer_output/",
 		"inputRef" : {
 			"path" : "./Gironde.tif",
-			"zunit" : "m",
-			"georef" : "WGS84"
+			"zunit" : "m"
 		},
 		"inputDSM" : {
 			"path" : "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
 			"zunit" : "m",
-			"georef" : "EPSG:32630",
 			"nodata" : -32768
 		},
 		"plani_opts": {

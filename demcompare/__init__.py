@@ -411,8 +411,16 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
         dem_nodata=(
             cfg["inputDSM"]["nodata"] if "nodata" in cfg["inputDSM"] else None
         ),
-        ref_georef_grid=cfg["inputRef"]["georef"],
-        dem_georef_grid=cfg["inputDSM"]["georef"],
+        ref_georef_grid=(
+            cfg["inputRef"]["georef"]
+            if "georef" in cfg["inputRef"]
+            else "WGS84"
+        ),
+        dem_georef_grid=(
+            cfg["inputDSM"]["georef"]
+            if "georef" in cfg["inputRef"]
+            else "WGS84"
+        ),
         ref_geoid_path=(
             cfg["inputRef"]["geoid_path"]
             if "geoid_path" in cfg["inputRef"]

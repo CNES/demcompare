@@ -310,6 +310,7 @@ def create_dataset(
     }
 
     if load_data is not False:
+        # If the georef is geoid, add geoid offset
         if georef_grid == "geoid":
             # transform to ellipsoid
             geoid_offset = get_geoid_offset(dataset, geoid_path)
