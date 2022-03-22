@@ -20,7 +20,16 @@ Here is the list of the parameters of the input configuration file and its assoc
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *inputDSM zunit*                                       | Z axes unit of the input DSM                    | string      |       m             | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputDSM georef*                                      | Georef of the input DSM                         | string      |                     | Yes      |
+| *inputDSM georef*                                      | | Georef of the input DSM                       | string      |      "WGS84"        | No       |
+|                                                        | | If set to "geoid", the according offset       |             |                     |          |
+|                                                        | | will be added.                                |             |                     |          |
+|                                                        | | If set to "geoid" and no "geoid_path"         |             |                     |          |
+|                                                        | | is given, then EGM96 geoid                    |             |                     |          |
+|                                                        | | will be used by default.                      |             |                     |          |
+|                                                        | | Please note that this parameter is only       |             |                     |          |
+|                                                        | | used if set to "geoid",                       |             |                     |          |
+|                                                        | | since the .crs of the raster                  |             |                     |          |
+|                                                        | | is used to obtain the georef.                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *inputDSM geoid_path*                                  | Geoid path of the input DSM                     | string      |      None           | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
@@ -32,7 +41,16 @@ Here is the list of the parameters of the input configuration file and its assoc
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *inputRef zunit*                                       | Z axes unit of the input Ref                    | string      |       m             | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputRef georef*                                      | Georef of the input Ref                         | string      |                     | Yes      |
+| *inputRef georef*                                      | | Georef of the input Ref                       | string      |      "WGS84"        | No       |
+|                                                        | | If set to "geoid", the according offset       |             |                     |          |
+|                                                        | | will be added.                                |             |                     |          |
+|                                                        | | If set to "geoid" and no "geoid_path"         |             |                     |          |
+|                                                        | | is given, then EGM96 geoid                    |             |                     |          |
+|                                                        | | will be used by default.                      |             |                     |          |
+|                                                        | | Please note that this parameter is only       |             |                     |          |
+|                                                        | | used if set to "geoid",                       |             |                     |          |
+|                                                        | | since the .crs of the raster                  |             |                     |          |
+|                                                        | | is used to obtain the georef.                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *inputRef geoid_path*                                  | Geoid path of the input Ref                     | string      |    None             | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+

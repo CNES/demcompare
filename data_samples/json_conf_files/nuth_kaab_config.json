@@ -2,13 +2,11 @@
 	"outputDir" : "./test_output/",
 	"inputRef" : {
 		"path" : "./srtm_ref.tif",
-		"zunit" : "m",
-		"georef" : "WGS84"
+		"zunit" : "m"
 	},
 	"inputDSM" : {
 		"path" : "./srtm_blurred_and_shifted.tif",
 		"zunit" : "m",
-		"georef" : "WGS84",
 		"nodata" : -32768
 	},
 	"plani_opts": {

@@ -310,6 +310,7 @@ def create_dataset(
     }
 
     if load_data is not False:
+        # If the georef is geoid, add geoid offset
         if georef_grid == "geoid":
             # transform to ellipsoid
             geoid_offset = get_geoid_offset(dataset, geoid_path)
@@ -643,9 +644,7 @@ def translate_to_coregistered_geometry(
     #
     # Translate the georef-origin of dem based on dx and dy values
     #   -> this makes dem coregistered on ref
-    #
-    # note the -0.5 since the (0,0) pixel coord is pixel centered
-    dem = translate(dem, dx - 0.5, dy - 0.5)
+    dem = translate(dem, dx, dy)
 
     #
     # Intersect and reproject both dsms.
