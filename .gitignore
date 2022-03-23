@@ -115,6 +115,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+*venv
 
 # Spyder project settings
 .spyderproject
@@ -143,3 +144,4 @@ cython_debug/
 # Custom folders to ignore
 cars/
 docker_archives/
+cars-mesh/
