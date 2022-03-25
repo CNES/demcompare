@@ -2,7 +2,7 @@ FROM ubuntu:20.04
 LABEL maintainer="CNES"
 
 # Avoid apt install interactive questions.
-ARG DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Dependencies packages
 RUN apt-get update && apt-get install --no-install-recommends -y --quiet \
@@ -94,6 +94,11 @@ RUN make clean && make install
 # source venv/bin/activate in docker mode
 ENV VIRTUAL_ENV='/cars/venv'
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# Add Python libraries specific to the mesh3d project
+RUN python -m pip install open3d
+RUN python -m pip install laspy
+RUN python -m pip install plyfile
+RUN python -m pip install click loguru
 # Clean pip cache
 RUN python -m pip cache purge
 
@@ -111,5 +116,10 @@ ENV OTB_APPLICATION_PATH=/cars/venv/lib/:$OTB_APPLICATION_PATH \
 ENV OPJ_NUM_THREADS=$OMP_NUM_THREADS \
     GDAL_NUM_THREADS=$OMP_NUM_THREADS \
     NUMBA_NUM_THREADS=$OMP_NUM_THREADS
+
+# Complete linux environment for open3d to work
+RUN apt-get update && apt-get install --no-install-recommends -y --quiet \
+    libx11-dev \
+    libgl-dev
 
 WORKDIR /code
