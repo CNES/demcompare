@@ -117,11 +117,34 @@ def test_demcompare_standard_outputs():
         )
 
         np.testing.assert_allclose(
+            ref_output_cfg["plani_results"]["gdal_translate_bounds"]["lry"],
+            output_cfg["plani_results"]["gdal_translate_bounds"]["lry"],
+            atol=TEST_TOL,
+        )
+
+        np.testing.assert_allclose(
+            ref_output_cfg["plani_results"]["gdal_translate_bounds"]["lrx"],
+            output_cfg["plani_results"]["gdal_translate_bounds"]["lrx"],
+            atol=TEST_TOL,
+        )
+
+        np.testing.assert_allclose(
+            ref_output_cfg["plani_results"]["gdal_translate_bounds"]["uly"],
+            output_cfg["plani_results"]["gdal_translate_bounds"]["uly"],
+            atol=TEST_TOL,
+        )
+
+        np.testing.assert_allclose(
+            ref_output_cfg["plani_results"]["gdal_translate_bounds"]["ulx"],
+            output_cfg["plani_results"]["gdal_translate_bounds"]["ulx"],
+            atol=TEST_TOL,
+        )
+
+        np.testing.assert_allclose(
             ref_output_cfg["alti_results"]["dz"]["bias_value"],
             output_cfg["alti_results"]["dz"]["bias_value"],
             atol=TEST_TOL,
         )
-
         # TEST DIFF TIF
 
         # Test initial_dh.tif

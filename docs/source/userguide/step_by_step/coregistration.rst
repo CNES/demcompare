@@ -6,12 +6,19 @@ For this reason, from now on we will refer to each DEM as **ref** and **sec** re
 Coregistration
 ==============
 
-To perform the **DEMs comparison**, **demcompare** considers that the **ref** is the cleaner DEM and has higher resolution than **sec**. Considering this, if the DEMs need to be coregistered, **demcompare** will perform the following steps:
+Demcompare performs the DEMs coregistration with [NuthKaab]_ corregistration algorithm.
 
-- The **ref** is reprojected to the **sec**'s **georeference grid**, so that it's resolution will be the same as **sec**'s. The **ref** is the one to be adapted as it supposedly is the cleaner one.
-- The [NuthKaab]_ corregistration algorithm performs the corregistration between both DEMs by interpolating and resampling the **ref**, so that it will compute two coregistred DEMs that have the **sec**'s **georeference grid** and **georeference origin**.
-- Since in **demcompare** the **ref**'s georeference origin is considered the correct location, both coregistred DEM's are then translated to the **ref**'s **georeference origin** by a simple transform using the offsets obtained by Nuth et Kaab.
-- With both coregistred DEMs having the **sec**'s **georeference grid** and the **ref**'s **georeference origin**, **demcompare** is ready to compare both DEMs computing a wide variety of standard metrics and statistics.
+In order to apply the coregistration offsets to the **sec** so that it will have the same georeference origin as the **ref**, the following GDAL command may be used:
+
+.. code-block:: bash
+
+    gdal_translate -a_ullr <ulx> <uly> <lrx> <lry> /PATH_TO/secondary_dem.tif /PATH_TO/coreg_secondary_dem.tif
+
+Being *<ulx> <uly> <lrx> <lry>* the coordinate bounds of the offsets applied on **sec**. They are stored in the *final_cfg.json* file as **gdal_translate_bounds**.
+
+The coregistration step also computes the *coregDEM.tif* and *coregREF.tif*, which are the intermediate coregistered DEMs used for the stats computation.
+
+.. note:: Please notice that *coregDEM.tif* and *coregREF.tif* share the same georeference origin, **but this origin may not be the reference one**. Moreover, those DEMs have been reprojected and cropped in order to have the same resolution and size.
 
 
 WGS84 and geoid references

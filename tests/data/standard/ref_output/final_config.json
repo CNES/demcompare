@@ -65,6 +65,12 @@
     "dy": {
       "bias_value": 0.00417,
       "unit": "deg"
+    },
+    "gdal_translate_bounds": {
+      "ulx": 40.0025,
+      "uly": 39.99583,
+      "lrx": 40.83333,
+      "lry": 39.16667
     }
   },
   "alti_results": {

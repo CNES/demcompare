@@ -11,6 +11,7 @@ A new section Unreleased is opened then for next dev phase.
 - Add pytest tests. [#23]
 - Add sphinx doc and readthedocs. [#30]
 - Clarifications and make optional input parameter georef. [#71]
+- Give bounds to coregister DEM with GDAL and clarifications on coregDEM and coregREF. [#70]
 
 ### Changed
 - Limit decimal number on output offsets. [#62]
