@@ -23,11 +23,13 @@ The images :
 | *dh_row_wise_wave_detection.tif* | | Image computed by substituting the `final_dh.tif` average row                          |
 |                                  | | to final_dh.tif itself. It helps to detect any residual oscillation.                   |
 +----------------------------------+------------------------------------------------------------------------------------------+
-| *coreg_DSM.tif*                  | | Coregistered DSM. Both coregistered                                                    |
-|                                  | | DEMs will have the dsm’s georeference grid and the ref’s georeference                  |
-|                                  | | origin.                                                                                |
+| *coreg_DSM.tif*                  | | Intermediate coregistered DSM used for the stats computation. Both coregistered        |
+|                                  | | DEMs will have the dsm’s georeference grid and an intermediate                         |
+|                                  | | georeference origin.                                                                   |
 +----------------------------------+------------------------------------------------------------------------------------------+
-| *coreg_Ref.tif*                  | Coregistered Ref                                                                         |
+| *coreg_Ref.tif*                  | | Intermediate coregistered Ref used for the stats computation. Both coregistered        |
+|                                  | | DEMs will have the dsm’s georeference grid and an intermediate                         |
+|                                  | | georeference origin.                                                                   |
 +----------------------------------+------------------------------------------------------------------------------------------+
 | *AltiErrors.tif*                 | | The images whose names start with **AltiErrors-** are the plots saved by               |
 |                                  | | demcompare. They show histograms by stats set and the same                             |

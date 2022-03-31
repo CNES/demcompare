@@ -31,7 +31,12 @@ import numpy as np
 import xarray as xr
 
 # DEMcompare imports
-from .img_tools import save_tif, translate, translate_to_coregistered_geometry
+from .img_tools import (
+    compute_offset_bounds,
+    save_tif,
+    translate,
+    translate_to_coregistered_geometry,
+)
 from .nuth_kaab_universal_coregistration import nuth_kaab_lib
 from .output_tree_design import get_out_dir, get_out_file_path
 
@@ -85,18 +90,9 @@ def coregister_with_nuth_and_kaab(
         final_dh,
     ) = nuth_kaab_lib(dem, ref, outdir_plot=tmp_dir, nb_iters=nb_iters)
 
-    # We change the georef-origin of nk_a3d_libAPI's coreg DEMs
-    # -> this is because NK library takes dem and ref,
-    #    and gives back two coreg DEMs keeping the dem's
-    #    georef-grid and georef-origin.
-    #    This is done by interpolating & resampling the ref.
-    #    While this is good behavior for independent use,
-    #    it is not exactly what we're looking for.
-    #    We do want the ref to be the one resampled,
-    #    but we want the coreg DEMs to have the ref's georef-origin .
-
+    # Change the georef-origin of nk_a3d_libAPI's coreg DEMs
     # Translate the georef-origin of coreg DEMs based on x_off and y_off values
-    #   -> this makes dem coregistered on ref
+    #   -> this makes both dems be on the same intermediate georef origin
     #
     coreg_dem = translate(coreg_dem, x_off, -y_off)
     coreg_ref = translate(coreg_ref, x_off, -y_off)
@@ -202,6 +198,17 @@ def coregister_and_compute_alti_diff(
         "bias_value": round(dy_bias, 5),
         "unit_bias_value": coreg_dem.attrs["plani_unit"].name,
     }
+
+    # -> for the coordinate bounds to apply the offsets
+    #    to the original DSM with GDAL
+    ulx, uly, lrx, lry = compute_offset_bounds(-dy_nuth, dx_nuth, cfg)
+    cfg["plani_results"]["gdal_translate_bounds"] = {
+        "ulx": round(ulx, 5),
+        "uly": round(uly, 5),
+        "lrx": round(lrx, 5),
+        "lry": round(lry, 5),
+    }
+
     # -> for alti_results
     cfg["alti_results"] = {}
     cfg["alti_results"]["rectifiedDSM"] = copy.deepcopy(cfg["inputDSM"])

@@ -26,7 +26,7 @@ This module contains functions associated to raster images.
 import copy
 import logging
 import os
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 # Third party imports
 import numpy as np
@@ -991,3 +991,38 @@ def get_geoid_offset(
     arr_offset = np.reshape(interp_geoid, dataset["im"].data.shape)
 
     return arr_offset
+
+
+def compute_offset_bounds(
+    y_off: float, x_off: float, cfg: Dict
+) -> Tuple[float, float, float, float]:
+    """
+    Obtain the coordinate bounds to apply the offsets to
+    the secondary DEM with gdal
+
+    The offsets can be applied with the command line:
+    gdal_translate -a_ullr <ulx> <uly> <lrx> <lry>
+      /path_to_original_dem.tif /path_to_coregistered_dem.tif
+
+    :param y_off: y pixel offset
+    :type y_off: float
+    :param x_off: x pixel offset
+    :type x_off: float
+    :param cfg: cfg
+    :type cfg: Dict
+    :return: coordinate bounds to apply the offsets
+    :rtype: Tuple[float,float,float,float]
+    """
+    # Read original secondary dem
+    dem = read_img(
+        cfg["inputDSM"]["path"],
+        load_data=(
+            cfg["inputDSM"]["roi"] if "roi" in cfg["inputDSM"] else False
+        ),
+    )
+    ysize, xsize = dem["im"].shape
+    # Compute the coordinates of the new bounds
+    x_0, y_0 = pix_to_coord(dem["trans"].data, y_off, x_off)
+    x_1, y_1 = pix_to_coord(dem["trans"].data, y_off + ysize, x_off + xsize)
+
+    return float(x_0), float(y_0), float(x_1), float(y_1)
