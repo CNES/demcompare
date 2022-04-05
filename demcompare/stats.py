@@ -700,7 +700,11 @@ def dem_diff_pdf_plot(
     width: float = 0.7,
 ):
     """
-    Computes the difference histogram
+    Computes the difference histogram.
+
+    The .tif output histogram plot is centered around 0
+    and bounded over [- |percentile98|, |percentile98|]
+    The output csv file has all the data.
 
     :param dem_diff: difference dem
     :type dem_diff: xarray Dataset
@@ -725,10 +729,10 @@ def dem_diff_pdf_plot(
     # Generate values array
     dem_diff = dem_diff["im"].data
 
-    # Histogram creation.
+    # Histogram plot creation.
     # The histogram is centered around 0
-    # and bounded over [-percentile98, percentile98]
-    p98 = np.nanpercentile(dem_diff, 98)
+    # and bounded over [- |percentile98|, |percentile98|]
+    p98 = np.abs(np.nanpercentile(dem_diff, 98))
 
     hist, bins = np.histogram(
         dem_diff[~np.isnan(dem_diff)],
@@ -745,7 +749,9 @@ def dem_diff_pdf_plot(
     # Define axes labels and title
     fig0_ax = fig0.add_subplot(111)
     fig0_ax.set_title(title, fontsize=12)
-    fig0_ax.set_xlabel("Elevation difference (m) from -p98 to p98", fontsize=12)
+    fig0_ax.set_xlabel(
+        "Elevation difference (m) from - |p98| to |p98|", fontsize=12
+    )
     fig0_ax.set_ylabel("Normalized frequency", fontsize=12)
     mpl_pyplot.grid(True)
     mpl_pyplot.bar(center, pdf, align="center", width=width)
