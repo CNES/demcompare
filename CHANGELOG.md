@@ -20,6 +20,7 @@ A new section Unreleased is opened then for next dev phase.
 ### Fixed
 - Correct classification layers coregistration. [#58]
 - Correct input DSM ROI not being considered. [#41]
+- Fix negative percentil on histogram creation. [#72]
 
 ## 0.2.0 Fix Bugs, Clean and small functionalities Release (September 2021)
 
