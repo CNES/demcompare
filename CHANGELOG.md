@@ -4,8 +4,15 @@ Only the first "Unreleased" section of this file corresponding of next release c
 When publication of a new release, the section "Unreleased" is blocked to the next chosen version and name of the milestone at a given date.
 A new section Unreleased is opened then for next dev phase.
 
-
 ## Unreleased
+
+### Added
+
+### Changed
+
+### Fixed
+
+## 0.3.0 Clean bugs, tests and documentation Release (April 2022)
 
 ### Added
 - Add pytest tests. [#23]
@@ -16,11 +23,13 @@ A new section Unreleased is opened then for next dev phase.
 ### Changed
 - Limit decimal number on output offsets. [#62]
 - Suppress the 0.5 offset on translate function. [#36]
+- Suppress unused mosaic tool.[#68]
 
 ### Fixed
 - Correct classification layers coregistration. [#58]
 - Correct input DSM ROI not being considered. [#41]
 - Fix negative percentil on histogram creation. [#72]
+- Filter Nuth et Kaab zero division. [#53]
 
 ## 0.2.0 Fix Bugs, Clean and small functionalities Release (September 2021)
 
