@@ -116,10 +116,10 @@ The DEMs altitudes can rely on both ellipsoid and geoid references. For instance
 
 .. sourcecode:: text
 
-    "inputDSM" : {  "path", "./inputDSM.tif"
-                            "zunit" : "meter",
-                            "georef" : "geoid",
-                            "nodata" : }
+    "inputDSM" : {  "path": "./inputDSM.tif"
+                    "zunit" : "meter",
+                    "georef" : "geoid",
+                    "nodata" : }
 
 In this case, **EGM96 geoid** will be used by default.
 
@@ -129,11 +129,11 @@ For instance, if DEMs altitudes are to rely on a local *.gtx* available **geoid*
 
 .. sourcecode:: text
 
-    "inputDSM" : {  "path", "./inputDSM.tif"
-                            "zunit" : "meter",
-                            "georef" : "geoid",
-                            "geoid_path": "path/to/egm08_25.gtx"
-                            "nodata" : }
+    "inputDSM" : {  "path": "./inputDSM.tif"
+                    "zunit" : "meter",
+                    "georef" : "geoid",
+                    "geoid_path": "path/to/egm08_25.gtx"
+                    "nodata" : }
 
 
 
