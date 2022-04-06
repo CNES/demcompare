@@ -1002,7 +1002,7 @@ def compute_offset_bounds(
 
     The offsets can be applied with the command line:
     gdal_translate -a_ullr <ulx> <uly> <lrx> <lry>
-      /path_to_original_dem.tif /path_to_coregistered_dem.tif
+    /path_to_original_dem.tif /path_to_coregistered_dem.tif
 
     :param y_off: y pixel offset
     :type y_off: float
