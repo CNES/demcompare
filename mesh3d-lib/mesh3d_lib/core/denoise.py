@@ -3,8 +3,8 @@ Denoising methods aiming at smoothing surfaces without losing genuine high-frequ
 """
 
 import multiprocessing as mp
+from typing import Callable
 
-from pathos.multiprocessing import ProcessingPool as Pool
 import pandas as pd
 import numpy as np
 from scipy.spatial import KDTree
@@ -33,7 +33,7 @@ def compute_normal_o3d(cloud, weights=None):
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(data)
 
-    # Compute normales
+    # Compute normals
     pcd.estimate_normals(o3d.geometry.KDTreeSearchParamKNN(100), )
 
     return pcd.normals
@@ -43,7 +43,7 @@ def compute_point_normal(pcd, weights=None):
     """
     Compute normal with the PCA approach
     The normal to a point on the surface of an object is approximated to the normal to the tangent plane
-    defined by the point and its neighbours. It becomes a least squares problem.
+    defined by the point and its neighbours. It becomes a least square problem.
     See https://pcl.readthedocs.io/projects/tutorials/en/latest/normal_estimation.html
 
     The normal vector corresponds to the vector associated with the smallest eigen value of the neighborhood point
@@ -85,52 +85,60 @@ def compute_point_normal(pcd, weights=None):
     return u[:, -1]
 
 
-def compute_pcd_normals(df_pcd, knn=30, weights_distance=False, weights_color=False, workers=1):
+def weight_exp(distance: np.ndarray, mean_distance: np.ndarray):
+    return np.exp(- distance ** 2 / mean_distance ** 2)
+
+
+def compute_pcd_normals(df_pcd: pd.DataFrame,
+                        knn: int = 30,
+                        weights_distance: bool = False,
+                        weights_color: bool = False,
+                        workers: int = 1):
     """
     Compute the normal for each point of the cloud
     """
 
     # Init
     tree = KDTree(df_pcd[["x", "y", "z"]].to_numpy())
+    weights = None
+    results = []
 
     # Query the knn for each point cloud data
     _, ind = tree.query(df_pcd[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
 
-    weights = None
-    results = []
+    # Loop on each point of the data to compute its normal
+    for k, row in tqdm(enumerate(ind)):
 
-    for row in tqdm(ind):
+        if weights_distance:
+            # Weighting of the variance according to the distance to the neighbours
+            distance = tree.data[row, :] - tree.data[k, :]
+            mean_distance = np.mean(distance)
+
+            weights = weight_exp(distance, mean_distance)
+
+        if weights_color:
+            # Weighting of the variance according to the radiometric difference with the neighbours
+            color_list = [color for color in ["red", "green", "blue", "nir"] if color in df_pcd]
+            if not color_list:
+                raise ValueError("Weights on radiometry has been asked but no color channel was found in data. "
+                                 "Color channels considered are among ['red', 'green', 'blue', 'nir'].")
+
+            color_data = df_pcd[color_list].to_numpy()
+            distance = color_data[row, :] - color_data[0, :]
+            mean_distance = np.mean(distance)
+
+            weights = weight_exp(distance, mean_distance) if weights is None \
+                else weights * weight_exp(distance, mean_distance)
+
+        # Compute the normal
         results.append(compute_point_normal(tree.data[row, :], weights))
 
     results = np.asarray(results)
 
+    # Add normals information to the dataframe
     df_pcd = df_pcd.assign(n_x=results[:, 0], n_y=results[:, 1], n_z=results[:, 2])
 
     return df_pcd
-
-
-
-# def set_normal(df_cloud, normals):
-#     """
-#     Set normals to cloud dataframe
-#     """
-#     df_cloud.loc[:, ("nx", "ny", "nz")] = normals
-#     return df_cloud
-#
-#
-# def sdv_from_neighbor_array(array, nn_ind, coef=None):
-#     """
-#     Helper to compute normales
-#     """
-#     xyz = array[nn_ind]
-#     centre = xyz.mean(axis=-2)
-#     xyz = xyz - centre[:, None, :]
-#     if coef is not None:
-#         xyz *= np.sqrt(coef)
-#     correlation_matrix = np.swapaxes(xyz, 1, 2) @ xyz
-#     matrix_v, singular_values, matrix_vh = np.linalg.svd(correlation_matrix)
-#     return matrix_v, singular_values, matrix_vh
-#
 #
 # def normal_selective(
 #     df_xyz: pd.DataFrame,
