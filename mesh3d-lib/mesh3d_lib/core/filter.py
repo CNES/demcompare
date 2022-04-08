@@ -40,7 +40,7 @@ def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=True):
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(data)
 
-    cl,ind = pcd.remove_radius_outlier(10, radius)
+    cl,ind = pcd.remove_radius_outlier(nb_points, radius)
 
     
     # get a final pandas cloud
@@ -48,7 +48,7 @@ def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=True):
     
     # serialize cloud in las
     if (serialize):
-        serializeDataFrameToLAS(new_cloud, "/home/data/radiuso3dpyramide.las")
+        serializeDataFrameToLAS(new_cloud, "/home/data/radiuso3dpyramidede40_3_5f.las")
 
     return new_cloud
 
@@ -96,11 +96,11 @@ def statistical_filtering_outliers_cars(cloud, nb_neighbors, std_factor, seriali
         raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a numpy " 
                         f"ndarray.")
 
-    pos,_ = points_cloud.statistical_outliers_filtering(cloud,100,3)
+    pos,_ = points_cloud.statistical_outliers_filtering(cloud,nb_neighbors,std_factor)
 
     # serialize cloud in las
     if (serialize):
-        serializeDataFrameToLAS(pos, "/home/data/statscarspyramide.las")
+        serializeDataFrameToLAS(pos, "/home/data/statscarspyramide50_0_1.las")
 
     return pos
 
@@ -140,7 +140,7 @@ def statistical_filtering_outliers_o3d(cloud, nb_neighbors, std_factor, serializ
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(data)
 
-    cl,ind = pcd.remove_statistical_outlier(100,3)
+    cl,ind = pcd.remove_statistical_outlier(nb_neighbors,3)
 
     # get a final pandas cloud
     new_cloud = cloud.loc[ind]
@@ -190,9 +190,9 @@ def main(df):
     print(radius)
 
     print("tot", len(df))
-    cloudo3 = radius_filtering_outliers_o3(df, radius, nb_pts)
+    cloudo3 = radius_filtering_outliers_o3(df, 3.5, 40)
     # ~ cloudcars = small_components_filtering_outliers_cars(df, 3.0, 50)
-    # ~ cloudcarstat = statistical_filtering_outliers_cars(df, 3, 10)
+    # ~ cloudcarstat = statistical_filtering_outliers_cars(df, 50, 0.1)
     # ~ cloudo3stat = statistical_filtering_outliers_o3d(df, 3, 10)
     # ~ print(len(cloudo3))
     # ~ print(len(cloudcars))
