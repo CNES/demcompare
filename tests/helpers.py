@@ -50,6 +50,25 @@ def demcompare_test_data_path(test_name: str) -> str:
     return os.path.join(test_data_folder, test_name)
 
 
+def demcompare_path(directory_name: str) -> str:
+    """
+    Return full absolute path to demcompare's desired directory
+
+    :param folder_name: name of directory to be located
+     inside demcompare/demcompare
+    :returns: full absolute path to demcompare directory.
+    """
+    # TODO: find why the path is unset from the second test
+    # Verify that the current path is well set
+    os.chdir(os.path.dirname(__file__))
+    dir_path = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
+    # Get absolute path from this file in
+    # root_src_demcompare/demcompare/ + directory_name
+    test_data_folder = os.path.join(dir_path, "demcompare")
+
+    return os.path.join(test_data_folder, directory_name)
+
+
 def read_csv_file(csv_file: str) -> List[float]:
     """
     Read a csv file and save its number values to float

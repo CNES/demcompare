@@ -40,7 +40,12 @@ import xarray as xr
 
 # DEMcompare imports
 from . import coregistration, initialization, report, stats
-from .img_tools import load_dems, read_img, read_img_from_array, save_tif
+from .dem_loading_tools import (
+    create_dataset_from_dataset,
+    load_dem,
+    reproject_dems,
+    save_dataset_to_tif,
+)
 from .output_tree_design import get_otd_dirs, get_out_dir, get_out_file_path
 
 # ** VERSION **
@@ -90,9 +95,9 @@ def setup_logging(
 def compute_report(
     cfg: Dict,
     steps: List[str],
-    dem_name: str,
+    dem_to_align_name: str,
     ref_name: str,
-    coreg_dem_name: str,
+    coreg_dem_to_align_name: str,
     coreg_ref_name: str,
 ):
     """
@@ -102,12 +107,12 @@ def compute_report(
     :type cfg: dict
     :param steps: pipeline steps
     :type steps: List
-    :param dem_name: dem raster name
-    :type dem_name: str
-    :param ref_name: reference dem raster name
+    :param dem_to_align_name: dem_to_align raster name
+    :type dem_to_align_name: str
+    :param ref_name: reference dem_to_align raster name
     :type ref_name: str
-    :param coreg_dem_name: coreg_dem name
-    :type coreg_dem_name: str
+    :param coreg_dem_to_align_name: coreg_dem_to_align name
+    :type coreg_dem_to_align_name: str
     :param coreg_ref_name: coreg_ref name
     :type coreg_ref_name: str
     :return: None
@@ -116,9 +121,9 @@ def compute_report(
         print("\n[Report]")
         report.generate_report(
             cfg["outputDir"],
-            dem_name,
+            dem_to_align_name,
             ref_name,
-            coreg_dem_name,
+            coreg_dem_to_align_name,
             coreg_ref_name,
             cfg["stats_results"]["partitions"],
             os.path.join(cfg["outputDir"], get_out_dir("sphinx_built_doc")),
@@ -128,7 +133,7 @@ def compute_report(
 
 def compute_stats(
     cfg: Dict[str, dict],
-    dem: xr.Dataset,
+    dem_to_align: xr.Dataset,
     ref: xr.Dataset,
     final_dh: xr.Dataset,
     display: bool = False,
@@ -139,11 +144,20 @@ def compute_stats(
 
     :param cfg: configuration dictionary
     :type cfg: dict
-    :param dem: dem raster
-    :type dem: xr.Dataset
-    :param ref: reference dem raster to be coregistered to dem raster
+    :param dem_to_align: dem to align xr.DataSet containing :
+
+                - im : 2D (row, col) xarray.DataArray float32
+                - trans: 1D (trans_len) xarray.DataArray
+    :type dem_to_align: xr.Dataset
+    :param ref: reference dem xr.DataSet containing :
+
+                - im : 2D (row, col) xarray.DataArray float32
+                - trans: 1D (trans_len) xarray.DataArray
     :type ref: xr.Dataset
-    :param final_dh: initial alti diff
+    :param final_dh: initial alti diff xr.DataSet containing :
+
+                - im : 2D (row, col) xarray.DataArray float32
+                - trans: 1D (trans_len) xarray.DataArray
     :type final_dh: xr.Dataset
     :param display: choose between plot show and plot save
     :type display: boolean
@@ -162,7 +176,7 @@ def compute_stats(
     print("# Altimetric error stats generation")
     stats.alti_diff_stats(
         cfg,
-        dem,
+        dem_to_align,
         ref,
         final_dh,
         display=display,
@@ -177,7 +191,7 @@ def compute_stats(
 def compute_coregistration(
     cfg: Dict,
     steps: List[str],
-    dem: xr.Dataset,
+    dem_to_align: xr.Dataset,
     ref: xr.Dataset,
     initial_dh: xr.Dataset,
     final_cfg: Dict[str, dict] = None,
@@ -195,17 +209,31 @@ def compute_coregistration(
     :type cfg: dict
     :param steps: pipeline steps
     :type steps: List
-    :param dem: dem raster
-    :type dem: xr.Dataset
-    :param ref: reference dem raster coregistered with dem
+    :param dem_to_align: dem_to_align xr.DataSet containing :
+
+                - im : 2D (row, col) xarray.DataArray float32
+                - trans: 1D (trans_len) xarray.DataArray
+    :type dem_to_align: xr.Dataset
+    :param ref: reference dem raster xr.DataSet containing :
+
+                - im : 2D (row, col) xarray.DataArray float32
+                - trans: 1D (trans_len) xarray.DataArray
     :type ref: xr.Dataset
-    :param initial_dh: initial difference raster
+    :param initial_dh: initial difference xr.DataSet containing :
+
+                - im : 2D (row, col) xarray.DataArray float32
+                - trans: 1D (trans_len) xarray.DataArray
     :type initial_dh: xr.Dataset
     :param final_cfg: filename of final_cfg
     :type final_cfg: dict
     :param final_json_file: filename of final_json_file
     :type final_json_file: str
-    :return: coreg_dem, coreg_ref, final_dh, coreg_state
+    :return: coreg_dem_to_align xr.Dataset, coreg_ref xr.Dataset,
+                final_dh xr.Dataset, coreg_state. The xr.Datasets
+                containing :
+
+                - im : 2D (row, col) xarray.DataArray float32
+                - trans: 1D (trans_len) xarray.DataArray
     :rtype: xr.Dataset, xr.Dataset, xr.Dataset, bool
     """
     print("[Coregistration]")
@@ -215,10 +243,12 @@ def compute_coregistration(
         coreg_state = True
 
         (
-            coreg_dem,
+            coreg_dem_to_align,
             coreg_ref,
             final_dh,
-        ) = coregistration.coregister_and_compute_alti_diff(cfg, dem, ref)
+        ) = coregistration.coregister_and_compute_alti_diff(
+            cfg, dem_to_align, ref
+        )
 
         # saves results here in case next step fails
         initialization.save_config_file(final_json_file, cfg)
@@ -236,25 +266,25 @@ def compute_coregistration(
 
             cfg["plani_results"] = final_cfg["plani_results"]
             cfg["alti_results"] = final_cfg["alti_results"]
-            coreg_dem = read_img(
+            coreg_dem_to_align = load_dem(
                 str(cfg["alti_results"]["rectifiedDSM"]["path"]),
-                no_data=(
+                nodata=(
                     cfg["alti_results"]["rectifiedDSM"]["nodata"]
                     if "nodata" in cfg["alti_results"]["rectifiedDSM"]
                     else None
                 ),
             )
-            coreg_ref = read_img(
+            coreg_ref = load_dem(
                 str(cfg["alti_results"]["rectifiedRef"]["path"]),
-                no_data=(
+                nodata=(
                     cfg["alti_results"]["rectifiedRef"]["nodata"]
                     if "nodata" in cfg["alti_results"]["rectifiedRef"]
                     else None
                 ),
             )
-            final_dh = read_img(
+            final_dh = load_dem(
                 str(cfg["alti_results"]["dzMap"]["path"]),
-                no_data=cfg["alti_results"]["dzMap"]["nodata"],
+                nodata=cfg["alti_results"]["dzMap"]["nodata"],
             )
 
         else:
@@ -263,7 +293,7 @@ def compute_coregistration(
             print("Set coregistration DEMs equal to input DEMs")
             coreg_state = False
             coreg_ref = ref
-            coreg_dem = dem
+            coreg_dem_to_align = dem_to_align
             final_dh = initial_dh
             cfg["plani_results"] = {}
             cfg["plani_results"]["dx"] = {"bias_value": 0, "unit": "m"}
@@ -272,39 +302,39 @@ def compute_coregistration(
             cfg["alti_results"]["rectifiedDSM"] = copy.deepcopy(cfg["inputDSM"])
             cfg["alti_results"]["rectifiedRef"] = copy.deepcopy(cfg["inputRef"])
 
-            coreg_dem = save_tif(
-                coreg_dem,
+            coreg_dem_to_align = save_dataset_to_tif(
+                coreg_dem_to_align,
                 os.path.join(
                     cfg["outputDir"], get_out_file_path("coreg_DEM.tif")
                 ),
             )
-            coreg_ref = save_tif(
+            coreg_ref = save_dataset_to_tif(
                 coreg_ref,
                 os.path.join(
                     cfg["outputDir"], get_out_file_path("coreg_REF.tif")
                 ),
             )
-            final_dh = save_tif(
+            final_dh = save_dataset_to_tif(
                 final_dh,
                 os.path.join(
                     cfg["outputDir"], get_out_file_path("final_dh.tif")
                 ),
             )
-            cfg["alti_results"]["rectifiedDSM"]["path"] = coreg_dem.attrs[
-                "input_img"
-            ]
+            cfg["alti_results"]["rectifiedDSM"][
+                "path"
+            ] = coreg_dem_to_align.attrs["input_img"]
             cfg["alti_results"]["rectifiedRef"]["path"] = coreg_ref.attrs[
                 "input_img"
             ]
-            cfg["alti_results"]["rectifiedDSM"]["nb_points"] = coreg_dem[
-                "im"
-            ].data.size
+            cfg["alti_results"]["rectifiedDSM"][
+                "nb_points"
+            ] = coreg_dem_to_align["im"].data.size
             cfg["alti_results"]["rectifiedRef"]["nb_points"] = coreg_ref[
                 "im"
             ].data.size
             cfg["alti_results"]["rectifiedDSM"][
                 "nb_valid_points"
-            ] = np.count_nonzero(~np.isnan(coreg_dem["im"].data))
+            ] = np.count_nonzero(~np.isnan(coreg_dem_to_align["im"].data))
             cfg["alti_results"]["rectifiedRef"][
                 "nb_valid_points"
             ] = np.count_nonzero(~np.isnan(coreg_ref["im"].data))
@@ -318,7 +348,7 @@ def compute_coregistration(
                 ),
             }
 
-    return coreg_dem, coreg_ref, final_dh, coreg_state
+    return coreg_dem_to_align, coreg_ref, final_dh, coreg_state
 
 
 def compute_initialization(config_json: str) -> Dict:
@@ -402,60 +432,70 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
     #
     # Create datasets
     #
-    ref, dem = load_dems(
+    ref_orig = load_dem(
         cfg["inputRef"]["path"],
-        cfg["inputDSM"]["path"],
-        ref_nodata=(
+        nodata=(
             cfg["inputRef"]["nodata"] if "nodata" in cfg["inputRef"] else None
         ),
-        dem_nodata=(
-            cfg["inputDSM"]["nodata"] if "nodata" in cfg["inputDSM"] else None
+        geoid_georef=(
+            cfg["inputRef"]["geoid_georef"]
+            if "geoid_georef" in cfg["inputRef"]
+            else False
         ),
-        ref_georef_grid=(
-            cfg["inputRef"]["georef"]
-            if "georef" in cfg["inputRef"]
-            else "WGS84"
-        ),
-        dem_georef_grid=(
-            cfg["inputDSM"]["georef"]
-            if "georef" in cfg["inputDSM"]
-            else "WGS84"
-        ),
-        ref_geoid_path=(
+        geoid_path=(
             cfg["inputRef"]["geoid_path"]
             if "geoid_path" in cfg["inputRef"]
             else None
         ),
-        dem_geoid_path=(
+        zunit=(cfg["inputRef"]["zunit"] if "zunit" in cfg["inputRef"] else "m"),
+        input_roi=(
+            cfg["inputRef"]["roi"] if "roi" in cfg["inputRef"] else True
+        ),
+    )
+
+    dem_to_align_orig = load_dem(
+        cfg["inputDSM"]["path"],
+        nodata=(
+            cfg["inputDSM"]["nodata"] if "nodata" in cfg["inputDSM"] else None
+        ),
+        geoid_georef=(
+            cfg["inputDSM"]["geoid_georef"]
+            if "geoid_georef" in cfg["inputDSM"]
+            else False
+        ),
+        geoid_path=(
             cfg["inputDSM"]["geoid_path"]
             if "geoid_path" in cfg["inputDSM"]
             else None
         ),
-        ref_zunit=(
-            cfg["inputRef"]["zunit"] if "zunit" in cfg["inputRef"] else "m"
-        ),
-        dem_zunit=(
-            cfg["inputDSM"]["zunit"] if "zunit" in cfg["inputDSM"] else "m"
-        ),
-        load_data=(
+        zunit=(cfg["inputDSM"]["zunit"] if "zunit" in cfg["inputDSM"] else "m"),
+        input_roi=(
             cfg["inputDSM"]["roi"] if "roi" in cfg["inputDSM"] else True
         ),
     )
+
+    dem_to_align, ref = reproject_dems(dem_to_align_orig, ref_orig)
     print("\n# Input Elevation Models:")
-    print("Tested DEM (DEM): {}".format(dem.input_img))
+    print("Tested DEM (DEM TO ALIGN): {}".format(dem_to_align.input_img))
     print("Reference DEM (REF): {}".format(ref.input_img))
 
     #
     # Compute initial dh, save it
     #
-    initial_dh = read_img_from_array(
-        ref["im"].data - dem["im"].data, from_dataset=dem, no_data=-32768
+    initial_dh = create_dataset_from_dataset(
+        ref["im"].data - dem_to_align["im"].data,
+        from_dataset=dem_to_align,
+        no_data=-32768,
     )
-    initial_dh = save_tif(
+    initial_dh = save_dataset_to_tif(
         initial_dh,
         os.path.join(cfg["outputDir"], get_out_file_path("initial_dh.tif")),
     )
-    print("-> Initial diff DEM (REF - DEM): {}\n".format(initial_dh.input_img))
+    print(
+        "-> Initial diff DEM (REF - DEM TO ALIGN): {}\n".format(
+            initial_dh.input_img
+        )
+    )
 
     #
     #  Plot/Save initial dh img and cdf
@@ -487,10 +527,15 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
     #
     # Coregister both DSMs together and compute final differences
     #
-    coreg_dem, coreg_ref, final_dh, coreg_state = compute_coregistration(
+    (
+        coreg_dem_to_align,
+        coreg_ref,
+        final_dh,
+        coreg_state,
+    ) = compute_coregistration(
         cfg,
         steps,
-        dem,
+        dem_to_align,
         ref,
         initial_dh,
         final_cfg=final_cfg,
@@ -501,7 +546,11 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
         #  Plot/Save final dh img and cdf if exists
         #
         print("# Coregistered Elevation Models:")
-        print("Coreg Tested DEM (COREG_DEM): {}".format(coreg_dem.input_img))
+        print(
+            "Coreg Tested DEM (COREG_DEM): {}".format(
+                coreg_dem_to_align.input_img
+            )
+        )
         print("Coreg Reference DEM (COREG_REF): {}".format(coreg_ref.input_img))
         print(
             "--> Final diff DEM (COREG_REF - COREG_DEM): {}".format(
@@ -538,7 +587,7 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
     #
     compute_stats(
         cfg,
-        coreg_dem,
+        coreg_dem_to_align,
         coreg_ref,
         final_dh,
         display=display,
@@ -551,9 +600,9 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
     compute_report(
         cfg,
         steps,
-        dem.input_img,
-        ref.input_img,
-        coreg_dem.input_img,
+        dem_to_align_orig.input_img,
+        ref_orig.input_img,
+        coreg_dem_to_align.input_img,
         coreg_ref.input_img,
     )
 

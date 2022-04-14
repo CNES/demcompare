@@ -31,12 +31,12 @@ import numpy as np
 import xarray as xr
 
 # DEMcompare imports
-from .img_tools import (
-    compute_offset_bounds,
-    save_tif,
-    translate,
+from .dem_loading_tools import (
+    load_dem,
+    save_dataset_to_tif,
     translate_to_coregistered_geometry,
 )
+from .dem_projection_tools import compute_offset_bounds, translate_dataset
 from .nuth_kaab_universal_coregistration import nuth_kaab_lib
 from .output_tree_design import get_out_dir, get_out_file_path
 
@@ -94,9 +94,9 @@ def coregister_with_nuth_and_kaab(
     # Translate the georef-origin of coreg DEMs based on x_off and y_off values
     #   -> this makes both dems be on the same intermediate georef origin
     #
-    coreg_dem = translate(coreg_dem, x_off, -y_off)
-    coreg_ref = translate(coreg_ref, x_off, -y_off)
-    final_dh = translate(final_dh, x_off, -y_off)
+    coreg_dem = translate_dataset(coreg_dem, x_off, -y_off)
+    coreg_ref = translate_dataset(coreg_ref, x_off, -y_off)
+    final_dh = translate_dataset(final_dh, x_off, -y_off)
 
     # Eventually we return nuth and kaab results :
     return (
@@ -162,15 +162,15 @@ def coregister_and_compute_alti_diff(
         raise NameError("coregistration method unsupported")
 
     # Saves output coreg DEM to file system
-    coreg_dem = save_tif(
+    coreg_dem = save_dataset_to_tif(
         coreg_dem,
         os.path.join(cfg["outputDir"], get_out_file_path("coreg_DEM.tif")),
     )
-    coreg_ref = save_tif(
+    coreg_ref = save_dataset_to_tif(
         coreg_ref,
         os.path.join(cfg["outputDir"], get_out_file_path("coreg_REF.tif")),
     )
-    final_dh = save_tif(
+    final_dh = save_dataset_to_tif(
         final_dh,
         os.path.join(cfg["outputDir"], get_out_file_path("final_dh.tif")),
     )
@@ -201,7 +201,18 @@ def coregister_and_compute_alti_diff(
 
     # -> for the coordinate bounds to apply the offsets
     #    to the original DSM with GDAL
-    ulx, uly, lrx, lry = compute_offset_bounds(-dy_nuth, dx_nuth, cfg)
+    orig_dem_to_align = load_dem(
+        cfg["inputDSM"]["path"],
+        input_roi=(
+            cfg["inputDSM"]["roi"] if "roi" in cfg["inputDSM"] else False
+        ),
+    )
+    ulx, uly, lrx, lry = compute_offset_bounds(
+        -dy_nuth,
+        dx_nuth,
+        orig_dem_to_align["im"].shape,
+        orig_dem_to_align["trans"].data,
+    )
     cfg["plani_results"]["gdal_translate_bounds"] = {
         "ulx": round(ulx, 5),
         "uly": round(uly, 5),

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# pylint:disable=too-many-lines
 # coding: utf8
 #
 # Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
@@ -45,7 +46,11 @@ from matplotlib import gridspec
 from scipy.optimize import curve_fit
 
 # DEMcompare imports
-from .img_tools import read_image, read_img_from_array, save_tif
+from .dem_loading_tools import (
+    create_dataset_from_dataset,
+    read_image,
+    save_dataset_to_tif,
+)
 from .output_tree_design import get_out_file_path
 from .partition import FusionPartition, NotEnoughDataToPartitionError, Partition
 
@@ -113,11 +118,11 @@ def compute_stats_array(
     cfg["stats_opts"]["plot_real_hists"] = False
     cfg["stats_opts"]["remove_outliers"] = False
 
-    dem_a3d = read_img_from_array(dem, no_data=dem_nodata)
-    ref_a3d = read_img_from_array(ref, no_data=ref_nodata)
+    dem_a3d = create_dataset_from_dataset(dem, no_data=dem_nodata)
+    ref_a3d = create_dataset_from_dataset(ref, no_data=ref_nodata)
 
     final_dh = dem_a3d["im"].data - ref_a3d["im"].data
-    final_dh_a3d = read_img_from_array(final_dh)
+    final_dh_a3d = create_dataset_from_dataset(final_dh)
 
     if final_json_file is None:
         final_json_file = cfg["outputDir"] + "/final_stats.json"
@@ -703,7 +708,7 @@ def dem_diff_pdf_plot(
     Computes the difference histogram.
 
     The .tif output histogram plot is centered around 0
-    and bounded over [- |percentile98|, |percentile98|]
+    and bounded over [- abs( percentile98 ), abs( percentile98 ) ]
     The output csv file has all the data.
 
     :param dem_diff: difference dem
@@ -786,7 +791,7 @@ def dem_diff_pdf_plot(
     mpl_pyplot.close(fig0)
 
 
-def plot_histograms(  # noqa: C901
+def plot_histograms(  # noqa: C901 # pylint:disable=too-many-arguments
     input_array: np.ndarray,
     bin_step: float = 0.1,
     to_keep_mask: np.ndarray = None,
@@ -1453,7 +1458,7 @@ def alti_diff_stats(
         #   (string to create) and generate_report() concatenate generated pages
 
 
-def save_as_graphs_and_tables(
+def save_as_graphs_and_tables(  # pylint:disable=too-many-arguments
     data_array: np.ndarray,
     stats_dir: str,
     outplotdir: str,
@@ -1668,7 +1673,9 @@ def wave_detection(cfg: Dict, dh):
             get_out_file_path("dh_{}_wave_detection.tif".format(dim)),
         )
 
-        georaster = read_img_from_array(
+        georaster = create_dataset_from_dataset(
             res[dim], from_dataset=dh, no_data=-32768
         )
-        save_tif(georaster, cfg["stats_results"]["images"][dim]["path"])
+        save_dataset_to_tif(
+            georaster, cfg["stats_results"]["images"][dim]["path"]
+        )

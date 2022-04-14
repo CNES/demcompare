@@ -9,8 +9,10 @@ A new section Unreleased is opened then for next dev phase.
 ### Added
 
 ### Changed
+- Refactoring image_tools. [#76]
 
 ### Fixed
+- Correct pixel filtering and add exception when outside of the geoid scope. [#86]
 
 ## 0.4.0 Bugs
 

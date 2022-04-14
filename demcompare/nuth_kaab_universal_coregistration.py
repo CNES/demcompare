@@ -42,7 +42,12 @@ from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
 
 # DEMcompare imports
-from .img_tools import load_dems, read_img_from_array, save_tif
+from .dem_loading_tools import (
+    create_dataset_from_dataset,
+    load_dem,
+    reproject_dems,
+    save_dataset_to_tif,
+)
 
 
 def grad2d(dem: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -379,16 +384,16 @@ def nuth_kaab_lib(
     )
 
     # Generate datasets, use the georef-grid from the dsm
-    coreg_dsm_dataset = read_img_from_array(
+    coreg_dsm_dataset = create_dataset_from_dataset(
         coreg_dsm, from_dataset=dsm_dataset, no_data=-32768
     )
-    coreg_ref_dataset = read_img_from_array(
+    coreg_ref_dataset = create_dataset_from_dataset(
         coreg_ref, from_dataset=dsm_dataset, no_data=-32768
     )
-    initial_dh_dataset = read_img_from_array(
+    initial_dh_dataset = create_dataset_from_dataset(
         initial_dh, from_dataset=dsm_dataset, no_data=-32768
     )
-    final_dh_dataset = read_img_from_array(
+    final_dh_dataset = create_dataset_from_dataset(
         coreg_ref - coreg_dsm, from_dataset=dsm_dataset, no_data=-32768
     )
 
@@ -453,14 +458,11 @@ def run(
     #
     # Create datasets
     #
-    reproj_dem, reproj_ref = load_dems(
-        dsm_to,
-        dsm_from,
-        ref_nodata=nan_dsm_from,
-        dem_nodata=nan_dsm_to,
-        load_data=False,
-    )
+    ref_orig = load_dem(dsm_to, nodata=nan_dsm_from)
 
+    dem_orig = load_dem(dsm_from, nodata=nan_dsm_to)
+
+    reproj_dem, reproj_ref = reproject_dems(dem_orig, ref_orig)
     #
     # Coregister and compute diff
     #
@@ -480,15 +482,15 @@ def run(
     # Save coreg dem
     #
     if outfile:
-        save_tif(coreg_dsm_dataset, "./coreg_dsm.tif")
-        save_tif(coreg_ref_dataset, "./coreg_ref.tif")
+        save_dataset_to_tif(coreg_dsm_dataset, "./coreg_dsm.tif")
+        save_dataset_to_tif(coreg_ref_dataset, "./coreg_ref.tif")
 
     #
     # Save diffs
     #
     if save_diff:
-        save_tif(init_dh_dataset, "./initial_dh.tif")
-        save_tif(final_dh_dataset, "./final_dh.tif")
+        save_dataset_to_tif(init_dh_dataset, "./initial_dh.tif")
+        save_dataset_to_tif(final_dh_dataset, "./final_dh.tif")
 
     return xoff, yoff, zoff
 

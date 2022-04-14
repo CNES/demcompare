@@ -36,7 +36,7 @@ import numpy as np
 from astropy import units as u
 
 # DEMcompare imports
-from .img_tools import read_img
+from .dem_loading_tools import load_dem
 from .output_tree_design import supported_OTD
 
 
@@ -441,9 +441,9 @@ def divide_images(cfg: dict):
     """
 
     # compute biggest roi
-    dem = read_img(
+    dem = load_dem(
         cfg["inputDSM"]["path"],
-        load_data=(cfg["roi"] if "roi" in cfg else False),
+        input_roi=(cfg["roi"] if "roi" in cfg else False),
     )
 
     sizes = {"w": dem["im"].data.shape[1], "h": dem["im"].data.shape[0]}
