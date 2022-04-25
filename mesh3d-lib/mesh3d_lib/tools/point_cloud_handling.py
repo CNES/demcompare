@@ -45,7 +45,6 @@ def ply2df(filepath: str):
 def df2las(filepath: str, df: pd.DataFrame, metadata: Union[laspy.LasHeader, None] = None):
     """
     This method serializes a pandas DataFrame in .las
-    A METTRE DANS TOOLS
     """
     if filepath.split(".")[-1] not in ["las", "laz"]:
         raise ValueError("Filepath extension is invalid. It should either be 'las' or 'laz'.")
@@ -55,17 +54,44 @@ def df2las(filepath: str, df: pd.DataFrame, metadata: Union[laspy.LasHeader, Non
 
     if metadata is not None:
         header = metadata
-    else:
-        # ~ print(dir(header))
-        header.x_scale = 1
-        header.y_scale = 1
-        header.z_scale = 1
+
+    # Compute normalization parameters specific to the LAS format (data is saved as an int32)
+    # 32 bits signed ==> 2**31 values (last bit for sign + or -)
+    number_values = 2 ** 32
+
+    # x_max = s * X_max + o <==> x_max = 2 ** 31 * s + o
+    # x_min = s * X_min + o <==> x_min = - 2 ** 31 * s + o
+
+    def get_offset(arr_max, arr_min):
+        return (arr_max + arr_min) / 2
+
+    def get_scale(arr_max, arr_min):
+        return (arr_max - arr_min) / number_values
+
+    def apply_scale_offset(arr, scale, offset, is_inverse=False, clip_min=None, clip_max=None):
+        if not is_inverse:
+            # X ==> x
+            return np.clip(arr * scale + offset, a_min=clip_min, a_max=clip_max)
+        else:
+            # x ==> X
+            return np.clip((arr - offset) / scale, a_min=clip_min, a_max=clip_max)
+
+    header.scales = [get_scale(df[coord].max(), df[coord].min()) for coord in ["x", "y", "z"]]
+    header.offsets = [get_offset(df[coord].max(), df[coord].min()) for coord in ["x", "y", "z"]]
 
     # Fill data points
     las = laspy.LasData(header)
-    las.X = df["x"]
-    las.Y = df["y"]
-    las.Z = df["z"]
+
+    # coords scaled in int32
+    [las.X, las.Y, las.Z] = [(apply_scale_offset(df[coord],
+                                                 header.scales[k],
+                                                 header.offsets[k],
+                                                 is_inverse=True,
+                                                 clip_min=- 2 ** 31,
+                                                 clip_max=2 ** 31)).astype(np.int32)
+                             for k, coord in enumerate(["x", "y", "z"])]
+
+    # if there are colors assigned
     if "red" in df:
         las.red = df["red"]
     if "green" in df:
