@@ -5,8 +5,11 @@ Filtering methods aiming at removing outliers or groups of outliers from the poi
 import pandas as pd
 import numpy as np
 import open3d as o3d
-from cars.steps import points_cloud
 import laspy
+from scipy.spatial import KDTree
+
+from cars.steps import points_cloud
+# ~ from mesh3d_lib.tools import point_cloud_handling
 
 
 def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=True):
@@ -48,7 +51,7 @@ def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=True):
     
     # serialize cloud in las
     if (serialize):
-        serializeDataFrameToLAS(new_cloud, "/home/data/radiuso3dpyramidede40_3_5f.las")
+        serializeDataFrameToLAS(new_cloud, "/home/data/radiuso3dpyramidedekmin_04.las")
 
     return new_cloud
 
@@ -72,7 +75,7 @@ def small_components_filtering_outliers_cars(cloud, radius, nb_points, serialize
 
     # serialize cloud in las
     if (serialize):
-        serializeDataFrameToLAS(pos, "/home/data/radiuscarspyramidedefault.las")
+        serializeDataFrameToLAS(pos, "/home/data/radiuscarstoulouuse.las")
 
     return pos
 
@@ -150,8 +153,38 @@ def statistical_filtering_outliers_o3d(cloud, nb_neighbors, std_factor, serializ
         serializeDataFrameToLAS(new_cloud, "/home/data/statso3dpyramide.las")
 
     return new_cloud
+
+def local_density_analysis(cloud, nb_neighbors, serialize=True):
     
-    
+    if not (isinstance(cloud, pd.DataFrame) or isinstance(cloud, np.ndarray)):
+        raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a numpy " 
+                        f"ndarray.")
+    cloud_xyz = cloud.loc[:, ["x", "y", "z"]].values
+    cloud_tree = KDTree(cloud_xyz)
+    remove_pts = []
+    for idx, _ in enumerate(cloud_xyz):
+        # ~ if idx == 1:
+        distances, pts = cloud_tree.query(cloud_xyz[idx], nb_neighbors)
+        # ~ print(len(pts))
+        # ~ print(pts)
+        # ~ print(distances)
+        mean_neighbors_distances = np.sum(distances) /nb_neighbors
+        # ~ print(mean_neighbors_distances)
+        density = (1/nb_neighbors)* np.sum(np.exp(-distances/mean_neighbors_distances))
+        # ~ print(density)
+        proba = 1-density
+        print(proba)
+        delta = 0.1*mean_neighbors_distances
+        # ~ print(delta)
+        if proba > delta:
+            remove_pts.append(idx)
+    print(len(cloud))
+    print(len(remove_pts))
+    cloud = cloud.drop(index=cloud.index.values[remove_pts])
+    print(len(cloud))
+    if (serialize):
+        serializeDataFrameToLAS(cloud, "/home/data/localdensity.las")
+            
 
 
 def serializeDataFrameToLAS(cloud, pathout):
@@ -184,22 +217,32 @@ def main(df):
     xy = df[["x","y"]]
     densite = len(xy) / (xy.min()-xy.max()).prod()
     # radius and nb_points for cars method
+    print(densite)
+    r=5
+    alpha=0.4
+    kmoy = np.pi*densite*(r**2)
+    print(kmoy)
+    kmin=alpha*kmoy
     radius = np.sqrt(densite)
-    nb_pts = densite*80
+    nb_pts = densite*np.pi*((radius*3)**2)
+    print(int(kmin))
     print(nb_pts)
     print(radius)
+    
+
 
     print("tot", len(df))
-    cloudo3 = radius_filtering_outliers_o3(df, 3.5, 40)
-    # ~ cloudcars = small_components_filtering_outliers_cars(df, 3.0, 50)
+    # ~ cloudo3 = radius_filtering_outliers_o3(df, 5, int(kmin))
+    # ~ cloudcars = small_components_filtering_outliers_cars(df, radius, nb_pts)
     # ~ cloudcarstat = statistical_filtering_outliers_cars(df, 50, 0.1)
     # ~ cloudo3stat = statistical_filtering_outliers_o3d(df, 3, 10)
+    local_density_analysis(df, 50, serialize=True)
     # ~ print(len(cloudo3))
     # ~ print(len(cloudcars))
     # ~ print(len(cloudcarstat))
     # ~ print(len(cloudo3stat))
 
 if __name__ == "__main__":
-    fileName ='/home/code/stage/pyramide-points_color.pkl'
+    fileName ='/home/code/stage/toulouse-points_color.pkl'
     df = pd.read_pickle(fileName)
     main(df)
