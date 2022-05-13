@@ -142,6 +142,5 @@ dmypy.json
 cython_debug/
 
 # Custom folders to ignore
-cars/
 docker_archives/
-cars-mesh/
+cars*
