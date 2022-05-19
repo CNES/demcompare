@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
-# pylint:disable=too-many-lines
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+#
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -18,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# pylint:disable=too-many-lines, too-many-branches
 """
 Mainly contains the Partition class.
 A partition defines a way to partition the DEMs alti differences.
@@ -37,17 +38,18 @@ import matplotlib
 import matplotlib.pyplot as mpl_pyplot
 import numpy as np
 import xarray as xr
+from scipy.interpolate import RectBivariateSpline
 
 # DEMcompare imports
-from .dem_loading_tools import (
-    create_dataset_from_dataset,
+from .dem_tools import (
+    SamplingSourceParameter,
+    create_dem,
     load_dem,
     reproject_dems,
-    save_dataset_to_tif,
-    translate_to_coregistered_geometry,
+    save_dem,
 )
-from .dem_projection_tools import get_slope, translate_dataset
 from .output_tree_design import get_out_dir
+from .slope import get_slope
 
 
 class NotEnoughDataToPartitionError(Exception):
@@ -90,6 +92,8 @@ class Partition:
         coreg_dsm: xr.Dataset,
         coreg_ref: xr.Dataset,
         output_dir: str,
+        sampling_source: str = SamplingSourceParameter.DEM_TO_ALIGN.value,
+        # Disable for unreformable line_too_long
         geo_ref: bool = True,
         dec_ref_path: str = None,
         dec_dem_path: str = None,
@@ -112,6 +116,8 @@ class Partition:
         :type coreg_ref: xr.Dataset
         :param output_dir: output directory
         :type output_dir: str
+        :param sampling_source: sampling source for reprojection
+        :type sampling_source: str
         :param geo_ref: georeference
         :type geo_ref: bool
         :param dec_ref_path: decorelated ref path
@@ -153,14 +159,15 @@ class Partition:
 
         # Store coreg path (TODO why?)
         self.coreg_path = {"ref": coreg_ref, "dsm": coreg_dsm}
-        self._coreg_shape = coreg_ref["im"].data.shape
+        self._coreg_shape = coreg_ref["image"].data.shape
 
         # Get coregistration offsets
         self.dx = dx
-        self.dy = dy
+        # Negative because the cfg file saves the negative of dy
+        self.dy = -dy
         self.init_disp_x = init_disp_x
         self.init_disp_y = init_disp_y
-
+        self.sampling_source = sampling_source
         # Get uncoregistred ref and dem path
         self.dec_ref_path = dec_ref_path
         self.dec_dem_path = dec_dem_path
@@ -214,8 +221,8 @@ class Partition:
         """
         self._sets_masks = [
             ~(
-                np.isnan(self.coreg_path["dsm"]["im"].data)
-                * np.isnan(self.coreg_path["ref"]["im"].data)
+                np.isnan(self.coreg_path["dsm"]["image"].data)
+                * np.isnan(self.coreg_path["ref"]["image"].data)
             )
         ]
         self._sets_colors = None
@@ -432,18 +439,24 @@ class Partition:
         # Compute ref slope
         self.ref_path = os.path.join(self.stats_dir, "Ref_support.tif")
         slope_ref = get_slope(coreg_ref, degree=False)
-        slope_ref_dataset = create_dataset_from_dataset(
-            slope_ref, from_dataset=coreg_ref, no_data=self.nodata
+        slope_ref_dataset = create_dem(
+            slope_ref,
+            transform=coreg_ref.georef_transform.data,
+            img_crs=coreg_ref.crs,
+            no_data=self.nodata,
         )
-        save_dataset_to_tif(slope_ref_dataset, self.ref_path)
+        save_dem(slope_ref_dataset, self.ref_path)
 
         # Compute dsm slope
         self.dsm_path = os.path.join(self.stats_dir, "DSM_support.tif")
         slope_dsm = get_slope(coreg_dsm, degree=False)
-        slope_dsm_georaster = create_dataset_from_dataset(
-            slope_dsm, from_dataset=coreg_dsm, no_data=self.nodata
+        slope_dsm_georaster = create_dem(
+            slope_dsm,
+            transform=coreg_dsm.georef_transform.data,
+            img_crs=coreg_dsm.crs,
+            no_data=self.nodata,
         )
-        save_dataset_to_tif(slope_dsm_georaster, self.dsm_path)
+        save_dem(slope_dsm_georaster, self.dsm_path)
 
     def create_map(self, slope_img: str, type_slope: str):
         """
@@ -459,34 +472,35 @@ class Partition:
         # use radiometric ranges to classify
         slope = load_dem(slope_img)
         rad_range = list(self.classes.values())
-        map_img = create_dataset_from_dataset(
-            np.ones(slope["im"].data.shape) * self.nodata,
-            from_dataset=slope,
+        map_img = create_dem(
+            np.ones(slope["image"].data.shape) * self.nodata,
+            transform=slope.georef_transform.data,
+            img_crs=slope.crs,
             no_data=self.nodata,
         )
-        map_img = save_dataset_to_tif(map_img, self.ref_path)
+        map_img = save_dem(map_img, self.ref_path)
 
         for idx, _ in enumerate(rad_range):
             if idx == len(rad_range) - 1:
-                map_img["im"].data[
+                map_img["image"].data[
                     np.where(
-                        (~np.isnan(slope["im"].data))
-                        * (slope["im"].data >= rad_range[idx])
+                        (~np.isnan(slope["image"].data))
+                        * (slope["image"].data >= rad_range[idx])
                     )
                 ] = rad_range[idx]
             else:
-                map_img["im"].data[
+                map_img["image"].data[
                     np.where(
-                        (~np.isnan(slope["im"].data))
-                        * (slope["im"].data >= rad_range[idx])
-                        & (slope["im"].data < rad_range[idx + 1])
+                        (~np.isnan(slope["image"].data))
+                        * (slope["image"].data >= rad_range[idx])
+                        & (slope["image"].data < rad_range[idx + 1])
                     )
                 ] = rad_range[idx]
 
         self.map_path[type_slope] = os.path.join(
             self.stats_dir, type_slope + "_support_map.tif"
         )
-        save_dataset_to_tif(map_img, self.map_path[type_slope])
+        save_dem(map_img, self.map_path[type_slope])
 
     def _create_set_indices(self):
         """
@@ -507,7 +521,7 @@ class Partition:
             sets_indices[support] = []
             if self.reproject_path[support]:
                 img_to_classify = load_dem(self.reproject_path[support])[
-                    "im"
+                    "image"
                 ].data
 
                 # calculate sets_indices of partition
@@ -659,94 +673,117 @@ class Partition:
                         self.reproject_path[map_name] = os.path.join(
                             self.stats_dir, map_name + "_support_map_rectif.tif"
                         )
-                        save_dataset_to_tif(
-                            map_img, self.reproject_path[map_name]
-                        )
+                        save_dem(map_img, self.reproject_path[map_name])
                     # If classification_layers, we need to reproject and apply
                     # the nuth et kaab offsets for the layer to be coregistered
                     # with coreg dsm and coreg ref
                     if self._type_layer == "classification_layers":
+
                         if map_name == "dsm":
                             ref_orig = load_dem(self.dec_ref_path)
                             map_dataset = load_dem(map_path)
-                            rectified_map_dataset, ref = reproject_dems(
-                                map_dataset, ref_orig
+                            (
+                                rectified_map_dataset,
+                                ref,  # pylint:disable=unused-variable
+                                adaptation_factor,
+                            ) = reproject_dems(
+                                map_dataset,
+                                ref_orig,
+                                self.init_disp_x,
+                                self.init_disp_y,
+                                self.sampling_source,
                             )
-                            # Resample images to pre-coregistered geometry
-                            # according to the initial disp
-                            if self.init_disp_x != 0 or self.init_disp_y != 0:
-                                (
-                                    rectified_map_dataset,
-                                    ref,
-                                ) = translate_to_coregistered_geometry(
-                                    rectified_map_dataset,
-                                    ref,
-                                    self.init_disp_x,
-                                    self.init_disp_y,
-                                )
+
+                            rectified_map = rectified_map_dataset["image"].data
+
                         elif map_name == "ref":
                             map_dataset = load_dem(map_path)
                             dem_orig = load_dem(self.dec_dem_path)
-                            dem, rectified_map_dataset = reproject_dems(
-                                dem_orig, map_dataset
+                            (
+                                dem,
+                                rectified_map_dataset,
+                                adaptation_factor,
+                            ) = reproject_dems(
+                                dem_orig,
+                                map_dataset,
+                                self.init_disp_x,
+                                self.init_disp_y,
+                                self.sampling_source,
                             )
-                            # Resample images to pre-coregistered geometry
-                            # according to the initial disp
-                            if self.init_disp_x != 0 or self.init_disp_y != 0:
-                                (
-                                    dem,
-                                    rectified_map_dataset,
-                                ) = translate_to_coregistered_geometry(
-                                    dem,
-                                    rectified_map_dataset,
-                                    self.init_disp_x,
-                                    self.init_disp_y,
-                                )
+                            # Adapt offset to the reprojected ref
+                            # Divide since we want to adapt the offset
+                            # to the reference resolution
+                            factor_x, factor_y = adaptation_factor
+                            self.dx = self.dx / factor_x
+                            self.dy = self.dy / factor_y
+                            # Compute interpolation for the rectified map to be
+                            # at the same grid as interm_coreg_REF.tif
+                            xgrid = np.arange(dem["image"].data.shape[1])
+                            ygrid = np.arange(dem["image"].data.shape[0])
+                            nan_maskval = np.isnan(
+                                rectified_map_dataset["image"].data
+                            )
+                            dsm_from_filled = np.where(
+                                nan_maskval,
+                                -9999,
+                                rectified_map_dataset["image"].data,
+                            )
+                            spline_1 = RectBivariateSpline(
+                                ygrid, xgrid, dsm_from_filled, kx=1, ky=1
+                            )
+                            spline_2 = RectBivariateSpline(
+                                ygrid, xgrid, nan_maskval, kx=1, ky=1
+                            )
+                            rectified_map = spline_1(
+                                ygrid - self.dy, xgrid + self.dx
+                            )
+                            nanval_new = spline_2(
+                                ygrid - self.dy, xgrid + self.dx
+                            )
+                            rectified_map[nanval_new != 0] = np.nan
 
                         # Update map with Nuth et kaab offsets
                         map_img = rectified_map_dataset.copy()
+
                         if self.dx >= 0:
-                            rectified_map = rectified_map_dataset["im"].data[
+                            rectified_map = rectified_map[
                                 :,
-                                0 : map_img["im"].data.shape[1]
+                                0 : map_img["image"].data.shape[1]
                                 - int(np.ceil(self.dx)),
                             ]
                         else:
-                            rectified_map = rectified_map_dataset["im"].data[
+                            rectified_map = rectified_map[
                                 :,
                                 int(np.floor(-self.dx)) : map_img[
-                                    "im"
+                                    "image"
                                 ].data.shape[1],
                             ]
                         if -self.dy >= 0:
                             rectified_map = rectified_map[
-                                0 : map_img["im"].data.shape[0]
+                                0 : map_img["image"].data.shape[0]
                                 - int(np.ceil(-self.dy)),
                                 :,
                             ]
                         else:
                             rectified_map = rectified_map[
                                 int(np.floor(self.dy)) : map_img[
-                                    "im"
+                                    "image"
                                 ].data.shape[0],
                                 :,
                             ]
                         # Generate dataset
-                        rectified_map_dataset = create_dataset_from_dataset(
-                            rectified_map, from_dataset=map_img, no_data=-32768
-                        )
-                        # Translate the georef-origin of rectified_map based
-                        # on x_off and y_off values
-                        #   -> this makes dem coregistered on ref
-                        rectified_map_dataset = translate_dataset(
-                            rectified_map_dataset, self.dx, -self.dy
+                        rectified_map_dataset = create_dem(
+                            rectified_map,
+                            transform=map_img.georef_transform.data,
+                            img_crs=map_img.crs,
+                            no_data=-32768,
                         )
 
                         self.reproject_path[map_name] = os.path.join(
                             self.stats_dir, map_name + "_support_map_rectif.tif"
                         )
 
-                        save_dataset_to_tif(
+                        save_dem(
                             rectified_map_dataset, self.reproject_path[map_name]
                         )
                 else:
@@ -834,7 +871,7 @@ class FusionPartition(Partition):
                     self.stats_dir, "{}_fusion_layer.tif".format(df_k)
                 )
 
-                save_dataset_to_tif(
+                save_dem(
                     self.partitions[0].coreg_path["ref"],
                     self.map_path[df_k],
                     new_array=map_fusion,
@@ -1007,8 +1044,11 @@ def create_fusion(
         sets_fusion.append((new_label_name, np.where(mask_fusion)))
 
     # save map fusion
-    map_return = create_dataset_from_dataset(
-        map_fusion, from_dataset=layers_obj, no_data=-32768
+    map_return = create_dem(
+        map_fusion,
+        transform=layers_obj.georef_transform.data,
+        img_crs=layers_obj.crs,
+        no_data=-32768,
     )
 
     return map_return, sets_fusion, sets_colors / 255.0

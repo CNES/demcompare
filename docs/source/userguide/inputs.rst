@@ -14,57 +14,50 @@ Here is the list of the parameters of the input configuration file and its assoc
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | Name                                                   | Description                                     | Type        | Default value       | Required |
 +========================================================+=================================================+=============+=====================+==========+
-| *outputDir*                                            | Output directory path                           | string      |                     | Yes      |
+| *output_dir*                                           | Output directory path                           | string      |                     | Yes      |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputDSM path*                                        | Path of the input DSM                           | string      |                     | Yes      |
+| *input_dem_to_align path*                              | Path of the input DSM                           | string      |                     | Yes      |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputDSM zunit*                                       | Z axes unit of the input DSM                    | string      |       m             | No       |
+| *input_dem_to_align zunit*                             | Z axes unit of the input DSM                    | string      |       m             | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputDSM georef*                                      | | Georef of the input DSM                       | string      |      "WGS84"        | No       |
-|                                                        | | If set to "geoid", the according offset       |             |                     |          |
-|                                                        | | will be added.                                |             |                     |          |
-|                                                        | | If set to "geoid" and no "geoid_path"         |             |                     |          |
+| *input_dem_to_align geoid_georef*                      | | True if the georef of the input DSM           | bool        |     False           | No       |
+|                                                        | | is "geoid". In that case, the according offset|             |                     |          |
+|                                                        | | will be added to the .crs of the raster.      |             |                     |          |
+|                                                        | | If set to "geoid_georef" and no "geoid_path"  |             |                     |          |
 |                                                        | | is given, then EGM96 geoid                    |             |                     |          |
 |                                                        | | will be used by default.                      |             |                     |          |
-|                                                        | | Please note that this parameter is only       |             |                     |          |
-|                                                        | | used if set to "geoid",                       |             |                     |          |
-|                                                        | | since the .crs of the raster                  |             |                     |          |
-|                                                        | | is used to obtain the georef.                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputDSM geoid_path*                                  | Geoid path of the input DSM                     | string      |      None           | No       |
+| *input_dem_to_align geoid_path*                        | Geoid path of the input DSM                     | string      |      None           | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputDSM nodata*                                      | No data value of the input DSM                  | int         |        None         | No       |
+| *input_dem_to_align nodata*                            | No data value of the input DSM                  | int         |        None         | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputDSM roi*                                         | Processed Region of interest of the input DSM   | Dict        |        None         | No       |
+| *input_dem_to_align roi*                               | Processed Region of interest of the input DSM   | Dict        |        None         | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputRef path*                                        | Path of the input Ref                           | string      |                     | Yes      |
+| *input_ref path*                                       | Path of the input Ref                           | string      |                     | Yes      |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputRef zunit*                                       | Z axes unit of the input Ref                    | string      |       m             | No       |
+| *input_ref zunit*                                      | Z axes unit of the input Ref                    | string      |       m             | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputRef georef*                                      | | Georef of the input Ref                       | string      |      "WGS84"        | No       |
-|                                                        | | If set to "geoid", the according offset       |             |                     |          |
-|                                                        | | will be added.                                |             |                     |          |
-|                                                        | | If set to "geoid" and no "geoid_path"         |             |                     |          |
+| *input_ref geoid_georef*                               | | True if the georef of the input Ref           | bool        |     False           | No       |
+|                                                        | | is "geoid". In that case, the according offset|             |                     |          |
+|                                                        | | will be added to the .crs of the raster.      |             |                     |          |
+|                                                        | | If set to "geoid_georef" and no "geoid_path"  |             |                     |          |
 |                                                        | | is given, then EGM96 geoid                    |             |                     |          |
 |                                                        | | will be used by default.                      |             |                     |          |
-|                                                        | | Please note that this parameter is only       |             |                     |          |
-|                                                        | | used if set to "geoid",                       |             |                     |          |
-|                                                        | | since the .crs of the raster                  |             |                     |          |
-|                                                        | | is used to obtain the georef.                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputRef geoid_path*                                  | Geoid path of the input Ref                     | string      |    None             | No       |
+| *input_ref geoid_path*                                 | Geoid path of the input Ref                     | string      |    None             | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *inputRef nodata*                                      | No data value of the input Ref                  | int         |     None            | No       |
+| *input_ref nodata*                                     | No data value of the input Ref                  | int         |     None            | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *plani_opts corregistration_method*                    | Planimetric corregistration method              | string      | nuth_kaab           | No       |
+| *coregistration method_name*                           | Planimetric coregistration method               | string      | nuth_kaab           | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *plani_opts corregistration_iterations*                | Planimetric corregistration method              | int         | 6                   | No       |
+| *coregistration number_of_iterations*                  | | Number of iterations                          | int         | 6                   | No       |
+|                                                        | | of the coregistration method                  |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *plani_opts disp_init x*                               | | Planimetric corregistration                   | int         |  0                  | No       |
-|                                                        | | initial disparity x                           |             |                     |          |
+| *coregistration estimated_initial_shift_x*             | | Estimated initial x                           | int         |  0                  | No       |
+|                                                        | | coregistration shift                          |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *plani_opts disp_init y*                               | | Planimetric corregistration                   | int         |  0                  | No       |
-|                                                        | | initial disparity y                           |             |                     |          |
+| *coregistration estimated_initial_shift_y*             | | Estimated initial y                           | int         |  0                  | No       |
+|                                                        | | coregistration shift                          |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *stats_opts elevation_thresholds list*                 | | List of elevation thresholds for              | list[float] |[0.5, 1, 3]          | No       |
 |                                                        | | statistics                                    |             |                     |          |

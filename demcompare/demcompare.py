@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
-# PYTHON_ARGCOMPLETE_OK
 #
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -19,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# PYTHON_ARGCOMPLETE_OK
 """
 demcompare aims at coregistering and comparing two dsms
 """

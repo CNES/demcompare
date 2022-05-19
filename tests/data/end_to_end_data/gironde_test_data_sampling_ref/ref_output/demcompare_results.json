@@ -1,0 +1,45 @@
+{
+  "alti_results": {
+    "reproj_coreg_ref": {
+      "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_REF.tif",
+      "nodata": -32768,
+      "nb_points": 927936,
+      "nb_valid_points": 927936
+    },
+    "reproj_coreg_dem_to_align": {
+      "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_DEM.tif",
+      "nodata": -32768,
+      "nb_points": 927936,
+      "nb_valid_points": 85312
+    },
+    "dz": {
+      "dz_map_path": "TO/PATH/demcompare/test_output/final_dh.tif",
+      "bias_value": -0.53005,
+      "zunit": "m",
+      "percent": 9.19374,
+      "nodata": -32768,
+      "nb_points": 927936,
+      "nb_valid_points": 85312
+    }
+  },
+  "coregistration_results": {
+    "dx": {
+      "nuth_offset": -1.08642,
+      "unit_nuth_offset": "px",
+      "bias_value": -543.21172,
+      "unit_bias_value": "m"
+    },
+    "dy": {
+      "nuth_offset": -0.22552,
+      "unit_nuth_offset": "px",
+      "bias_value": -112.76041,
+      "unit_bias_value": "m"
+    },
+    "gdal_translate_bounds": {
+      "ulx": 599711.78828,
+      "uly": 5099857.76041,
+      "lrx": 708711.78828,
+      "lry": 4990857.76041
+    }
+  }
+}

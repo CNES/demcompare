@@ -1,0 +1,7 @@
+"Set Name","% Of Valid Points","Max Error","Min Error","Mean Error","Error std","RMSE","Median Error","NMAD","90 percentile"
+"All classes considered",6.25593,55.3683,-49.06409,0.04807,10.07716,10,1.65037,5.33963,17.6937
+"[0%;10%[",6.25593,55.3683,-49.06409,0.04807,10.07716,10,1.65037,5.33963,17.6937
+"[10%;25%[",0.0,nan,nan,nan,nan,nan,nan,nan,nan
+"[25%;50%[",0.0,nan,nan,nan,nan,nan,nan,nan,nan
+"[50%;90%[",0.0,nan,nan,nan,nan,nan,nan,nan,nan
+"[90%;inf[",0.0,nan,nan,nan,nan,nan,nan,nan,nan

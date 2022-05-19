@@ -1,0 +1,43 @@
+{
+  "output_dir": "./test_classification_layer_output/",
+  "input_ref": {
+    "path": "./Gironde.tif",
+    "zunit": "m"
+  },
+  "input_dem_to_align": {
+    "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
+    "zunit": "m",
+    "nodata": -32768
+  },
+  "coregistration": {
+    "method_name": "nuth_kaab",
+    "number_of_iterations": 6,
+    "estimated_initial_shift_x": 0,
+    "estimated_initial_shift_y": 0
+  },
+  "stats_opts": {
+    "remove_outliers": false,
+    "classification_layers": {
+      "Status": {
+        "dsm": "FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF",
+        "classes": {
+          "valid": [
+            0
+          ],
+          "KO": [
+            1
+          ],
+          "Land": [
+            2
+          ],
+          "NoData": [
+            3
+          ],
+          "Outside_detector": [
+            4
+          ]
+        }
+      }
+    }
+  }
+}

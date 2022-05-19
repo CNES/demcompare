@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -27,23 +27,12 @@ If somehow required, this project generator shall be improved to offer some
 level of customization.
 """
 # Standard imports
-import errno
 import os
 import shutil
 import subprocess
 
-
-def mkdir_p(path):
-    """
-    Create a directory without complaining if it already exists.
-    """
-    try:
-        os.makedirs(path)
-    except OSError as exc:  # requires Python > 2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
+# DEMcompare imports
+from .initialization import mkdir_p
 
 
 class SphinxProjectManager:

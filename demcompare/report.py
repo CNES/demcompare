@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -18,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# pylint:disable=too-many-locals, too-many-branches, broad-except
 """
 Generate demcompare report from DEM comparison results (graphs, stats, ...)
 
@@ -35,6 +36,7 @@ import collections
 import csv
 import fnmatch
 import glob
+import logging
 import os
 import sys
 from typing import List
@@ -472,14 +474,14 @@ def generate_report(  # noqa: C901
     try:
         spm.build_project("html")
     except Exception:
-        print(
+        logging.error(
             ("Error when building report as {} output (ignored)".format("html"))
         )
         raise
     try:
         spm.build_project("latexpdf")
     except Exception:
-        print(
+        logging.error(
             ("Error when building report as {} output (ignored)".format("pdf"))
         )
 

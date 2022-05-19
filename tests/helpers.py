@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+#
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -22,7 +23,7 @@ Helpers shared testing generic module:
 contains global shared generic functions for tests/*.py
 """
 
-# Standard imports
+# strm_test_data imports
 import os
 from typing import List
 
@@ -31,7 +32,7 @@ import numpy as np
 import rasterio as rio
 
 # Define tests tolerance
-TEST_TOL = 1e-03
+TEST_TOL = 1e-02
 
 
 def demcompare_test_data_path(test_name: str) -> str:
@@ -45,8 +46,12 @@ def demcompare_test_data_path(test_name: str) -> str:
     # Verify that the current path is well set
     os.chdir(os.path.dirname(__file__))
 
-    # Get absolute path from this file in root_src_demcompare/tests/ + data
-    test_data_folder = os.path.join(os.path.dirname(__file__), "data")
+    # Get absolute path from this file
+    # in root_src_demcompare/tests/ + data/end_to_end_data
+
+    test_data_folder = os.path.join(
+        os.path.dirname(__file__), os.path.join("data", "end_to_end_data")
+    )
     return os.path.join(test_data_folder, test_name)
 
 

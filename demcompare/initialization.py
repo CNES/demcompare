@@ -18,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# pylint:disable=too-many-branches
 """
 Init part of dsm_compare
 This is where high level parameters are checked and default options are set
@@ -28,6 +29,7 @@ TODO: move all init parts of __init__ here for consistency
 import copy
 import errno
 import json
+import logging
 import os
 from typing import Dict, List, Tuple
 
@@ -35,8 +37,10 @@ from typing import Dict, List, Tuple
 import numpy as np
 from astropy import units as u
 
+from .coregistration import Coregistration
+
 # DEMcompare imports
-from .dem_loading_tools import load_dem
+from .dem_tools import load_dem
 from .output_tree_design import supported_OTD
 
 
@@ -85,18 +89,18 @@ def read_config_file(config_file: str) -> Dict[str, dict]:
     :returns: The json dictionary read from file
     :rtype: dict
     """
-    config = {}
     with open(config_file, "r", encoding="utf-8") as _fstream:
         # Load json file
         config = json.load(_fstream)
         config_dir = os.path.abspath(os.path.dirname(config_file))
         # make potential relative paths absolute
-        config["inputRef"]["path"] = make_relative_path_absolute(
-            config["inputRef"]["path"], config_dir
-        )
-        config["inputDSM"]["path"] = make_relative_path_absolute(
-            config["inputDSM"]["path"], config_dir
-        )
+        if "input_ref" in config:
+            config["input_ref"]["path"] = make_relative_path_absolute(
+                config["input_ref"]["path"], config_dir
+            )
+            config["input_dem_to_align"]["path"] = make_relative_path_absolute(
+                config["input_dem_to_align"]["path"], config_dir
+            )
     return config
 
 
@@ -113,7 +117,7 @@ def save_config_file(config_file: str, config: Dict[str, dict]):
         json.dump(config, file_, indent=2)
 
 
-def check_parameters(cfg: Dict):  # noqa: C901
+def check_input_parameters(cfg: Dict):  # noqa: C901
     """
     Checks parameters
 
@@ -121,74 +125,79 @@ def check_parameters(cfg: Dict):  # noqa: C901
     :type cfg: Dict
     """
     # verify that input files are defined
-    if "inputDSM" not in cfg or "inputRef" not in cfg:
+    if "input_dem_to_align" not in cfg or "input_ref" not in cfg:
         raise NameError("ERROR: missing input images description")
 
     # verify if input files are correctly defined :
-    if "path" not in cfg["inputDSM"] or "path" not in cfg["inputRef"]:
+    if (
+        "path" not in cfg["input_dem_to_align"]
+        or "path" not in cfg["input_ref"]
+    ):
         raise NameError("ERROR: missing paths to input images")
-    cfg["inputDSM"]["path"] = os.path.abspath(str(cfg["inputDSM"]["path"]))
-    cfg["inputRef"]["path"] = os.path.abspath(str(cfg["inputRef"]["path"]))
+    cfg["input_dem_to_align"]["path"] = os.path.abspath(
+        str(cfg["input_dem_to_align"]["path"])
+    )
+    cfg["input_ref"]["path"] = os.path.abspath(str(cfg["input_ref"]["path"]))
 
     # verify z units
-    if "zunit" not in cfg["inputDSM"]:
-        cfg["inputDSM"]["zunit"] = "m"
+    if "zunit" not in cfg["input_dem_to_align"]:
+        cfg["input_dem_to_align"]["zunit"] = "m"
     else:
         try:
-            unit = u.Unit(cfg["inputDSM"]["zunit"])
+            unit = u.Unit(cfg["input_dem_to_align"]["zunit"])
         except ValueError as value_error:
             raise NameError(
                 "ERROR: input DSM zunit ({}) not a supported unit".format(
-                    cfg["inputDSM"]["zunit"]
+                    cfg["input_dem_to_align"]["zunit"]
                 )
             ) from value_error
         if unit.physical_type != u.m.physical_type:
             raise NameError(
                 "ERROR: input DSM zunit ({}) not a lenght unit".format(
-                    cfg["inputDSM"]["zunit"]
+                    cfg["input_dem_to_align"]["zunit"]
                 )
             )
-    if "zunit" not in cfg["inputRef"]:
-        cfg["inputRef"]["zunit"] = "m"
+    if "zunit" not in cfg["input_ref"]:
+        cfg["input_ref"]["zunit"] = "m"
     else:
         try:
-            unit = u.Unit(cfg["inputRef"]["zunit"])
+            unit = u.Unit(cfg["input_ref"]["zunit"])
         except ValueError as value_error:
             raise NameError(
                 "ERROR: input Ref zunit ({}) not a supported unit".format(
-                    cfg["inputRef"]["zunit"]
+                    cfg["input_ref"]["zunit"]
                 )
             ) from value_error
         if unit.physical_type != u.m.physical_type:
             raise NameError(
                 "ERROR: input Ref zunit ({}) not a lenght unit".format(
-                    cfg["inputRef"]["zunit"]
+                    cfg["input_ref"]["zunit"]
                 )
             )
 
     # check ref:
-    if "geoid" in cfg["inputDSM"] or "geoid" in cfg["inputRef"]:
-        print(
+    if "geoid" in cfg["input_dem_to_align"] or "geoid" in cfg["input_ref"]:
+        logging.warning(
             "WARNING : geoid option is deprecated. \
             Use georef keyword now with EGM96 or WGS84 value"
         )
     # what we do below is just in case someone used georef as geoid was used...
-    if "georef" in cfg["inputDSM"]:
-        if cfg["inputDSM"]["georef"] is True:
-            cfg["inputDSM"]["georef"] = "EGM96"
+    if "georef" in cfg["input_dem_to_align"]:
+        if cfg["input_dem_to_align"]["georef"] is True:
+            cfg["input_dem_to_align"]["georef"] = "EGM96"
         else:
-            if cfg["inputDSM"]["georef"] is False:
-                cfg["inputDSM"]["georef"] = "WGS84"
+            if cfg["input_dem_to_align"]["georef"] is False:
+                cfg["input_dem_to_align"]["georef"] = "WGS84"
     else:
-        cfg["inputDSM"]["georef"] = "WGS84"
-    if "georef" in cfg["inputRef"]:
-        if cfg["inputRef"]["georef"] is True:
-            cfg["inputRef"]["georef"] = "EGM96"
+        cfg["input_dem_to_align"]["georef"] = "WGS84"
+    if "georef" in cfg["input_ref"]:
+        if cfg["input_ref"]["georef"] is True:
+            cfg["input_ref"]["georef"] = "EGM96"
         else:
-            if cfg["inputRef"]["georef"] is False:
-                cfg["inputRef"]["georef"] = "WGS84"
+            if cfg["input_ref"]["georef"] is False:
+                cfg["input_ref"]["georef"] = "WGS84"
     else:
-        cfg["inputRef"]["georef"] = "WGS84"
+        cfg["input_ref"]["georef"] = "WGS84"
 
     # check output tree design
     if "otd" in cfg and cfg["otd"] not in supported_OTD:
@@ -200,59 +209,19 @@ def check_parameters(cfg: Dict):  # noqa: C901
     cfg["otd"] = "default_OTD"
 
 
-def initialization_plani_opts(cfg: Dict):
+def check_coregistration_conf(cfg: Dict):
     """
-    Initialize the plan2DShift step used
-    to compute plani (x,y) shift between the two DSMs.
-
-    'auto_disp_first_guess' : when set to True,
-    PRO_DecMoy is used to guess disp init and disp range
-    'coregistration_method' : 'correlation' or 'nuth_kaab'
-    if 'correlation' :   'correlator' : 'PRO_Medicis'
-    'disp_init' and 'disp_range' define the area
-    to explore when 'auto_disp_first_guess' is set to False
-
-    Note that disp_init and disp_range are used
-    to define margin when the process is tiled.
+    Check coregistration configuration
 
     :param cfg: configuration dictionary
     :type cfg: Dict
     """
 
-    default_plani_opts = {
-        "coregistration_method": "nuth_kaab",
-        "coregistration_iterations": 6,
-        "disp_init": {"x": 0, "y": 0},
-    }
-
-    if "plani_opts" not in cfg:
-        cfg["plani_opts"] = default_plani_opts
-    else:
-        # we keep users items and add default items he has not set
-        cfg["plani_opts"] = dict(
-            list(default_plani_opts.items()) + list(cfg["plani_opts"].items())
-        )
-
-
-def initialization_alti_opts(cfg: Dict):
-    """
-    Init Altitude options from configuration
-
-    :param cfg: Input demcompare configuration
-    :type cfg: Dict
-    """
-    default_alti_opts = {
-        "egm96-15": {"path": "demcompare/geoid/egm96_15.gtx", "zunit": "m"},
-        "deramping": False,
-    }
-
-    if "alti_opts" not in cfg:
-        cfg["alti_opts"] = default_alti_opts
-    else:
-        # we keep users items and add default items he has not set
-        cfg["alti_opts"] = dict(
-            list(default_alti_opts.items()) + list(cfg["alti_opts"].items())
-        )
+    if "coregistration" in cfg:
+        try:
+            Coregistration(**cfg["coregistration"])
+        except KeyError:
+            logging.error("Please check your coregistration configuration.")
 
 
 def initialization_stats_opts(cfg: Dict):
@@ -355,10 +324,10 @@ def get_tile_dir(cfg: Dict, col_1: int, row_1: int, width: int, height: int):
 
     :param cfg: Input demcompare configuration
     :type cfg: Dict
-    :param col: value of tile first column
-    :type col: int
-    :param row: value of tile first row
-    :type row: int
+    :param col_1: value of tile first column
+    :type col_1: int
+    :param row_1: value of tile first row
+    :type row_1: int
     :param width: width of tile
     :type width: int
     :param height: height of tile
@@ -372,7 +341,7 @@ def get_tile_dir(cfg: Dict, col_1: int, row_1: int, width: int, height: int):
     if "max_digit_tile_col" in cfg:
         max_digit_col = cfg["max_digit_tile_col"]
     return os.path.join(
-        cfg["outputDir"],
+        cfg["output_dir"],
         "tiles",
         "row_{:0{}}_height_{}".format(row_1, max_digit_row, height),
         "col_{:0{}}_width_{}".format(col_1, max_digit_col, width),
@@ -399,7 +368,7 @@ def adjust_tile_size(image_size: int, tile_size: int) -> Tuple[int, int]:
     nty = int(np.round(float(image_size["h"]) / tile_h))
     tile_h = int(np.ceil(float(image_size["h"]) / nty))
 
-    print(("tile size: {} {}".format(tile_w, tile_h)))
+    logging.info(("tile size: {} {}".format(tile_w, tile_h)))
 
     return tile_w, tile_h
 
@@ -442,16 +411,16 @@ def divide_images(cfg: dict):
 
     # compute biggest roi
     dem = load_dem(
-        cfg["inputDSM"]["path"],
+        cfg["input_dem_to_align"]["path"],
         input_roi=(cfg["roi"] if "roi" in cfg else False),
     )
 
-    sizes = {"w": dem["im"].data.shape[1], "h": dem["im"].data.shape[0]}
+    sizes = {"w": dem["image"].data.shape[1], "h": dem["image"].data.shape[0]}
     roi = {
         "x": cfg["roi"]["x"] if "roi" in cfg else 0,
         "y": cfg["roi"]["y"] if "roi" in cfg else 0,
-        "w": dem["im"].data.shape[1],
-        "h": dem["im"].data.shape[0],
+        "w": dem["image"].data.shape[1],
+        "h": dem["image"].data.shape[0],
     }
 
     # list tiles coordinates
@@ -483,19 +452,18 @@ def divide_images(cfg: dict):
         tile_cfg = copy.deepcopy(cfg)
         col, row, width, height = tile["coordinates"]
         tile_cfg["roi"] = {"x": col, "y": row, "w": width, "h": height}
-        tile_cfg["outputDir"] = tile["dir"]
+        tile_cfg["output_dir"] = tile["dir"]
 
         tile_json = os.path.join(tile["dir"], "config.json")
         tile["json"] = tile_json
 
         save_config_file(tile_json, tile_cfg)
 
-    # Write the list of json files to outputDir/tiles.txt
+    # Write the list of json files to output_dir/tiles.txt
     with open(
-        os.path.join(cfg["outputDir"], "tiles.txt"), "w", encoding="utf8"
+        os.path.join(cfg["output_dir"], "tiles.txt"), "w", encoding="utf8"
     ) as tile_file:
         for tile in tiles:
-
             tile_file.write(tile["json"] + os.linesep)
 
     return tiles

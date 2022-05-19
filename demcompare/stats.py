@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-# pylint:disable=too-many-lines
 # coding: utf8
 #
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -19,6 +18,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# pylint:disable=too-many-lines, too-many-locals, too-many-branches,
+# pylint:disable=broad-except
 """
 Stats module of dsm_compare offers routines
 for stats computation and plot viewing
@@ -26,7 +27,6 @@ for stats computation and plot viewing
 
 # Standard imports
 import collections
-import copy
 import csv
 import json
 import logging
@@ -40,17 +40,14 @@ import matplotlib.pyplot as mpl_pyplot
 
 # Third party imports
 import numpy as np
+import rasterio
 import xarray as xr
 from astropy import units as u
 from matplotlib import gridspec
 from scipy.optimize import curve_fit
 
 # DEMcompare imports
-from .dem_loading_tools import (
-    create_dataset_from_dataset,
-    read_image,
-    save_dataset_to_tif,
-)
+from .dem_tools import SamplingSourceParameter, create_dem, save_dem
 from .output_tree_design import get_out_file_path
 from .partition import FusionPartition, NotEnoughDataToPartitionError, Partition
 
@@ -61,6 +58,7 @@ class NoPointsToPlot(Exception):
 
 def compute_stats_array(
     cfg: Dict,
+    demcompare_results: Dict,
     dem: np.ndarray,
     ref: np.ndarray,
     dem_nodata: Union[int, float, None] = None,
@@ -101,41 +99,48 @@ def compute_stats_array(
         cfg["stats_results"] = {}
 
     # default config
-    cfg["plani_results"] = {}
-    cfg["plani_results"]["dx"] = 1
-    cfg["plani_results"]["dy"] = 1
+    demcompare_results["coregistration_results"] = {}
+    demcompare_results["coregistration_results"]["dx"] = 1
+    demcompare_results["coregistration_results"]["dy"] = 1
 
-    cfg["alti_results"] = {}
-    cfg["alti_results"]["rectifiedRef"] = {}
-    cfg["alti_results"]["rectifiedRef"]["nb_valid_points"] = 10
-    cfg["alti_results"]["rectifiedRef"]["nb_points"] = 10
-    cfg["alti_results"]["rectifiedDEM"] = {}
-    cfg["alti_results"]["rectifiedDEM"]["nb_valid_points"] = 10
-    cfg["alti_results"]["rectifiedDEM"]["nb_points"] = 10
+    demcompare_results["coregistration_results"] = {}
+    demcompare_results["alti_results"]["reproj_coreg_ref"] = {}
+    demcompare_results["alti_results"]["reproj_coreg_ref"][
+        "nb_valid_points"
+    ] = 10
+    demcompare_results["alti_results"]["reproj_coreg_ref"]["nb_points"] = 10
+    demcompare_results["alti_results"]["reproj_coreg_dem_to_align"] = {}
+    demcompare_results["alti_results"]["reproj_coreg_dem_to_align"][
+        "nb_valid_points"
+    ] = 10
+    demcompare_results["alti_results"]["reproj_coreg_dem_to_align"][
+        "nb_points"
+    ] = 10
 
     cfg["stats_opts"]["alti_error_threshold"] = {}
     cfg["stats_opts"]["alti_error_threshold"]["value"] = 0
     cfg["stats_opts"]["plot_real_hists"] = False
     cfg["stats_opts"]["remove_outliers"] = False
 
-    dem_a3d = create_dataset_from_dataset(dem, no_data=dem_nodata)
-    ref_a3d = create_dataset_from_dataset(ref, no_data=ref_nodata)
+    dem_a3d = create_dem(dem, no_data=dem_nodata)
+    ref_a3d = create_dem(ref, no_data=ref_nodata)
 
     final_dh = dem_a3d["im"].data - ref_a3d["im"].data
-    final_dh_a3d = create_dataset_from_dataset(final_dh)
+    final_dh_a3d = create_dem(final_dh)
 
     if final_json_file is None:
-        final_json_file = cfg["outputDir"] + "/final_stats.json"
+        final_json_file = cfg["output_dir"] + "/final_stats.json"
 
     alti_diff_stats(
         cfg,
+        demcompare_results,
         dem_a3d,
         ref_a3d,
         final_dh_a3d,
-        display=display,
-        remove_outliers=cfg["stats_opts"]["remove_outliers"],
+        display,
         geo_ref=False,
     )
+
     # save results
     with open(final_json_file, "w", encoding="utf8") as outfile:
         json.dump(cfg, outfile, indent=2)
@@ -254,7 +259,7 @@ def create_mode_masks(alti_map: xr.Dataset, partitions_sets_masks=None):
     mode_names.append("standard")
     # -> remove alti_map nodata indices
     mode_masks.append(
-        get_nonan_mask(alti_map["im"].data, alti_map.attrs["no_data"])
+        get_nonan_mask(alti_map["image"].data, alti_map.attrs["no_data"])
     )
     # -> remove nodata indices for every partitioning image
     if partitions_sets_masks:
@@ -344,28 +349,33 @@ def create_masks(
 
     # Starting with the 'standard' mask with no nan values
     modes.append("standard")
-    masks.append(get_nonan_mask(alti_map["im"].data, alti_map.attrs["no_data"]))
+    masks.append(
+        get_nonan_mask(alti_map["image"].data, alti_map.attrs["no_data"])
+    )
 
     # Create no outliers mask if required
     no_outliers = None
     if remove_outliers:
         no_outliers = get_outliers_free_mask(
-            alti_map["im"].data, alti_map.attrs["no_data"]
+            alti_map["image"].data, alti_map.attrs["no_data"]
         )
 
     # If the classification is on then we also consider ref_support nan values
     if do_classification:
         masks[0] *= get_nonan_mask(
-            ref_support["im"].data, ref_support.attrs["no_data"]
+            ref_support["image"].data, ref_support.attrs["no_data"]
         )
 
     # Carrying on with potentially the cross classification masks
     if do_classification and do_cross_classification:
         modes.append("coherent-classification")
 
-        ref_support_classified_val = read_image(
-            ref_support_classified_desc["path"], band=4
-        )
+        # TODO: refactor this part
+        # Open classification raster from path
+        with rasterio.open(ref_support_classified_desc["path"]) as rio_dataset:
+            # Read masks from 4th band
+            ref_support_classified_val = rio_dataset.read(4)
+
         # so we get rid of what are actually 'nodata'
         # and incoherent values as well
         coherent_mask = get_nonan_mask(
@@ -479,6 +489,7 @@ def get_stats(
              %(out_of_all_pts), max, min, mean, std, rmse, ...)
     :rtype: List[Dict]
     """
+
     # pylint: disable=singleton-comparison
 
     def nighty_percentile(array):
@@ -582,14 +593,14 @@ def dem_diff_plot(
     :type display: bool
     """
     # Init mu and sigma from data to focus on little values
-    mu = np.nanmean(dem_diff["im"].data)
-    sigma = np.nanstd(dem_diff["im"].data)
+    mu = np.nanmean(dem_diff["image"].data)
+    sigma = np.nanstd(dem_diff["image"].data)
 
     # Plot
     fig, fig_ax = mpl_pyplot.subplots(figsize=(7.0, 8.0))
     fig_ax.set_title(title, fontsize="large")
     im1 = fig_ax.imshow(
-        dem_diff["im"].data, cmap="terrain", vmin=mu - sigma, vmax=mu + sigma
+        dem_diff["image"].data, cmap="terrain", vmin=mu - sigma, vmax=mu + sigma
     )
     fig.colorbar(im1, label="Elevation differences (m)")
     fig.text(
@@ -639,7 +650,7 @@ def dem_diff_cdf_plot(
     plot_file_base = os.path.splitext(plot_file)[0]
 
     # Generate absolute values array
-    abs_dem_diff = np.abs(dem_diff["im"].data)
+    abs_dem_diff = np.abs(dem_diff["image"].data)
 
     # Get max diff from data
     max_diff = np.nanmax(abs_dem_diff)
@@ -680,7 +691,7 @@ def dem_diff_cdf_plot(
         "Full absolute elevation differences (m) "
         "\nmax_diff={} nb_bins={}"
         "\nnb_pixels={} nb_nans={}".format(
-            max_diff, nb_bins, nb_pixels, nb_nans
+            round(max_diff, 3), nb_bins, nb_pixels, nb_nans
         ),
         fontsize="medium",
     )
@@ -732,7 +743,7 @@ def dem_diff_pdf_plot(
     plot_file_base = os.path.splitext(plot_file)[0]
 
     # Generate values array
-    dem_diff = dem_diff["im"].data
+    dem_diff = dem_diff["image"].data
 
     # Histogram plot creation.
     # The histogram is centered around 0
@@ -1035,7 +1046,7 @@ def plot_histograms(  # noqa: C901 # pylint:disable=too-many-arguments
                             horizontalalignment="left",
                         )
                 except RuntimeError:
-                    print(
+                    logging.error(
                         "No fitted gaussian plot "
                         "created as curve_fit failed to converge"
                     )
@@ -1124,7 +1135,7 @@ def save_results(
                         )
                     )
                 except Exception:
-                    print(
+                    logging.error(
                         "Error: plot_files and plot_colors "
                         "should have same dimension as labels_plotted"
                     )
@@ -1171,6 +1182,7 @@ def create_partitions(
     dsm: xr.Dataset,
     ref: xr.Dataset,
     cfg: Dict,
+    demcompare_results: Dict,
     geo_ref: bool = True,
 ):
     """
@@ -1183,11 +1195,15 @@ def create_partitions(
     :type geo_ref: bool
     :return: dict, with partitions information {'
     """
-    output_dir = cfg["outputDir"]
+    output_dir = cfg["output_dir"]
     stats_opts = cfg["stats_opts"]
     to_be_clayers = stats_opts["to_be_classification_layers"].copy()
     clayers = stats_opts["classification_layers"].copy()
-
+    sampling_source = (
+        cfg["stats_opts"]["sampling_source"]
+        if "sampling_source" in cfg["stats_opts"]
+        else SamplingSourceParameter.DEM_TO_ALIGN.value
+    )
     logging.debug(
         "list of to be classification layers: {}".format(to_be_clayers)
     )
@@ -1204,12 +1220,13 @@ def create_partitions(
                     dsm,
                     ref,
                     output_dir,
+                    sampling_source,
                     **tbclayer
                 )
             )
         except Exception as error:
             traceback.print_exc()
-            print(
+            logging.error(
                 (
                     "Cannot create partition for {}:{} -> {}".format(
                         layer_name, tbclayer, error
@@ -1226,19 +1243,28 @@ def create_partitions(
                     dsm,
                     ref,
                     output_dir,
+                    sampling_source=sampling_source,
                     geo_ref=geo_ref,
-                    dec_ref_path=cfg["inputRef"]["path"],
-                    dec_dem_path=cfg["inputDSM"]["path"],
-                    init_disp_x=cfg["plani_opts"]["disp_init"]["x"],
-                    init_disp_y=cfg["plani_opts"]["disp_init"]["y"],
-                    dx=cfg["plani_results"]["dx"]["nuth_offset"],
-                    dy=cfg["plani_results"]["dy"]["nuth_offset"],
+                    dec_ref_path=cfg["input_ref"]["path"],
+                    dec_dem_path=cfg["input_dem_to_align"]["path"],
+                    init_disp_x=cfg["coregistration"][
+                        "estimated_initial_shift_x"
+                    ],
+                    init_disp_y=cfg["coregistration"][
+                        "estimated_initial_shift_y"
+                    ],
+                    dx=demcompare_results["coregistration_results"]["dx"][
+                        "nuth_offset"
+                    ],
+                    dy=demcompare_results["coregistration_results"]["dy"][
+                        "nuth_offset"
+                    ],
                     **clayer
                 )
             )
         except Exception as error:
             traceback.print_exc()
-            print(
+            logging.error(
                 (
                     "Cannot create partition for {}:{} -> {}".format(
                         layer_name, clayer, error
@@ -1280,6 +1306,7 @@ def create_partitions(
 
 def alti_diff_stats(
     cfg: Dict,
+    demcompare_results: Dict,
     dsm: xr.Dataset,
     ref: xr.Dataset,
     alti_map: xr.Dataset,
@@ -1336,13 +1363,13 @@ def alti_diff_stats(
     :return:
     """
 
-    def get_title(cfg):
+    def get_title():
         """Create title for alti_diff_stats"""
         if geo_ref:
             # Set future plot title with bias and % of nan values as part of it
             title = ["DEM quality performance"]
-            dx = cfg["plani_results"]["dx"]
-            dy = cfg["plani_results"]["dy"]
+            dx = demcompare_results["coregistration_results"]["dx"]
+            dy = demcompare_results["coregistration_results"]["dy"]
             biases = {
                 "dx": {
                     "value_m": dx["bias_value"],
@@ -1363,8 +1390,12 @@ def alti_diff_stats(
                     biases["dy"]["value_p"],
                 )
             )
-            rect_ref_cfg = cfg["alti_results"]["rectifiedRef"]
-            rect_dsm_cfg = cfg["alti_results"]["rectifiedDSM"]
+            rect_ref_cfg = demcompare_results["alti_results"][
+                "reproj_coreg_ref"
+            ]
+            rect_dsm_cfg = demcompare_results["alti_results"][
+                "reproj_coreg_dem_to_align"
+            ]
             title.append(
                 "(holes or no data stats: "
                 "Reference DSM  % nan values : {:.2f}%; "
@@ -1408,17 +1439,19 @@ def alti_diff_stats(
     # Get outliers free mask (array of True where value is no outlier)
     if remove_outliers:
         outliers_free_mask = get_outliers_free_mask(
-            alti_map["im"].data, alti_map.attrs["no_data"]
+            alti_map["image"].data, alti_map.attrs["no_data"]
         )
     else:
         outliers_free_mask = 1
 
     # There can be multiple ways to partition the stats.
     # We gather them all inside a list here:
-    partitions = create_partitions(dsm, ref, cfg, geo_ref=geo_ref)
+    partitions = create_partitions(
+        dsm, ref, cfg, demcompare_results, geo_ref=geo_ref
+    )
 
     # For every partition get stats and save them as plots and tables
-    cfg["stats_results"]["partitions"] = {}
+    demcompare_results["stats_results"]["partitions"] = {}
     for p in partitions:
         # Compute stats for each mode and every sets
         mode_stats, mode_masks, mode_names = get_stats_per_mode(
@@ -1432,7 +1465,7 @@ def alti_diff_stats(
 
         # Save stats as plots, csv and json and do so for each mode
         p.stats_mode_json = save_as_graphs_and_tables(
-            alti_map["im"].data,
+            alti_map["image"].data,
             p.stats_dir,
             p.plots_dir,
             p.histograms_dir,
@@ -1442,7 +1475,7 @@ def alti_diff_stats(
             p.sets_masks[0],  # do not need 'ref' and 'dsm' only one of them
             p.sets_labels,
             p.sets_colors,
-            plot_title="\n".join(get_title(cfg)),
+            plot_title="\n".join(get_title()),
             bin_step=cfg["stats_opts"]["alti_error_threshold"]["value"],
             display=display,
             plot_real_hist=cfg["stats_opts"]["plot_real_hists"],
@@ -1450,7 +1483,9 @@ def alti_diff_stats(
         )
 
         # get partition stats results
-        cfg["stats_results"]["partitions"][p.name] = p.stats_results
+        demcompare_results["stats_results"]["partitions"][
+            p.name
+        ] = p.stats_results
 
         # TODO two possibilities :
         # - call generate_report() itself directly
@@ -1536,7 +1571,9 @@ def save_as_graphs_and_tables(  # pylint:disable=too-many-arguments
                     plot_real_hist=plot_real_hist,
                 )
             except NoPointsToPlot:
-                print(("Nothing to plot for mode {} ".format(mode_name_item)))
+                logging.error(
+                    ("Nothing to plot for mode {} ".format(mode_name_item))
+                )
                 continue
 
         #
@@ -1616,11 +1653,10 @@ def get_stats_per_mode(
     # Next is done for all modes
     mode_stats = []
     for mode_idx, _ in enumerate(mode_names):
-
         # Compute stats for all sets of a single mode
         mode_stats.append(
             get_stats(
-                data["im"].data,
+                data["image"].data,
                 to_keep_mask=mode_masks[mode_idx],
                 outliers_free_mask=outliers_free_mask,
                 sets=sets_masks[
@@ -1635,7 +1671,7 @@ def get_stats_per_mode(
     return mode_stats, mode_masks, mode_names
 
 
-def wave_detection(cfg: Dict, dh):
+def wave_detection(cfg: Dict, demcompare_results: Dict, dh: xr.Dataset):
     """
     Detect potential oscillations inside dh
 
@@ -1648,34 +1684,46 @@ def wave_detection(cfg: Dict, dh):
     # Compute mean dh row and mean dh col
     # -> then compute min between dh mean row (col) vector and dh rows (cols)
     res = {
-        "row_wise": np.zeros(dh["im"].data.shape, dtype=np.float32),
-        "col_wise": np.zeros(dh["im"].data.shape, dtype=np.float32),
+        "row_wise": np.zeros(dh["image"].data.shape, dtype=np.float32),
+        "col_wise": np.zeros(dh["image"].data.shape, dtype=np.float32),
     }
     axis = -1
     for dim in list(res.keys()):
         axis += 1
-        mean = np.nanmean(dh["im"].data, axis=axis)
+        mean = np.nanmean(dh["image"].data, axis=axis)
         if axis == 1:
             # for axis == 1, we need to transpose the array to substitute it
             # to dh.r otherwise 1D array stays row array
             mean = np.transpose(
                 np.ones((1, mean.size), dtype=np.float32) * mean
             )
-        res[dim] = dh["im"].data - mean
+        res[dim] = dh["image"].data - mean
 
-        cfg["stats_results"]["images"]["list"].append(dim)
-        cfg["stats_results"]["images"][dim] = copy.deepcopy(
-            cfg["alti_results"]["dzMap"]
-        )
-        cfg["stats_results"]["images"][dim].pop("nb_points")
-        cfg["stats_results"]["images"][dim]["path"] = os.path.join(
-            cfg["outputDir"],
+        demcompare_results["stats_results"]["images"]["list"].append(dim)
+        demcompare_results["stats_results"]["images"][dim] = {}
+        demcompare_results["stats_results"]["images"][dim][
+            "path"
+        ] = os.path.join(
+            cfg["output_dir"],
             get_out_file_path("dh_{}_wave_detection.tif".format(dim)),
         )
+        demcompare_results["stats_results"]["images"][dim][
+            "zunit"
+        ] = demcompare_results["alti_results"]["dz"]["zunit"]
+        demcompare_results["stats_results"]["images"][dim][
+            "nodata"
+        ] = demcompare_results["alti_results"]["dz"]["nodata"]
+        demcompare_results["stats_results"]["images"][dim][
+            "nb_valid_points"
+        ] = demcompare_results["alti_results"]["dz"]["nb_valid_points"]
 
-        georaster = create_dataset_from_dataset(
-            res[dim], from_dataset=dh, no_data=-32768
+        georaster = create_dem(
+            res[dim],
+            transform=dh.georef_transform.data,
+            img_crs=dh.crs,
+            no_data=-32768,
         )
-        save_dataset_to_tif(
-            georaster, cfg["stats_results"]["images"][dim]["path"]
+        save_dem(
+            georaster,
+            demcompare_results["stats_results"]["images"][dim]["path"],
         )

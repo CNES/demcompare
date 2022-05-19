@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -29,12 +29,15 @@ default_OTD = {
     # first seen output
     "initial_dh.tif": ".",
     "final_dh.tif": ".",
-    "final_config.json": ".",
+    "demcompare_results.json": ".",
     "dh_col_wise_wave_detection.tif": ".",
     "dh_row_wise_wave_detection.tif": ".",
     # coreg step
     "coreg_DEM.tif": "./coregistration/",
-    "coreg_REF.tif": "./coregistration/",
+    "reproj_REF.tif": "./coregistration/",
+    "reproj_DEM.tif": "./coregistration/",
+    "reproj_coreg_REF.tif": "./coregistration/",
+    "reproj_coreg_DEM.tif": "./coregistration/",
     "nuth_kaab_tmp_dir": "./coregistration/nuth_kaab_tmp_dir",
     # snapshots
     "snapshots_dir": "./snapshots",
@@ -61,7 +64,6 @@ default_OTD = {
     "sphinx_built_doc": "./doc/published_report",
     "sphinx_src_doc": "./doc/src",
 }
-
 
 supported_OTD = {"default_OTD": default_OTD}
 

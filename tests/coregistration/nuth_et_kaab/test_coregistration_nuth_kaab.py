@@ -1,0 +1,397 @@
+#!/usr/bin/env python
+# coding: utf8
+# Disable the protected-access to test the functions
+# pylint:disable=protected-access
+# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+#
+# This file is part of demcompare
+# (see https://github.com/CNES/demcompare).
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+"""
+This module contains functions to test all the
+methods in the Nuth et Kaab coregistration method.
+"""
+
+# strm_test_data imports
+import os
+
+# Third party imports
+import numpy as np
+import pytest
+import scipy
+
+from demcompare import coregistration, dem_tools
+from demcompare.initialization import read_config_file
+
+# Tests helpers
+from tests.helpers import demcompare_test_data_path
+
+
+@pytest.mark.unit_tests
+def test_coregistration_method():
+    """
+    Test the coregistration_method function of
+    the Nuth et Kaab class.
+    Loads the data present in the "gironde_test_data" root data
+    directory and test that the output Transform is
+    correct.
+    The following configurations are tested:
+    - "gironde_test_data" test root input DEMs,
+     sampling value dem_to_align
+    - "gironde_test_data" test root input DEMs,
+     sampling value ref
+    """
+    # Test with "gironde_test_data" test root
+    # input DEMs and sampling value dem_to_align -----------------------------
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Load dems
+    ref = dem_tools.load_dem(cfg["input_ref"]["path"])
+    dem_to_align = dem_tools.load_dem(cfg["input_dem_to_align"]["path"])
+    sampling_source = "dem_to_align"
+
+    # Define ground truth outputs
+    rotation = None
+    x_off = -1.4366
+    y_off = -0.4190
+    z_off = -3.4025
+
+    # Reproject and crop DEMs
+    (reproj_crop_dem, reproj_crop_ref, _,) = dem_tools.reproject_dems(
+        dem_to_align, ref, sampling_source=sampling_source
+    )
+
+    # Coregistration configuration is the following :
+    # "coregistration": {
+    #    "method_name": "nuth_kaab",
+    #    "number_of_iterations": 6,
+    #    "estimated_initial_shift_x": 0,
+    #    "estimated_initial_shift_y": 0
+    # }
+    # Create coregistration object
+    coregistration_ = coregistration.Coregistration(**cfg["coregistration"])
+    # Run coregister_dems
+    (
+        transform,
+        _,
+        _,
+    ) = coregistration_._coregister_dems(reproj_crop_dem, reproj_crop_ref)
+
+    # Test that the outputs match the ground truth
+    assert rotation == transform.rotation
+    np.testing.assert_allclose(x_off, transform.x_off, rtol=1e-02)
+    np.testing.assert_allclose(y_off, transform.y_off, rtol=1e-02)
+    np.testing.assert_allclose(z_off, transform.z_off, rtol=1e-02)
+
+    # Test with "gironde_test_data" test root
+    # input DEMs and sampling value ref -----------------------------
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Load dems
+    ref = dem_tools.load_dem(cfg["input_ref"]["path"])
+    dem_to_align = dem_tools.load_dem(cfg["input_dem_to_align"]["path"])
+    sampling_source = "ref"
+
+    # Define ground truth outputs
+    rotation = None
+    x_off = -5.44706
+    y_off = -1.18139
+    z_off = -0.53005
+
+    # Reproject and crop DEMs
+    (reproj_crop_dem, reproj_crop_ref, _,) = dem_tools.reproject_dems(
+        dem_to_align, ref, sampling_source=sampling_source
+    )
+
+    # Coregistration configuration is the following :
+    # "coregistration": {
+    #    "method_name": "nuth_kaab",
+    #    "number_of_iterations": 6,
+    #    "estimated_initial_shift_x": 0,
+    #    "estimated_initial_shift_y": 0
+    # }
+    # Create coregistration object
+    coregistration_ = coregistration.Coregistration(
+        **cfg["coregistration"]
+    )  # type: ignore
+    # Run coregister_dems
+    (
+        transform,
+        _,
+        _,
+    ) = coregistration_._coregister_dems(reproj_crop_dem, reproj_crop_ref)
+
+    # Test that the outputs match the ground truth
+    assert rotation == transform.rotation
+    np.testing.assert_allclose(x_off, transform.x_off, rtol=1e-02)
+    np.testing.assert_allclose(y_off, transform.y_off, rtol=1e-02)
+    np.testing.assert_allclose(z_off, transform.z_off, rtol=1e-02)
+
+
+@pytest.mark.unit_tests
+def test_grad2d():
+    """
+    Test the grad2d function
+    Manually computes an input array and its
+    slope and gradient, and tests that the obtained
+    values resulting from the grad2d function are
+    correct.
+
+    """
+    # Define cfg
+    cfg = {
+        "method_name": "nuth_kaab",
+        "number_of_iterations": 6,
+        "estimated_initial_shift_x": 0,
+        "estimated_initial_shift_y": 0,
+    }
+    # Create coregsitration object
+    coregistration_ = coregistration.Coregistration(**cfg)  # type: ignore
+
+    # Define dh array to make the computations
+    dh = np.array(
+        ([1, 1, 1], [-1, 2, 1], [4, -3, 1], [1, 1, 1], [1, 1, 1]),
+        dtype=np.float64,
+    )
+    # Manually compute gradients
+    grad1 = np.array(
+        [
+            [
+                (dh[0][1] - dh[0][0]) / 1,
+                (dh[0][2] - dh[0][0]) / 2,
+                (dh[0][2] - dh[0][1]) / 1,
+            ],
+            [
+                (dh[1][1] - dh[1][0]) / 1,
+                (dh[1][2] - dh[1][0]) / 2,
+                (dh[1][2] - dh[1][1]) / 1,
+            ],
+            [
+                (dh[2][1] - dh[2][0]) / 1,
+                (dh[2][2] - dh[2][0]) / 2,
+                (dh[2][2] - dh[2][1]) / 1,
+            ],
+            [
+                (dh[3][1] - dh[3][0]) / 1,
+                (dh[3][2] - dh[3][0]) / 2,
+                (dh[3][2] - dh[3][1]) / 1,
+            ],
+            [
+                (dh[4][1] - dh[4][0]) / 1,
+                (dh[4][2] - dh[4][0]) / 2,
+                (dh[4][2] - dh[4][1]) / 1,
+            ],
+        ]
+    )
+
+    grad2 = np.array(
+        [
+            [
+                (dh[1][0] - dh[0][0]) / 1,
+                (dh[1][1] - dh[0][1]) / 1,
+                (dh[1][2] - dh[0][2]) / 1,
+            ],
+            [
+                (dh[2][0] - dh[0][0]) / 2,
+                (dh[2][1] - dh[0][1]) / 2,
+                (dh[2][2] - dh[0][2]) / 2,
+            ],
+            [
+                (dh[3][0] - dh[1][0]) / 2,
+                (dh[3][1] - dh[1][1]) / 2,
+                (dh[3][2] - dh[1][2]) / 2,
+            ],
+            [
+                (dh[4][0] - dh[2][0]) / 2,
+                (dh[4][1] - dh[2][1]) / 2,
+                (dh[4][2] - dh[2][2]) / 2,
+            ],
+            [
+                (dh[4][0] - dh[3][0]) / 1,
+                (dh[4][1] - dh[3][1]) / 1,
+                (dh[4][2] - dh[3][2]) / 1,
+            ],
+        ]
+    )
+    # Ground truth slope
+    gt_slope = np.sqrt(grad1**2 + grad2**2)
+    # Ground truth aspect
+    gt_aspect = np.arctan2(-grad1, grad2) + np.pi
+
+    output_slope, output_aspect = coregistration_._grad2d(dh)
+    # Test that the output slope and aspect are the same as ground truth
+    np.testing.assert_allclose(output_slope, gt_slope, rtol=1e-02)
+    np.testing.assert_allclose(output_aspect, gt_aspect, rtol=1e-02)
+
+
+@pytest.mark.unit_tests
+def test_filter_target():
+    """
+    Test the filter_target function
+    Computes an input target and manually adds noise
+    to it, then tests that the filter_target function
+    correctly filters the added noise.
+
+    """
+    # Initialize cfg
+    cfg = {
+        "method_name": "nuth_kaab",
+        "number_of_iterations": 6,
+        "estimated_initial_shift_x": 0,
+        "estimated_initial_shift_y": 0,
+    }
+    # Create coregistration object
+    coregistration_ = coregistration.Coregistration(**cfg)  # type: ignore
+    # Define aspect bounds with a np.pi/36 step
+    aspect_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
+    coregistration_.aspect_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
+
+    # Define target as a sinus array
+    target = np.sin(np.array(np.arange(0, 360, 0.05)) * np.pi / 180.0)
+    # Define aspect array
+    aspect = np.arange(0, 360, 360 / len(target)) * np.pi / 180.0
+
+    noisy_target = []
+    gt_filtered_target = []
+    gt_slice_filt_median = []
+
+    # Create noisy target by adding noise samples on each slice
+    for bounds in aspect_bounds:
+        # Slice indexes within aspect
+        slice_idxes = np.where(
+            (bounds < aspect) & (aspect < bounds + np.pi / 36)
+        )
+        target_slice = target[slice_idxes]
+        # Compute ground truth filtered median with the non-noisy target
+        gt_slice_filt_median.append(np.nanmedian(target_slice))
+        # Obtain target slice's mean and std
+        slice_mean = np.nanmean(target_slice)
+        slice_sigma = np.std(target_slice[np.isfinite(target_slice)])
+        # Add noise samples that will be outside of the 3 sigma filter
+        noisy_target.append(slice_mean + 19 * slice_sigma)
+        noisy_target.append(slice_mean - 20 * slice_sigma)
+        # The ground truth filtered target has np.nan in the noise sample places
+        gt_filtered_target.append(np.nan)
+        gt_filtered_target.append(np.nan)
+        # Add the non-noisy target_slice samples
+        for tar in target_slice:
+            noisy_target.append(tar)
+            gt_filtered_target.append(tar)
+    # Define the noisy_target aspect
+    aspect = np.arange(0, 360, 360 / len(noisy_target)) * np.pi / 180.0
+
+    (
+        output_slice_filt_median,
+        output_filtered_target,
+    ) = coregistration_._filter_target(np.array(aspect), np.array(noisy_target))
+
+    # Test that the output filtered target and
+    # filtered median are the same as ground truth
+    np.testing.assert_allclose(
+        gt_filtered_target, output_filtered_target, rtol=1e-02
+    )
+    np.testing.assert_allclose(
+        gt_slice_filt_median, output_slice_filt_median, rtol=1e-02
+    )
+
+
+@pytest.mark.unit_tests
+def test_nuth_kaab_single_iter():
+    """
+    Manually computes an input array and its
+    output offsets, and tests that the resulting
+    offsets form the nuth_kaab_single_iter are the
+    same.
+
+    """
+    # Define cfg
+    cfg = {
+        "method_name": "nuth_kaab",
+        "number_of_iterations": 6,
+        "estimated_initial_shift_x": 0,
+        "estimated_initial_shift_y": 0,
+    }
+    # Define dh array
+    dh = np.array(
+        ([1, 1, 1], [-1, 2, 1], [4, -3, 1], [1, 1, 1], [1, 1, 1]),
+        dtype=np.float64,
+    )
+    # Initialize coregistration object
+    coregistration_ = coregistration.Coregistration(**cfg)  # type: ignore
+    # Define aspect_bounds attribute as it is defined in the upper function
+    aspect_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
+    coregistration_.aspect_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
+
+    # Obtain slope and aspect
+    slope, aspect = coregistration_._grad2d(dh)
+    # Filter slope values below threshold
+    slope[np.where(slope < 0.001)] = np.nan
+    # Compute target
+    target = dh / slope
+    # Filer target and aspect non finite values
+    target = target[np.isfinite(dh)]
+    aspect_filt = aspect[np.isfinite(dh)]
+    # Compute filtered target and target median
+    slice_filt_median, target_filt = coregistration_._filter_target(
+        aspect_filt, target
+    )
+    # Do least squares optimization with scipy as
+    # performed in nuth_kaab_single_iter
+    x = aspect_filt.ravel()
+    y = target_filt.ravel()
+    yf = y[(np.isfinite(x)) & (np.isfinite(y))]
+    p0 = (3 * np.std(yf) / (2**0.5), 0, np.mean(yf))
+
+    # least square fit
+    def peval(x, p):
+        """peval defines the model chosen"""
+        return p[0] * np.cos(p[1] - x) + p[2]
+
+    def residuals(p, y, x):
+        """residuals function based on peval"""
+        err = peval(x, p) - y
+        return err
+
+    plsq = scipy.optimize.leastsq(
+        residuals,
+        p0,
+        args=(slice_filt_median, aspect_bounds),
+        full_output=1,
+    )
+    a, b, c = plsq[0]
+    # Obtain ground truth offsets
+    gt_east = a * np.sin(b)
+    gt_north = a * np.cos(b)
+    gt_c = c
+
+    (
+        output_east,
+        output_north,
+        output_c,
+    ) = coregistration_._nuth_kaab_single_iter(dh, slope, aspect)
+    # Test that the output offsets are the same as ground truth
+    np.testing.assert_allclose(output_east, gt_east, rtol=1e-02)
+    np.testing.assert_allclose(output_north, gt_north, rtol=1e-02)
+    np.testing.assert_allclose(output_c, gt_c, rtol=1e-02)
