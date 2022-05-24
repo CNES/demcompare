@@ -1,14 +1,25 @@
 #### Résumé de la proposition
 
-#### Détails techniques de l'implémentation (si besoin)
+1. Que fait la MR ? (bien etre explicite sur le titre)
+2. Lien vers l'issue source (Closes si la MR ferme l'issue, Relates si en fait une partie)
+3. Liste des taches de la MR qui répondent à l'issue (partiellement ou globalement suivant si Closes ou Relates) 
+4. Etat du Reste à faire à reprendre pour finir l'issue
+
+#### Détails techniques de l'implémentation
+
+Cette section décrit les solutions techniques que la MR met en oeuvre et qui répondent à la description fonctionnelle de l'issue associée. 
 
 #### Stratégie de validation
+En lien avec le plan de validation de l'issue, il faut décrire la stratégie de validation dont s'occupe la MR. 
+Au moins : 
+- [ ] Tests Unitaires (obligatoire)
+- [ ] Tests Fonctionnels (intégration / interfaces avec d'autres outils)
+- [ ] Tests Performances
 
-- [ ] Tests Unitaires ? (obligatoire pour du `feat` et `fix`)
+Si besoin suivant l'issue/MR:
 - [ ] Tests Visuels ? (doc)
-- [ ] Tests Fonctionnels ? (intégration / interfaces avec d'autres outils)
 - [ ] Tests Comparatifs ? (`feat` métier avec outil de référence)
-  - dans ce cas citer l'outil et son paramétrage 
+  - dans ce cas citer les outils et leur paramétrage
 
 #### MR non prête à merger
 
@@ -25,6 +36,7 @@ Si la Merge Request est prête, merci de valider les étapes suivantes:
     - ajout d'une fonctionnalité à destination du grand public (communication)
   - suivre les recommandations de https://github.com/olivierlacan/keep-a-changelog/blob/master/CHANGELOG.md
     - inscrire la modification sous le titre `Unreleased`
+- [ ] S'assurer qu'il y a toutes les infos dans la MR pour qu'un autre développeur puisse relire facilement, ce qu'on s'attendrait à avoir soi même pour relire la MR (cf résumé ci dessus)
 
 #### Integration Continue
 

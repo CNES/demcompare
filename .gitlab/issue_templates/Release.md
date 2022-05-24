@@ -1,5 +1,7 @@
 Release <numero_version>
 
+/label ~"Kind - Release"
+
 Liste de points à vérifier/faire pour la release en cours:
 
 - [ ] Vérifier issues milestone (mettre lien milestone) exemple %"Version 0.3.0 : Clean bugs and documentation" 
