@@ -9,8 +9,10 @@ import laspy
 from scipy.spatial import KDTree
 
 from cars.steps import points_cloud
-# ~ from mesh3d_lib.tools import point_cloud_handling
-
+# ~ from mesh3d_lib import tools
+import os,sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from tools import point_cloud_handling
 
 def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=True):
     """
@@ -51,7 +53,8 @@ def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=True):
     
     # serialize cloud in las
     if (serialize):
-        serializeDataFrameToLAS(new_cloud, "/home/data/radiuso3dpyramidedekmin_04.las")
+        # ~ serializeDataFrameToLAS(new_cloud, "/home/data/radiuso3dpyramidedekmin_04.las")
+        point_cloud_handling.serialize_point_cloud("/home/data/radiuso3dpyramidedekmin_04.las", new_cloud)
 
     return new_cloud
 
@@ -75,7 +78,8 @@ def small_components_filtering_outliers_cars(cloud, radius, nb_points, serialize
 
     # serialize cloud in las
     if (serialize):
-        serializeDataFrameToLAS(pos, "/home/data/radiuscarstoulouuse.las")
+        # ~ serializeDataFrameToLAS(pos, "/home/data/radiuscarstoulouuse.las")
+        point_cloud_handling.serialize_point_cloud( "/home/data/radiuscarstoulouuse.las", pos)
 
     return pos
 
@@ -103,7 +107,8 @@ def statistical_filtering_outliers_cars(cloud, nb_neighbors, std_factor, seriali
 
     # serialize cloud in las
     if (serialize):
-        serializeDataFrameToLAS(pos, "/home/data/statscarspyramide50_0_1.las")
+        # ~ serializeDataFrameToLAS(pos, "/home/data/statscarspyramide50_0_1.las")
+        point_cloud_handling.serialize_point_cloud( "/home/data/statscarspyramide50_0_1.las", pos)
 
     return pos
 
@@ -150,7 +155,8 @@ def statistical_filtering_outliers_o3d(cloud, nb_neighbors, std_factor, serializ
 
     # serialize cloud in las
     if (serialize):
-        serializeDataFrameToLAS(new_cloud, "/home/data/statso3dpyramide.las")
+        # ~ serializeDataFrameToLAS(new_cloud, "/home/data/statso3dpyramide.las")
+        point_cloud_handling.serialize_point_cloud("/home/data/statso3dpyramide.las", new_cloud)
 
     return new_cloud
 
@@ -162,6 +168,8 @@ def local_density_analysis(cloud, nb_neighbors, serialize=True):
     cloud_xyz = cloud.loc[:, ["x", "y", "z"]].values
     cloud_tree = KDTree(cloud_xyz)
     remove_pts = []
+    moy = []
+    deltas=[]
     for idx, _ in enumerate(cloud_xyz):
         # ~ if idx == 1:
         distances, pts = cloud_tree.query(cloud_xyz[idx], nb_neighbors)
@@ -173,44 +181,49 @@ def local_density_analysis(cloud, nb_neighbors, serialize=True):
         density = (1/nb_neighbors)* np.sum(np.exp(-distances/mean_neighbors_distances))
         # ~ print(density)
         proba = 1-density
-        print(proba)
+        # ~ print(proba)
+        moy.append(proba)
         delta = 0.1*mean_neighbors_distances
+        deltas.append(delta)
         # ~ print(delta)
-        if proba > delta:
+        if proba > 0.6:
             remove_pts.append(idx)
-    print(len(cloud))
-    print(len(remove_pts))
+    # ~ print(len(cloud))
+    # ~ print(len(remove_pts))
     cloud = cloud.drop(index=cloud.index.values[remove_pts])
-    print(len(cloud))
+    print(sum(moy)/len(moy))
+    print('delta', sum(deltas)/len(deltas))
+    # ~ print(len(cloud))p
     if (serialize):
-        serializeDataFrameToLAS(cloud, "/home/data/localdensity.las")
+        # ~ serializeDataFrameToLAS(cloud, "/home/data/localdensity.las")
+        point_cloud_handling.serialize_point_cloud("/home/data/localdensity4.las", cloud)
             
 
 
-def serializeDataFrameToLAS(cloud, pathout):
-    """
-    This method serializes a pandas DataFrame in .las
-    A METTRE DANS TOOLS
+# ~ def serializeDataFrameToLAS(cloud, pathout):
+    # ~ """
+    # ~ This method serializes a pandas DataFrame in .las
+    # ~ A METTRE DANS TOOLS
 
-    :param cloud: pandas DataFrame cloud
-    :param pathout: which folder to write the file
-    """
-    header = laspy.LasHeader(point_format=8, version="1.4")
+    # ~ :param cloud: pandas DataFrame cloud
+    # ~ :param pathout: which folder to write the file
+    # ~ """
+    # ~ header = laspy.LasHeader(point_format=8, version="1.4")
     # ~ print(dir(header))
-    header.x_scale=1
-    header.y_scale=1
-    header.z_scale=1
+    # ~ header.x_scale=1
+    # ~ header.y_scale=1
+    # ~ header.z_scale=1
 
-    las = laspy.LasData(header)
-    las.X = cloud["x"]
-    las.Y = cloud["y"]
-    las.Z = cloud["z"]
-    las.red = cloud["clr0"]
-    las.green = cloud["clr1"]
-    las.blue = cloud["clr2"]
-    las.nir = cloud["clr3"]
+    # ~ las = laspy.LasData(header)
+    # ~ las.X = cloud["x"]
+    # ~ las.Y = cloud["y"]
+    # ~ las.Z = cloud["z"]
+    # ~ las.red = cloud["clr0"]
+    # ~ las.green = cloud["clr1"]
+    # ~ las.blue = cloud["clr2"]
+    # ~ las.nir = cloud["clr3"]
 
-    las.write(pathout)
+    # ~ las.write(pathout)
     
     
 def main(df):
@@ -236,13 +249,13 @@ def main(df):
     # ~ cloudcars = small_components_filtering_outliers_cars(df, radius, nb_pts)
     # ~ cloudcarstat = statistical_filtering_outliers_cars(df, 50, 0.1)
     # ~ cloudo3stat = statistical_filtering_outliers_o3d(df, 3, 10)
-    local_density_analysis(df, 50, serialize=True)
+    local_density_analysis(df, 100, serialize=True)
     # ~ print(len(cloudo3))
     # ~ print(len(cloudcars))
     # ~ print(len(cloudcarstat))
     # ~ print(len(cloudo3stat))
 
 if __name__ == "__main__":
-    fileName ='/home/code/stage/toulouse-points_color.pkl'
+    fileName ='/home/code/stage/pyramide-points_color.pkl'
     df = pd.read_pickle(fileName)
     main(df)
