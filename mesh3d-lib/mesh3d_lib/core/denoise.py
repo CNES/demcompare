@@ -12,10 +12,9 @@ import open3d as o3d
 from tqdm import tqdm
 
 
-def compute_normal_o3d(cloud, weights=None):
+def compute_pcd_normals_o3d(cloud, weights=None):
     if isinstance(cloud, pd.DataFrame):
-        data = cloud.loc[["x", "y", "z"]]
-        data = data.to_numpy()
+        data = cloud[["x", "y", "z"]].to_numpy()
 
     elif isinstance(cloud, np.ndarray):
         data = cloud
@@ -36,7 +35,10 @@ def compute_normal_o3d(cloud, weights=None):
     # Compute normals
     pcd.estimate_normals(o3d.geometry.KDTreeSearchParamKNN(100), )
 
-    return pcd.normals
+    df_pcd = pd.DataFrame(data=np.concatenate((np.asarray(pcd.points), np.asarray(pcd.normals)), axis=1),
+                          columns=["x", "y", "z", "n_x", "n_y", "n_z"])
+
+    return df_pcd
 
 
 def compute_point_normal(pcd, weights=None):
@@ -93,50 +95,55 @@ def compute_pcd_normals(df_pcd: pd.DataFrame,
                         knn: int = 30,
                         weights_distance: bool = False,
                         weights_color: bool = False,
-                        workers: int = 1):
+                        workers: int = 1,
+                        use_open3d=False):
     """
     Compute the normal for each point of the cloud
     """
 
-    # Init
-    tree = KDTree(df_pcd[["x", "y", "z"]].to_numpy())
-    weights = None
-    results = []
+    if use_open3d:
+        df_pcd = compute_pcd_normals_o3d(df_pcd)
 
-    # Query the knn for each point cloud data
-    _, ind = tree.query(df_pcd[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
+    else:
+        # Init
+        tree = KDTree(df_pcd[["x", "y", "z"]].to_numpy())
+        weights = None
+        results = []
 
-    # Loop on each point of the data to compute its normal
-    for k, row in tqdm(enumerate(ind)):
+        # Query the knn for each point cloud data
+        _, ind = tree.query(df_pcd[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
 
-        if weights_distance:
-            # Weighting of the variance according to the distance to the neighbours
-            distance = tree.data[row, :] - tree.data[k, :]
-            mean_distance = np.mean(distance)
+        # Loop on each point of the data to compute its normal
+        for k, row in tqdm(enumerate(ind)):
 
-            weights = weight_exp(distance, mean_distance)
+            if weights_distance:
+                # Weighting of the variance according to the distance to the neighbours
+                distance = tree.data[row, :] - tree.data[k, :]
+                mean_distance = np.mean(distance)
 
-        if weights_color:
-            # Weighting of the variance according to the radiometric difference with the neighbours
-            color_list = [color for color in ["red", "green", "blue", "nir"] if color in df_pcd]
-            if not color_list:
-                raise ValueError("Weights on radiometry has been asked but no color channel was found in data. "
-                                 "Color channels considered are among ['red', 'green', 'blue', 'nir'].")
+                weights = weight_exp(distance, mean_distance)
 
-            color_data = df_pcd[color_list].to_numpy()
-            distance = color_data[row, :] - color_data[0, :]
-            mean_distance = np.mean(distance)
+            if weights_color:
+                # Weighting of the variance according to the radiometric difference with the neighbours
+                color_list = [color for color in ["red", "green", "blue", "nir"] if color in df_pcd]
+                if not color_list:
+                    raise ValueError("Weights on radiometry has been asked but no color channel was found in data. "
+                                     "Color channels considered are among ['red', 'green', 'blue', 'nir'].")
 
-            weights = weight_exp(distance, mean_distance) if weights is None \
-                else weights * weight_exp(distance, mean_distance)
+                color_data = df_pcd[color_list].to_numpy()
+                distance = color_data[row, :] - color_data[0, :]
+                mean_distance = np.mean(distance)
 
-        # Compute the normal
-        results.append(compute_point_normal(tree.data[row, :], weights))
+                weights = weight_exp(distance, mean_distance) if weights is None \
+                    else weights * weight_exp(distance, mean_distance)
 
-    results = np.asarray(results)
+            # Compute the normal
+            results.append(compute_point_normal(tree.data[row, :], weights))
 
-    # Add normals information to the dataframe
-    df_pcd = df_pcd.assign(n_x=results[:, 0], n_y=results[:, 1], n_z=results[:, 2])
+        results = np.asarray(results)
+
+        # Add normals information to the dataframe
+        df_pcd = df_pcd.assign(n_x=results[:, 0], n_y=results[:, 1], n_z=results[:, 2])
 
     return df_pcd
 #
