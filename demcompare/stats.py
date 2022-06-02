@@ -527,8 +527,8 @@ def get_stats(
 
     # Computing stats for all sets (sets are a partition of all values)
     if sets is not None and sets_labels is not None and sets_names is not None:
-        for set_idx, _ in enumerate(sets):
-            set_item = sets[set_idx] * to_keep_mask * outliers_free_mask
+        for set_idx, set_item in enumerate(sets):
+            set_item = set_item * to_keep_mask * outliers_free_mask
 
             data = dz_values[np.where(set_item == True)]  # noqa: E712
             output_list.append(stats_computation(data, list_threshold))

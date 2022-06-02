@@ -57,8 +57,6 @@ disable=
 	function-redefined,
 	consider-using-dict-comprehension,
 	cell-var-from-loop,
-	bad-continuation,
-	bad-whitespace,
 	consider-using-f-string
 
 
@@ -213,13 +211,6 @@ max-line-length=80
 
 # Maximum number of lines in a module.
 max-module-lines=1325
-
-# List of optional constructs for which whitespace checking is disabled. `dict-
-# separator` is used to allow tabulation in dicts, etc.: {1  : 1,\n222: 2}.
-# `trailing-comma` allows a space between comma and closing bracket: (a, ).
-# `empty-line` allows space-only lines.
-no-space-check=trailing-comma,
-               dict-separator
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
@@ -409,7 +400,7 @@ method-naming-style=snake_case
 #method-rgx=
 
 # Naming style matching correct module names.
-eodule-naming-style=snake_case
+module-naming-style=snake_case
 
 # Regular expression matching correct module names. Overrides module-naming-
 # style.

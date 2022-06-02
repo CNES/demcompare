@@ -396,17 +396,17 @@ class Partition:
         """
         # change the intervals into a list to make 'classes' generic
         classes = collections.OrderedDict()
-        for idx, _ in enumerate(ranges):
+        for idx, range_item in enumerate(ranges):
             if idx == len(ranges) - 1:
                 if self.name == "slope":
-                    key = "[{}%;inf[".format(ranges[idx])
+                    key = "[{}%;inf[".format(range_item)
                 else:
-                    key = "[{};inf[".format(ranges[idx])
+                    key = "[{};inf[".format(range_item)
             else:
                 if self.name == "slope":
-                    key = "[{}%;{}%[".format(ranges[idx], ranges[idx + 1])
+                    key = "[{}%;{}%[".format(range_item, ranges[idx + 1])
                 else:
-                    key = "[{};{}[".format(ranges[idx], ranges[idx + 1])
+                    key = "[{};{}[".format(range_item, ranges[idx + 1])
             classes[key] = ranges[idx]
 
         return classes
