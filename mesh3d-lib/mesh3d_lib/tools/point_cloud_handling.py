@@ -1,6 +1,7 @@
 """
 Tools to manipulate point clouds
 """
+
 from typing import Union
 import laspy
 import plyfile
@@ -14,7 +15,7 @@ import open3d as o3d
 # any point cloud format ===> pandas DataFrame
 # -------------------------------------------------------------------------------------------------------- #
 
-def o3d2df(o3d_pcd: o3d.geometry.PointCloud):
+def o3d2df(o3d_pcd: o3d.geometry.PointCloud) -> pd.DataFrame:
     """Open3D Point Cloud to pandas DataFrame"""
 
     # Point coordinates
@@ -30,7 +31,7 @@ def o3d2df(o3d_pcd: o3d.geometry.PointCloud):
     return df_pcd
 
 
-def las2df(filepath: str):
+def las2df(filepath: str) -> (pd.DataFrame, laspy.LasHeader):
     """LAS or LAZ point cloud to pandas DataFrame"""
     las = laspy.read(filepath)
     metadata = las.header
@@ -45,12 +46,12 @@ def las2df(filepath: str):
     return df, metadata
 
 
-def pkl2df(filepath: str):
+def pkl2df(filepath: str) -> pd.DataFrame:
     """PKL point cloud to pandas DataFrame"""
     return pd.read_pickle(filepath)
 
 
-def ply2df(filepath: str):
+def ply2df(filepath: str) -> pd.DataFrame:
     """PLY point cloud to pandas DataFrame"""
     plydata = plyfile.PlyData.read(filepath)
 
@@ -130,7 +131,7 @@ def df2las(filepath: str, df: pd.DataFrame, metadata: Union[laspy.LasHeader, Non
     las.write(filepath)
 
 
-def df2o3d(df_pcd: pd.DataFrame):
+def df2o3d(df_pcd: pd.DataFrame) -> o3d.geometry.PointCloud:
     """pandas.DataFrame to Open3D Point Cloud"""
 
     # init o3d point cloud
@@ -161,7 +162,7 @@ def df2o3d(df_pcd: pd.DataFrame):
 # General functions
 # -------------------------------------------------------------------------------------------------------- #
 
-def deserialize_point_cloud(filepath: str):
+def deserialize_point_cloud(filepath: str) -> (pd.DataFrame, laspy.LasHeader):
     """Convert a point cloud to a pandas dataframe"""
     extension = filepath.split(".")[-1]
 
@@ -205,7 +206,7 @@ def serialize_point_cloud(filepath: str,
         raise NotImplementedError
 
 
-def change_frame(df, in_epsg, out_epsg):
+def change_frame(df, in_epsg, out_epsg) -> pd.DataFrame:
     """Change frame in which the points are expressed"""
     proj_transformer = pyproj.Transformer.from_crs(in_epsg, out_epsg, always_xy=True)
     df["x"], df["y"], df["z"] = proj_transformer.transform(df["x"].to_numpy(), df["y"].to_numpy(), df["z"].to_numpy())

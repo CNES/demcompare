@@ -1,7 +1,9 @@
-import plyfile
+"""
+Tools to manipulate meshes
+"""
+
 import open3d as o3d
 import numpy as np
-import pandas as pd
 
 import mesh3d_lib.tools.point_cloud_handling as pcd_handler
 
@@ -10,7 +12,7 @@ import mesh3d_lib.tools.point_cloud_handling as pcd_handler
 # dict of pandas DataFrame point cloud and numpy array mesh (vertex indexes of triangles) ===> any mesh format
 # -------------------------------------------------------------------------------------------------------- #
 
-def dict2o3d(dict_pcd_mesh: dict):
+def dict2o3d(dict_pcd_mesh: dict) -> o3d.geometry.TriangleMesh:
     """dict of pandas DataFrame point cloud and numpy array mesh to open3d Triangle Mesh"""
 
     # init Triangle Mesh
@@ -43,8 +45,8 @@ def dict2ply(filepath: str, dict_pcd_mesh: dict):
 # any mesh format ===> dict of pandas DataFrame point cloud and numpy array mesh (vertex indexes of triangles)
 # -------------------------------------------------------------------------------------------------------- #
 
-def ply2dict(filepath: str):
-    """PLY mesh to pandas DataFrame"""
+def ply2dict(filepath: str) -> dict:
+    """PLY mesh to dict"""
 
     # Check consistency
     if filepath.split(".")[-1] != "ply":
@@ -66,7 +68,7 @@ def ply2dict(filepath: str):
 # General functions
 # -------------------------------------------------------------------------------------------------------- #
 
-def deserialize_mesh(filepath: str):
+def deserialize_mesh(filepath: str) -> dict:
     """Deserialize a mesh"""
     extension = filepath.split(".")[-1]
 
