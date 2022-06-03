@@ -1,15 +1,37 @@
 """
 Tools to manipulate point clouds
 """
+
 from typing import Union
 import laspy
 import plyfile
 import pandas as pd
 import numpy as np
 import pyproj
+import open3d as o3d
 
 
-def las2df(filepath: str):
+# -------------------------------------------------------------------------------------------------------- #
+# any point cloud format ===> pandas DataFrame
+# -------------------------------------------------------------------------------------------------------- #
+
+def o3d2df(o3d_pcd: o3d.geometry.PointCloud) -> pd.DataFrame:
+    """Open3D Point Cloud to pandas DataFrame"""
+
+    # Point coordinates
+    if not o3d_pcd.has_points():
+        raise ValueError("Open3D Point Cloud does not contain any point.")
+    else:
+        df_pcd = pd.DataFrame(data=np.asarray(o3d_pcd.points), columns=["x", "y", "z"])
+
+    # Colors if applicable (only RGB)
+    if o3d_pcd.has_colors():
+        df_pcd = df_pcd.assign(data=np.asarray(o3d_pcd.colors), columns=["red", "green", "blue"])
+
+    return df_pcd
+
+
+def las2df(filepath: str) -> (pd.DataFrame, laspy.LasHeader):
     """LAS or LAZ point cloud to pandas DataFrame"""
     las = laspy.read(filepath)
     metadata = las.header
@@ -24,12 +46,12 @@ def las2df(filepath: str):
     return df, metadata
 
 
-def pkl2df(filepath: str):
+def pkl2df(filepath: str) -> pd.DataFrame:
     """PKL point cloud to pandas DataFrame"""
     return pd.read_pickle(filepath)
 
 
-def ply2df(filepath: str):
+def ply2df(filepath: str) -> pd.DataFrame:
     """PLY point cloud to pandas DataFrame"""
     plydata = plyfile.PlyData.read(filepath)
 
@@ -41,6 +63,10 @@ def ply2df(filepath: str):
 
     return df
 
+
+# -------------------------------------------------------------------------------------------------------- #
+# pandas DataFrame ===> any point cloud format
+# -------------------------------------------------------------------------------------------------------- #
 
 def df2las(filepath: str, df: pd.DataFrame, metadata: Union[laspy.LasHeader, None] = None):
     """
@@ -105,7 +131,38 @@ def df2las(filepath: str, df: pd.DataFrame, metadata: Union[laspy.LasHeader, Non
     las.write(filepath)
 
 
-def deserialize_point_cloud(filepath: str):
+def df2o3d(df_pcd: pd.DataFrame) -> o3d.geometry.PointCloud:
+    """pandas.DataFrame to Open3D Point Cloud"""
+
+    # init o3d point cloud
+    o3d_pcd = o3d.geometry.PointCloud()
+
+    # add 3d coordinates
+    o3d_pcd.points = o3d.utility.Vector3dVector(df_pcd[["x", "y", "z"]].to_numpy())
+
+    # add colors if applicable (only RGB)
+    # init to zero
+    colors_arr = np.zeros_like(df_pcd[["x", "y", "z"]].to_numpy(), dtype=np.float64)
+    # retrieve information from the dataframe
+    for k, c in enumerate(["red", "green", "blue"]):
+        if c in df_pcd:
+            colors_arr[:, k] = df_pcd[c].to_numpy()
+    # normalize colours in [0, 1]
+    colors_arr = np.divide(colors_arr - colors_arr.min(),
+                           colors_arr.max() - colors_arr.min(),
+                           out=np.zeros_like(colors_arr),
+                           where=(colors_arr.max() - colors_arr.min()) != 0.)
+    # add to opend3d point cloud
+    o3d_pcd.colors = o3d.utility.Vector3dVector(colors_arr)
+
+    return o3d_pcd
+
+
+# -------------------------------------------------------------------------------------------------------- #
+# General functions
+# -------------------------------------------------------------------------------------------------------- #
+
+def deserialize_point_cloud(filepath: str) -> (pd.DataFrame, laspy.LasHeader):
     """Convert a point cloud to a pandas dataframe"""
     extension = filepath.split(".")[-1]
 
@@ -149,7 +206,7 @@ def serialize_point_cloud(filepath: str,
         raise NotImplementedError
 
 
-def change_frame(df, in_epsg, out_epsg):
+def change_frame(df, in_epsg, out_epsg) -> pd.DataFrame:
     """Change frame in which the points are expressed"""
     proj_transformer = pyproj.Transformer.from_crs(in_epsg, out_epsg, always_xy=True)
     df["x"], df["y"], df["z"] = proj_transformer.transform(df["x"].to_numpy(), df["y"].to_numpy(), df["z"].to_numpy())

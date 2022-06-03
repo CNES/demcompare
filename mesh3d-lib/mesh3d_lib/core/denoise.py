@@ -16,10 +16,9 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from tools import point_cloud_handling
 
 
-def compute_normal_o3d(cloud, weights=None):
+def compute_pcd_normals_o3d(cloud, weights=None):
     if isinstance(cloud, pd.DataFrame):
-        data = cloud[["x", "y", "z"]]
-        data = data.to_numpy()
+        data = cloud[["x", "y", "z"]].to_numpy()
 
     elif isinstance(cloud, np.ndarray):
         data = cloud
@@ -41,7 +40,10 @@ def compute_normal_o3d(cloud, weights=None):
     pcd.estimate_normals(o3d.geometry.KDTreeSearchParamKNN(100), )
     print(np.asarray(pcd.normals))
 
-    return pcd.normals
+    df_pcd = pd.DataFrame(data=np.concatenate((np.asarray(pcd.points), np.asarray(pcd.normals)), axis=1),
+                          columns=["x", "y", "z", "n_x", "n_y", "n_z"])
+
+    return df_pcd
 
 
 def compute_point_normal(pcd, weights=None):
@@ -103,15 +105,20 @@ def compute_pcd_normals(df_pcd: pd.DataFrame,
                         knn: int = 30,
                         weights_distance: bool = False,
                         weights_color: bool = False,
-                        workers: int = 1):
+                        workers: int = 1,
+                        use_open3d=False):
     """
     Compute the normal for each point of the cloud
     """
 
-    # Init
-    tree = KDTree(df_pcd[["x", "y", "z"]].to_numpy())
-    weights = None
-    results = []
+    if use_open3d:
+        df_pcd = compute_pcd_normals_o3d(df_pcd)
+
+    else:
+        # Init
+        tree = KDTree(df_pcd[["x", "y", "z"]].to_numpy())
+        weights = None
+        results = []
 
     # Query the knn for each point cloud data/ TODO test en recherchant les voisins dans une sphere avec rayon?
     _, ind = tree.query(df_pcd[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
@@ -144,11 +151,12 @@ def compute_pcd_normals(df_pcd: pd.DataFrame,
         results.append(compute_point_normal(tree.data[row, :], weights))
 
     results = np.asarray(results)
-    print(results)
+
     # Add normals information to the dataframe
     df_pcd = df_pcd.assign(n_x=results[:, 0], n_y=results[:, 1], n_z=results[:, 2])
 
     return df_pcd
+
 
 def bilateral_denoising(df: pd.DataFrame,
                         radius: int=5,
@@ -178,6 +186,7 @@ def bilateral_denoising(df: pd.DataFrame,
 
     return(df_pcd)
 
+
 def bilateral_denoising_2(df: pd.DataFrame,
                         radius: int=50,
                         sigma_d: float=0.5,
@@ -186,7 +195,7 @@ def bilateral_denoising_2(df: pd.DataFrame,
                         weights_distance: bool = False,
                         weights_color: bool = False,
                         workers: int = 1):
-    normals = compute_normal_o3d(df)
+    normals = compute_pcd_normals_o3d(df)
     cloud = df.loc[:, ["x", "y", "z"]].values
     cloud_tree = KDTree(cloud)
     for idx, _ in tqdm(enumerate(cloud)):
@@ -392,12 +401,14 @@ def bilateral_denoising_2(df: pd.DataFrame,
 #     normals *= np.sign(normals[:, 2, None])
 #     return normals
 
+
 def main(df):
     # ~ compute_normal_o3d(df)
     # ~ compute_pcd_normals(df)
     # ~ df_f = bilateral_denoising(df)
     df_f = bilateral_denoising_2(df)
     point_cloud_handling.serialize_point_cloud("/home/data/bil_tlse3.las", df_f)
+
 
 if __name__ == "__main__":
     fileName ='/home/code/stage/toulouse-points_color.pkl'
