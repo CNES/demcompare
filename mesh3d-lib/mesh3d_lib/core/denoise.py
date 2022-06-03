@@ -179,10 +179,10 @@ def bilateral_denoising(df: pd.DataFrame,
     return(df_pcd)
 
 def bilateral_denoising_2(df: pd.DataFrame,
-                        radius: int=5,
+                        radius: int=50,
                         sigma_d: float=0.5,
                         sigma_n: float=0.5,
-                        knn: int = 50,
+                        knn: int = 10,
                         weights_distance: bool = False,
                         weights_color: bool = False,
                         workers: int = 1):
@@ -190,7 +190,7 @@ def bilateral_denoising_2(df: pd.DataFrame,
     cloud = df.loc[:, ["x", "y", "z"]].values
     cloud_tree = KDTree(cloud)
     for idx, _ in tqdm(enumerate(cloud)):
-        neighbors_list = cloud_tree.query_ball_point(cloud[idx], 1)
+        neighbors_list = cloud_tree.query_ball_point(cloud[idx], radius)
         distance = cloud_tree.data[neighbors_list, :] - cloud_tree.data[idx, :]
         d_d = [np.linalg.norm(i) for i in distance]
         d_n = np.dot(distance, normals[idx])
@@ -397,7 +397,7 @@ def main(df):
     # ~ compute_pcd_normals(df)
     # ~ df_f = bilateral_denoising(df)
     df_f = bilateral_denoising_2(df)
-    point_cloud_handling.serialize_point_cloud("/home/data/bil_tlse2.las", df_f)
+    point_cloud_handling.serialize_point_cloud("/home/data/bil_tlse3.las", df_f)
 
 if __name__ == "__main__":
     fileName ='/home/code/stage/toulouse-points_color.pkl'
