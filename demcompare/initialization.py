@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -31,17 +31,18 @@ import errno
 import json
 import logging
 import os
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 # Third party imports
 import numpy as np
 from astropy import units as u
 
-from .coregistration import Coregistration
-
-# DEMcompare imports
+# Demcompare imports
 from .dem_tools import load_dem
 from .output_tree_design import supported_OTD
+
+# Declare a configuration json type for type hinting
+ConfigType = Dict[str, Any]
 
 
 def mkdir_p(path):
@@ -78,7 +79,7 @@ def make_relative_path_absolute(path, directory):
     return out
 
 
-def read_config_file(config_file: str) -> Dict[str, dict]:
+def read_config_file(config_file: str) -> ConfigType:
     """
     Read a demcompare input json config file.
     Relative paths will be made absolute.
@@ -104,7 +105,7 @@ def read_config_file(config_file: str) -> Dict[str, dict]:
     return config
 
 
-def save_config_file(config_file: str, config: Dict[str, dict]):
+def save_config_file(config_file: str, config: ConfigType):
     """
     Save a json configuration file
 
@@ -117,7 +118,7 @@ def save_config_file(config_file: str, config: Dict[str, dict]):
         json.dump(config, file_, indent=2)
 
 
-def check_input_parameters(cfg: Dict):  # noqa: C901
+def check_input_parameters(cfg: ConfigType):  # noqa: C901
     """
     Checks parameters
 
@@ -209,22 +210,7 @@ def check_input_parameters(cfg: Dict):  # noqa: C901
     cfg["otd"] = "default_OTD"
 
 
-def check_coregistration_conf(cfg: Dict):
-    """
-    Check coregistration configuration
-
-    :param cfg: configuration dictionary
-    :type cfg: Dict
-    """
-
-    if "coregistration" in cfg:
-        try:
-            Coregistration(**cfg["coregistration"])
-        except KeyError:
-            logging.error("Please check your coregistration configuration.")
-
-
-def initialization_stats_opts(cfg: Dict):
+def initialization_stats_opts(cfg: ConfigType):
     """
     Init Stats options from configuration
 
@@ -398,7 +384,7 @@ def compute_tiles_coordinates(
     return out
 
 
-def divide_images(cfg: dict):
+def divide_images(cfg: ConfigType):
     """
     List the tiles to process and prepare their output directories structures.
 

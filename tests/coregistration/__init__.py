@@ -19,11 +19,5 @@
 # limitations under the License.
 #
 """
-Init file for coregistration module.
-Imports are used to simplify calls to module API Coregistration.
+Demcompare coregistration tests module
 """
-# Demcompare imports
-from . import nuth_kaab_internal
-from .coregistration import Coregistration
-
-__all__ = ["nuth_kaab_internal", "Coregistration"]  # To avoid flake8 F401

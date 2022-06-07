@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
-# Disable the protected-access to test the functions
-# pylint:disable=protected-access
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+#
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -19,12 +18,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# Disable the protected-access to test the functions
+# pylint:disable=protected-access
 """
 This module contains functions to test all the
 methods in the Nuth et Kaab coregistration method.
 """
 
-# strm_test_data imports
+# Standard imports
 import os
 
 # Third party imports
@@ -32,6 +33,7 @@ import numpy as np
 import pytest
 import scipy
 
+# Demcompare imports
 from demcompare import coregistration, dem_tools
 from demcompare.initialization import read_config_file
 
@@ -40,9 +42,9 @@ from tests.helpers import demcompare_test_data_path
 
 
 @pytest.mark.unit_tests
-def test_coregistration_method():
+def test_coregister_dems_algorithm():
     """
-    Test the coregistration_method function of
+    Test the _coregister_dems_algorithm function of
     the Nuth et Kaab class.
     Loads the data present in the "gironde_test_data" root data
     directory and test that the output Transform is
@@ -69,9 +71,9 @@ def test_coregistration_method():
 
     # Define ground truth outputs
     rotation = None
-    x_off = -1.4366
-    y_off = -0.4190
-    z_off = -3.4025
+    x_offset = -1.4366
+    y_offset = -0.4190
+    z_offset = -3.4025
 
     # Reproject and crop DEMs
     (reproj_crop_dem, reproj_crop_ref, _,) = dem_tools.reproject_dems(
@@ -80,25 +82,23 @@ def test_coregistration_method():
 
     # Coregistration configuration is the following :
     # "coregistration": {
-    #    "method_name": "nuth_kaab",
+    #    "method_name": "nuth_kaab_internal",
     #    "number_of_iterations": 6,
     #    "estimated_initial_shift_x": 0,
     #    "estimated_initial_shift_y": 0
     # }
     # Create coregistration object
-    coregistration_ = coregistration.Coregistration(**cfg["coregistration"])
-    # Run coregister_dems
-    (
-        transform,
-        _,
-        _,
-    ) = coregistration_._coregister_dems(reproj_crop_dem, reproj_crop_ref)
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
+    # Run _coregister_dems_algorithm
+    (transform, _, _,) = coregistration_._coregister_dems_algorithm(
+        reproj_crop_dem, reproj_crop_ref
+    )
 
     # Test that the outputs match the ground truth
     assert rotation == transform.rotation
-    np.testing.assert_allclose(x_off, transform.x_off, rtol=1e-02)
-    np.testing.assert_allclose(y_off, transform.y_off, rtol=1e-02)
-    np.testing.assert_allclose(z_off, transform.z_off, rtol=1e-02)
+    np.testing.assert_allclose(x_offset, transform.x_offset, rtol=1e-02)
+    np.testing.assert_allclose(y_offset, transform.y_offset, rtol=1e-02)
+    np.testing.assert_allclose(z_offset, transform.z_offset, rtol=1e-02)
 
     # Test with "gironde_test_data" test root
     # input DEMs and sampling value ref -----------------------------
@@ -116,9 +116,9 @@ def test_coregistration_method():
 
     # Define ground truth outputs
     rotation = None
-    x_off = -5.44706
-    y_off = -1.18139
-    z_off = -0.53005
+    x_offset = -5.44706
+    y_offset = -1.18139
+    z_offset = -0.53005
 
     # Reproject and crop DEMs
     (reproj_crop_dem, reproj_crop_ref, _,) = dem_tools.reproject_dems(
@@ -127,27 +127,23 @@ def test_coregistration_method():
 
     # Coregistration configuration is the following :
     # "coregistration": {
-    #    "method_name": "nuth_kaab",
+    #    "method_name": "nuth_kaab_internal",
     #    "number_of_iterations": 6,
     #    "estimated_initial_shift_x": 0,
     #    "estimated_initial_shift_y": 0
     # }
     # Create coregistration object
-    coregistration_ = coregistration.Coregistration(
-        **cfg["coregistration"]
-    )  # type: ignore
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
     # Run coregister_dems
-    (
-        transform,
-        _,
-        _,
-    ) = coregistration_._coregister_dems(reproj_crop_dem, reproj_crop_ref)
+    (transform, _, _,) = coregistration_._coregister_dems_algorithm(
+        reproj_crop_dem, reproj_crop_ref
+    )
 
     # Test that the outputs match the ground truth
     assert rotation == transform.rotation
-    np.testing.assert_allclose(x_off, transform.x_off, rtol=1e-02)
-    np.testing.assert_allclose(y_off, transform.y_off, rtol=1e-02)
-    np.testing.assert_allclose(z_off, transform.z_off, rtol=1e-02)
+    np.testing.assert_allclose(x_offset, transform.x_offset, rtol=1e-02)
+    np.testing.assert_allclose(y_offset, transform.y_offset, rtol=1e-02)
+    np.testing.assert_allclose(z_offset, transform.z_offset, rtol=1e-02)
 
 
 @pytest.mark.unit_tests
@@ -162,13 +158,13 @@ def test_grad2d():
     """
     # Define cfg
     cfg = {
-        "method_name": "nuth_kaab",
+        "method_name": "nuth_kaab_internal",
         "number_of_iterations": 6,
         "estimated_initial_shift_x": 0,
         "estimated_initial_shift_y": 0,
     }
     # Create coregsitration object
-    coregistration_ = coregistration.Coregistration(**cfg)  # type: ignore
+    coregistration_ = coregistration.Coregistration(cfg)
 
     # Define dh array to make the computations
     dh = np.array(
@@ -240,7 +236,10 @@ def test_grad2d():
     # Ground truth aspect
     gt_aspect = np.arctan2(-grad1, grad2) + np.pi
 
-    output_slope, output_aspect = coregistration_._grad2d(dh)
+    (
+        output_slope,
+        output_aspect,
+    ) = coregistration_._grad2d(dh)
     # Test that the output slope and aspect are the same as ground truth
     np.testing.assert_allclose(output_slope, gt_slope, rtol=1e-02)
     np.testing.assert_allclose(output_aspect, gt_aspect, rtol=1e-02)
@@ -257,13 +256,13 @@ def test_filter_target():
     """
     # Initialize cfg
     cfg = {
-        "method_name": "nuth_kaab",
+        "method_name": "nuth_kaab_internal",
         "number_of_iterations": 6,
         "estimated_initial_shift_x": 0,
         "estimated_initial_shift_y": 0,
     }
     # Create coregistration object
-    coregistration_ = coregistration.Coregistration(**cfg)  # type: ignore
+    coregistration_ = coregistration.Coregistration(cfg)
     # Define aspect bounds with a np.pi/36 step
     aspect_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
     coregistration_.aspect_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
@@ -328,7 +327,7 @@ def test_nuth_kaab_single_iter():
     """
     # Define cfg
     cfg = {
-        "method_name": "nuth_kaab",
+        "method_name": "nuth_kaab_internal",
         "number_of_iterations": 6,
         "estimated_initial_shift_x": 0,
         "estimated_initial_shift_y": 0,
@@ -339,7 +338,7 @@ def test_nuth_kaab_single_iter():
         dtype=np.float64,
     )
     # Initialize coregistration object
-    coregistration_ = coregistration.Coregistration(**cfg)  # type: ignore
+    coregistration_ = coregistration.Coregistration(cfg)
     # Define aspect_bounds attribute as it is defined in the upper function
     aspect_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
     coregistration_.aspect_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
@@ -354,9 +353,10 @@ def test_nuth_kaab_single_iter():
     target = target[np.isfinite(dh)]
     aspect_filt = aspect[np.isfinite(dh)]
     # Compute filtered target and target median
-    slice_filt_median, target_filt = coregistration_._filter_target(
-        aspect_filt, target
-    )
+    (
+        slice_filt_median,
+        target_filt,
+    ) = coregistration_._filter_target(aspect_filt, target)
     # Do least squares optimization with scipy as
     # performed in nuth_kaab_single_iter
     x = aspect_filt.ravel()

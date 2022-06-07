@@ -23,7 +23,7 @@ Helpers shared testing generic module:
 contains global shared generic functions for tests/*.py
 """
 
-# strm_test_data imports
+# Standard imports
 import os
 from typing import List
 

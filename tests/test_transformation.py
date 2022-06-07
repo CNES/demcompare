@@ -24,15 +24,15 @@ This module contains functions to test all the methods
 in the transformation class.
 """
 
+# Standard imports
 import copy
-
-# strm_test_data imports
 import os
 
 # Third party imports
 import numpy as np
 import pytest
 
+# Demcompare imports
 from demcompare import dem_tools, img_tools, transformation
 from demcompare.initialization import read_config_file
 
@@ -72,19 +72,19 @@ def test_apply():
         no_data=-32768,
     )
     # Define pixel offsets
-    xoff = -1.43664
-    yoff = 0.41903
-    zoff = 0.0
+    x_offset = -1.43664
+    y_offset = 0.41903
+    z_offset = 0.0
 
     # Create transform object
     transform = transformation.Transformation(
-        x_off=xoff, y_off=-yoff, z_off=zoff
+        x_offset=x_offset, y_offset=-y_offset, z_offset=z_offset
     )
     # Copy dataset to compute ground truth transformed dataset
     gt_dataset_transformed = copy.copy(dataset)
     # Add offset to the ground truth dataset
     x_off_coord, y_off_coord = img_tools.convert_pix_to_coord(
-        gt_dataset_transformed["georef_transform"].data, -yoff, xoff
+        gt_dataset_transformed["georef_transform"].data, -y_offset, x_offset
     )
     gt_dataset_transformed["georef_transform"].data[0] = x_off_coord
     gt_dataset_transformed["georef_transform"].data[3] = y_off_coord
@@ -107,30 +107,31 @@ def test_adapt_transform_offset():
     by the input adapting_factor.
     """
     # Define pixel offsets
-    xoff = 30000
-    yoff = 64000
-    zoff = 0.0
+    x_offset = 30000
+    y_offset = 64000
+    z_offset = 0.0
     adapting_factor = (0.4, -0.003)
     x_factor, y_factor = adapting_factor
-    gt_x_off = xoff * x_factor
-    gt_y_off = yoff * y_factor
+    gt_x_off = x_offset * x_factor
+    gt_y_off = y_offset * y_factor
 
     # Create transform object
     transform = transformation.Transformation(
-        x_off=xoff, y_off=yoff, z_off=zoff
+        x_offset=x_offset,
+        y_offset=y_offset,
+        z_offset=z_offset,
+        adapting_factor=adapting_factor,
     )
-
-    transform.adapt_transform_offset(adapting_factor)
 
     # Test that the adapted transform
     # has the same attributes as the ground truth
     np.testing.assert_allclose(
-        transform.x_off,
+        transform.x_offset,
         gt_x_off,
         rtol=1e-02,
     )
     np.testing.assert_allclose(
-        transform.y_off,
+        transform.y_offset,
         gt_y_off,
         rtol=1e-02,
     )

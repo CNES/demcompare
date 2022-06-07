@@ -18,10 +18,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# pylint: disable=broad-except
 """
-DEMcompare init module file.
-DEMcompare aims at coregistering and comparing two Digital Elevation Models(DEM)
+Demcompare init module file.
+Demcompare aims at coregistering and comparing two Digital Elevation Models(DEM)
+
+Note : this version of the __init__.py is transitional to keep the tests valid
+during the refactoring, the structure and aim will evolve after dem_tools,
+coreg, stats refactoring.
 """
 
 # Standard imports
@@ -37,17 +40,16 @@ from typing import Dict, List
 import matplotlib as mpl
 import xarray as xr
 
-# DEMcompare imports
+# Demcompare imports
 from . import initialization, report, stats
 from .coregistration import Coregistration
-
-# TODO: Remove dataset_tools dependency with stats, coreg refacto.
-from .dem_tools import load_dem
+from .dem_tools import compute_dems_diff, load_dem, save_dem
 from .output_tree_design import get_otd_dirs, get_out_dir, get_out_file_path
 
 # ** VERSION **
 # pylint: disable=import-error,no-name-in-module
 # Depending on python version get importlib standard lib or backported package
+# TODO: remove pythons < 3.8
 if sys.version_info[:2] >= (3, 8):
     # when python3 > 3.8
     from importlib.metadata import PackageNotFoundError  # pragma: no cover
@@ -68,8 +70,8 @@ DEFAULT_STEPS = ["coregistration", "stats", "report"]
 
 
 def setup_logging(
-    logconf_path="demcompare/logging.json",
-    default_level=logging.WARNING,
+    logconf_path="logging.json",
+    default_level=logging.INFO,
 ):
     """
     Setup the logging configuration
@@ -81,14 +83,21 @@ def setup_logging(
     :param default_level: default level
     :type default_level: logging level
     """
+    logconf_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), logconf_path)
+    )
     if os.path.exists(logconf_path):
         with open(logconf_path, "rt", encoding="utf8") as logconf_file:
             config = json.load(logconf_file)
+        # Set config and force default_level from command_line
         logging.config.dictConfig(config)
+        logging.getLogger().setLevel(default_level)
     else:
+        # take default python config with default_level from command line
         logging.basicConfig(level=default_level)
 
 
+# TODO: to be affected by the refacto stats
 def compute_report(
     cfg: Dict,
     demcompare_results: Dict,
@@ -121,7 +130,7 @@ def compute_report(
         coreg_ref_name = ""
 
     if "report" in steps:
-        logging.info("\n[Report]")
+        logging.info("[Report]")
         report.generate_report(
             cfg["output_dir"],
             dem_to_align_name,
@@ -134,6 +143,7 @@ def compute_report(
         )
 
 
+# TODO: to be affected by the refacto stats
 def compute_stats(
     cfg: Dict[str, dict],
     demcompare_results: Dict[str, dict],
@@ -174,7 +184,7 @@ def compute_stats(
     :type final_json_file: str
     :return:
     """
-    logging.info("\n[Stats]")
+    logging.info("[Stats]")
     demcompare_results["stats_results"] = {}
     demcompare_results["stats_results"]["images"] = {}
     demcompare_results["stats_results"]["images"]["list"] = []
@@ -193,11 +203,14 @@ def compute_stats(
         remove_outliers=cfg["stats_opts"]["remove_outliers"],
     )
     # save results
-    logging.info("Save final results stats information file:")
-    logging.info(demcompare_results)
+    logging.info(
+        "Save final results stats information file: {}".format(final_json_file)
+    )
+    logging.debug("Final stats results: {}".format(demcompare_results))
     initialization.save_config_file(final_json_file, demcompare_results)
 
 
+# TODO : evolution with refacto __init__.py demcompare
 def dem_coregistration(
     cfg: Dict,
     dem_to_align: xr.Dataset,
@@ -234,28 +247,60 @@ def dem_coregistration(
                 - georef_transform: 1D (trans_len) xr.DataArray
     :rtype: xr.Dataset, xr.Dataset, xr.Dataset, bool
     """
-    logging.info("[Coregistration]")
 
-    logging.info("# Nuth & Kaab coregistration")
-    # Create coregistration object
-    coregistration_ = Coregistration(**cfg["coregistration"])
+    logging.info("[Coregistration]")
+    # TODO: refactoring function, coreg_state kept for consistency
     coreg_state = True
-    # Compute coregistration
-    _ = coregistration_.compute_coregistration(dem_to_align, ref)
+
+    # Create coregistration object
+    coregistration_ = Coregistration(cfg["coregistration"])
+    # Compute coregistration to get applicable transformation object
+    transformation = coregistration_.compute_coregistration(dem_to_align, ref)
+
+    # Apply coregistration offsets to the original DEM and store it
+    coreg_dem_to_align = transformation.apply_transform(dem_to_align)
+
+    # If output_dir is defined, save the coregistered DEM
+    if "output_dir" in cfg:
+        # Save coregistered DEM
+        # - coreg_DEM.tif -> coregistered dem_to_align
+        save_dem(
+            coreg_dem_to_align,
+            os.path.join(cfg["output_dir"], get_out_file_path("coreg_DEM.tif")),
+        )
+
+    # TODO: do this part only if stats are to be computed
+
+    # Get demcompare_results dict
+    demcompare_results = coregistration_.demcompare_results
+
+    # Get internal dems
+    reproj_ref = coregistration_.reproj_ref
+    reproj_dem_to_align = coregistration_.reproj_dem_to_align
+    reproj_coreg_ref = coregistration_.reproj_coreg_ref
+    reproj_coreg_dem_to_align = coregistration_.reproj_coreg_dem_to_align
+    # Compute initial_dh
+    initial_dh = compute_dems_diff(reproj_ref, reproj_dem_to_align)
+    # Compute final_dh
+    final_dh = compute_dems_diff(reproj_coreg_ref, reproj_coreg_dem_to_align)
+
+    # TODO: do this part only if stats are to be computed
 
     if "output_dir" in cfg:
-        coregistration_.save_outputs_to_disk()
+        # Saves initial altitude difference to file system
+        initial_dh = save_dem(
+            initial_dh,
+            os.path.join(
+                cfg["output_dir"], get_out_file_path("initial_dh.tif")
+            ),
+        )
+        # Saves final altitude difference to file system
+        final_dh = save_dem(
+            final_dh,
+            os.path.join(cfg["output_dir"], get_out_file_path("final_dh.tif")),
+        )
 
-    _, demcompare_results = coregistration_.get_results()
-    (
-        initial_dh,
-        final_dh,
-        _,
-        _,
-        interm_coreg_dem_to_align,
-        interm_coreg_ref,
-    ) = coregistration_.get_internal_results()
-
+    # TODO: to be modified by the refacto stats
     stats.dem_diff_plot(
         initial_dh,
         title="Initial [REF - DEM] differences",
@@ -280,18 +325,21 @@ def dem_coregistration(
         ),
         display=False,
     )
+    # TODO: may be modified by the refacto script demcompare
     # saves results here in case next step fails
     initialization.save_config_file(final_json_file, demcompare_results)
 
+    # TODO: the returns will be modified by the refacto stats
     return (
-        interm_coreg_dem_to_align,
-        interm_coreg_ref,
+        reproj_coreg_dem_to_align,
+        reproj_coreg_ref,
         final_dh,
         coreg_state,
         demcompare_results,
     )
 
 
+# TODO: must be modified by the refacto script demcompare
 def compute_initialization(config_json: str) -> Dict:
     """
     Compute demcompare initialization process :
@@ -340,17 +388,15 @@ def compute_initialization(config_json: str) -> Dict:
                     "sampling_source"
                 ]
 
-    # Checks coregistration config
-    initialization.check_coregistration_conf(cfg)
-
     # TODO: to be modified by stats refactoring
     initialization.initialization_stats_opts(cfg)
     return cfg
 
 
+# TODO: to be modified by the refacto script demcompare
 def run_tile(json_file: str, steps: List[str] = None, display=False):
     """
-    DEMcompare execution for a single tile
+    Demcompare execution for a single tile
 
     :param json_file: Input Json configuration file (mandatory)
     :type json_file: str
@@ -369,8 +415,8 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
     #
     cfg = compute_initialization(json_file)
 
-    logging.info("*** DEMcompare ***")
-    logging.info("Working directory: {}".format(cfg["output_dir"]))
+    logging.info("*** Demcompare ***")
+    logging.info("Output directory: {}".format(cfg["output_dir"]))
     logging.debug("Demcompare configuration: {}".format(cfg))
 
     sys.stdout.flush()
@@ -437,11 +483,10 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
         ),
     )
 
-    logging.info("\n# Input Elevation Models:")
     dem_to_align_name = dem_to_align_orig.input_img
     ref_name = ref_orig.input_img
-    logging.info("Tested DEM (DEM): {}".format(dem_to_align_orig.input_img))
-    logging.info("Reference DEM (REF): {}".format(ref_orig.input_img))
+    logging.info("Input Tested DEM (DEM): {}".format(dem_to_align_name))
+    logging.info("Input Reference DEM (REF): {}".format(ref_name))
 
     #
     # Coregister both DSMs together and compute final differences
@@ -462,19 +507,18 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
         #
         #  Plot/Save final dh img and cdf if exists
         #
-        logging.info("# Coregistered Elevation Models:")
         logging.info(
-            "Coreg Tested DEM (COREG_DEM): {}".format(
+            "Input Coreg Tested DEM (COREG_DEM): {}".format(
                 interm_coreg_dem_to_align.input_img
             )
         )
         logging.info(
-            "Coreg Reference DEM (COREG_REF): {}".format(
+            "Input Coreg Reference DEM (COREG_REF): {}".format(
                 interm_coreg_ref.input_img
             )
         )
         logging.info(
-            "--> Final diff DEM (COREG_REF - COREG_DEM): {}".format(
+            "Final diff DEM (COREG_REF - COREG_DEM): {}".format(
                 final_dh.input_img
             )
         )
@@ -530,6 +574,7 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
     )
 
 
+# TODO: to be modified by the refacto script demcompare
 def run(
     json_file: str,
     steps: List[str] = None,
@@ -537,7 +582,7 @@ def run(
     loglevel=logging.WARNING,
 ):
     """
-    DEMcompare main execution for all tiles.
+    Demcompare main execution for all tiles.
     Call run_tile() function for each tile.
 
     :param json_file: Input Json configuration file (mandatory)
@@ -582,7 +627,7 @@ def run(
                 steps,
                 display=display,
             )
-        except Exception as error:
+        except Exception as error:  # pylint: disable=broad-except
             traceback.print_exc()
             logging.error(
                 "Error encountered for tile: {} -> {}".format(tile, error)

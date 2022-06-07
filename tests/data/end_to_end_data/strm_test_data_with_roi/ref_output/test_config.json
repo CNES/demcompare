@@ -18,7 +18,7 @@
     }
   },
   "coregistration": {
-    "method_name": "nuth_kaab",
+    "method_name": "nuth_kaab_internal",
     "number_of_iterations": 6,
     "estimated_initial_shift_x": 0,
     "estimated_initial_shift_y": 0,

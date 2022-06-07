@@ -26,13 +26,14 @@ dataset_tools module.
 - _interpolate_geoid is tested with test_get_geoid_offset
 """
 
-# strm_test_data imports
+# Standard imports
 import os
 
 # Third party imports
 import numpy as np
 import pytest
 
+# Demcompare imports
 from demcompare import dataset_tools, dem_tools
 from demcompare.initialization import read_config_file
 

@@ -1372,12 +1372,12 @@ def alti_diff_stats(
             dy = demcompare_results["coregistration_results"]["dy"]
             biases = {
                 "dx": {
-                    "value_m": dx["bias_value"],
-                    "value_p": dx["bias_value"] / ref.attrs["xres"],
+                    "value_m": dx["total_bias_value"],
+                    "value_p": dx["total_bias_value"] / ref.attrs["xres"],
                 },
                 "dy": {
-                    "value_m": dy["bias_value"],
-                    "value_p": dy["bias_value"] / ref.attrs["yres"],
+                    "value_m": dy["total_bias_value"],
+                    "value_p": dy["total_bias_value"] / ref.attrs["yres"],
                 },
             }
             title.append(

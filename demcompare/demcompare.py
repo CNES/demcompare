@@ -84,7 +84,7 @@ def get_parser():
     )
     parser.add_argument(
         "--loglevel",
-        default="WARNING",
+        default="INFO",
         choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
         help="Logger level (default: INFO. Should be one of "
         "(DEBUG, INFO, WARNING, ERROR, CRITICAL)",

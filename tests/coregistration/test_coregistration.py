@@ -25,12 +25,14 @@ This module contains functions to test all the
 methods in the coregistration step.
 """
 
+# Standard imports
 import os
 
 # Third party imports
 import numpy as np
 import pytest
 
+# Demcompare imports
 from demcompare import coregistration
 from demcompare.dem_tools import SamplingSourceParameter, load_dem
 from demcompare.initialization import read_config_file
@@ -73,14 +75,16 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
     gt_plani_results = {
         "dx": {
             "nuth_offset": -1.43664,
-            "unit_nuth_offset": "px",
-            "bias_value": -718.31907,
+            "total_offset": -1.43664,
+            "unit_offset": "px",
+            "total_bias_value": -718.31907,
             "unit_bias_value": "m",
         },
         "dy": {
             "nuth_offset": -0.41903,
-            "unit_nuth_offset": "px",
-            "bias_value": -209.51619,
+            "total_offset": -0.41903,
+            "unit_offset": "px",
+            "total_bias_value": -209.51619,
             "unit_bias_value": "m",
         },
         "gdal_translate_bounds": {
@@ -92,15 +96,15 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
     }
 
     # Initialize coregistration object
-    coregistration_ = coregistration.Coregistration(**cfg["coregistration"])
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
     # Compute coregistration
     transform = coregistration_.compute_coregistration(dem_to_align, ref)
     # Get coregistration results
-    _, demcompare_results = coregistration_.get_results()
+    demcompare_results = coregistration_.demcompare_results
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_off, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_off, rtol=1e-02)
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
     assert gt_sampling_source == coregistration_.sampling_source
     np.testing.assert_allclose(
         gt_plani_results["dx"]["nuth_offset"],
@@ -108,14 +112,12 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
         rtol=1e-02,
     )
     assert (
-        gt_plani_results["dx"]["unit_nuth_offset"]
-        == demcompare_results["coregistration_results"]["dx"][
-            "unit_nuth_offset"
-        ]
+        gt_plani_results["dx"]["unit_offset"]
+        == demcompare_results["coregistration_results"]["dx"]["unit_offset"]
     )
     np.testing.assert_allclose(
-        gt_plani_results["dx"]["bias_value"],
-        demcompare_results["coregistration_results"]["dx"]["bias_value"],
+        gt_plani_results["dx"]["total_bias_value"],
+        demcompare_results["coregistration_results"]["dx"]["total_bias_value"],
         rtol=1e-02,
     )
     assert (
@@ -129,14 +131,12 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
         rtol=1e-02,
     )
     assert (
-        gt_plani_results["dy"]["unit_nuth_offset"]
-        == demcompare_results["coregistration_results"]["dy"][
-            "unit_nuth_offset"
-        ]
+        gt_plani_results["dy"]["unit_offset"]
+        == demcompare_results["coregistration_results"]["dy"]["unit_offset"]
     )
     np.testing.assert_allclose(
-        gt_plani_results["dy"]["bias_value"],
-        demcompare_results["coregistration_results"]["dy"]["bias_value"],
+        gt_plani_results["dy"]["total_bias_value"],
+        demcompare_results["coregistration_results"]["dy"]["total_bias_value"],
         rtol=1e-02,
     )
     assert (
@@ -208,14 +208,16 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     gt_plani_results = {
         "dx": {
             "nuth_offset": -1.08642,
-            "unit_nuth_offset": "px",
-            "bias_value": -543.21172,
+            "total_offset": -1.08642,
+            "unit_offset": "px",
+            "total_bias_value": -543.21172,
             "unit_bias_value": "m",
         },
         "dy": {
             "nuth_offset": -0.22552,
-            "unit_nuth_offset": "px",
-            "bias_value": -112.76041,
+            "total_offset": -0.22552,
+            "unit_offset": "px",
+            "total_bias_value": -112.76041,
             "unit_bias_value": "m",
         },
         "gdal_translate_bounds": {
@@ -226,16 +228,16 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
         },
     }
 
-    coregistration_ = coregistration.Coregistration(**cfg["coregistration"])
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
 
     # Compute coregistration
     transform = coregistration_.compute_coregistration(dem_to_align, ref)
     # Get coregistration results
-    _, demcompare_results = coregistration_.get_results()
+    demcompare_results = coregistration_.demcompare_results
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_off, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_off, rtol=1e-02)
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
     assert gt_sampling_source == coregistration_.sampling_source
     np.testing.assert_allclose(
         gt_plani_results["dx"]["nuth_offset"],
@@ -243,14 +245,12 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
         rtol=1e-02,
     )
     assert (
-        gt_plani_results["dx"]["unit_nuth_offset"]
-        == demcompare_results["coregistration_results"]["dx"][
-            "unit_nuth_offset"
-        ]
+        gt_plani_results["dx"]["unit_offset"]
+        == demcompare_results["coregistration_results"]["dx"]["unit_offset"]
     )
     np.testing.assert_allclose(
-        gt_plani_results["dx"]["bias_value"],
-        demcompare_results["coregistration_results"]["dx"]["bias_value"],
+        gt_plani_results["dx"]["total_bias_value"],
+        demcompare_results["coregistration_results"]["dx"]["total_bias_value"],
         rtol=1e-02,
     )
     assert (
@@ -263,14 +263,12 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
         rtol=1e-02,
     )
     assert (
-        gt_plani_results["dy"]["unit_nuth_offset"]
-        == demcompare_results["coregistration_results"]["dy"][
-            "unit_nuth_offset"
-        ]
+        gt_plani_results["dy"]["unit_offset"]
+        == demcompare_results["coregistration_results"]["dy"]["unit_offset"]
     )
     np.testing.assert_allclose(
-        gt_plani_results["dy"]["bias_value"],
-        demcompare_results["coregistration_results"]["dy"]["bias_value"],
+        gt_plani_results["dy"]["total_bias_value"],
+        demcompare_results["coregistration_results"]["dy"]["total_bias_value"],
         rtol=1e-02,
     )
     assert (
@@ -345,14 +343,16 @@ def test_compute_coregistration_with_strm_sampling_dem_and_initial_disparity():
     gt_plani_results = {
         "dx": {
             "nuth_offset": 1.0,
-            "unit_nuth_offset": "px",
-            "bias_value": 0.0025,
+            "total_offset": 3.0,
+            "unit_offset": "px",
+            "total_bias_value": 0.0025,
             "unit_bias_value": "deg",
         },
         "dy": {
             "nuth_offset": 2.0,
-            "unit_nuth_offset": "px",
-            "bias_value": 0.00417,
+            "total_offset": 5.0,
+            "unit_offset": "px",
+            "total_bias_value": 0.00417,
             "unit_bias_value": "deg",
         },
         "gdal_translate_bounds": {
@@ -363,24 +363,16 @@ def test_compute_coregistration_with_strm_sampling_dem_and_initial_disparity():
         },
     }
 
-    # Coregistration configuration is the following :
-    # "coregistration": {
-    #    "method_name": "nuth_kaab",
-    #    "number_of_iterations": 6,
-    #    "estimated_initial_shift_x": 2,
-    #    "estimated_initial_shift_y": 3,
-    #    "sampling_source": "dem_to_align",
-    # }
-    coregistration_ = coregistration.Coregistration(**cfg["coregistration"])
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
 
     # Compute coregistration
     transform = coregistration_.compute_coregistration(dem_to_align, ref)
     # Get coregistration results
-    _, demcompare_results = coregistration_.get_results()
+    demcompare_results = coregistration_.demcompare_results
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_off, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_off, rtol=1e-02)
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
     assert gt_sampling_source == coregistration_.sampling_source
     np.testing.assert_allclose(
         gt_plani_results["dx"]["nuth_offset"],
@@ -388,8 +380,8 @@ def test_compute_coregistration_with_strm_sampling_dem_and_initial_disparity():
         rtol=1e-02,
     )
     np.testing.assert_allclose(
-        gt_plani_results["dx"]["bias_value"],
-        demcompare_results["coregistration_results"]["dx"]["bias_value"],
+        gt_plani_results["dx"]["total_bias_value"],
+        demcompare_results["coregistration_results"]["dx"]["total_bias_value"],
         rtol=1e-02,
     )
     np.testing.assert_allclose(
@@ -398,8 +390,8 @@ def test_compute_coregistration_with_strm_sampling_dem_and_initial_disparity():
         rtol=1e-02,
     )
     np.testing.assert_allclose(
-        gt_plani_results["dy"]["bias_value"],
-        demcompare_results["coregistration_results"]["dy"]["bias_value"],
+        gt_plani_results["dy"]["total_bias_value"],
+        demcompare_results["coregistration_results"]["dy"]["total_bias_value"],
         rtol=1e-02,
     )
     np.testing.assert_allclose(
@@ -473,14 +465,16 @@ def test_compute_coregistration_with_strm_sampling_ref_and_initial_disparity():
     gt_plani_results = {
         "dx": {
             "nuth_offset": 0.997,
-            "unit_nuth_offset": "px",
-            "bias_value": 0.0025,
+            "total_offset": 3.0,
+            "unit_offset": "px",
+            "total_bias_value": 0.0025,
             "unit_bias_value": "deg",
         },
         "dy": {
             "nuth_offset": 1.99,
-            "unit_nuth_offset": "px",
-            "bias_value": 0.00416,
+            "total_offset": 5.0,
+            "unit_offset": "px",
+            "total_bias_value": 0.00416,
             "unit_bias_value": "deg",
         },
         "gdal_translate_bounds": {
@@ -491,24 +485,16 @@ def test_compute_coregistration_with_strm_sampling_ref_and_initial_disparity():
         },
     }
 
-    # Coregistration configuration is the following :
-    # "coregistration": {
-    #    "method_name": "nuth_kaab",
-    #    "number_of_iterations": 6,
-    #    "estimated_initial_shift_x": 2,
-    #    "estimated_initial_shift_y": 3,
-    #    "sampling_source": "ref",
-    # }
-    coregistration_ = coregistration.Coregistration(**cfg["coregistration"])
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
 
     # Compute coregistration
     transform = coregistration_.compute_coregistration(dem_to_align, ref)
     # Get coregistration results
-    _, demcompare_results = coregistration_.get_results()
+    demcompare_results = coregistration_.demcompare_results
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_off, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_off, rtol=1e-02)
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
     assert gt_sampling_source == coregistration_.sampling_source
     np.testing.assert_allclose(
         gt_plani_results["dx"]["nuth_offset"],
@@ -516,8 +502,8 @@ def test_compute_coregistration_with_strm_sampling_ref_and_initial_disparity():
         rtol=1e-02,
     )
     np.testing.assert_allclose(
-        gt_plani_results["dx"]["bias_value"],
-        demcompare_results["coregistration_results"]["dx"]["bias_value"],
+        gt_plani_results["dx"]["total_bias_value"],
+        demcompare_results["coregistration_results"]["dx"]["total_bias_value"],
         rtol=1e-02,
     )
 
@@ -527,8 +513,8 @@ def test_compute_coregistration_with_strm_sampling_ref_and_initial_disparity():
         rtol=1e-02,
     )
     np.testing.assert_allclose(
-        gt_plani_results["dy"]["bias_value"],
-        demcompare_results["coregistration_results"]["dy"]["bias_value"],
+        gt_plani_results["dy"]["total_bias_value"],
+        demcompare_results["coregistration_results"]["dy"]["total_bias_value"],
         rtol=1e-02,
     )
     np.testing.assert_allclose(
@@ -595,22 +581,14 @@ def test_compute_coregistration_gironde_sampling_dem_and_initial_disparity():
     gt_yoff = -0.4796
     gt_sampling_source = "dem_to_align"
 
-    # Coregistration configuration is the following :
-    # "coregistration": {
-    #    "method_name": "nuth_kaab",
-    #    "number_of_iterations": 6,
-    #    "estimated_initial_shift_x": -0.5,
-    #    "estimated_initial_shift_y": 0.2,
-    #    "sampling_source": "dem_to_align",
-    # }
-    coregistration_ = coregistration.Coregistration(**cfg["coregistration"])
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
 
     # Compute coregistration
     transform = coregistration_.compute_coregistration(dem_to_align, ref)
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_off, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_off, rtol=1e-02)
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
     # Get coregistration results
     assert gt_sampling_source == coregistration_.sampling_source
 
@@ -652,20 +630,51 @@ def test_compute_coregistration_gironde_sampling_ref_and_initial_disparity():
     gt_yoff = -0.2321
     gt_sampling_source = "ref"
 
-    # Coregistration configuration is the following :
-    # "coregistration": {
-    #    "method_name": "nuth_kaab",
-    #    "number_of_iterations": 6,
-    #    "estimated_initial_shift_x": -0.5,
-    #    "estimated_initial_shift_y": 0.2
-    #    "sampling_source": "ref",
-    # }
-    coregistration_ = coregistration.Coregistration(**cfg["coregistration"])
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
 
     # Compute coregistration
     transform = coregistration_.compute_coregistration(dem_to_align, ref)
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_off, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_off, rtol=1e-02)
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
     assert gt_sampling_source == coregistration_.sampling_source
+
+
+def test_compute_coregistration_with_default_coregistration_strm_sampling_dem():
+    """
+    Test the compute_coregistration function:
+    - Loads the data present in the test root data directory
+    - Creates a coregistration object and does compute_coregistration
+    - Tests that the output Transform has the correct offsets
+
+    Test configuration:
+    - default coregistration without input configuration
+    - "strm_test_data" input DEMs
+    - sampling value dem
+    - coregistration method Nuth et kaab
+    - non-zero initial disparity
+    """
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("strm_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Load dems
+    ref = load_dem(cfg["input_ref"]["path"])
+    dem_to_align = load_dem(cfg["input_dem_to_align"]["path"])
+
+    # Define ground truth offsets
+    gt_xoff = 3.0
+    gt_yoff = 5.0
+    # Create coregistration with default configuration
+    coregistration_ = coregistration.Coregistration()
+
+    # Compute coregistration
+    transform = coregistration_.compute_coregistration(dem_to_align, ref)
+
+    # Test that the output offsets and bias are the same as gt
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)

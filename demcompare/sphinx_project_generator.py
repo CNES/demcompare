@@ -27,6 +27,7 @@ If somehow required, this project generator shall be improved to offer some
 level of customization.
 """
 # Standard imports
+import logging
 import os
 import shutil
 import subprocess
@@ -92,7 +93,7 @@ class SphinxProjectManager:
             os.chdir(cur_dir)
             raise
         else:
-            print("Sphinx clean succeeded ")
+            logging.info("Sphinx clean succeeded ")
 
     def _create_makefile(self):
         # pylint: disable=line-too-long, anomalous-backslash-in-string
@@ -233,7 +234,7 @@ class SphinxProjectManager:
             os.chdir(cur_dir)
             raise
         else:
-            print(("Sphinx build succeeded for {} mode".format(mode)))
+            logging.info(("Sphinx build succeeded for {} mode".format(mode)))
 
     def install_project(self):
         """
@@ -243,7 +244,7 @@ class SphinxProjectManager:
         shutil.rmtree(self._output_dir, ignore_errors=True)
         # Copy build directory to install directory
         shutil.copytree(self._build_dir, self._output_dir)
-        print(("Generated report: {}".format(self._output_dir)))
+        logging.info(("Generated report: {}".format(self._output_dir)))
 
     @staticmethod
     def clean():

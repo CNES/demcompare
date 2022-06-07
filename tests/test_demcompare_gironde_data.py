@@ -22,7 +22,7 @@ This module contains functions to test Demcompare end2end with
 the "gironde_test_data" test root data
 """
 
-# strm_test_data imports
+# Standard imports
 import os
 from tempfile import TemporaryDirectory
 
@@ -117,34 +117,59 @@ def test_demcompare_with_gironde_test_data():
 
         # Test demcompare_results.json
         cfg_file = get_out_file_path("demcompare_results.json")
-        ref_output_cfg = read_config_file(
+        ref_demcompare_results = read_config_file(
             os.path.join(test_ref_output_path, cfg_file)
         )
-        output_cfg = read_config_file(os.path.join(tmp_dir, cfg_file))
+        demcompare_results = read_config_file(os.path.join(tmp_dir, cfg_file))
         np.testing.assert_allclose(
-            ref_output_cfg["coregistration_results"]["dx"]["bias_value"],
-            output_cfg["coregistration_results"]["dx"]["bias_value"],
-            atol=TEST_TOL,
-        )
-
-        np.testing.assert_allclose(
-            ref_output_cfg["coregistration_results"]["dy"]["bias_value"],
-            output_cfg["coregistration_results"]["dy"]["bias_value"],
-            atol=TEST_TOL,
-        )
-        np.testing.assert_allclose(
-            ref_output_cfg["coregistration_results"]["dx"]["nuth_offset"],
-            output_cfg["coregistration_results"]["dx"]["nuth_offset"],
+            ref_demcompare_results["coregistration_results"]["dx"][
+                "total_bias_value"
+            ],
+            demcompare_results["coregistration_results"]["dx"][
+                "total_bias_value"
+            ],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_output_cfg["coregistration_results"]["dy"]["nuth_offset"],
-            output_cfg["coregistration_results"]["dy"]["nuth_offset"],
+            ref_demcompare_results["coregistration_results"]["dy"][
+                "total_bias_value"
+            ],
+            demcompare_results["coregistration_results"]["dy"][
+                "total_bias_value"
+            ],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_output_cfg["alti_results"]["dz"]["bias_value"],
-            output_cfg["alti_results"]["dz"]["bias_value"],
+            ref_demcompare_results["coregistration_results"]["dx"][
+                "nuth_offset"
+            ],
+            demcompare_results["coregistration_results"]["dx"]["nuth_offset"],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_demcompare_results["coregistration_results"]["dy"][
+                "nuth_offset"
+            ],
+            demcompare_results["coregistration_results"]["dy"]["nuth_offset"],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_demcompare_results["coregistration_results"]["dx"][
+                "total_offset"
+            ],
+            demcompare_results["coregistration_results"]["dx"]["total_offset"],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_demcompare_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
+            demcompare_results["coregistration_results"]["dy"]["total_offset"],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_demcompare_results["alti_results"]["dz"]["total_bias_value"],
+            demcompare_results["alti_results"]["dz"]["total_bias_value"],
             atol=TEST_TOL,
         )
 
@@ -325,17 +350,21 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
         )
         np.testing.assert_allclose(
             ref_demcompare_results["coregistration_results"]["dx"][
-                "bias_value"
+                "total_bias_value"
             ],
-            demcompare_results["coregistration_results"]["dx"]["bias_value"],
+            demcompare_results["coregistration_results"]["dx"][
+                "total_bias_value"
+            ],
             atol=TEST_TOL,
         )
 
         np.testing.assert_allclose(
             ref_demcompare_results["coregistration_results"]["dy"][
-                "bias_value"
+                "total_bias_value"
             ],
-            demcompare_results["coregistration_results"]["dy"]["bias_value"],
+            demcompare_results["coregistration_results"]["dy"][
+                "total_bias_value"
+            ],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
@@ -353,8 +382,22 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["alti_results"]["dz"]["bias_value"],
-            demcompare_results["alti_results"]["dz"]["bias_value"],
+            ref_demcompare_results["coregistration_results"]["dx"][
+                "total_offset"
+            ],
+            demcompare_results["coregistration_results"]["dx"]["total_offset"],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_demcompare_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
+            demcompare_results["coregistration_results"]["dy"]["total_offset"],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_demcompare_results["alti_results"]["dz"]["total_bias_value"],
+            demcompare_results["alti_results"]["dz"]["total_bias_value"],
             atol=TEST_TOL,
         )
 

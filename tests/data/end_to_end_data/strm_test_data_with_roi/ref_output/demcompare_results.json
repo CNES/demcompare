@@ -14,7 +14,7 @@
     },
     "dz": {
       "dz_map_path": "TO/PATH/demcompare/test_output/final_dh.tif",
-      "bias_value": -0.01813,
+      "total_bias_value": -0.01813,
       "zunit": "m",
       "percent": 100.0,
       "nodata": -32768,
@@ -25,14 +25,16 @@
   "coregistration_results": {
     "dx": {
       "nuth_offset": 3.0,
-      "unit_nuth_offset": "px",
-      "bias_value": 0.0025,
+      "total_offset": 3.0,
+      "unit_offset": "px",
+      "total_bias_value": 0.0025,
       "unit_bias_value": "m"
     },
     "dy": {
       "nuth_offset": 5.0,
-      "unit_nuth_offset": "px",
-      "bias_value": 0.00417,
+      "total_offset": 5.0,
+      "unit_offset": "px",
+      "total_bias_value": 0.00417,
       "unit_bias_value": "m"
     },
     "gdal_translate_bounds": {

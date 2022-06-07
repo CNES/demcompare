@@ -193,7 +193,7 @@ class Partition:
         # Create partition (labelled map with associated sets)
         self._create_partition_sets(**cfg_layer)
 
-        logging.info("Partition created as: {}".format(self))
+        logging.debug("Partition created as: {}".format(self))
 
     def _create_partition_sets(self, **cfg_layer):
         """

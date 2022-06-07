@@ -288,25 +288,15 @@ def translate_dem(
     """
     dataset_translated = copy.copy(dataset)
     # Project the pixellic offset to input dataset's coordinates
-    x_off, y_off = convert_pix_to_coord(
+    x_offset, y_offset = convert_pix_to_coord(
         dataset["georef_transform"].data, y_offset, x_offset
     )
     # To add an offset, the [0] and [3] positions
     # of the transform have to be modified
-    dataset_translated["georef_transform"].data[0] = x_off
-    dataset_translated["georef_transform"].data[3] = y_off
+    dataset_translated["georef_transform"].data[0] = x_offset
+    dataset_translated["georef_transform"].data[3] = y_offset
 
     return dataset_translated
-
-
-class SamplingSourceParameter(Enum):
-    """
-    Enum type definition for sampling_source parameter
-    value are dem_to_align or ref to choose in reproject_dems
-    """
-
-    DEM_TO_ALIGN = "dem_to_align"
-    REF = "ref"
 
 
 def create_dem(  # pylint: disable=too-many-arguments, too-many-branches
@@ -445,13 +435,22 @@ def create_dem(  # pylint: disable=too-many-arguments, too-many-branches
     return dataset
 
 
+class SamplingSourceParameter(Enum):
+    """
+    Enum type definition for sampling_source parameter
+    value are dem_to_align or ref to choose in reproject_dems
+    """
+
+    DEM_TO_ALIGN = "dem_to_align"
+    REF = "ref"
+
+
 def reproject_dems(
     dem_to_align: xr.Dataset,
     ref: xr.Dataset,
     initial_shift_x: Union[int, float] = 0,
     initial_shift_y: Union[int, float] = 0,
     sampling_source: str = SamplingSourceParameter.DEM_TO_ALIGN.value,
-    # Disable for unreformable line_too_long
 ) -> Tuple[xr.Dataset, xr.Dataset, Tuple[float, float]]:
     """
     Reprojects both DEMs to common grid, common bounds and common georef origin.
@@ -495,7 +494,7 @@ def reproject_dems(
     if sampling_source == SamplingSourceParameter.REF.value:
         interp = dem_to_align
         static = ref
-        # Compute adapting_factor for later adapting the
+        # Compute offset adapting factor for later adapting the
         # offset to the original dem resolution
         adapting_factor = compute_offset_adapting_factor(dem_to_align, ref)
     else:  # sampling_source == SamplingSourceParameter.DEM_TO_ALIGN.value:

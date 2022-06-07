@@ -24,13 +24,14 @@ img_tools module.
 - crop_rasterio_source_with_roi is tested in test_dem_tools with reproject_dems
 """
 
-# strm_test_data imports
+# Standard imports
 import os
 
 # Third party imports
 import numpy as np
 import pytest
 
+# Demcompare imports
 from demcompare import dem_tools, img_tools
 from demcompare.initialization import read_config_file
 

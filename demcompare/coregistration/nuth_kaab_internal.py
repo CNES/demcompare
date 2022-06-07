@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+#
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -19,131 +20,116 @@
 #
 """
 This module contains functions associated to the
-Nuth et Kaab coregistration method.
+Nuth and Kaab universal co-registration
+(Correcting elevation data for glacier change detection 2011).
+
+Based on the work of geoutils project
+https://github.com/GeoUtils/geoutils/blob/master/geoutils/dem_coregistration.py
+Authors : Amaury Dehecq, Andrew Tedstone
+Date : June 2015
+License : MIT
 """
+
+# Standard imports
 import logging
 import os
-import sys
-from typing import Dict, Tuple, Union
+from typing import Tuple, Union
 
+# Third party imports
 import matplotlib.pyplot as pl
 import numpy as np
 import xarray as xr
-from json_checker import And, Checker, Or
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
 
-from ..dem_tools import SamplingSourceParameter, create_dem
-from ..img_tools import compute_gdal_translate_bounds
+# Demcompare imports
+from ..dem_tools import create_dem
+from ..initialization import ConfigType
 from ..output_tree_design import get_out_dir
 from ..transformation import Transformation
 from .coregistration import Coregistration
+from .coregistration_template import CoregistrationTemplate
 
 
-class NuthKaab(Coregistration, method_name="nuth_kaab"):
+@Coregistration.register("nuth_kaab_internal")
+class NuthKaabInternal(CoregistrationTemplate):
     """
-    NuthKaab class, allows to perform the coregistration
+    NuthKaab class, allows to perform a Nuth & Kaab coregistration
+    from authors above and adapted in demcompare
     """
 
-    _SAMPLING_SOURCE = SamplingSourceParameter.DEM_TO_ALIGN.value
-    _ITERATIONS = 6
+    # Default parameters in case they are not specified in the cfg
+    DEFAULT_ITERATIONS = 6
+    # Method name
+    method_name = "nuth_kaab_internal"
 
-    def __init__(self, **cfg: dict):
+    def __init__(self, cfg: ConfigType = None):
         """
+        Any coregistration class should have the following schema on
+        its input cfg (optional parameters may be added for a
+        particular coregistration class):
+
+        coregistration = {
+         "method_name": coregistration class name. str,
+         "number_of_iterations": number of iterations. int,
+         "sampling_source": optional. sampling source at which
+           the dems are reprojected prior to coregistration. str
+           "dem_to_align" (default) or "ref",
+         "estimated_initial_shift_x": optional. estimated initial
+           x shift. int or float. 0 by default,
+         "estimated_initial_shift_y": optional. estimated initial
+           y shift. int or float. 0 by default,
+         "output_dir": optional output directory. str. If given,
+           the coreg_dem is saved,
+         "save_coreg_method_outputs": optional. bool. Requires output_dir
+           to be set. If activated, the outputs of the coregistration method
+           (such as nuth et kaab iteration plots) are saved,
+         "save_internal_dems": optional. bool. Requires output_dir to be set.
+           If activated, the internal dems of the coregistration
+           such as reproj_dem, reproj_ref, reproj_coreg_dem,
+           reproj_coreg_ref, initial_dh and final_dh are saved.
+        }
+
         :param cfg: configuration
-        :type cfg: dict
+        :type cfg: ConfigType
         """
-        # Configuration file
-        self.cfg = self._check_conf(**cfg)
-        # Output directory to save results
-        self.output_dir = self.cfg["output_dir"]
-        # Number of iterations
+        # Call generic init before supercharging
+        super().__init__(cfg)
+        # Number of iterations specific to Nuth et kaab internal algorithm
         self.iterations = self.cfg["number_of_iterations"]
-        # Sampling source considered during reprojection
-        # (see dem_tools.SamplingSourceParameter)
-        self.sampling_source = self.cfg["sampling_source"]
-        # Estimated initial shift x
-        self.estimated_initial_shift_x = self.cfg["estimated_initial_shift_x"]
-        # Estimated initial shif y
-        self.estimated_initial_shift_y = self.cfg["estimated_initial_shift_y"]
-        # Save internal dems
-        self.save_internal_dems = self.cfg["save_internal_dems"]
-        # Save coreg_method outputs
-        self.save_coreg_method_outputs = self.cfg["save_coreg_method_outputs"]
-        # Aspect bounds for the Nuth et kaab algorithm
+        # Aspect bounds for the Nuth et kaab internal algorithm
         self.aspect_bounds: np.array = None
 
-    def _check_conf(
-        self, **cfg: Union[str, float, int, SamplingSourceParameter]
-    ) -> Dict[str, Union[str, float, int]]:
+    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
         Add default values to the dictionary if there are missing
-        elements and check if the dictionary is correct
+        elements and define the configuration schema
 
         :param cfg: coregistration configuration
-        :type cfg: dict
+        :type cfg: ConfigType
         :return cfg: coregistration configuration updated
-        :rtype: dict
+        :rtype: ConfigType
         """
+        # Call generic fill_conf_and_schema
+        cfg = super().fill_conf_and_schema(cfg)
+
         # Give the default value if the required element
         # is not in the configuration
         if "number_of_iterations" not in cfg:
-            cfg["number_of_iterations"] = self._ITERATIONS
-        if "sampling_source" not in cfg:
-            cfg["sampling_source"] = self._SAMPLING_SOURCE
-        if "estimated_initial_shift_x" not in cfg:
-            cfg["estimated_initial_shift_x"] = 0
-            cfg["estimated_initial_shift_y"] = 0
-        if "save_internal_dems" in cfg:
-            cfg["save_internal_dems"] = bool(cfg["save_internal_dems"])
-        else:
-            cfg["save_internal_dems"] = False
-        if "save_coreg_method_outputs" in cfg:
-            cfg["save_coreg_method_outputs"] = bool(
-                cfg["save_coreg_method_outputs"]
-            )
-        else:
-            cfg["save_coreg_method_outputs"] = False
+            cfg["number_of_iterations"] = self.DEFAULT_ITERATIONS
 
-        if "output_dir" not in cfg:
-            cfg["output_dir"] = None
-            if cfg["save_internal_dems"] or cfg["save_coreg_method_outputs"]:
-                logging.error(
-                    "save_internal_dems and/or save_coreg_method_outputs"
-                    " options are activated but no output_dir has been set. "
-                    "Please set the output_dir parameter or deactivate"
-                    " the saving options."
-                )
-                sys.exit(1)
+        # Add subclass parameter to the default schema
+        self.schema["number_of_iterations"] = cfg["number_of_iterations"]
 
-        schema = {
-            "number_of_iterations": And(int, lambda x: x > 1),
-            "sampling_source": And(
-                str,
-                Or(
-                    lambda input: SamplingSourceParameter.REF.value,
-                    lambda input: SamplingSourceParameter.DEM_TO_ALIGN.value,
-                ),
-            ),
-            "estimated_initial_shift_x": Or(int, float),
-            "estimated_initial_shift_y": Or(int, float),
-            "method_name": And(str, lambda input: "nuth_kaab"),
-            "output_dir": Or(str, None),
-            "save_coreg_method_outputs": bool,
-            "save_internal_dems": bool,
-        }
-
-        checker = Checker(schema)
-        checker.validate(cfg)
         return cfg
 
-    def _coregister_dems(  # pylint:disable=too-many-locals
+    def _coregister_dems_algorithm(  # pylint:disable=too-many-locals
         self,
         dem_to_align: xr.Dataset,
         ref: xr.Dataset,
     ) -> Tuple[Transformation, xr.Dataset, xr.Dataset]:
         """
-        Coregister_dems, computes coregistration
+        Coregister_dems_algorithm, computes coregistration
         transformation and reprojected coregistered DEMs
         with Nuth et kaab algorithm
         Plots might be saved if save_coreg_method_outputs is set.
@@ -210,7 +196,7 @@ class NuthKaab(Coregistration, method_name="nuth_kaab"):
             ygrid, xgrid, dsm_from_filled, kx=1, ky=1
         )
         spline_2 = RectBivariateSpline(ygrid, xgrid, nan_maskval, kx=1, ky=1)
-        xoff, yoff = 0, 0
+        x_offset, y_offset = 0, 0
 
         logging.info("Nuth & Kaab iterations: {}".format(self.iterations))
         coreg_dem = dem_im
@@ -247,13 +233,13 @@ class NuthKaab(Coregistration, method_name="nuth_kaab"):
                 )
             )
             # Update total offsets
-            xoff += east
-            yoff += north
+            x_offset += east
+            y_offset += north
 
             # Resample slave DEM in the new grid
             # spline 1 : positive y shift moves south
-            znew = spline_1(ygrid - yoff, xgrid + xoff)
-            nanval_new = spline_2(ygrid - yoff, xgrid + xoff)
+            znew = spline_1(ygrid - y_offset, xgrid + x_offset)
+            nanval_new = spline_2(ygrid - y_offset, xgrid + x_offset)
 
             # We created nan_maskval so that non NaN values are set to 0.
             # Interpolation "creates" values, and the values not affected
@@ -263,22 +249,30 @@ class NuthKaab(Coregistration, method_name="nuth_kaab"):
             znew[nanval_new != 0] = np.nan
 
             # Crop DEMs with offset
-            if xoff >= 0:
-                coreg_ref = znew[:, 0 : znew.shape[1] - int(np.ceil(xoff))]
-                coreg_dem = dem_im[:, 0 : dem_im.shape[1] - int(np.ceil(xoff))]
+            if x_offset >= 0:
+                coreg_ref = znew[:, 0 : znew.shape[1] - int(np.ceil(x_offset))]
+                coreg_dem = dem_im[
+                    :, 0 : dem_im.shape[1] - int(np.ceil(x_offset))
+                ]
             else:
-                coreg_ref = znew[:, int(np.floor(-xoff)) : znew.shape[1]]
-                coreg_dem = dem_im[:, int(np.floor(-xoff)) : dem_im.shape[1]]
-            if -yoff >= 0:
+                coreg_ref = znew[:, int(np.floor(-x_offset)) : znew.shape[1]]
+                coreg_dem = dem_im[
+                    :, int(np.floor(-x_offset)) : dem_im.shape[1]
+                ]
+            if -y_offset >= 0:
                 coreg_ref = coreg_ref[
-                    0 : znew.shape[0] - int(np.ceil(-yoff)), :
+                    0 : znew.shape[0] - int(np.ceil(-y_offset)), :
                 ]
                 coreg_dem = coreg_dem[
-                    0 : dem_im.shape[0] - int(np.ceil(-yoff)), :
+                    0 : dem_im.shape[0] - int(np.ceil(-y_offset)), :
                 ]
             else:
-                coreg_ref = coreg_ref[int(np.floor(yoff)) : znew.shape[0], :]
-                coreg_dem = coreg_dem[int(np.floor(yoff)) : dem_im.shape[0], :]
+                coreg_ref = coreg_ref[
+                    int(np.floor(y_offset)) : znew.shape[0], :
+                ]
+                coreg_dem = coreg_dem[
+                    int(np.floor(y_offset)) : dem_im.shape[0], :
+                ]
 
             # Logging of some statistics
             diff = coreg_ref - coreg_dem
@@ -295,7 +289,7 @@ class NuthKaab(Coregistration, method_name="nuth_kaab"):
             )
             nmad_old = nmad_new
 
-        # Generate dem, use the georef-grid from the dem_to_align
+        # Generate the dataset dems
         coreg_dem_dataset = create_dem(
             coreg_dem,
             transform=dem_to_align.georef_transform.data,
@@ -310,7 +304,7 @@ class NuthKaab(Coregistration, method_name="nuth_kaab"):
         )
         logging.info(
             "Nuth & Kaab Final Offset in pixels (east, north):"
-            "({:.2f},{:.2f})\n".format(xoff, yoff)
+            "({:.2f},{:.2f})".format(x_offset, y_offset)
         )
         # Display
         final_dh = coreg_ref - coreg_dem
@@ -332,11 +326,15 @@ class NuthKaab(Coregistration, method_name="nuth_kaab"):
                 dpi=100,
                 bbox_inches="tight",
             )
-        zoff = float(np.nanmean(final_dh))
+        z_offset = float(np.nanmean(final_dh))
         transform = Transformation(
-            x_off=xoff,
-            y_off=-yoff,  # -y_off because y_off from nk is north oriented
-            z_off=zoff,
+            x_offset=x_offset,
+            y_offset=-y_offset,  # -y_offset because y_offset
+            # from nk is north oriented
+            z_offset=z_offset,
+            estimated_initial_shift_x=self.estimated_initial_shift_x,
+            estimated_initial_shift_y=self.estimated_initial_shift_y,
+            adapting_factor=self.adapting_factor,
         )
         return transform, coreg_dem_dataset, coreg_ref_dataset
 
@@ -350,7 +348,7 @@ class NuthKaab(Coregistration, method_name="nuth_kaab"):
         :return: slope (fast forward style) and aspect
         :rtype: np.ndarray, np.ndarray
         """
-        grad2, grad1 = np.gradient(dem)  # in Python, x and y axis reversed
+        grad2, grad1 = np.gradient(dem)
 
         slope = np.sqrt(grad1**2 + grad2**2)
         aspect = np.arctan2(-grad1, grad2)  # aspect=0 when slope facing north
@@ -567,74 +565,20 @@ class NuthKaab(Coregistration, method_name="nuth_kaab"):
         pl.savefig(plot_file, dpi=100, bbox_inches="tight")
         pl.close()
 
-    def _fill_output_dict_with_coregistration_method(self):
+    def compute_results(self):
         """
-        Save the the coregistration method results on a Dict
+        Save the coregistration results on a Dict
+        The altimetric and coregistration results are saved.
+        Logging of the altimetric results is done in this function.
 
-        :return None
+        :return: None
         """
-
-        # Obtain unit of the bias and compute x and y biases
-        unit_bias_value = self.dem_to_align.attrs["zunit"]
-        dx_bias = (
-            self.transform.x_off + self.cfg["estimated_initial_shift_x"]
-        ) * self.dem_to_align.attrs["xres"]
-        dy_bias = (
-            self.transform.y_off + self.cfg["estimated_initial_shift_y"]
-        ) * abs(self.dem_to_align.attrs["yres"])
-
-        # Save nuth et kaab coregistration results
-        self.demcompare_results["coregistration_results"] = {}
-        self.demcompare_results["coregistration_results"]["dx"] = {
-            "nuth_offset": round(self.transform.x_off, 5),
-            "unit_nuth_offset": "px",
-            "bias_value": round(dx_bias, 5),
-            "unit_bias_value": unit_bias_value.name,
-        }
-        self.demcompare_results["coregistration_results"]["dy"] = {
-            "nuth_offset": round(self.transform.y_off, 5),
-            "unit_nuth_offset": "px",
-            "bias_value": round(dy_bias, 5),
-            "unit_bias_value": unit_bias_value.name,
-        }
-
-        # -> for the coordinate bounds to apply the offsets
-        #    to the original DSM with GDAL
-        ulx, uly, lrx, lry = compute_gdal_translate_bounds(
-            self.transform.y_off,
-            self.transform.x_off,
-            self.dem_to_align["image"].shape,
-            self.dem_to_align["georef_transform"].data,
-        )
-        self.demcompare_results["coregistration_results"][
-            "gdal_translate_bounds"
-        ] = {
-            "ulx": round(ulx, 5),
-            "uly": round(uly, 5),
-            "lrx": round(lrx, 5),
-            "lry": round(lry, 5),
-        }
-
-        # Logging report
-        logging.info("# Coregistration results:")
-        logging.info("\nPlanimetry 2D shift between DEM and REF:")
-        logging.info(
-            " -> row : {}".format(
-                self.demcompare_results["coregistration_results"]["dy"][
-                    "bias_value"
-                ]
-                * unit_bias_value
-            )
-        )
-        logging.info(
-            " -> col : {}".format(
-                self.demcompare_results["coregistration_results"]["dx"][
-                    "bias_value"
-                ]
-                * unit_bias_value
-            )
-        )
-        logging.info("\nAltimetry shift between COREG_DEM and COREG_REF")
-        logging.info(
-            (" -> alti : {}".format(self.transform.z_off * unit_bias_value))
-        )
+        # Call generic compute_results before supercharging
+        super().compute_results()
+        # Add Nuth offsets to demcompare_results
+        self.demcompare_results["coregistration_results"]["dx"][
+            "nuth_offset"
+        ] = round(self.transform.x_offset, 5)
+        self.demcompare_results["coregistration_results"]["dy"][
+            "nuth_offset"
+        ] = round(self.transform.y_offset, 5)

@@ -29,7 +29,7 @@ TODO:
 - check CRS in compute_dems_diff ?
 """
 
-# strm_test_data imports
+# Standard imports
 import os
 
 # Third party imports
@@ -37,6 +37,7 @@ import numpy as np
 import pytest
 import rasterio
 
+# Demcompare imports
 from demcompare import dataset_tools, dem_tools
 from demcompare.initialization import read_config_file
 

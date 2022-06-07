@@ -9,7 +9,8 @@ A new section Unreleased is opened then for next dev phase.
 ### Added
 
 ### Changed
-- Refactoring image_tools. [#76]
+- Refactoring image and dem tools with demcompare dataset. [#76]
+- Refactoring coregistration module. [#76]
 
 ### Fixed
 - Correct pixel filtering and add exception when outside of the geoid scope. [#86]

@@ -115,8 +115,8 @@ def crop_rasterio_source_with_roi(
 
 
 def compute_gdal_translate_bounds(
-    y_off: Union[float, int, np.ndarray],
-    x_off: Union[float, int, np.ndarray],
+    y_offset: Union[float, int, np.ndarray],
+    x_offset: Union[float, int, np.ndarray],
     shape: Tuple[int, int],
     georef_transform: np.ndarray,
 ) -> Tuple[float, float, float, float]:
@@ -128,10 +128,10 @@ def compute_gdal_translate_bounds(
     gdal_translate -a_ullr <ulx> <uly> <lrx> <lry>
     /path_to_original_dem.tif /path_to_coregistered_dem.tif
 
-    :param y_off: y pixel offset
-    :type y_off: Union[float, int, ndarray]
-    :param x_off: x pixel offset
-    :type x_off: Union[float, int, ndarray]
+    :param y_offset: y pixel offset
+    :type y_offset: Union[float, int, ndarray]
+    :param x_offset: x pixel offset
+    :type x_offset: Union[float, int, ndarray]
     :param shape: rasterio tuple containing x size and y size
     :type shape: Tuple[int, int]
     :param georef_transform: Array with 6 Affine Geo Transform coefficients
@@ -142,9 +142,9 @@ def compute_gdal_translate_bounds(
     # Read original secondary dem
     ysize, xsize = shape
     # Compute the coordinates of the new bounds
-    x_0, y_0 = convert_pix_to_coord(georef_transform, y_off, x_off)
+    x_0, y_0 = convert_pix_to_coord(georef_transform, y_offset, x_offset)
     x_1, y_1 = convert_pix_to_coord(
-        georef_transform, y_off + ysize, x_off + xsize
+        georef_transform, y_offset + ysize, x_offset + xsize
     )
 
     return float(x_0), float(y_0), float(x_1), float(y_1)

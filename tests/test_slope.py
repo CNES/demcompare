@@ -23,7 +23,7 @@ This module contains functions to test all the methods in
 the slope module.
 """
 
-# strm_test_data imports
+# Standard imports
 import os
 
 # Third party imports
