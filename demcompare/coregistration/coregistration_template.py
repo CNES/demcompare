@@ -29,7 +29,7 @@ import logging
 import os
 import sys
 from abc import ABCMeta, abstractmethod
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple
 
 # Third party imports
 import numpy as np
@@ -50,61 +50,18 @@ from ..output_tree_design import get_out_file_path
 from ..transformation import Transformation
 
 
-class CoregistrationTemplate(
-    metaclass=ABCMeta
-):  # pylint:disable=too-many-instance-attributes
+# pylint:disable=too-many-instance-attributes
+class CoregistrationTemplate(metaclass=ABCMeta):
     """
     Class for general specification of a coregistration class
     """
 
-    # Coregistration configuration
-    cfg: ConfigType = None
-
-    # Name of the coregistration method
-    method_name: str = None
-    # Number of iterations
-    iterations: int = None
-    # Output directory to save results
-    output_dir: str = None
-
-    # Sampling source for the reprojection, "ref" or
-    # "dem_to_align" (see dem_tools.SamplingSourceParameter)
-    sampling_source: str = SamplingSourceParameter.DEM_TO_ALIGN.value
-
-    # Estimated pixellic initial shift x
-    estimated_initial_shift_x: Union[float, int] = 0.0
-    # Estimated pixellic initial shift x
-    estimated_initial_shift_y: Union[float, int] = 0.0
-    # Original dem_to_align
-    orig_dem_to_align: xr.Dataset = None
-    # Reprojected and cropped dem to align
-    reproj_dem_to_align: xr.Dataset = None
-    # Reprojected and cropped ref
-    reproj_ref: xr.Dataset = None
-    # Intermediate coregistered dem_to_align
-    reproj_coreg_dem_to_align: xr.Dataset = None
-    # Intermediate coregistered ref
-    reproj_coreg_ref: xr.Dataset = None
-    # Coregistered dem_to_align
-    coreg_dem_to_align: xr.Dataset = None
-    # Final altitude map
-    final_dh: xr.Dataset = None
-
-    # Computed Transformation: result of coregistration process
-    transform: Transformation = None
-    # Offset adapting factor
-    adapting_factor: Tuple[float, float] = (1.0, 1.0)
-
-    # Demcompare results dict
-    demcompare_results: Dict = None
-
-    # If internal dems are to be saved
-    save_internal_dems: bool = None
-    # If coregistration method outputs are to be saved
-    save_coreg_method_outputs: bool = None
-
-    # Conf schema
-    schema: Dict = None
+    # Sampling source
+    _SAMPLING_SOURCE: str = SamplingSourceParameter.SEC.value
+    # Internal dems
+    _SAVE_INTERNAL_DEMS = False
+    # Coreg method outputs
+    _SAVE_COREG_METHOD_OUTPUTS = False
 
     @abstractmethod
     def __init__(self, cfg: ConfigType):
@@ -121,7 +78,7 @@ class CoregistrationTemplate(
          "number_of_iterations": number of iterations. int,
          "sampling_source": optional. sampling source at which
            the dems are reprojected prior to coregistration. str
-           "dem_to_align" (default) or "ref",
+           "sec" (default) or "ref",
          "estimated_initial_shift_x": optional. estimated initial
            x shift. int or float. 0 by default,
          "estimated_initial_shift_y": optional. estimated initial
@@ -140,6 +97,31 @@ class CoregistrationTemplate(
         :param cfg: configuration {'method_name': value}
         :type cfg: ConfigType
         """
+
+        # Original sec
+        self.orig_sec: xr.Dataset = None
+        # Reprojected and cropped dem to align
+        self.reproj_sec: xr.Dataset = None
+        # Reprojected and cropped ref
+        self.reproj_ref: xr.Dataset = None
+        # Intermediate coregistered sec
+        self.reproj_coreg_sec: xr.Dataset = None
+        # Intermediate coregistered ref
+        self.reproj_coreg_ref: xr.Dataset = None
+        # Coregistered sec
+        self.coreg_sec: xr.Dataset = None
+        # Final altitude map
+        self.final_dh: xr.Dataset = None
+
+        # Computed Transformation: result of coregistration process
+        self.transform: Transformation = None
+        # Offset adapting factor
+        self.adapting_factor: Tuple[float, float] = (1.0, 1.0)
+        # Demcompare results dict
+        self.demcompare_results: Dict = None
+        # Conf schema
+        self.schema: Dict = None
+
         # Fill configuration file
         self.cfg = self.fill_conf_and_schema(cfg)
         # Check and update configuration file
@@ -179,22 +161,23 @@ class CoregistrationTemplate(
         # Give the default value if the required element
         # is not in the configuration
         if "method_name" not in cfg:
-            cfg["method_name"] = self.method_name
+            cfg["method_name"] = self.method_name  # pylint:disable=no-member
         if "sampling_source" not in cfg:
-            cfg["sampling_source"] = self.sampling_source
+            cfg["sampling_source"] = self._SAMPLING_SOURCE
         if "estimated_initial_shift_x" not in cfg:
             cfg["estimated_initial_shift_x"] = 0
             cfg["estimated_initial_shift_y"] = 0
         if "save_internal_dems" in cfg:
-            cfg["save_internal_dems"] = bool(cfg["save_internal_dems"])
+            cfg["save_internal_dems"] = cfg["save_internal_dems"] == "True"
         else:
-            cfg["save_internal_dems"] = False
+            cfg["save_internal_dems"] = self._SAVE_INTERNAL_DEMS
         if "save_coreg_method_outputs" in cfg:
-            cfg["save_coreg_method_outputs"] = bool(
-                cfg["save_coreg_method_outputs"]
+            cfg["save_coreg_method_outputs"] = (
+                cfg["save_coreg_method_outputs"] == "True"
             )
+
         else:
-            cfg["save_coreg_method_outputs"] = False
+            cfg["save_coreg_method_outputs"] = self._SAVE_COREG_METHOD_OUTPUTS
 
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
@@ -213,7 +196,7 @@ class CoregistrationTemplate(
                 str,
                 Or(
                     lambda input: SamplingSourceParameter.REF.value,
-                    lambda input: SamplingSourceParameter.DEM_TO_ALIGN.value,
+                    lambda input: SamplingSourceParameter.SEC.value,
                 ),
             ),
             "estimated_initial_shift_x": Or(int, float),
@@ -244,16 +227,16 @@ class CoregistrationTemplate(
 
     def prepare_dems_for_coregistration(
         self,
-        dem_to_align: xr.Dataset,
+        sec: xr.Dataset,
         ref: xr.Dataset,
     ) -> Tuple[xr.Dataset, xr.Dataset, xr.Dataset, Tuple[float, float]]:
         """
         Reproject the two input DEMs to the same resolution
-        and size. orig_dem_to_align, reproj_dem_to_align,
+        and size. orig_sec, reproj_sec,
         reproj_ref and the offset adapting_factor are stored as
         attributes of the class.
 
-        :type dem_to_align: dem to align xr.Dataset containing
+        :type sec: dem to align xr.Dataset containing
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
@@ -261,8 +244,8 @@ class CoregistrationTemplate(
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-        :return: reproj_dem_to_align xr.Dataset, reproj_ref xr.Dataset,
-                orig_dem_to_align xr.Dataset, adapting_factor
+        :return: reproj_sec xr.Dataset, reproj_ref xr.Dataset,
+                orig_sec xr.Dataset, adapting_factor
                 Tuple[float, float].
                 The xr.Datasets containing :
 
@@ -272,45 +255,43 @@ class CoregistrationTemplate(
         """
 
         logging.info(
-            "Input Coregistration DEM: {}".format(
-                dem_to_align.attrs["input_img"]
-            )
+            "Input Coregistration SEC: {}".format(sec.attrs["input_img"])
         )
         logging.info(
             "Input Coregistration REF: {}".format(ref.attrs["input_img"])
         )
-        # Store the original dem_to_align prior to reprojection
-        self.orig_dem_to_align = copy_dem(dem_to_align)
+        # Store the original sec prior to reprojection
+        self.orig_sec = copy_dem(sec)
 
         # Reproject and crop DEMs
         (
-            self.reproj_dem_to_align,
+            self.reproj_sec,
             self.reproj_ref,
             self.adapting_factor,
         ) = reproject_dems(
-            dem_to_align,
+            sec,
             ref,
             self.estimated_initial_shift_x,
             self.estimated_initial_shift_y,
             self.sampling_source,
         )
         return (
-            self.reproj_dem_to_align,
+            self.reproj_sec,
             self.reproj_ref,
-            self.orig_dem_to_align,
+            self.orig_sec,
             self.adapting_factor,
         )
 
     def compute_coregistration(
         self,
-        dem_to_align: xr.Dataset,
+        sec: xr.Dataset,
         ref: xr.Dataset,
     ) -> Transformation:
         """
         Reproject and compute coregistration between the two input DEMs.
         A Transformation object is returned.
 
-        :type dem_to_align: dem to align xr.Dataset containing
+        :type sec: dem to align xr.Dataset containing
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
@@ -324,20 +305,18 @@ class CoregistrationTemplate(
         # Prepare dems for coregistration reprojecting them
         # to the same resolution and size
         (
-            self.reproj_dem_to_align,
+            self.reproj_sec,
             self.reproj_ref,
-            self.orig_dem_to_align,
+            self.orig_sec,
             self.adapting_factor,
-        ) = self.prepare_dems_for_coregistration(dem_to_align, ref)
+        ) = self.prepare_dems_for_coregistration(sec, ref)
 
         # Do coregistration
         (
             self.transform,
-            self.reproj_coreg_dem_to_align,
+            self.reproj_coreg_sec,
             self.reproj_coreg_ref,
-        ) = self._coregister_dems_algorithm(
-            self.reproj_dem_to_align, self.reproj_ref
-        )
+        ) = self._coregister_dems_algorithm(self.reproj_sec, self.reproj_ref)
 
         # Compute and store the demcompare_results dict
         self.compute_results()
@@ -350,7 +329,7 @@ class CoregistrationTemplate(
     @abstractmethod
     def _coregister_dems_algorithm(
         self,
-        dem_to_align: xr.Dataset,
+        sec: xr.Dataset,
         ref: xr.Dataset,
     ) -> Tuple[Transformation, xr.Dataset, xr.Dataset]:
         """
@@ -358,17 +337,17 @@ class CoregistrationTemplate(
         transform and coregistered DEMS of two DEMs
         that have the same size and resolution.
 
-        :param dem_to_align: dem_to_align xr.DataSet containing :
+        :param sec: sec xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-        :type dem_to_align: xarray Dataset
+        :type sec: xarray Dataset
         :param ref: ref xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
         :type ref: xarray Dataset
-        :return: transformation, reproj_coreg_dem_to_align xr.DataSet,
+        :return: transformation, reproj_coreg_sec xr.DataSet,
                  reproj_coreg_ref xr.DataSet. The xr.Datasets containing :
 
                 - image : 2D (row, col) xr.DataArray float32
@@ -381,18 +360,18 @@ class CoregistrationTemplate(
         Save the dems obtained from the coregistration to .tif
         and updates its path on the demcompare_results file
 
-            - ./coregistration/reproj_DEM.tif -> reprojected dem_to_align
+            - ./coregistration/reproj_DEM.tif -> reprojected sec
             - ./coregistration/reproj_REF.tif -> reprojected ref
             - ./coregistration/reproj_coreg_DEM.tif -> reprojected
-               coregistered dem_to_align
+               coregistered sec
             - ./coregistration/reproj_coreg_REF.tif -> reprojected
                coregistered ref
 
         :return: None
         """
         # Saves reprojected DEM to file system
-        self.reproj_dem_to_align = save_dem(
-            self.reproj_dem_to_align,
+        self.reproj_sec = save_dem(
+            self.reproj_sec,
             os.path.join(self.output_dir, get_out_file_path("reproj_DEM.tif")),
         )
         # Saves reprojected REF to file system
@@ -401,8 +380,8 @@ class CoregistrationTemplate(
             os.path.join(self.output_dir, get_out_file_path("reproj_REF.tif")),
         )
         # Saves reprojected coregistered DEM to file system
-        self.reproj_coreg_dem_to_align = save_dem(
-            self.reproj_coreg_dem_to_align,
+        self.reproj_coreg_sec = save_dem(
+            self.reproj_coreg_sec,
             os.path.join(
                 self.output_dir, get_out_file_path("reproj_coreg_DEM.tif")
             ),
@@ -420,9 +399,9 @@ class CoregistrationTemplate(
                 "path"
             ] = self.reproj_coreg_ref.attrs["input_img"]
             # Update path on demcompare_results file
-            self.demcompare_results["alti_results"][
-                "reproj_coreg_dem_to_align"
-            ]["path"] = self.reproj_coreg_dem_to_align.attrs["input_img"]
+            self.demcompare_results["alti_results"]["reproj_coreg_sec"][
+                "path"
+            ] = self.reproj_coreg_sec.attrs["input_img"]
             # Update path on demcompare_results file
             self.demcompare_results["alti_results"]["dz"][
                 "dz_map_path"
@@ -460,29 +439,25 @@ class CoregistrationTemplate(
             "nb_valid_points"
         ] = np.count_nonzero(~np.isnan(self.reproj_coreg_ref["image"].data))
 
-        # Reprojected coregistered dem_to_align information
-        self.demcompare_results["alti_results"][
-            "reproj_coreg_dem_to_align"
-        ] = {}
-        self.demcompare_results["alti_results"]["reproj_coreg_dem_to_align"][
+        # Reprojected coregistered sec information
+        self.demcompare_results["alti_results"]["reproj_coreg_sec"] = {}
+        self.demcompare_results["alti_results"]["reproj_coreg_sec"][
             "path"
-        ] = self.reproj_coreg_dem_to_align.attrs["input_img"]
-        self.demcompare_results["alti_results"]["reproj_coreg_dem_to_align"][
+        ] = self.reproj_coreg_sec.attrs["input_img"]
+        self.demcompare_results["alti_results"]["reproj_coreg_sec"][
             "nodata"
-        ] = self.reproj_coreg_dem_to_align.attrs["no_data"]
-        self.demcompare_results["alti_results"]["reproj_coreg_dem_to_align"][
+        ] = self.reproj_coreg_sec.attrs["no_data"]
+        self.demcompare_results["alti_results"]["reproj_coreg_sec"][
             "nb_points"
-        ] = self.reproj_coreg_dem_to_align["image"].data.size
-        self.demcompare_results["alti_results"]["reproj_coreg_dem_to_align"][
+        ] = self.reproj_coreg_sec["image"].data.size
+        self.demcompare_results["alti_results"]["reproj_coreg_sec"][
             "nb_valid_points"
-        ] = np.count_nonzero(
-            ~np.isnan(self.reproj_coreg_dem_to_align["image"].data)
-        )
+        ] = np.count_nonzero(~np.isnan(self.reproj_coreg_sec["image"].data))
 
         # Altitude difference information
         # Compute final_dh to complete the alti_resuts
         self.final_dh = compute_dems_diff(
-            self.reproj_coreg_ref, self.reproj_coreg_dem_to_align
+            self.reproj_coreg_ref, self.reproj_coreg_sec
         )
         self.demcompare_results["alti_results"]["dz"] = {}
         self.demcompare_results["alti_results"]["dz"] = {
@@ -490,7 +465,7 @@ class CoregistrationTemplate(
             "total_bias_value": round(
                 float(np.nanmean(self.final_dh["image"].data)), 5
             ),
-            "zunit": self.reproj_coreg_dem_to_align.attrs["zunit"].name,
+            "zunit": self.reproj_coreg_sec.attrs["zunit"].name,
             "percent": round(
                 100
                 * np.count_nonzero(~np.isnan(self.final_dh["image"].data))
@@ -505,13 +480,9 @@ class CoregistrationTemplate(
         }
 
         # Obtain unit of the bias and compute x and y biases
-        unit_bias_value = self.orig_dem_to_align.attrs["zunit"]
-        dx_bias = (
-            self.transform.total_offset_x * self.orig_dem_to_align.attrs["xres"]
-        )
-        dy_bias = (
-            self.transform.total_offset_y * self.orig_dem_to_align.attrs["xres"]
-        )
+        unit_bias_value = self.orig_sec.attrs["zunit"]
+        dx_bias = self.transform.total_offset_x * self.orig_sec.attrs["xres"]
+        dy_bias = self.transform.total_offset_y * self.orig_sec.attrs["xres"]
 
         # Save coregistration results
         self.demcompare_results["coregistration_results"] = {}
@@ -533,8 +504,8 @@ class CoregistrationTemplate(
         ulx, uly, lrx, lry = compute_gdal_translate_bounds(
             self.transform.y_offset,
             self.transform.x_offset,
-            self.orig_dem_to_align["image"].shape,
-            self.orig_dem_to_align["georef_transform"].data,
+            self.orig_sec["image"].shape,
+            self.orig_sec["georef_transform"].data,
         )
         self.demcompare_results["coregistration_results"][
             "gdal_translate_bounds"
@@ -550,8 +521,8 @@ class CoregistrationTemplate(
         ulx, uly, lrx, lry = compute_gdal_translate_bounds(
             self.transform.y_offset,
             self.transform.x_offset,
-            self.orig_dem_to_align["image"].shape,
-            self.orig_dem_to_align["georef_transform"].data,
+            self.orig_sec["image"].shape,
+            self.orig_sec["georef_transform"].data,
         )
         self.demcompare_results["coregistration_results"][
             "gdal_translate_bounds"

@@ -132,7 +132,7 @@ def test_compute_gdal_translate_bounds():
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
     # Load dem
-    dem = dem_tools.load_dem(cfg["input_dem_to_align"]["path"])
+    dem = dem_tools.load_dem(cfg["input_sec"]["path"])
 
     # Pixellic offset
     dy_px = 0.00417
@@ -162,7 +162,7 @@ def test_compute_gdal_translate_bounds():
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
     # Load dem
-    dem = dem_tools.load_dem(cfg["input_dem_to_align"]["path"])
+    dem = dem_tools.load_dem(cfg["input_sec"]["path"])
 
     # Pixellic offset
     dy_nuth = 0.41903

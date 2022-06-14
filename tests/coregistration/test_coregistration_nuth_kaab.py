@@ -19,12 +19,13 @@
 # limitations under the License.
 #
 # Disable the protected-access to test the functions
-# pylint:disable=protected-access
+
 """
 This module contains functions to test all the
 methods in the Nuth et Kaab coregistration method.
 """
-
+# pylint:disable=protected-access
+# pylint:disable=duplicate-code
 # Standard imports
 import os
 
@@ -51,12 +52,12 @@ def test_coregister_dems_algorithm():
     correct.
     The following configurations are tested:
     - "gironde_test_data" test root input DEMs,
-     sampling value dem_to_align
+     sampling value sec
     - "gironde_test_data" test root input DEMs,
      sampling value ref
     """
     # Test with "gironde_test_data" test root
-    # input DEMs and sampling value dem_to_align -----------------------------
+    # input DEMs and sampling value sec -----------------------------
 
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data")
@@ -66,8 +67,8 @@ def test_coregister_dems_algorithm():
 
     # Load dems
     ref = dem_tools.load_dem(cfg["input_ref"]["path"])
-    dem_to_align = dem_tools.load_dem(cfg["input_dem_to_align"]["path"])
-    sampling_source = "dem_to_align"
+    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
+    sampling_source = "sec"
 
     # Define ground truth outputs
     rotation = None
@@ -76,9 +77,11 @@ def test_coregister_dems_algorithm():
     z_offset = -3.4025
 
     # Reproject and crop DEMs
-    (reproj_crop_dem, reproj_crop_ref, _,) = dem_tools.reproject_dems(
-        dem_to_align, ref, sampling_source=sampling_source
-    )
+    (
+        reproj_crop_dem,
+        reproj_crop_ref,
+        _,
+    ) = dem_tools.reproject_dems(sec, ref, sampling_source=sampling_source)
 
     # Coregistration configuration is the following :
     # "coregistration": {
@@ -111,7 +114,7 @@ def test_coregister_dems_algorithm():
 
     # Load dems
     ref = dem_tools.load_dem(cfg["input_ref"]["path"])
-    dem_to_align = dem_tools.load_dem(cfg["input_dem_to_align"]["path"])
+    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
     sampling_source = "ref"
 
     # Define ground truth outputs
@@ -121,9 +124,11 @@ def test_coregister_dems_algorithm():
     z_offset = -0.53005
 
     # Reproject and crop DEMs
-    (reproj_crop_dem, reproj_crop_ref, _,) = dem_tools.reproject_dems(
-        dem_to_align, ref, sampling_source=sampling_source
-    )
+    (
+        reproj_crop_dem,
+        reproj_crop_ref,
+        _,
+    ) = dem_tools.reproject_dems(sec, ref, sampling_source=sampling_source)
 
     # Coregistration configuration is the following :
     # "coregistration": {
@@ -395,3 +400,174 @@ def test_nuth_kaab_single_iter():
     np.testing.assert_allclose(output_east, gt_east, rtol=1e-02)
     np.testing.assert_allclose(output_north, gt_north, rtol=1e-02)
     np.testing.assert_allclose(output_c, gt_c, rtol=1e-02)
+
+
+@pytest.mark.unit_tests
+def test_interpolate_dem_on_grid():
+    """
+    Test the interpolate_dem_on_grid function
+    Manually computes an input array and its
+    spline interpolators, and tests that the resulting
+    splines form the interpolate_dem_on_grid are the
+    same.
+    """
+    # Define cfg
+    cfg = {
+        "method_name": "nuth_kaab_internal",
+        "number_of_iterations": 6,
+        "estimated_initial_shift_x": 0,
+        "estimated_initial_shift_y": 0,
+    }
+
+    # Initialize coregistration object
+    coregistration_ = coregistration.Coregistration(cfg)
+
+    # Define input_dem array
+    input_dem = np.array(
+        (
+            [1, 1, np.nan],
+            [-1, 2, 1],
+            [4, -3, np.nan],
+            [np.nan, 1, 1],
+            [1, 1, np.nan],
+        ),
+        dtype=np.float64,
+    )
+
+    # Set target dem grid for interpolation purpose
+    xgrid = np.arange(input_dem.shape[1])
+    ygrid = np.arange(input_dem.shape[0])
+
+    # Masked input_dem used to obtain spline_1 interpolator
+    gt_masked_dem = np.array(
+        (
+            [1, 1, -9999],
+            [-1, 2, 1],
+            [4, -3, -9999],
+            [-9999, 1, 1],
+            [1, 1, -9999],
+        ),
+        dtype=np.float64,
+    )
+    # input_dem's mask used to obtain spline_2 interpolators
+    gt_nan_mask = np.array(
+        (
+            [False, False, True],
+            [False, False, False],
+            [False, False, True],
+            [True, False, False],
+            [False, False, True],
+        ),
+        dtype=np.float64,
+    )
+    output_spline_1, output_spline_2 = coregistration_.interpolate_dem_on_grid(
+        input_dem, xgrid, ygrid
+    )
+
+    # Compute both ground_truth splines
+    gt_spline_1 = scipy.interpolate.RectBivariateSpline(
+        ygrid, xgrid, gt_masked_dem, kx=1, ky=1
+    )
+    gt_spline_2 = scipy.interpolate.RectBivariateSpline(
+        ygrid, xgrid, gt_nan_mask, kx=1, ky=1
+    )
+
+    # Test that the output splines are the same as ground_truth
+    # spline.tck is a tuple (t,c,k) containing the vector of knots,
+    # the B-spline coefficients, and the degree of the spline.
+    np.testing.assert_allclose(
+        gt_spline_1.tck[0], output_spline_1.tck[0], rtol=1e-02
+    )
+    np.testing.assert_allclose(
+        gt_spline_2.tck[0], output_spline_2.tck[0], rtol=1e-02
+    )
+
+    np.testing.assert_allclose(
+        gt_spline_1.tck[1], output_spline_1.tck[1], rtol=1e-02
+    )
+    np.testing.assert_allclose(
+        gt_spline_2.tck[1], output_spline_2.tck[1], rtol=1e-02
+    )
+
+    np.testing.assert_allclose(
+        gt_spline_1.tck[2], output_spline_1.tck[2], rtol=1e-02
+    )
+    np.testing.assert_allclose(
+        gt_spline_2.tck[2], output_spline_2.tck[2], rtol=1e-02
+    )
+
+
+@pytest.mark.unit_tests
+def test_crop_dem_with_offset():
+    """
+    Test the crop_dem_with_offset function
+    Manually computes an input array and crops it
+    with different offsets, and tests that the resulting
+    arrays form the crop_dem_with_offset are the
+    same.
+    """
+
+    # Define cfg
+    cfg = {
+        "method_name": "nuth_kaab_internal",
+        "number_of_iterations": 6,
+        "estimated_initial_shift_x": 0,
+        "estimated_initial_shift_y": 0,
+    }
+
+    # Initialize coregistration object
+    coregistration_ = coregistration.Coregistration(cfg)
+
+    # Define input_dem array
+    input_dem = np.array(
+        ([1, 1, 1], [-1, 2, 1], [4, -3, 2], [2, 1, 1], [1, 1, 2]),
+        dtype=np.float64,
+    )
+
+    # Test with positive x_offset and positive y_offset
+    x_offset = 2.3
+    y_offset = 4.7
+    output_cropped_dem = coregistration_.crop_dem_with_offset(
+        input_dem, x_offset, y_offset
+    )
+    gt_cropped_dem = input_dem[
+        int(np.floor(y_offset)) : input_dem.shape[0],
+        0 : input_dem.shape[1] - int(np.ceil(x_offset)),
+    ]
+    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
+
+    # Test with positive x_offset and negative y_offset
+    x_offset = 2.3
+    y_offset = -4.7
+    output_cropped_dem = coregistration_.crop_dem_with_offset(
+        input_dem, x_offset, y_offset
+    )
+    gt_cropped_dem = input_dem[
+        0 : input_dem.shape[0] - int(np.ceil(-y_offset)),
+        0 : input_dem.shape[1] - int(np.ceil(x_offset)),
+    ]
+    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
+
+    # Test with negative x_offset and positive y_offset
+    x_offset = -2.3
+    y_offset = 4.7
+    output_cropped_dem = coregistration_.crop_dem_with_offset(
+        input_dem, x_offset, y_offset
+    )
+    gt_cropped_dem = input_dem[
+        int(np.floor(y_offset)) : input_dem.shape[0],
+        int(np.floor(-x_offset)) : input_dem.shape[1],
+    ]
+    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
+
+    # Test with negative x_offset and negative y_offset
+    x_offset = -2.3
+    y_offset = -4.7
+    output_cropped_dem = coregistration_.crop_dem_with_offset(
+        input_dem, x_offset, y_offset
+    )
+    gt_cropped_dem = input_dem[
+        0 : input_dem.shape[0] - int(np.ceil(-y_offset)),
+        int(np.floor(-x_offset)) : input_dem.shape[1],
+    ]
+    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)

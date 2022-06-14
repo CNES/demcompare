@@ -41,10 +41,20 @@ import matplotlib as mpl
 import xarray as xr
 
 # Demcompare imports
-from . import initialization, report, stats
+from . import initialization, report
 from .coregistration import Coregistration
-from .dem_tools import compute_dems_diff, load_dem, save_dem
+from .dem_tools import (
+    compute_alti_diff_for_stats,
+    compute_and_save_image_plots,
+    compute_dem_slope,
+    compute_dems_diff,
+    compute_waveform,
+    load_dem,
+    save_dem,
+    verify_fusion_layers,
+)
 from .output_tree_design import get_otd_dirs, get_out_dir, get_out_file_path
+from .stats_processing import StatsProcessing
 
 # ** VERSION **
 # pylint: disable=import-error,no-name-in-module
@@ -66,7 +76,7 @@ finally:
     del version, PackageNotFoundError
 
 # ** STEPS **
-DEFAULT_STEPS = ["coregistration", "stats", "report"]
+DEFAULT_STEPS = ["coregistration", "statistics", "report"]
 
 
 def setup_logging(
@@ -97,14 +107,14 @@ def setup_logging(
         logging.basicConfig(level=default_level)
 
 
-# TODO: to be affected by the refacto stats
+# TODO: to be modified by the refacto script demcompare
 def compute_report(
     cfg: Dict,
-    demcompare_results: Dict,
     steps: List[str],
-    dem_to_align_name: str,
+    stats_dataset,
+    sec_name: str,
     ref_name: str,
-    coreg_dem_to_align_name: str,
+    coreg_sec_name: str,
     coreg_ref_name: str,
 ):
     """
@@ -114,107 +124,218 @@ def compute_report(
     :type cfg: dict
     :param steps: pipeline steps
     :type steps: List
-    :param dem_to_align_name: dem_to_align raster name
-    :type dem_to_align_name: str
-    :param ref_name: reference dem_to_align raster name
+    :param sec_name: sec raster name
+    :type sec_name: str
+    :param ref_name: reference sec raster name
     :type ref_name: str
-    :param coreg_dem_to_align_name: coreg_dem_to_align name
-    :type coreg_dem_to_align_name: str
-    :param coreg_ref_name: coreg_ref name
+    :param coreg_sec_name: sec name
+    :type coreg_sec_name: str
+    :param coreg_ref_name: ref name
     :type coreg_ref_name: str
     :return: None
     """
-    if coreg_dem_to_align_name is None:
-        coreg_dem_to_align_name = ""
+    if coreg_sec_name is None:
+        coreg_sec_name = ""
     if coreg_ref_name is None:
         coreg_ref_name = ""
 
     if "report" in steps:
         logging.info("[Report]")
         report.generate_report(
-            cfg["output_dir"],
-            dem_to_align_name,
-            ref_name,
-            coreg_dem_to_align_name,
-            coreg_ref_name,
-            demcompare_results["stats_results"]["partitions"],
-            os.path.join(cfg["output_dir"], get_out_dir("sphinx_built_doc")),
-            os.path.join(cfg["output_dir"], get_out_dir("sphinx_src_doc")),
+            working_dir=cfg["output_dir"],
+            stats_dataset=stats_dataset,
+            sec_name=sec_name,
+            ref_name=ref_name,
+            coreg_sec_name=coreg_sec_name,
+            coreg_ref_name=coreg_ref_name,
+            doc_dir=os.path.join(
+                cfg["output_dir"], get_out_dir("sphinx_built_doc")
+            ),
+            project_dir=os.path.join(
+                cfg["output_dir"], get_out_dir("sphinx_src_doc")
+            ),
         )
 
 
-# TODO: to be affected by the refacto stats
+# TODO: to be modified by the refacto script demcompare
 def compute_stats(
     cfg: Dict[str, dict],
-    demcompare_results: Dict[str, dict],
-    dem_to_align: xr.Dataset,
-    ref: xr.Dataset,
-    final_dh: xr.Dataset,
-    display: bool = False,
-    final_json_file: str = None,
+    coreg_sec: xr.Dataset,
+    coreg_ref: xr.Dataset,
+    initial_sec: xr.Dataset = None,
+    initial_ref: xr.Dataset = None,
 ):
     """
-    Compute Stats on final_dh
+    Compute Stats
 
     :param cfg: configuration dictionary
     :type cfg: dict
-    :param dem_to_align: dem to align xr.DataSet containing :
+    :param coreg_sec: coreg dem to align xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-    :type dem_to_align: xr.Dataset
-    :param ref: reference dem xr.DataSet containing :
+    :type coreg_sec: xr.Dataset
+    :param coreg_ref: coreg reference dem xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-    :type ref: xr.Dataset
-    :param final_dh: initial alti diff
-    :param final_dh: initial alti diff xr.Dataset containing the variables :
-            - im : 2D (row, col) xarray.DataArray float32
-            - trans: 1D (trans_len) xarray.DataArray
-
-    :param final_dh: initial alti diff xr.DataSet containing :
+    :param initial_sec: optional initial dem
+                to align xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-    :type final_dh: xr.Dataset
-    :param display: choose between plot show and plot save
-    :type display: boolean
-    :param final_json_file: filename of final_cfg
-    :type final_json_file: str
+    :type initial_sec: xr.Dataset
+    :param initial_ref: optional initial reference dem xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+    :type initial_ref: xr.Dataset
     :return:
     """
     logging.info("[Stats]")
-    demcompare_results["stats_results"] = {}
-    demcompare_results["stats_results"]["images"] = {}
-    demcompare_results["stats_results"]["images"]["list"] = []
 
     logging.info("# DEM diff wave detection")
-    stats.wave_detection(cfg, demcompare_results, final_dh)
 
     logging.info("# Altimetric error stats generation")
-    stats.alti_diff_stats(
-        cfg,
-        demcompare_results,
-        dem_to_align,
-        ref,
-        final_dh,
-        display=display,
-        remove_outliers=cfg["stats_opts"]["remove_outliers"],
+
+    # Cfg for the initial stats --------------------------------------------
+
+    # Compute altitude diff
+    initial_altitude_diff = compute_dems_diff(initial_ref, initial_sec)
+    # Compute and save waveform tifs
+    compute_waveform(initial_altitude_diff, cfg["output_dir"])
+
+    # Obtain output paths
+    (
+        dem_path,
+        plot_file_path,
+        plot_path_cdf,
+        csv_path_cdf,
+        plot_path_pdf,
+        csv_path_pdf,
+    ) = initialization.compute_output_files_paths(
+        cfg["output_dir"], "initial_dem_diff"
     )
-    # save results
-    logging.info(
-        "Save final results stats information file: {}".format(final_json_file)
+    # Compute and save initial altitude diff image plots
+    compute_and_save_image_plots(
+        initial_altitude_diff,
+        plot_file_path,
+        title="initial [REF - DEM] differences",
+        dem_path=dem_path,
     )
-    logging.debug("Final stats results: {}".format(demcompare_results))
-    initialization.save_config_file(final_json_file, demcompare_results)
+
+    # Create StatsComputation object for the initial_dh
+    # We do not need any classification_layers for the initial_dh
+    initial_stats_cfg = {
+        "remove_outliers": "False",
+        "output_dir": cfg["output_dir"],
+    }
+    stats_processing_initial = StatsProcessing(
+        initial_stats_cfg, initial_altitude_diff
+    )
+
+    # For the initial_dh, compute cdf and pdf stats
+    # on the global classification layer (diff, pdf, cdf)
+    plot_metrics = [
+        {
+            "cdf": {
+                "remove_outliers": "False",
+                "output_plot_path": plot_path_cdf,
+                "output_csv_path": csv_path_cdf,
+            }
+        },
+        {
+            "pdf": {
+                "remove_outliers": "False",
+                "output_plot_path": plot_path_pdf,
+                "output_csv_path": csv_path_pdf,
+            }
+        },
+    ]
+    stats_processing_initial.compute_stats(
+        classification_layer=["global"], metrics=plot_metrics
+    )
+
+    # Cfg for the final stats --------------------------------------------
+
+    # Compute slope and add it as a classification_layer
+    # The ref name as it is considered the main classification,
+    # the slope of the sec dem will be used for the intersection-exclusion
+    coreg_ref = compute_dem_slope(coreg_ref)
+    coreg_sec = compute_dem_slope(coreg_sec)
+
+    # Verify fusion layers according to the cfg
+    if "fusion" in cfg["statistics"]["classification_layers"]:
+        coreg_ref = verify_fusion_layers(
+            coreg_ref, cfg["statistics"]["classification_layers"], name="ref"
+        )
+        coreg_sec = verify_fusion_layers(
+            coreg_sec, cfg["statistics"]["classification_layers"], name="sec"
+        )
+
+    # Compute altitude diff
+    final_altitude_diff = compute_alti_diff_for_stats(coreg_ref, coreg_sec)
+    # Compute and save waveform tifs
+    compute_waveform(final_altitude_diff, cfg["output_dir"])
+
+    # Obtain output paths
+    (
+        dem_path,
+        plot_file_path,
+        plot_path_cdf,
+        csv_path_cdf,
+        plot_path_pdf,
+        csv_path_pdf,
+    ) = initialization.compute_output_files_paths(
+        cfg["output_dir"], "final_dem_diff"
+    )
+
+    # Compute and save initial altitude diff image plots
+    compute_and_save_image_plots(
+        final_altitude_diff,
+        plot_file_path,
+        title="final [REF - DEM] differences",
+        dem_path=dem_path,
+    )
+
+    # Create StatsComputation object for the final_dh
+    final_stats_cfg = cfg["statistics"]
+    stats_processing_final = StatsProcessing(
+        final_stats_cfg, final_altitude_diff
+    )
+    # For the final_dh, first compute plot stats on the
+    # global classification layer (diff, pdf, cdf)
+    plot_metrics = [
+        {
+            "cdf": {
+                "remove_outliers": "False",
+                "output_plot_path": plot_path_cdf,
+                "output_csv_path": csv_path_cdf,
+            }
+        },
+        {
+            "pdf": {
+                "remove_outliers": "False",
+                "output_plot_path": plot_path_pdf,
+                "output_csv_path": csv_path_pdf,
+            }
+        },
+    ]
+    stats_processing_final.compute_stats(
+        classification_layer=["global"], metrics=plot_metrics
+    )
+
+    # For the final_dh, also compute all classif layer default metric stats
+    stats_dataset = stats_processing_final.compute_stats()
+    return stats_dataset
 
 
-# TODO : evolution with refacto __init__.py demcompare
+# TODO: to be modified by the refacto script demcompare
 def dem_coregistration(
     cfg: Dict,
-    dem_to_align: xr.Dataset,
+    sec: xr.Dataset,
     ref: xr.Dataset,
+    cfg_stats: bool = False,
     final_json_file: str = None,
 ):
     """
@@ -227,19 +348,21 @@ def dem_coregistration(
 
     :param cfg: configuration dictionary
     :type cfg: dict
-    :param dem_to_align: dem_to_align xr.DataSet containing :
+    :param sec: sec xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-    :type dem_to_align: xr.Dataset
+    :type sec: xr.Dataset
     :param ref: reference dem raster xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
     :type ref: xr.Dataset
+    :param cfg_stats: is stats option is in the input cfg
+    :type cfg_stats: bool
     :param final_json_file: filename of final_json_file
     :type final_json_file: str
-    :return: coreg_dem_to_align xr.Dataset, coreg_ref xr.Dataset,
+    :return: sec xr.Dataset, ref xr.Dataset,
                 final_dh xr.Dataset, coreg_state. The xr.Datasets
                 containing :
 
@@ -249,92 +372,47 @@ def dem_coregistration(
     """
 
     logging.info("[Coregistration]")
-    # TODO: refactoring function, coreg_state kept for consistency
-    coreg_state = True
 
     # Create coregistration object
     coregistration_ = Coregistration(cfg["coregistration"])
     # Compute coregistration to get applicable transformation object
-    transformation = coregistration_.compute_coregistration(dem_to_align, ref)
+    transformation = coregistration_.compute_coregistration(sec, ref)
 
     # Apply coregistration offsets to the original DEM and store it
-    coreg_dem_to_align = transformation.apply_transform(dem_to_align)
+    coreg_sec = transformation.apply_transform(sec)
 
     # If output_dir is defined, save the coregistered DEM
     if "output_dir" in cfg:
         # Save coregistered DEM
-        # - coreg_DEM.tif -> coregistered dem_to_align
+        # - coreg_DEM.tif -> coregistered sec
         save_dem(
-            coreg_dem_to_align,
+            coreg_sec,
             os.path.join(cfg["output_dir"], get_out_file_path("coreg_DEM.tif")),
         )
-
-    # TODO: do this part only if stats are to be computed
 
     # Get demcompare_results dict
     demcompare_results = coregistration_.demcompare_results
 
-    # Get internal dems
-    reproj_ref = coregistration_.reproj_ref
-    reproj_dem_to_align = coregistration_.reproj_dem_to_align
-    reproj_coreg_ref = coregistration_.reproj_coreg_ref
-    reproj_coreg_dem_to_align = coregistration_.reproj_coreg_dem_to_align
-    # Compute initial_dh
-    initial_dh = compute_dems_diff(reproj_ref, reproj_dem_to_align)
-    # Compute final_dh
-    final_dh = compute_dems_diff(reproj_coreg_ref, reproj_coreg_dem_to_align)
+    reproj_ref = None
+    reproj_sec = None
+    reproj_coreg_ref = None
+    reproj_coreg_sec = None
+    if cfg_stats:
+        # Get internal dems
+        reproj_ref = coregistration_.reproj_ref
+        reproj_sec = coregistration_.reproj_sec
+        reproj_coreg_ref = coregistration_.reproj_coreg_ref
+        reproj_coreg_sec = coregistration_.reproj_coreg_sec
 
-    # TODO: do this part only if stats are to be computed
-
-    if "output_dir" in cfg:
-        # Saves initial altitude difference to file system
-        initial_dh = save_dem(
-            initial_dh,
-            os.path.join(
-                cfg["output_dir"], get_out_file_path("initial_dh.tif")
-            ),
-        )
-        # Saves final altitude difference to file system
-        final_dh = save_dem(
-            final_dh,
-            os.path.join(cfg["output_dir"], get_out_file_path("final_dh.tif")),
-        )
-
-    # TODO: to be modified by the refacto stats
-    stats.dem_diff_plot(
-        initial_dh,
-        title="Initial [REF - DEM] differences",
-        plot_file=os.path.join(
-            cfg["output_dir"], get_out_file_path("initial_dem_diff.png")
-        ),
-        display=False,
-    )
-    stats.dem_diff_cdf_plot(
-        initial_dh,
-        title="Initial [REF - DEM] differences CDF",
-        plot_file=os.path.join(
-            cfg["output_dir"], get_out_file_path("initial_dem_diff_cdf.png")
-        ),
-        display=False,
-    )
-    stats.dem_diff_pdf_plot(
-        initial_dh,
-        title="Elevation difference Histogram",
-        plot_file=os.path.join(
-            cfg["output_dir"], get_out_file_path("initial_dem_diff_pdf.png")
-        ),
-        display=False,
-    )
     # TODO: may be modified by the refacto script demcompare
     # saves results here in case next step fails
     initialization.save_config_file(final_json_file, demcompare_results)
 
-    # TODO: the returns will be modified by the refacto stats
     return (
-        reproj_coreg_dem_to_align,
+        reproj_sec,
+        reproj_ref,
+        reproj_coreg_sec,
         reproj_coreg_ref,
-        final_dh,
-        coreg_state,
         demcompare_results,
     )
 
@@ -363,11 +441,12 @@ def compute_initialization(config_json: str) -> Dict:
     if "output_dir" in cfg:
         output_dir = os.path.abspath(cfg["output_dir"])
         cfg["output_dir"] = output_dir
-        # Save output_dir parameter in "coregistration" and/or "stats_opts" dict
+        # Save output_dir parameter in "coregistration" and/or "statistics" dict
         if "coregistration" in cfg:
             cfg["coregistration"]["output_dir"] = output_dir
-        if "stats_opts" in cfg:
-            cfg["stats_opts"]["output_dir"] = output_dir
+        if "statistics" in cfg:
+            cfg["statistics"]["output_dir"] = output_dir
+
         # Create output_dir
         initialization.mkdir_p(cfg["output_dir"])
 
@@ -383,13 +462,10 @@ def compute_initialization(config_json: str) -> Dict:
     # Force the sampling_source of the coregistration step into the stats step
     if "coregistration" in cfg:
         if "sampling_source" in cfg["coregistration"]:
-            if "stats_opts" in cfg:
-                cfg["stats_opts"]["sampling_source"] = cfg["coregistration"][
+            if "statistics" in cfg:
+                cfg["statistics"]["sampling_source"] = cfg["coregistration"][
                     "sampling_source"
                 ]
-
-    # TODO: to be modified by stats refactoring
-    initialization.initialization_stats_opts(cfg)
     return cfg
 
 
@@ -409,7 +485,7 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
     # Set steps to default if None
     if steps is None:
         steps = DEFAULT_STEPS
-
+    cfg_stats = "statistics" in steps
     #
     # Initialization
     #
@@ -452,126 +528,93 @@ def run_tile(json_file: str, steps: List[str] = None, display=False):
         input_roi=(
             cfg["input_ref"]["roi"] if "roi" in cfg["input_ref"] else True
         ),
-    )
-
-    dem_to_align_orig = load_dem(
-        cfg["input_dem_to_align"]["path"],
-        no_data=(
-            cfg["input_dem_to_align"]["nodata"]
-            if "nodata" in cfg["input_dem_to_align"]
+        classification_layers=(
+            cfg["input_ref"]["classification_layers"]
+            if "classification_layers" in cfg["input_ref"]
             else None
         ),
+    )
+
+    sec_orig = load_dem(
+        cfg["input_sec"]["path"],
+        no_data=(
+            cfg["input_sec"]["nodata"] if "nodata" in cfg["input_sec"] else None
+        ),
         geoid_georef=(
-            cfg["input_dem_to_align"]["geoid_georef"]
-            if "geoid_georef" in cfg["input_dem_to_align"]
+            cfg["input_sec"]["geoid_georef"]
+            if "geoid_georef" in cfg["input_sec"]
             else False
         ),
         geoid_path=(
-            cfg["input_dem_to_align"]["geoid_path"]
-            if "geoid_path" in cfg["input_dem_to_align"]
+            cfg["input_sec"]["geoid_path"]
+            if "geoid_path" in cfg["input_sec"]
             else None
         ),
         zunit=(
-            cfg["input_dem_to_align"]["zunit"]
-            if "zunit" in cfg["input_dem_to_align"]
-            else "m"
+            cfg["input_sec"]["zunit"] if "zunit" in cfg["input_sec"] else "m"
         ),
         input_roi=(
-            cfg["input_dem_to_align"]["roi"]
-            if "roi" in cfg["input_dem_to_align"]
-            else True
+            cfg["input_sec"]["roi"] if "roi" in cfg["input_sec"] else True
+        ),
+        classification_layers=(
+            cfg["input_sec"]["classification_layers"]
+            if "classification_layers" in cfg["input_sec"]
+            else None
         ),
     )
 
-    dem_to_align_name = dem_to_align_orig.input_img
+    sec_name = sec_orig.input_img
     ref_name = ref_orig.input_img
-    logging.info("Input Tested DEM (DEM): {}".format(dem_to_align_name))
-    logging.info("Input Reference DEM (REF): {}".format(ref_name))
+    logging.info("Input Tested secondary DEM (SEC): {}".format(sec_name))
+    logging.info("Input Reference reference DEM (REF): {}".format(ref_name))
 
     #
     # Coregister both DSMs together and compute final differences
     #
     (
-        interm_coreg_dem_to_align,
+        interm_sec,
+        interm_ref,
+        interm_coreg_sec,
         interm_coreg_ref,
-        final_dh,
-        coreg_state,
         demcompare_results,
     ) = dem_coregistration(
         cfg,
-        dem_to_align_orig,
+        sec_orig,
         ref_orig,
+        cfg_stats,
         final_json_file=final_json_file,
     )
-    if coreg_state:
-        #
-        #  Plot/Save final dh img and cdf if exists
-        #
-        logging.info(
-            "Input Coreg Tested DEM (COREG_DEM): {}".format(
-                interm_coreg_dem_to_align.input_img
-            )
-        )
-        logging.info(
-            "Input Coreg Reference DEM (COREG_REF): {}".format(
-                interm_coreg_ref.input_img
-            )
-        )
-        logging.info(
-            "Final diff DEM (COREG_REF - COREG_DEM): {}".format(
-                final_dh.input_img
-            )
-        )
-        stats.dem_diff_plot(
-            final_dh,
-            title="Final [COREG_REF - COREG_DEM] differences",
-            plot_file=os.path.join(
-                cfg["output_dir"], get_out_file_path("final_dem_diff.png")
-            ),
-            display=display,
-        )
-        stats.dem_diff_cdf_plot(
-            final_dh,
-            title="Final [COREG_REF - COREG_DEM] differences CDF",
-            plot_file=os.path.join(
-                cfg["output_dir"], get_out_file_path("final_dem_diff_cdf.png")
-            ),
-            display=display,
-        )
-        stats.dem_diff_pdf_plot(
-            final_dh,
-            title="Elevation difference Histogram",
-            plot_file=os.path.join(
-                cfg["output_dir"], get_out_file_path("final_dem_diff_pdf.png")
-            ),
-            display=display,
-        )
 
     #
     # Compute stats
     #
-    compute_stats(
-        cfg,
-        demcompare_results,
-        interm_coreg_dem_to_align,
-        interm_coreg_ref,
-        final_dh,
-        display=display,
-        final_json_file=final_json_file,
-    )
+    if cfg_stats:
 
-    #
-    # Compute reports
-    #
-    compute_report(
-        cfg,
-        demcompare_results,
-        steps,
-        dem_to_align_name,
-        ref_name,
-        interm_coreg_dem_to_align.input_img,
-        interm_coreg_ref.input_img,
+        stats_dataset = compute_stats(
+            cfg,
+            interm_coreg_sec,
+            interm_coreg_ref,
+            interm_sec,
+            interm_ref,
+        )
+        #
+        # Compute reports
+        #
+        compute_report(
+            cfg,
+            steps,
+            stats_dataset,
+            sec_name,
+            ref_name,
+            interm_coreg_sec.input_img,
+            interm_coreg_ref.input_img,
+        )
+
+    logging.info(
+        "Save final results stats information file: {}".format(final_json_file)
     )
+    logging.debug("Final stats results: {}".format(demcompare_results))
+    initialization.save_config_file(final_json_file, demcompare_results)
 
 
 # TODO: to be modified by the refacto script demcompare

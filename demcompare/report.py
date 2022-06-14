@@ -24,7 +24,7 @@ Generate demcompare report from DEM comparison results (graphs, stats, ...)
 
 Steps:
 - init SphinxProjectManager class structure
-- create all data and documentation needed structure for each partition and mode
+- create all data and documentation structure for each classif_layer and mode
 - create sphinx source rst report and add to SphinxProjectManager object
 - Compile SphinxProjectManager object to generate html and pdf report
 
@@ -39,7 +39,6 @@ import glob
 import logging
 import os
 import sys
-from typing import List
 
 # DEMcompare imports
 from .sphinx_project_generator import SphinxProjectManager
@@ -88,11 +87,11 @@ def first_recursive_search(directory: str, pattern: str):
 
 def generate_report(  # noqa: C901
     working_dir: str,
-    dsm_name: str,
+    stats_dataset,
+    sec_name: str,
     ref_name: str,
-    coreg_dsm_name: str,
+    coreg_sec_name: str,
     coreg_ref_name: str,
-    partitions: List[str] = None,
     doc_dir: str = ".",
     project_dir: str = ".",
 ):
@@ -102,16 +101,18 @@ def generate_report(  # noqa: C901
     :param working_dir: directory in which to find *mode*.png
             and *mode*.csv files for each mode in modename
     :type working_dir: str
-    :param dsm_name: name or path to the dsm to be compared against the ref
-    :type dsm_name: str
-    :param ref_name: name or path to the reference dsm
+    :param sec_name: name or path to the
+      sec to be compared against the ref
+    :type sec_name: str
+    :param ref_name: name or path to the reference sec
     :type ref_name: str
-    :param coreg_dsm_name: name or path to the coreg dsm
-    :type coreg_dsm_name: str
-    :param coreg_ref_name: name or path to the ref dsm
+    :param coreg_sec_name: name or path to the coreg sec
+    :type coreg_sec_name: str
+    :param coreg_ref_name: name or path to the ref sec
     :type coreg_ref_name: str
-    :param partitions: list of partition, contains modes by partition
-    :type partitions: List[str]
+    :param classification_layers: list of classification_layer,
+      contains modes by classification_layer
+    :type classification_layers: List[str]
     :param doc_dir: directory in which to find the output documentation
     :type doc_dir: str
     :param project_dir: directory of the sphinx src documentation
@@ -119,43 +120,38 @@ def generate_report(  # noqa: C901
     :return:
     """
 
-    if partitions is None:
-        partitions = ["standard"]
+    classification_layers = list(stats_dataset.classif_layers_and_modes.keys())
 
     # Initialize the sphinx project
     spm = SphinxProjectManager(
         project_dir, doc_dir, "demcompare_report", "DEM Compare Report"
     )
 
-    # TODO modes_information[mode] overwritten , needs one per partition
-    # => modes_information[partition_name][mode]
-
     # Initialize mode informations
     modes_information = collections.OrderedDict()
 
-    # Loop on demcompare partitions
-    for partition_name, _ in partitions.items():
-        # Initialize mode informations for partition
-        modes_information[partition_name] = collections.OrderedDict()
-        modes_information[partition_name]["standard"] = {
+    # Loop on demcompare classification_layers
+    for classification_layer_name in classification_layers:
+        # Initialize mode informations for classification_layer
+        modes_information[classification_layer_name] = collections.OrderedDict()
+        modes_information[classification_layer_name]["standard"] = {
             "pitch": "This mode results relies only on **valid values** "
             "without nan values "
             "(whether they are from the error image or the reference support "
             "image when do_classification is on). Outliers and "
             "masked ones has been also discarded."
         }
-        modes_information[partition_name]["coherent-classification"] = {
+        modes_information[classification_layer_name]["intersection"] = {
             "pitch": "This is the standard mode where only the pixels for "
-            "which input DSMs classifications are coherent."
+            "which input DSMs classifications are intersection."
         }
-        modes_information[partition_name]["incoherent-classification"] = {
-            "pitch": "This mode is the 'coherent-classification' "
-            "complementary."
+        modes_information[classification_layer_name]["exclusion"] = {
+            "pitch": "This mode is the 'intersection' " "complementary."
         }
         modes = [
             "standard",
-            "coherent-classification",
-            "incoherent-classification",
+            "intersection",
+            "exclusion",
         ]
 
         # Loop on demcompare modes.
@@ -164,28 +160,34 @@ def generate_report(  # noqa: C901
             # find both graph and csv stats associated with the mode
             # - histograms
             result = recursive_search(
-                os.path.join(working_dir, "*", partition_name),
+                os.path.join(working_dir, "*", classification_layer_name),
                 "*Real*_{}*.png".format(mode),
             )
             if len(result) > 0:
-                modes_information[partition_name][mode]["histo"] = result[0]
+                modes_information[classification_layer_name][mode][
+                    "histo"
+                ] = result[0]
             else:
-                modes_information[partition_name][mode]["histo"] = None
+                modes_information[classification_layer_name][mode][
+                    "histo"
+                ] = None
 
             # - graph
             result = recursive_search(
-                os.path.join(working_dir, "*", partition_name),
+                os.path.join(working_dir, "*", classification_layer_name),
                 "*Fitted*_{}*.png".format(mode),
             )
             if len(result) > 0:
-                modes_information[partition_name][mode][
+                modes_information[classification_layer_name][mode][
                     "fitted_histo"
                 ] = result[0]
             else:
-                modes_information[partition_name][mode]["fitted_histo"] = None
+                modes_information[classification_layer_name][mode][
+                    "fitted_histo"
+                ] = None
             # - csv
             result = recursive_search(
-                os.path.join(working_dir, "*", partition_name),
+                os.path.join(working_dir, "*", classification_layer_name),
                 "*_{}*.csv".format(mode),
             )
             if len(result) > 0:
@@ -206,18 +208,22 @@ def generate_report(  # noqa: C901
                                     ]
                                 )
                             )
-                    modes_information[partition_name][mode]["csv"] = "\n".join(
+                    modes_information[classification_layer_name][mode][
+                        "csv"
+                    ] = "\n".join(
                         [
                             "    " + csv_single_data
                             for csv_single_data in csv_data
                         ]
                     )
                 else:
-                    modes_information[partition_name][mode]["csv"] = None
+                    modes_information[classification_layer_name][mode][
+                        "csv"
+                    ] = None
             else:
-                modes_information[partition_name][mode]["csv"] = None
+                modes_information[classification_layer_name][mode]["csv"] = None
         # End of mode loop
-    # End of partition loop
+    # End of classification_layer loop
 
     # Find DSMs differences files
     dem_diff_without_coreg = first_recursive_search(
@@ -243,10 +249,10 @@ def generate_report(  # noqa: C901
         working_dir, "final_dem_diff_pdf.png"
     )
     # Get ref_name
-    dsm_name_dir, dsm_name = os.path.split(dsm_name)
+    sec_name_dir, sec_name = os.path.split(sec_name)
     ref_name_dir, ref_name = os.path.split(ref_name)
     if dem_diff_with_coreg:
-        coreg_dsm_name_dir, coreg_dsm_name = os.path.split(coreg_dsm_name)
+        coreg_sec_name_dir, coreg_sec_name = os.path.split(coreg_sec_name)
         coreg_ref_name_dir, coreg_ref_name = os.path.split(coreg_ref_name)
 
     # Create source
@@ -278,8 +284,8 @@ def generate_report(  # noqa: C901
             "",
             "*Input Initial DEMs:*",
             "",
-            "* Tested DEM (DEM): {}".format(dsm_name),
-            "   * dir: {}".format(dsm_name_dir),
+            "* Tested DEM (SEC): {}".format(sec_name),
+            "   * dir: {}".format(sec_name_dir),
             "* Reference DEM (REF): {}".format(ref_name),
             "   * dir: {}".format(ref_name_dir),
             "",
@@ -314,8 +320,8 @@ def generate_report(  # noqa: C901
                 src,
                 "**Generated coregistered DEMs:**",
                 "",
-                "* Tested Coreg DEM (COREG_DEM): {}".format(coreg_dsm_name),
-                "   * dir: {} ".format(coreg_dsm_name_dir),
+                "* Tested Coreg DEM (COREG_SEC): {}".format(coreg_sec_name),
+                "   * dir: {} ".format(coreg_sec_name_dir),
                 "* Reference Coreg DEM (COREG_REF): {}".format(coreg_ref_name),
                 "   * dir: {}".format(coreg_ref_name_dir),
                 "",
@@ -341,7 +347,7 @@ def generate_report(  # noqa: C901
             [
                 src,
                 "*Important: stats are generated on "
-                + "COREG_REF - COREG_DEM difference*",
+                + "COREG_SEC - COREG_REF difference*",
                 "",
             ]
         )
@@ -366,61 +372,65 @@ def generate_report(  # noqa: C901
             "",
         ]
     )
-    for partition_name, _ in partitions.items():
+    for (
+        classification_layer_name,
+        modes_dict,
+    ) in stats_dataset.classif_layers_and_modes.items():
         src = "\n".join(
             [
                 src,
-                "* The :ref:`{partition_name} <{partition_name}>` ".format(
-                    partition_name=partition_name
+                "* The :ref:`{classification_layer_name}"
+                " <{classification_layer_name}>` ".format(
+                    classification_layer_name=classification_layer_name
                 )
                 + "classification layer"
                 "",
             ]
         )
 
-    src = "\n".join(
-        [
-            src,
-            "**Evaluation modes:**",
-            "",
-        ]
-    )
-    for mode in modes:
-        the_mode_pitch = modes_information[partition_name][mode]["pitch"]
         src = "\n".join(
             [
                 src,
-                "* The :ref:`{mode} <{mode}>` mode".format(mode=mode),
-                "",
-                "{} \n".format(the_mode_pitch),
+                "**Evaluation modes:**",
                 "",
             ]
         )
+        for mode in modes_dict["modes"]:
+            the_mode_pitch = modes_information[classification_layer_name][mode][
+                "pitch"
+            ]
+            src = "\n".join(
+                [
+                    src,
+                    "* The :ref:`{mode} <{mode}>` mode".format(mode=mode),
+                    "",
+                    "{} \n".format(the_mode_pitch),
+                    "",
+                ]
+            )
 
     # -> the results
-    for partition_name, stats_results_d in partitions.items():
+    for (
+        classification_layer_name,
+        modes_dict,
+    ) in stats_dataset.classif_layers_and_modes.items():
         src = "\n".join(
             [
                 src,
-                ".. _{}:".format(partition_name),
+                ".. _{}:".format(classification_layer_name),
                 "",
-                "Classification layer: {}".format(partition_name),
-                "{}-----------------------".format("-" * len(partition_name)),
+                "Classification layer: {}".format(classification_layer_name),
+                "{}-----------------------".format(
+                    "-" * len(classification_layer_name)
+                ),
                 "",
             ]
         )
         # loop for results for each mode
-        for mode in modes:
-            if mode in stats_results_d:
-                the_mode_histo = modes_information[partition_name][mode][
-                    "histo"
-                ]
-                the_mode_fitted_histo = modes_information[partition_name][mode][
-                    "fitted_histo"
-                ]
-                the_mode_csv = modes_information[partition_name][mode]["csv"]
-            else:
-                continue
+        for mode in modes_dict["modes"]:
+            the_mode_csv = modes_information[classification_layer_name][mode][
+                "csv"
+            ]
             src = "\n".join(
                 [
                     src,
@@ -432,28 +442,6 @@ def generate_report(  # noqa: C901
                     "",
                 ]
             )
-            # Histogram
-            if the_mode_histo:
-                src = "\n".join(
-                    [
-                        src,
-                        "Graph showing mean and standard deviation",
-                        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%",
-                        ".. image:: /{}".format(the_mode_histo),
-                        "",
-                    ]
-                )
-            # Gaussian Fitted Histogram
-            if the_mode_fitted_histo:
-                src = "\n".join(
-                    [
-                        src,
-                        "Fitted graph showing mean and standard deviation",
-                        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%",
-                        ".. image:: /{}".format(the_mode_fitted_histo),
-                        "",
-                    ]
-                )
             # Table of results
             if the_mode_csv:
                 src = "\n".join(

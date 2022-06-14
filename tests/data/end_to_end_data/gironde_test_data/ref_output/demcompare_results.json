@@ -6,7 +6,7 @@
       "nb_points": 35422,
       "nb_valid_points": 34057
     },
-    "reproj_coreg_dem_to_align": {
+    "reproj_coreg_sec": {
       "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_DEM.tif",
       "nodata": -32768,
       "nb_points": 35422,
@@ -63,42 +63,32 @@
         "nb_valid_points": 10167
       }
     },
-    "partitions": {
-      "slope": {
-        "strm_test_data": {
-          "Ref_support": {
+    "classification_layers": {
+      "Slope0": {
+        "standard": {
+          "ref_support": {
             "nodata": -32768.0,
-            "path": "TO/PATH/demcompare/test_output/stats/slope/ref_support_map.tif"
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/ref_support_map.tif"
           },
-          "DSM_support": {
+          "sec_support": {
             "nodata": -32768.0,
-            "path": "TO/PATH/demcompare/test_output/stats/slope/dsm_support_map.tif"
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/sec_support_map.tif"
           }
-        },
-        "coherent-classification": {
-          "Ref_support": null,
-          "DSM_support": null
-        },
-        "incoherent-classification": {
-          "Ref_support": null,
-          "DSM_support": null
         }
       },
       "Status": {
-        "strm_test_data": {
-          "Ref_support": null,
-          "DSM_support": {
+        "standard": {
+          "sec_support": {
             "nodata": -32768.0,
             "path": "TO/PATH/demcompare/demcompare/tests/data/gironde_test_data/input/FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF"
           }
         }
       },
       "fusion_layer": {
-        "strm_test_data": {
-          "Ref_support": null,
-          "DSM_support": {
+        "standard": {
+          "sec_support": {
             "nodata": -32768.0,
-            "path": "TO/PATH/demcompare/test_output/stats/fusion_layer/dsm_fusion_layer.tif"
+            "path": "TO/PATH/demcompare/test_output/stats/fusion_layer/sec_fusion_layer.tif"
           }
         }
       }

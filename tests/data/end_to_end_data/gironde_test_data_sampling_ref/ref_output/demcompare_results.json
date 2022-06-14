@@ -6,7 +6,7 @@
       "nb_points": 927936,
       "nb_valid_points": 927936
     },
-    "reproj_coreg_dem_to_align": {
+    "reproj_coreg_sec": {
       "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_DEM.tif",
       "nodata": -32768,
       "nb_points": 927936,
@@ -42,6 +42,56 @@
       "uly": 5099857.76041,
       "lrx": 708711.78828,
       "lry": 4990857.76041
+    }
+  },
+  "stats_results": {
+    "images": {
+      "list": [
+        "row_wise",
+        "col_wise"
+      ],
+      "row_wise": {
+        "path": "TO/PATH/demcompare/test_output/dh_row_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 10167
+      },
+      "col_wise": {
+        "path": "TO/PATH/demcompare/test_output/dh_col_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 10167
+      }
+    },
+    "classification_layers": {
+      "Slope0": {
+        "standard": {
+          "ref_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/ref_support_map.tif"
+          },
+          "sec_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/sec_support_map.tif"
+          }
+        }
+      },
+      "Status": {
+        "standard": {
+          "ref_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/demcompare/tests/data/gironde_test_data/input/ref_status.tif"
+          }
+        }
+      },
+      "fusion_layer": {
+        "standard": {
+          "ref_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/fusion_layer/sec_fusion_layer.tif"
+          }
+        }
+      }
     }
   }
 }

@@ -4,7 +4,7 @@
 		"path" : "./srtm_ref.tif",
 		"zunit" : "m"
 	},
-	"input_dem_to_align" : {
+	"input_sec" : {
 		"path" : "./srtm_blurred_and_shifted.tif",
 		"zunit" : "m",
 		"nodata" : -32768
@@ -17,8 +17,20 @@
 		"save_internal_dems": "True",
 		"save_coreg_method_outputs": "True"
 	},
-	"stats_opts": {
-		"to_be_classification_layers": {"slope": {"ranges": [0, 5, 10, 25, 45]}},
-                "remove_outliers": true
-	}
+  "statistics": {
+	"save_results": "True",
+    "classification_layers": {
+      "Slope0": {
+        "type": "slope",
+        "ranges": [
+          0,
+          5,
+          10,
+          25,
+          45
+        ]
+      }
+    },
+    "remove_outliers": "True"
+  }
 }

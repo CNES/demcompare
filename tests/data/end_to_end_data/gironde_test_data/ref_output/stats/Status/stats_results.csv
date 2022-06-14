@@ -1,0 +1,6 @@
+"Set Name","mean","median","max","min","sum","percentil_90","squared_sum","nmad","rmse","std","nbpts","percent_valid_points"
+"valid:[0]",-3.40256,-1.23687,100.99401,-56.72004,-34593.86328,25.78921,2480901.5,10.59014,15.62098,15.24591,10167,28.7025
+"KO:[1]",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Land:[2]",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"NoData:[3]",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Outside_detector:[4]",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0

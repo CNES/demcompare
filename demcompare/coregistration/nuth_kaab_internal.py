@@ -29,7 +29,7 @@ Authors : Amaury Dehecq, Andrew Tedstone
 Date : June 2015
 License : MIT
 """
-
+# pylint:disable=too-many-lines
 # Standard imports
 import logging
 import os
@@ -43,7 +43,7 @@ from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
 
 # Demcompare imports
-from ..dem_tools import create_dem
+from ..dem_tools import DEFAULT_NODATA, create_dem
 from ..initialization import ConfigType
 from ..output_tree_design import get_out_dir
 from ..transformation import Transformation
@@ -52,7 +52,9 @@ from .coregistration_template import CoregistrationTemplate
 
 
 @Coregistration.register("nuth_kaab_internal")
-class NuthKaabInternal(CoregistrationTemplate):
+class NuthKaabInternal(
+    CoregistrationTemplate
+):  # pylint:disable=abstract-method
     """
     NuthKaab class, allows to perform a Nuth & Kaab coregistration
     from authors above and adapted in demcompare
@@ -74,7 +76,7 @@ class NuthKaabInternal(CoregistrationTemplate):
          "number_of_iterations": number of iterations. int,
          "sampling_source": optional. sampling source at which
            the dems are reprojected prior to coregistration. str
-           "dem_to_align" (default) or "ref",
+           "sec" (default) or "ref",
          "estimated_initial_shift_x": optional. estimated initial
            x shift. int or float. 0 by default,
          "estimated_initial_shift_y": optional. estimated initial
@@ -115,6 +117,8 @@ class NuthKaabInternal(CoregistrationTemplate):
 
         # Give the default value if the required element
         # is not in the configuration
+        if "method_name" not in cfg:
+            cfg["method_name"] = self.method_name
         if "number_of_iterations" not in cfg:
             cfg["number_of_iterations"] = self.DEFAULT_ITERATIONS
 
@@ -125,7 +129,7 @@ class NuthKaabInternal(CoregistrationTemplate):
 
     def _coregister_dems_algorithm(  # pylint:disable=too-many-locals
         self,
-        dem_to_align: xr.Dataset,
+        sec: xr.Dataset,
         ref: xr.Dataset,
     ) -> Tuple[Transformation, xr.Dataset, xr.Dataset]:
         """
@@ -134,17 +138,17 @@ class NuthKaabInternal(CoregistrationTemplate):
         with Nuth et kaab algorithm
         Plots might be saved if save_coreg_method_outputs is set.
 
-        :param dem_to_align: dem_to_align xr.DataSet containing :
+        :param sec: sec xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-        :type dem_to_align: xarray Dataset
+        :type sec: xarray Dataset
         :param ref: ref xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
         :type ref: xarray Dataset
-        :return: transformation, reproj_coreg_dem_to_align xr.DataSet,
+        :return: transformation, reproj_coreg_sec xr.DataSet,
                  reproj_coreg_ref xr.DataSet. The xr.Datasets containing :
 
                  - image : 2D (row, col) xr.DataArray float32
@@ -152,14 +156,16 @@ class NuthKaabInternal(CoregistrationTemplate):
         :rtype: Tuple[Transformation, xr.Dataset, xr.Dataset]
         """
         # Copy dataset and extract image array
-        dem_im = dem_to_align["image"].data
+        dem_im = sec["image"].data
         ref_im = ref["image"].data
 
         # Set target dem grid for interpolation purpose
         xgrid = np.arange(dem_im.shape[1])
         ygrid = np.arange(dem_im.shape[0])
+        # Set spline interpolation
+        spline_1, spline_2 = self.interpolate_dem_on_grid(ref_im, xgrid, ygrid)
 
-        # Compute inital_dh and initialize coreg_ref
+        # Compute inital_dh and initialize ref
         initial_dh = ref_im - dem_im
         coreg_ref = ref_im
 
@@ -183,21 +189,8 @@ class NuthKaabInternal(CoregistrationTemplate):
                 bbox_inches="tight",
             )
         pl.close()
-
-        # Since later interpolations will consider
-        # nodata values as normal values,
-        # we need to keep track of nodata values
-        # to get rid of them when the time comes
-        nan_maskval = np.isnan(coreg_ref)
-        dsm_from_filled = np.where(nan_maskval, -9999, coreg_ref)
-
-        # Create spline function for interpolation
-        spline_1 = RectBivariateSpline(
-            ygrid, xgrid, dsm_from_filled, kx=1, ky=1
-        )
-        spline_2 = RectBivariateSpline(ygrid, xgrid, nan_maskval, kx=1, ky=1)
+        # Initialize offsets
         x_offset, y_offset = 0, 0
-
         logging.info("Nuth & Kaab iterations: {}".format(self.iterations))
         coreg_dem = dem_im
 
@@ -248,31 +241,9 @@ class NuthKaabInternal(CoregistrationTemplate):
             # as invalid ones
             znew[nanval_new != 0] = np.nan
 
-            # Crop DEMs with offset
-            if x_offset >= 0:
-                coreg_ref = znew[:, 0 : znew.shape[1] - int(np.ceil(x_offset))]
-                coreg_dem = dem_im[
-                    :, 0 : dem_im.shape[1] - int(np.ceil(x_offset))
-                ]
-            else:
-                coreg_ref = znew[:, int(np.floor(-x_offset)) : znew.shape[1]]
-                coreg_dem = dem_im[
-                    :, int(np.floor(-x_offset)) : dem_im.shape[1]
-                ]
-            if -y_offset >= 0:
-                coreg_ref = coreg_ref[
-                    0 : znew.shape[0] - int(np.ceil(-y_offset)), :
-                ]
-                coreg_dem = coreg_dem[
-                    0 : dem_im.shape[0] - int(np.ceil(-y_offset)), :
-                ]
-            else:
-                coreg_ref = coreg_ref[
-                    int(np.floor(y_offset)) : znew.shape[0], :
-                ]
-                coreg_dem = coreg_dem[
-                    int(np.floor(y_offset)) : dem_im.shape[0], :
-                ]
+            # Crop dems with offset
+            coreg_ref = self.crop_dem_with_offset(znew, x_offset, y_offset)
+            coreg_dem = self.crop_dem_with_offset(dem_im, x_offset, y_offset)
 
             # Logging of some statistics
             diff = coreg_ref - coreg_dem
@@ -289,18 +260,37 @@ class NuthKaabInternal(CoregistrationTemplate):
             )
             nmad_old = nmad_new
 
+        # Initialize coregistered classification layers
+        coreg_ref_classif = None
+        coreg_dem_classif = None
+        # If classification layers in ref, interpolate and crop them
+        # To have the same modifications as ref
+        if "indicator" in ref.coords:
+            coreg_ref_classif = self.interpolate_classif_layers(
+                ref.classification_layers, xgrid, ygrid, x_offset, y_offset
+            )
+            coreg_ref_classif = self.crop_classif_layers(
+                coreg_ref_classif, x_offset, y_offset
+            )
+        if "indicator" in sec.coords:
+            coreg_dem_classif = self.crop_classif_layers(
+                sec.classification_layers, x_offset, y_offset
+            )
+
         # Generate the dataset dems
         coreg_dem_dataset = create_dem(
             coreg_dem,
-            transform=dem_to_align.georef_transform.data,
-            no_data=-32768,
-            img_crs=dem_to_align.crs,
+            transform=sec.georef_transform.data,
+            no_data=DEFAULT_NODATA,
+            img_crs=sec.crs,
+            classification_layers=coreg_dem_classif,
         )
         coreg_ref_dataset = create_dem(
             coreg_ref,
-            transform=dem_to_align.georef_transform.data,
-            no_data=-32768,
-            img_crs=dem_to_align.crs,
+            transform=sec.georef_transform.data,
+            no_data=DEFAULT_NODATA,
+            img_crs=sec.crs,
+            classification_layers=coreg_ref_classif,
         )
         logging.info(
             "Nuth & Kaab Final Offset in pixels (east, north):"
@@ -339,6 +329,158 @@ class NuthKaabInternal(CoregistrationTemplate):
         return transform, coreg_dem_dataset, coreg_ref_dataset
 
     @staticmethod
+    def interpolate_dem_on_grid(
+        interp_dem: np.ndarray, xgrid: np.ndarray, ygrid: np.ndarray
+    ) -> Tuple[RectBivariateSpline, RectBivariateSpline]:
+        """
+        interpolate_dem_on_grid, returns the RectBivariateSpline function
+        to do Bivariate spline approximation over a rectangular mesh.
+
+        :param interp_dem: input dem image
+        :type interp_dem: np.ndarray
+        :param xgrid: x axis grid
+        :type xgrid: np.ndarray
+        :param ygrid: x axis grid
+        :type ygrid: np.ndarray
+        :return: spline_1, spline_2,
+        :rtype: Tuple[RectBivariateSpline, RectBivariateSpline]
+        """
+        # Mask nan values to -9999
+        nan_maskval = np.isnan(interp_dem)
+        sec_from_filled = np.where(nan_maskval, -9999, interp_dem)
+        # Compute both splines
+        spline_1 = RectBivariateSpline(
+            ygrid, xgrid, sec_from_filled, kx=1, ky=1
+        )
+        spline_2 = RectBivariateSpline(ygrid, xgrid, nan_maskval, kx=1, ky=1)
+
+        return spline_1, spline_2
+
+    def interpolate_classif_layers(
+        self,
+        dem_classif: xr.DataArray,
+        xgrid: np.ndarray,
+        ygrid: np.ndarray,
+        x_offset: float,
+        y_offset: float,
+    ):
+        """
+        interpolates the classification layers on the input
+        grids with the input offsets.
+
+        :param dem_classif: input dem image
+        :type dem_classif: xr.Dataarray
+        :param xgrid: x axis grid
+        :type xgrid: np.ndarray
+        :param ygrid: x axis grid
+        :type ygrid: np.ndarray
+        :param x_offset: x offset
+        :type x_offset: float
+        :param y_offset: y offset
+        :type y_offset: float
+        :return: interpolated classification layers
+        :rtype: xr.Dataarray
+        """
+        interp_classif = dem_classif.data
+        # For each existing classification layer
+        for idx in range(len(dem_classif.coords["indicator"])):
+            # Get classification data
+            classif_data = dem_classif.data[:, :, idx]
+            # Compute classif layer splines
+            spline_1, spline_2 = self.interpolate_dem_on_grid(
+                classif_data, xgrid, ygrid
+            )
+            # Apply spline interpolations
+            rectified_map = spline_1(ygrid - y_offset, xgrid + x_offset)
+            nanval_new = spline_2(ygrid - y_offset, xgrid + x_offset)
+            rectified_map[nanval_new != 0] = np.nan
+            interp_classif[:, :, idx] = rectified_map
+        # Update dataset's classification data
+        dem_classif.data = interp_classif
+        return dem_classif
+
+    @staticmethod
+    def crop_dem_with_offset(
+        dem: np.ndarray, x_offset: float, y_offset: float
+    ) -> np.ndarray:
+        """
+        Crops the input dem with the given offsets.
+
+        :param dem: input dem image
+        :type dem: np.ndarray
+        :param x_offset: x offset
+        :type x_offset: float
+        :param y_offset: y offset
+        :type y_offset: float
+        :return: cropped dem
+        :rtype: np.ndarray
+        """
+        # Crop DEMs with offset
+        if x_offset >= 0:
+            cropped_dem = dem[:, 0 : dem.shape[1] - int(np.ceil(x_offset))]
+
+        else:
+            cropped_dem = dem[:, int(np.floor(-x_offset)) : dem.shape[1]]
+
+        if -y_offset >= 0:
+            cropped_dem = cropped_dem[
+                0 : dem.shape[0] - int(np.ceil(-y_offset)), :
+            ]
+
+        else:
+            cropped_dem = cropped_dem[int(np.floor(y_offset)) : dem.shape[0], :]
+
+        return cropped_dem
+
+    def crop_classif_layers(
+        self, dem_classif: xr.DataArray, x_offset, y_offset
+    ) -> xr.DataArray:
+        """
+        crop_classif_layers crops and updates the input classification layers
+        with the input offsets.
+
+        :param dem_classif: classification layers
+        :type dem_classif: xr.Dataarray
+        :param x_offset: x offset
+        :type x_offset: float
+        :param y_offset: y offset
+        :type y_offset: float
+        :return: cropped classification layers
+        :rtype: xr.Dataarray
+        """
+        # Initialize cropped data
+        cropped_classif_list = []
+        # For each existing classification layer
+        for idx in range(len(dem_classif.coords["indicator"])):
+            # Get classification data
+            classif_map = dem_classif.data[:, :, idx]
+            # Crop classification data
+            rectified_map = self.crop_dem_with_offset(
+                classif_map, x_offset, y_offset
+            )
+            cropped_classif_list.append(rectified_map)
+        # Set cropped data to the correct dimension order
+        cropped_classif = np.swapaxes(
+            np.transpose(np.array(cropped_classif_list)), 0, 1
+        )
+        # Get all classif indicators
+        indicator = list(dem_classif.coords["indicator"].data)
+        # Initialize new cropped classif coordinates
+        coords_classification_layers = {
+            "row": np.arange(rectified_map.shape[0]),
+            "col": np.arange(rectified_map.shape[1]),
+            "indicator": indicator,
+        }
+        # Create new xarray with the cropped classif
+        cropped_classifs = xr.DataArray(
+            data=cropped_classif,
+            coords=coords_classification_layers,
+            dims=["row", "col", "indicator"],
+        )
+
+        return cropped_classifs
+
+    @staticmethod
     def _grad2d(dem: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Computes input DEM's slope and aspect
@@ -367,7 +509,7 @@ class NuthKaabInternal(CoregistrationTemplate):
         Computes the horizontal shift between 2 DEMs
         using the method presented in Nuth & Kaab 2011
 
-        :param dh: elevation difference dem_to_align - ref
+        :param dh: elevation difference sec - ref
         :type dh: np.ndarray
         :param slope: slope for the same locations as the dh
         :type slope: np.ndarray
@@ -449,7 +591,7 @@ class NuthKaabInternal(CoregistrationTemplate):
         Filter target slice outliers of an input
         array by a 3*sigma filtering to improve Nuth et kaab fit.
 
-        :param aspect: elevation difference dem_to_align - ref
+        :param aspect: elevation difference sec - ref
         :type aspect: np.ndarray
         :param target: slope for the same locations as the dh
         :type target: np.ndarray

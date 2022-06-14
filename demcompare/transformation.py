@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf8
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -73,7 +73,7 @@ class Transformation:
 
         # adapt the offsets to the correct resolution with
         # the input adapting factor
-        # (necessary in case the sampling_value is ref, otherwise
+        # (necessary in case the sampling_value is dem_1, otherwise
         # the adapting factor is (1.0, 1.0))
         self.adapting_factor = adapting_factor
         x_factor, y_factor = adapting_factor

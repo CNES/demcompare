@@ -24,11 +24,11 @@ The images :
 |                                  | | to final_dh.tif itself. It helps to detect any residual oscillation.                   |
 +----------------------------------+------------------------------------------------------------------------------------------+
 | *coreg_DSM.tif*                  | | Intermediate coregistered DSM used for the stats computation. Both coregistered        |
-|                                  | | DEMs will have the dsm’s georeference grid and an intermediate                         |
+|                                  | | DEMs will have the sec’s georeference grid and an intermediate                         |
 |                                  | | georeference origin.                                                                   |
 +----------------------------------+------------------------------------------------------------------------------------------+
 | *coreg_Ref.tif*                  | | Intermediate coregistered Ref used for the stats computation. Both coregistered        |
-|                                  | | DEMs will have the dsm’s georeference grid and an intermediate                         |
+|                                  | | DEMs will have the sec’s georeference grid and an intermediate                         |
 |                                  | | georeference origin.                                                                   |
 +----------------------------------+------------------------------------------------------------------------------------------+
 | *AltiErrors.tif*                 | | The images whose names start with **AltiErrors-** are the plots saved by               |

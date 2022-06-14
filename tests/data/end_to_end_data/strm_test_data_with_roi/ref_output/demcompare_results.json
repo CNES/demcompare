@@ -6,7 +6,7 @@
       "nb_points": 389070,
       "nb_valid_points": 389070
     },
-    "reproj_coreg_dem_to_align": {
+    "reproj_coreg_sec": {
       "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_DEM.tif",
       "nodata": -32768,
       "nb_points": 389070,
@@ -63,25 +63,17 @@
         "nb_valid_points": 389070
       }
     },
-    "partitions": {
+    "classification_layers": {
       "slope": {
-        "strm_test_data": {
-          "Ref_support": {
+        "standard": {
+          "ref_support": {
             "nodata": -32768.0,
-            "path": "TO/PATH/demcompare/test_output/stats/slope/ref_support_map.tif"
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/ref_support_map.tif"
           },
-          "DSM_support": {
+          "sec_support": {
             "nodata": -32768.0,
-            "path": "TO/PATH/demcompare/test_output/stats/slope/dsm_support_map.tif"
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/sec_support_map.tif"
           }
-        },
-        "coherent-classification": {
-          "Ref_support": null,
-          "DSM_support": null
-        },
-        "incoherent-classification": {
-          "Ref_support": null,
-          "DSM_support": null
         }
       }
     }

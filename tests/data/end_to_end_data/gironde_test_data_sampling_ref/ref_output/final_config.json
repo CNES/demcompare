@@ -6,7 +6,7 @@
       "nb_points": 927936,
       "nb_valid_points": 927936
     },
-    "interm_rectified_dem_to_align": {
+    "interm_rectified_sec": {
       "path": "TO/PATH/demcompare/test_output/coregistration/interm_coreg_DEM.tif",
       "nodata": -32768,
       "nb_points": 927936,
@@ -61,43 +61,43 @@
         "nb_valid_points": 85312
       }
     },
-    "partitions": {
+    "classification_layers": {
       "slope": {
         "strm_test_data": {
-          "Ref_support": {
+          "ref_support": {
             "nodata": -32768.0,
-            "path": "TO/PATH/demcompare/test_output/stats/slope/ref_support_map.tif"
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/ref_support_map.tif"
           },
-          "DSM_support": {
+          "sec_support": {
             "nodata": -32768.0,
-            "path": "TO/PATH/demcompare/test_output/stats/slope/dsm_support_map.tif"
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/sec_support_map.tif"
           }
         },
-        "coherent-classification": {
-          "Ref_support": null,
-          "DSM_support": null
+        "intersection-classification": {
+          "ref_support": null,
+          "sec_support": null
         },
-        "incoherent-classification": {
-          "Ref_support": null,
-          "DSM_support": null
+        "exclusion-classification": {
+          "ref_support": null,
+          "sec_support": null
         }
       },
       "Status": {
         "strm_test_data": {
-          "Ref_support": {
+          "ref_support": {
             "nodata": -32768.0,
             "path": "TO/PATH/demcompare/tests/data/classification_layer_sampling_ref/input/ref_status.tif"
           },
-          "DSM_support": null
+          "sec_support": null
         }
       },
       "fusion_layer": {
         "strm_test_data": {
-          "Ref_support": {
+          "ref_support": {
             "nodata": -32768.0,
             "path": "TO/PATH/demcompare/test_output/stats/fusion_layer/ref_fusion_layer.tif"
           },
-          "DSM_support": null
+          "sec_support": null
         }
       }
     }

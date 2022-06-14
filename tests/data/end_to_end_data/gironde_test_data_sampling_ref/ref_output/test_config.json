@@ -3,9 +3,12 @@
   "input_ref": {
     "path": "/Gironde.tif",
     "zunit": "m",
-    "georef": "WGS84"
+    "georef": "WGS84",
+    "classification_layers": {
+			"Status": {"map_path": "./ref_status.tif"}
+    }
   },
-  "input_dem_to_align": {
+  "input_sec": {
     "path": "/FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
     "zunit": "m",
     "georef": "EPSG:32630",
@@ -20,10 +23,12 @@
     "estimated_initial_shift_y": 0,
     "save_internal_dems": "True"
   },
-  "stats_opts": {
-    "remove_outliers": false,
+  "statistics": {
+    "remove_outliers": "False",
+    "save_results": "True",
     "classification_layers": {
       "Status": {
+        "type": "segmentation",
         "ref": "ref_status.tif",
         "classes": {
           "sea": [

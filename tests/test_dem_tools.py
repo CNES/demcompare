@@ -25,10 +25,11 @@ TODO:
 - add test_save_dem
 - add test_copy_dem
 - check wrong opening of DEM test_load_wrong_dem.
-- check reproject_dems with CRS ref and dem_to_align inversed.
+- check reproject_dems with CRS ref and sec inversed.
 - check CRS in compute_dems_diff ?
 """
-
+# pylint:disable = too-many-lines
+# pylint:disable = duplicate-code
 # Standard imports
 import os
 
@@ -36,9 +37,11 @@ import os
 import numpy as np
 import pytest
 import rasterio
+import xarray as xr
 
 # Demcompare imports
 from demcompare import dataset_tools, dem_tools
+from demcompare.dem_tools import DEFAULT_NODATA
 from demcompare.initialization import read_config_file
 
 # Tests helpers
@@ -111,7 +114,7 @@ def test_translate_dem():
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
     # Load dem
-    dem = dem_tools.load_dem(cfg["input_dem_to_align"]["path"])
+    dem = dem_tools.load_dem(cfg["input_sec"]["path"])
 
     # When translate_dem, the values at position 0 and 3 of the
     # transform are modified
@@ -243,23 +246,19 @@ def test_reproject_dems():
     cfg = read_config_file(test_cfg_path)
     # Load original dems
     ref_orig = dem_tools.load_dem(cfg["input_ref"]["path"])
-    dem_to_align_orig = dem_tools.load_dem(cfg["input_dem_to_align"]["path"])
+    sec_orig = dem_tools.load_dem(cfg["input_sec"]["path"])
 
     # Reproject dems with sampling value dem  -------------------------------
-    (
-        reproj_dem_to_align,
-        reproj_ref,
-        adapting_factor,
-    ) = dem_tools.reproject_dems(
-        dem_to_align_orig,
+    (reproj_sec, reproj_ref, adapting_factor,) = dem_tools.reproject_dems(
+        sec_orig,
         ref_orig,
-        sampling_source=dem_tools.SamplingSourceParameter.DEM_TO_ALIGN.value,
+        sampling_source=dem_tools.SamplingSourceParameter.SEC.value,
     )
 
     # Define ground truth values
     gt_intersection_roi = (600255.0, 4990745.0, 689753.076, 5090117.757)
-    # Since sampling value is "dem_to_align",
-    # output resolutions is "dem_to_align"'s resolution
+    # Since sampling value is "sec",
+    # output resolutions is "sec"'s resolution
     gt_output_yres = -500.00
     gt_output_xres = 500.00
     gt_output_shape = (199, 179)
@@ -278,26 +277,22 @@ def test_reproject_dems():
     # Test that both the output dems have the same gt values
     # Tests dems shape
     np.testing.assert_array_equal(
-        reproj_dem_to_align["image"].shape, reproj_ref["image"].shape
+        reproj_sec["image"].shape, reproj_ref["image"].shape
     )
     np.testing.assert_allclose(
-        reproj_dem_to_align["image"].shape, gt_output_shape, rtol=1e-03
+        reproj_sec["image"].shape, gt_output_shape, rtol=1e-03
     )
     np.testing.assert_allclose(
         reproj_ref["image"].shape, gt_output_shape, rtol=1e-03
     )
     # Tests dems resolution
-    np.testing.assert_allclose(
-        reproj_dem_to_align.yres, gt_output_yres, rtol=1e-02
-    )
+    np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=1e-02)
     np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=1e-02)
-    np.testing.assert_allclose(
-        reproj_dem_to_align.xres, gt_output_xres, rtol=1e-02
-    )
+    np.testing.assert_allclose(reproj_sec.xres, gt_output_xres, rtol=1e-02)
     np.testing.assert_allclose(reproj_ref.xres, gt_output_xres, rtol=1e-02)
     # Tests dems bounds
     np.testing.assert_allclose(
-        reproj_dem_to_align.attrs["bounds"], gt_intersection_roi, rtol=1e-03
+        reproj_sec.attrs["bounds"], gt_intersection_roi, rtol=1e-03
     )
     np.testing.assert_allclose(
         reproj_ref.attrs["bounds"], gt_intersection_roi, rtol=1e-03
@@ -306,7 +301,7 @@ def test_reproject_dems():
     np.testing.assert_allclose(adapting_factor, gt_adapting_factor, rtol=1e-02)
     # Test dems transform
     np.testing.assert_allclose(
-        reproj_dem_to_align.georef_transform, gt_output_trans, rtol=1e-02
+        reproj_sec.georef_transform, gt_output_trans, rtol=1e-02
     )
     np.testing.assert_allclose(
         reproj_ref.georef_transform, gt_output_trans, rtol=1e-02
@@ -314,12 +309,8 @@ def test_reproject_dems():
 
     # Reproject dems with sampling value ref --------------------------------
 
-    (
-        reproj_dem_to_align,
-        reproj_ref,
-        adapting_factor,
-    ) = dem_tools.reproject_dems(
-        dem_to_align_orig,
+    (reproj_sec, reproj_ref, adapting_factor,) = dem_tools.reproject_dems(
+        sec_orig,
         ref_orig,
         sampling_source=dem_tools.SamplingSourceParameter.REF.value,
     )
@@ -344,26 +335,22 @@ def test_reproject_dems():
     # Test that both the output dems have the same gt values
     # Tests dems shape
     np.testing.assert_array_equal(
-        reproj_dem_to_align["image"].shape, reproj_ref["image"].shape
+        reproj_sec["image"].shape, reproj_ref["image"].shape
     )
     np.testing.assert_allclose(
-        reproj_dem_to_align["image"].shape, gt_output_shape, rtol=1e-03
+        reproj_sec["image"].shape, gt_output_shape, rtol=1e-03
     )
     np.testing.assert_allclose(
         reproj_ref["image"].shape, gt_output_shape, rtol=1e-03
     )
     # Tests dems resolution
-    np.testing.assert_allclose(
-        reproj_dem_to_align.yres, gt_output_yres, rtol=1e-02
-    )
+    np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=1e-02)
     np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=1e-02)
-    np.testing.assert_allclose(
-        reproj_dem_to_align.xres, gt_output_xres, rtol=1e-02
-    )
+    np.testing.assert_allclose(reproj_sec.xres, gt_output_xres, rtol=1e-02)
     np.testing.assert_allclose(reproj_ref.xres, gt_output_xres, rtol=1e-02)
     # Tests dems bounds
     np.testing.assert_allclose(
-        reproj_dem_to_align.attrs["bounds"], gt_intersection_roi, rtol=1e-02
+        reproj_sec.attrs["bounds"], gt_intersection_roi, rtol=1e-02
     )
     np.testing.assert_allclose(
         reproj_ref.attrs["bounds"], gt_intersection_roi, rtol=1e-02
@@ -372,7 +359,7 @@ def test_reproject_dems():
     np.testing.assert_allclose(adapting_factor, gt_adapting_factor, rtol=1e-02)
     # Test dems transform
     np.testing.assert_allclose(
-        reproj_dem_to_align.georef_transform, gt_output_trans, rtol=1e-02
+        reproj_sec.georef_transform, gt_output_trans, rtol=1e-02
     )
     np.testing.assert_allclose(
         reproj_ref.georef_transform, gt_output_trans, rtol=1e-02
@@ -380,22 +367,18 @@ def test_reproject_dems():
 
     # Reproject dems with sampling value dem and initial disparity -------------
 
-    (
-        reproj_dem_to_align,
-        reproj_ref,
-        adapting_factor,
-    ) = dem_tools.reproject_dems(
-        dem_to_align_orig,
+    (reproj_sec, reproj_ref, adapting_factor,) = dem_tools.reproject_dems(
+        sec_orig,
         ref_orig,
-        sampling_source=dem_tools.SamplingSourceParameter.DEM_TO_ALIGN.value,
+        sampling_source=dem_tools.SamplingSourceParameter.SEC.value,
         initial_shift_x=2,
         initial_shift_y=-3,
     )
 
     # Define ground truth values
     gt_intersection_roi = (600255.0, 4990745.0, 689753.076, 5090117.757)
-    # Since sampling value is "dem_to_align",
-    # output resolutions is "dem_to_align"'s resolution
+    # Since sampling value is "sec",
+    # output resolutions is "sec"'s resolution
     gt_output_yres = -500.00
     gt_output_xres = 500.00
     gt_output_shape = (199, 179)
@@ -414,26 +397,22 @@ def test_reproject_dems():
     # Test that both the output dems have the same gt values
     # Tests dems shape
     np.testing.assert_array_equal(
-        reproj_dem_to_align["image"].shape, reproj_ref["image"].shape
+        reproj_sec["image"].shape, reproj_ref["image"].shape
     )
     np.testing.assert_allclose(
-        reproj_dem_to_align["image"].shape, gt_output_shape, rtol=1e-03
+        reproj_sec["image"].shape, gt_output_shape, rtol=1e-03
     )
     np.testing.assert_allclose(
         reproj_ref["image"].shape, gt_output_shape, rtol=1e-03
     )
     # Tests dems resolution
-    np.testing.assert_allclose(
-        reproj_dem_to_align.yres, gt_output_yres, rtol=1e-02
-    )
+    np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=1e-02)
     np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=1e-02)
-    np.testing.assert_allclose(
-        reproj_dem_to_align.xres, gt_output_xres, rtol=1e-02
-    )
+    np.testing.assert_allclose(reproj_sec.xres, gt_output_xres, rtol=1e-02)
     np.testing.assert_allclose(reproj_ref.xres, gt_output_xres, rtol=1e-02)
     # Tests dems bounds
     np.testing.assert_allclose(
-        reproj_dem_to_align.attrs["bounds"], gt_intersection_roi, rtol=1e-03
+        reproj_sec.attrs["bounds"], gt_intersection_roi, rtol=1e-03
     )
     np.testing.assert_allclose(
         reproj_ref.attrs["bounds"], gt_intersection_roi, rtol=1e-03
@@ -443,7 +422,7 @@ def test_reproject_dems():
     np.testing.assert_allclose(adapting_factor, gt_adapting_factor, rtol=1e-02)
     # Test dems transform
     np.testing.assert_allclose(
-        reproj_dem_to_align.georef_transform, gt_output_trans, rtol=1e-02
+        reproj_sec.georef_transform, gt_output_trans, rtol=1e-02
     )
     np.testing.assert_allclose(
         reproj_ref.georef_transform, gt_output_trans, rtol=1e-02
@@ -458,47 +437,57 @@ def test_compute_dems_diff():
     to test the obtained difference Dataset.
     """
     # Create input datasets
-    dem_to_align = np.array(
-        [[1, 1, 1], [1, 1, 1], [-1, -9999, 1], [1, 2, -9999], [1, 1, -9999]],
+    sec = np.array(
+        [
+            [1, 1, 1],
+            [1, 1, 1],
+            [-1, -37, 1],
+            [1, 2, -37],
+            [1, 1, -37],
+        ],
         dtype=np.float32,
     )
     ref = np.array(
-        [[3, 3, 3], [1, 2, 1], [1, 0, 1], [1, 1, 0], [1, 1, 2]],
+        [[3, 99, 3], [99, 2, 1], [99, 0, 1], [1, 1, 0], [1, 1, 99]],
         dtype=np.float32,
     )
 
-    dem_to_align_dataset = dem_tools.create_dem(data=dem_to_align)
-    ref_dataset = dem_tools.create_dem(data=ref)
+    sec_dataset = dem_tools.create_dem(data=sec, no_data=-37)
+    ref_dataset = dem_tools.create_dem(data=ref, no_data=99)
 
     # Define ground truth value
     diff_gt = np.array(
         [
-            [3 - 1, 3 - 1, 3 - 1],
-            [1 - 1, 2 - 1, 1 - 1],
-            [1 + 1, np.nan, 1 - 1],
+            [3 - 1, np.nan, 3 - 1],
+            [np.nan, 2 - 1, 1 - 1],
+            [np.nan, np.nan, 1 - 1],
             [1 - 1, 1 - 2, np.nan],
             [1 - 1, 1 - 1, np.nan],
         ],
         dtype=np.float32,
     )
 
-    diff_dataset = dem_tools.compute_dems_diff(
-        ref_dataset, dem_to_align_dataset
-    )
+    diff_dataset = dem_tools.compute_dems_diff(ref_dataset, sec_dataset)
     # Test that the output difference is the same as ground_truth
     np.testing.assert_array_equal(diff_gt, diff_dataset["image"].data)
 
     # Create input datasets
-    dem_to_align = np.array(
+    sec = np.array(
         [[1, 1, 1], [1, 1, 1], [-1, -33, 1], [1, 2, -33], [1, 1, -33]],
         dtype=np.float32,
     )
     ref = np.array(
-        [[3, 3, 3], [1, 2, 1], [-9999, 0, 1], [1, 1, 0], [1, 1, -9999]],
+        [
+            [3, 3, 3],
+            [1, 2, 1],
+            [DEFAULT_NODATA, 0, 1],
+            [1, 1, 0],
+            [1, 1, DEFAULT_NODATA],
+        ],
         dtype=np.float32,
     )
 
-    dem_to_align_dataset = dem_tools.create_dem(data=dem_to_align, no_data=-33)
+    sec_dataset = dem_tools.create_dem(data=sec, no_data=-33)
     ref_dataset = dem_tools.create_dem(data=ref)
 
     # Define ground truth value
@@ -513,9 +502,7 @@ def test_compute_dems_diff():
         ],
         dtype=np.float32,
     )
-    diff_dataset = dem_tools.compute_dems_diff(
-        ref_dataset, dem_to_align_dataset
-    )
+    diff_dataset = dem_tools.compute_dems_diff(ref_dataset, sec_dataset)
     # Test that the output difference is the same as ground_truth
     np.testing.assert_array_equal(diff_gt, diff_dataset["image"].data)
 
@@ -548,7 +535,7 @@ def test_create_dem():
         5090000,
     )
     trans = np.array([700000, 600, 0, 1000000, 0, -600])
-    nodata = -32768
+    nodata = -3
     # Create dataset from the gironde_test_data
     # DSM with the defined data, bounds,
     # transform and nodata values
@@ -556,7 +543,7 @@ def test_create_dem():
         data=data,
         img_crs=rasterio.crs.CRS.from_epsg(32630),
         transform=trans,
-        input_img=cfg["input_dem_to_align"]["path"],
+        input_img=cfg["input_sec"]["path"],
         bounds=bounds_dem,
         no_data=nodata,
     )
@@ -564,7 +551,7 @@ def test_create_dem():
     # The created dataset should have the gironde_test_data DSM georef
     gt_img_crs = "EPSG:32630"
     gt_zunit = "m"
-    gt_no_data = -32768
+    gt_no_data = -3
     gt_plani_unit = "m"
 
     # Test that the created dataset has the ground truth values
@@ -589,7 +576,7 @@ def test_create_dem():
         data=data,
         img_crs=rasterio.crs.CRS.from_epsg(32630),
         transform=trans,
-        input_img=cfg["input_dem_to_align"]["path"],
+        input_img=cfg["input_sec"]["path"],
         bounds=bounds_dem,
         no_data=nodata,
         geoid_georef=True,
@@ -602,3 +589,250 @@ def test_create_dem():
         gt_data_with_offset,
         rtol=1e-02,
     )
+
+
+@pytest.mark.unit_tests
+def test_create_dem_with_classification_layers():
+    """
+    Test the _create_dem function with input classification layers
+    Creates a dem with random input data and input classification layers
+    as xr.DataArray and as a dictionary.
+    """
+
+    # Define data
+    data = np.ones((1000, 1000))
+
+    # Test with input classification layer as xr.DataArray ---------------
+    # Initialize the data of the classification layers
+    classif_data = np.full((data.shape[0], data.shape[1], 2), np.nan)
+    classif_data[:, :, 0] = np.ones((data.shape[0], data.shape[1]))
+    classif_data[:, :, 1] = np.ones((data.shape[0], data.shape[1])) * 2
+    classif_name = ["test_first_classif", "test_second_classif"]
+
+    # Initialize the coordinates of the classification layers
+    coords_classification_layers = [
+        np.arange(data.shape[0]),
+        np.arange(data.shape[1]),
+        classif_name,
+    ]
+    # Create the classif layer xr.DataArray
+    seg_classif_layer = xr.DataArray(
+        data=classif_data,
+        coords=coords_classification_layers,
+        dims=["row", "col", "indicator"],
+    )
+    # Create the sec dataset
+    dataset_dem = dem_tools.create_dem(
+        data=data, classification_layers=seg_classif_layer
+    )
+
+    # Test that the classification layers have been correctly loaded
+    np.testing.assert_array_equal(
+        dataset_dem.classification_layers.data, classif_data
+    )
+    np.testing.assert_array_equal(
+        dataset_dem.classification_layers.indicator.data, classif_name
+    )
+
+    # Test with input classification layer as a dictionary ---------------
+
+    # Initialize the classification layer data as a dictionary
+    classif_layer_dict = {}
+    classif_layer_dict["map_arrays"] = classif_data
+    classif_layer_dict["names"] = classif_name
+
+    # Create the sec dataset
+    dataset_dem_from_dict = dem_tools.create_dem(
+        data=data, classification_layers=classif_layer_dict
+    )
+
+    # Test that the classification layers have been correctly loaded
+    np.testing.assert_array_equal(
+        dataset_dem_from_dict.classification_layers.data, classif_data
+    )
+    np.testing.assert_array_equal(
+        dataset_dem_from_dict.classification_layers.indicator.data, classif_name
+    )
+
+
+@pytest.mark.unit_tests
+def test_compute_waveform():
+    """
+    Test the compute_waveform function.
+    """
+
+    # Initialize input data
+    data = np.array(
+        [[-7.0, 3.0, 3.0], [1, 3.0, 1.0], [3.0, 1.0, 0.0]], dtype=np.float32
+    )
+    dem = dem_tools.create_dem(data=data)
+
+    # Compute gt waveform
+    mean_row = np.nanmean(data, axis=0)
+    gt_row_waveform = data - mean_row
+
+    mean_col = np.nanmean(data, axis=1)
+
+    mean_col = np.transpose(
+        np.ones((1, mean_col.size), dtype=np.float32) * mean_col
+    )
+    gt_col_waveform = data - mean_col
+
+    # Obtain output waveform
+    output_row_waveform, output_col_waveform = dem_tools.compute_waveform(dem)
+
+    np.testing.assert_allclose(gt_col_waveform, output_col_waveform, rtol=1e-02)
+    np.testing.assert_allclose(gt_row_waveform, output_row_waveform, rtol=1e-02)
+
+
+@pytest.mark.unit_tests
+def test_compute_dem_slope():
+    """
+    Test the compute_dem_slope function
+    - Loads the data present in the test root data directory
+    - Creates a dem with a created array and the input data
+      georeference and transform
+    - Manually computes the dem slope
+    - Tests that the computed slope by the function
+      compute_dem_slope is the same as ground truth
+    """
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "strm_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    # Load dem
+    from_dataset = dem_tools.load_dem(cfg["input_sec"]["path"])
+
+    # Generate dsm with the following data and
+    # "gironde_test_data" DSM's georef and resolution
+    data = np.array([[1, 0, 1], [1, 0, 1], [-1, 0, 1]], dtype=np.float32)
+    dem_dataset = dem_tools.create_dem(
+        data=data,
+        transform=from_dataset.georef_transform.data,
+        img_crs=rasterio.crs.CRS.from_epsg(32630),
+    )
+    # Compute dem's slope
+    dem_dataset = dem_tools.compute_dem_slope(dem_dataset)
+    # Slope filters are the following
+    # conv_x = np.array([[-1, 0, 1],
+    #                   [-2, 0, 2],
+    #                   [-1, 0, 1]])
+    # conv_y = np.array([[-1, -2, -1],
+    #                   [ 0,  0,  0],
+    #                   [ 1,  2,  1]])
+
+    # Convolution result
+    gx = np.array([[4, 0, -4], [2, -2, -4], [-2, -6, -4]])
+    gy = np.array([[0, 0, 0], [6, 2, 0], [6, 2, 0]])
+    # Dataset's absolute resolutions are 500, 500
+    distx = np.abs(dem_dataset.xres)
+    disty = np.abs(dem_dataset.yres)
+
+    # Compute tan(slope) and aspect
+    tan_slope = np.sqrt((gx / distx) ** 2 + (gy / disty) ** 2) / 8
+    gt_slope = np.arctan(tan_slope) * 100
+
+    output_slope = dem_tools.compute_dem_slope(dem_dataset)
+    # Test that the output_slope is the same as ground_truth
+    np.testing.assert_allclose(
+        gt_slope,
+        output_slope["classification_layers"].data[:, :, 0],
+        rtol=1e-02,
+    )
+
+
+def test_verify_fusion_layers():
+    """
+    Test the verify_fusion_layers function
+    - Loads the data present in the test root data directory
+    - Manually computes different classification layers configuration
+      that include fusion layers
+    - Tests that the verify_fusion_layers raises an error when
+      the layers needed to be fusioned are not present on the input dem
+      and the input cfg
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Initialize sec and ref, necessary for StatsProcessing creation
+    sec = dem_tools.load_dem(
+        cfg["input_sec"]["path"],
+        classification_layers=(cfg["input_sec"]["classification_layers"]),
+    )
+    ref = dem_tools.load_dem(cfg["input_ref"]["path"])
+    sec, ref, _ = dem_tools.reproject_dems(sec, ref)
+
+    # Compute slope and add it as a classification_layer
+    ref = dem_tools.compute_dem_slope(ref)
+    sec = dem_tools.compute_dem_slope(sec)
+
+    # Test with sec fusion ---------------------------------
+    # Initialize stats input configuration
+    input_classif_cfg = {
+        "Status": {
+            "type": "segmentation",
+            "classes": {
+                "valid": [0],
+                "KO": [1],
+                "Land": [2],
+                "NoData": [3],
+                "Outside_detector": [4],
+            },
+        },
+        "Slope0": {
+            "type": "slope",
+            "ranges": [0, 10, 25, 50, 90],
+        },
+        "fusion": {"sec": ["Slope0", "Status"]},
+    }
+
+    dem_tools.verify_fusion_layers(sec, input_classif_cfg, "sec")
+    dem_tools.verify_fusion_layers(ref, input_classif_cfg, "ref")
+
+    # Test with ref fusion ---------------------------------
+    # It should not work as no ref Status exists
+    # Initialize stats input configuration
+    input_classif_cfg = {
+        "Status": {
+            "type": "segmentation",
+            "classes": {
+                "valid": [0],
+                "KO": [1],
+                "Land": [2],
+                "NoData": [3],
+                "Outside_detector": [4],
+            },
+        },
+        "Slope0": {
+            "type": "slope",
+            "ranges": [0, 10, 25, 50, 90],
+        },
+        "fusion": {"ref": ["Slope0", "Status"]},
+    }
+
+    dem_tools.verify_fusion_layers(sec, input_classif_cfg, "sec")
+    # Test that an error is raised
+    with pytest.raises(ValueError):
+        dem_tools.verify_fusion_layers(ref, input_classif_cfg, "ref")
+
+    # Test without defining the Status layer
+    # on the input cfg ---------------------------------
+    # It should not work as no ref Status exists
+    # Initialize stats input configuration
+    input_classif_cfg = {
+        "Slope0": {
+            "type": "slope",
+            "ranges": [0, 10, 25, 50, 90],
+        },
+        "fusion": {"ref": ["Slope0", "Status"]},
+    }
+
+    # Test that an error is raised
+    with pytest.raises(ValueError):
+        dem_tools.verify_fusion_layers(ref, input_classif_cfg, "ref")

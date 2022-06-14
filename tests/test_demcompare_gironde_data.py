@@ -62,14 +62,6 @@ def test_demcompare_with_gironde_test_data():
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     test_cfg = read_config_file(test_cfg_path)
 
-    # Modify test's classification layer path to its complete path
-    classif_layer_path = os.path.join(
-        "input",
-        test_cfg["stats_opts"]["classification_layers"]["Status"]["dsm"],
-    )
-    test_cfg["stats_opts"]["classification_layers"]["Status"][
-        "dsm"
-    ] = os.path.join(test_data_path, classif_layer_path)
     # Get "gironde_test_data" demcompare reference output path for
     test_ref_output_path = os.path.join(test_data_path, "ref_output")
 
@@ -101,13 +93,13 @@ def test_demcompare_with_gironde_test_data():
         )
         output_cfg = read_config_file(os.path.join(tmp_dir, cfg_file))
         ref_output_cfg["coregistration"]["output_dir"] = tmp_dir
-        ref_output_cfg["stats_opts"]["output_dir"] = tmp_dir
+        ref_output_cfg["statistics"]["output_dir"] = tmp_dir
 
         np.testing.assert_equal(
-            ref_output_cfg["stats_opts"]["classification_layers"]["Status"][
+            ref_output_cfg["statistics"]["classification_layers"]["Status"][
                 "classes"
             ],
-            output_cfg["stats_opts"]["classification_layers"]["Status"][
+            output_cfg["statistics"]["classification_layers"]["Status"][
                 "classes"
             ],
         )
@@ -175,14 +167,14 @@ def test_demcompare_with_gironde_test_data():
 
         # TEST DIFF TIF
 
-        # Test initial_dh.tif
-        img = get_out_file_path("initial_dh.tif")
+        # Test initial_dem_diff.tif
+        img = get_out_file_path("initial_dem_diff.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test final_dh.tif
-        img = get_out_file_path("final_dh.tif")
+        # Test final_dem_diff.tif
+        img = get_out_file_path("final_dem_diff.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -205,56 +197,76 @@ def test_demcompare_with_gironde_test_data():
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # TEST SLOPE STATS
+        # TEST WAVEFORM TIFS
 
-        # Test stats/slope/stats_results_standard.csv
-        file = "stats/slope/stats_results_standard.csv"
-        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
-        output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
-
-        # Test stats/slope/stats_results_coherent-classification.csv
-        file = "stats/slope/stats_results_coherent-classification.csv"
-        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
-        output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
-
-        # Test dsm_support_map_rectif.tif
-        img = "stats/slope/dsm_support_map_rectif.tif"
+        img = get_out_file_path("dh_row_wise_wave_detection.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test ref_support_map_rectif.tif
-        img = "stats/slope/ref_support_map_rectif.tif"
+        img = get_out_file_path("dh_col_wise_wave_detection.tif")
+        ref_output_data = os.path.join(test_ref_output_path, img)
+        output_data = os.path.join(tmp_dir, img)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
+
+        # TEST SLOPE STATS
+
+        # Test stats/Slope0/stats_results.csv
+        file = "stats/Slope0/stats_results.csv"
+        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
+
+        # Test stats/Slope0/stats_results_intersection.csv
+        file = "stats/Slope0/stats_results_intersection.csv"
+        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
+
+        # Test Slope0/0_support_map.tif
+        img = "stats/Slope0/0_support_map.tif"
+        ref_output_data = os.path.join(test_ref_output_path, img)
+        output_data = os.path.join(tmp_dir, img)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
+
+        # Test Slope0/1_support_map.tif
+        img = "stats/Slope0/1_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TEST STATUS CLASSIFICATION LAYER STATS
 
-        # Test stats/Status/stats_results_standard.csv
-        file = "stats/Status/stats_results_standard.csv"
+        # Test stats/Status/stats_results.csv
+        file = "stats/Status/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, rtol=1e-2)
 
-        # Test dsm_support_map_rectif.tif
-        img = "stats/Status/dsm_support_map_rectif.tif"
+        # Test Status/0_support_map.tif
+        img = "stats/Status/0_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
+        # TEST GLOBAL CLASSIFICATION LAYER STATS
+
+        # Test stats/global/stats_results.csv
+        file = "stats/global/stats_results.csv"
+        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(ref_output_csv, output_csv, rtol=1e-2)
+
         # TEST FUSION_LAYER STATS
 
-        # Test stats/fusion_layer/stats_results_standard.csv
-        file = "stats/fusion_layer/stats_results_standard.csv"
+        # Test stats/fusion_layer1/stats_results.csv
+        file = "stats/fusion_layer1/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test dsm_fusion_layer.tif
-        img = "stats/fusion_layer/dsm_fusion_layer.tif"
+        # Test fusion_layer1/0_support_map.tif
+        img = "stats/fusion_layer1/0_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -287,14 +299,6 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     test_cfg = read_config_file(test_cfg_path)
 
-    # Modify test's classification layer path to its complete path
-    classif_layer_path = os.path.join(
-        "input",
-        test_cfg["stats_opts"]["classification_layers"]["Status"]["ref"],
-    )
-    test_cfg["stats_opts"]["classification_layers"]["Status"][
-        "ref"
-    ] = os.path.join(test_data_path, classif_layer_path)
     # Get "gironde_test_data" demcompare reference output path for
     test_ref_output_path = os.path.join(test_data_path, "ref_output")
 
@@ -325,14 +329,14 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
             os.path.join(test_ref_output_path, input_cfg)
         )
         ref_output_cfg["coregistration"]["output_dir"] = tmp_dir
-        ref_output_cfg["stats_opts"]["output_dir"] = tmp_dir
+        ref_output_cfg["statistics"]["output_dir"] = tmp_dir
 
         filled_cfg = read_config_file(os.path.join(tmp_dir, input_cfg))
         np.testing.assert_equal(
-            ref_output_cfg["stats_opts"]["classification_layers"]["Status"][
+            ref_output_cfg["statistics"]["classification_layers"]["Status"][
                 "classes"
             ],
-            filled_cfg["stats_opts"]["classification_layers"]["Status"][
+            filled_cfg["statistics"]["classification_layers"]["Status"][
                 "classes"
             ],
         )
@@ -403,14 +407,14 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
 
         # TEST DIFF TIF
 
-        # Test initial_dh.tif
-        img = get_out_file_path("initial_dh.tif")
+        # Test initial_dem_diff.tif
+        img = get_out_file_path("initial_dem_diff.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test final_dh.tif
-        img = get_out_file_path("final_dh.tif")
+        # Test final_dem_diff.tif
+        img = get_out_file_path("final_dem_diff.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -435,54 +439,61 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
 
         # TEST SLOPE STATS
 
-        # Test stats/slope/stats_results_standard.csv
-        file = "stats/slope/stats_results_standard.csv"
+        # Test stats/Slope0/stats_results.csv
+        file = "stats/Slope0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test stats/slope/stats_results_coherent-classification.csv
-        file = "stats/slope/stats_results_coherent-classification.csv"
+        # Test stats/Slope0/stats_results_intersection.csv
+        file = "stats/Slope0/stats_results_intersection.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test dsm_support_map_rectif.tif
-        img = "stats/slope/dsm_support_map_rectif.tif"
+        # Test Slope0/1_support_map.tif
+        img = "stats/Slope0/1_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test ref_support_map_rectif.tif
-        img = "stats/slope/ref_support_map_rectif.tif"
+        # Test Slope0/0_support_map.tif
+        img = "stats/Slope0/0_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TEST STATUS CLASSIFICATION LAYER STATS
 
-        # Test stats/Status/stats_results_standard.csv
-        file = "stats/Status/stats_results_standard.csv"
+        # Test stats/Status/stats_results.csv
+        file = "stats/Status/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test ref_support_map_rectif.tif
-        img = "stats/Status/ref_support_map_rectif.tif"
+        # Test Status/0_support_map.tif
+        img = "stats/Status/0_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
+        # TEST GLOBAL CLASSIFICATION LAYER STATS
+
+        # Test stats/Status/stats_results.csv
+        file = "stats/global/stats_results.csv"
+        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
+        output_csv = read_csv_file(os.path.join(tmp_dir, file))
+        np.testing.assert_allclose(ref_output_csv, output_csv, rtol=1e-2)
         # TEST FUSION_LAYER STATS
 
-        # Test stats/fusion_layer/stats_results_standard.csv
-        file = "stats/fusion_layer/stats_results_standard.csv"
+        # Test stats/fusion_layer0/stats_results.csv
+        file = "stats/fusion_layer0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test ref_fusion_layer.tif
-        img = "stats/fusion_layer/ref_fusion_layer.tif"
+        # Test fusion_layer0/0_support_map.tif
+        img = "stats/fusion_layer0/0_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)

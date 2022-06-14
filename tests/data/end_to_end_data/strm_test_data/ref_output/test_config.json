@@ -5,7 +5,7 @@
     "zunit": "m",
     "georef": "WGS84"
   },
-  "input_dem_to_align": {
+  "input_sec": {
     "path": "tests/tests_data/strm_test_data/srtm_blurred_and_shifted.tif",
     "zunit": "m",
     "georef": "WGS84",
@@ -18,9 +18,10 @@
     "estimated_initial_shift_y": 0,
     "save_internal_dems": "True"
   },
-  "stats_opts": {
-    "to_be_classification_layers": {
-      "slope": {
+  "statistics": {
+    "classification_layers": {
+      "Slope0": {
+        "type": "slope",
         "ranges": [
           0,
           5,
@@ -30,6 +31,7 @@
         ]
       }
     },
-    "remove_outliers": true
+    "remove_outliers": "True",
+    "save_results": "True"
   }
 }

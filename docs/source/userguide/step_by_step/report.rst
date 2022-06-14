@@ -33,11 +33,11 @@ The output report has the following structure:
             - Graph showing mean and standard deviation
             - Fitted graph showing mean and standard deviation
             - Table showing comparison metrics
-        2.1.2 Mode: coherent-classification
+        2.1.2 Mode: intersection-classification
             - Graph showing mean and standard deviation
             - Fitted graph showing mean and standard deviation
             - Table showing comparison metrics
-        2.1.3 Mode: incoherent-classification
+        2.1.3 Mode: exclusion-classification
             - Graph showing mean and standard deviation
             - Fitted graph showing mean and standard deviation
             - Table showing comparison metrics

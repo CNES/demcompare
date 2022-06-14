@@ -35,7 +35,7 @@ import argcomplete
 # DEMcompare import
 import demcompare
 
-DEFAULT_STEPS = ["coregistration", "stats", "report"]
+DEFAULT_STEPS = ["coregistration", "statistics", "report"]
 ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
 
 

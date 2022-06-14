@@ -91,12 +91,12 @@ def test_demcompare_strm_test_data():
             os.path.join(test_ref_output_path, cfg_file)
         )
         # Manually add output directory on reference output cfg
-        ref_output_cfg["stats_opts"]["output_dir"] = tmp_dir_
+        ref_output_cfg["statistics"]["output_dir"] = tmp_dir_
         ref_output_cfg["coregistration"]["output_dir"] = tmp_dir_
 
         output_cfg = read_config_file(os.path.join(tmp_dir_, cfg_file))
         np.testing.assert_equal(
-            ref_output_cfg["stats_opts"], output_cfg["stats_opts"]
+            ref_output_cfg["statistics"], output_cfg["statistics"]
         )
         np.testing.assert_equal(
             ref_output_cfg["coregistration"], output_cfg["coregistration"]
@@ -208,27 +208,25 @@ def test_demcompare_strm_test_data():
         )
         assert (
             os.path.normpath(
-                ref_demcompare_results["alti_results"][
-                    "reproj_coreg_dem_to_align"
-                ]["path"]
-            ).split(os.path.sep)[-1]
-            == os.path.normpath(
-                demcompare_results["alti_results"]["reproj_coreg_dem_to_align"][
+                ref_demcompare_results["alti_results"]["reproj_coreg_sec"][
                     "path"
                 ]
+            ).split(os.path.sep)[-1]
+            == os.path.normpath(
+                demcompare_results["alti_results"]["reproj_coreg_sec"]["path"]
             ).split(os.path.sep)[-1]
         )
 
         # TEST DIFF TIF
 
-        # Test initial_dh.tif
-        img = get_out_file_path("initial_dh.tif")
+        # Test initial_dem_diff.tif
+        img = get_out_file_path("initial_dem_diff.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test final_dh.tif
-        img = get_out_file_path("final_dh.tif")
+        # Test final_dem_diff.tif
+        img = get_out_file_path("final_dem_diff.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -247,6 +245,18 @@ def test_demcompare_strm_test_data():
 
         # Test reproj_coreg_REF.tif
         img = get_out_file_path("reproj_coreg_REF.tif")
+        ref_output_data = os.path.join(test_ref_output_path, img)
+        output_data = os.path.join(tmp_dir_, img)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
+
+        # TEST WAVEFORM TIFS
+
+        img = get_out_file_path("dh_row_wise_wave_detection.tif")
+        ref_output_data = os.path.join(test_ref_output_path, img)
+        output_data = os.path.join(tmp_dir_, img)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
+
+        img = get_out_file_path("dh_col_wise_wave_detection.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -279,20 +289,20 @@ def test_demcompare_strm_test_data():
 
         # TEST CSV STATS
 
-        # Test stats/slope/stats_results_standard.csv
-        file = "stats/slope/stats_results_standard.csv"
+        # Test stats/Slope0/stats_results.csv
+        file = "stats/Slope0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test stats/slope/stats_results_incoherent-classification.csv
-        file = "stats/slope/stats_results_incoherent-classification.csv"
+        # Test stats/Slope0/stats_results_exclusion.csv
+        file = "stats/Slope0/stats_results_exclusion.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test stats/slope/stats_results_coherent-classification.csv
-        file = "stats/slope/stats_results_coherent-classification.csv"
+        # Test stats/Slope0/stats_results_intersection.csv
+        file = "stats/Slope0/stats_results_intersection.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
@@ -346,13 +356,13 @@ def test_demcompare_strm_test_data_with_roi():
             os.path.join(test_ref_output_path, cfg_file)
         )
         # Manually add output directory on reference output cfg
-        ref_output_cfg["stats_opts"]["output_dir"] = tmp_dir
+        ref_output_cfg["statistics"]["output_dir"] = tmp_dir
         ref_output_cfg["coregistration"]["output_dir"] = tmp_dir
 
         output_cfg = read_config_file(os.path.join(tmp_dir, cfg_file))
 
         np.testing.assert_equal(
-            ref_output_cfg["stats_opts"], output_cfg["stats_opts"]
+            ref_output_cfg["statistics"], output_cfg["statistics"]
         )
         np.testing.assert_equal(
             ref_output_cfg["coregistration"], output_cfg["coregistration"]
@@ -420,14 +430,14 @@ def test_demcompare_strm_test_data_with_roi():
 
         # TEST DIFF TIF
 
-        # Test initial_dh.tif
-        img = get_out_file_path("initial_dh.tif")
+        # Test initial_dem_diff.tif
+        img = get_out_file_path("initial_dem_diff.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test final_dh.tif
-        img = get_out_file_path("final_dh.tif")
+        # Test final_dem_diff.tif
+        img = get_out_file_path("final_dem_diff.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -460,14 +470,14 @@ def test_demcompare_strm_test_data_with_roi():
 
         # TEST CSV STATS
 
-        # Test stats/slope/stats_results_standard.csv
-        file = "stats/slope/stats_results_standard.csv"
+        # Test stats/Slope0/stats_results.csv
+        file = "stats/Slope0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test stats/slope/stats_results_coherent-classification.csv
-        file = "stats/slope/stats_results_coherent-classification.csv"
+        # Test stats/Slope0/stats_results_intersection.csv
+        file = "stats/Slope0/stats_results_intersection.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)

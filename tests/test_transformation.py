@@ -2,7 +2,7 @@
 # coding: utf8
 # Disable the protected-access to test the functions
 # pylint:disable=protected-access
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -57,7 +57,7 @@ def test_apply():
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
     # Load dem
-    from_dataset = dem_tools.load_dem(cfg["input_dem_to_align"]["path"])
+    from_dataset = dem_tools.load_dem(cfg["input_sec"]["path"])
 
     # Define data
     data = np.array(

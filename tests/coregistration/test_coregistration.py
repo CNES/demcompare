@@ -66,12 +66,12 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
 
     # Load dems
     ref = load_dem(cfg["input_ref"]["path"])
-    dem_to_align = load_dem(cfg["input_dem_to_align"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
 
     # Define ground truth offsets
     gt_xoff = -1.43664
     gt_yoff = -0.41903
-    gt_sampling_source = "dem_to_align"
+    gt_sampling_source = "sec"
     gt_plani_results = {
         "dx": {
             "nuth_offset": -1.43664,
@@ -98,7 +98,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
     # Initialize coregistration object
     coregistration_ = coregistration.Coregistration(cfg["coregistration"])
     # Compute coregistration
-    transform = coregistration_.compute_coregistration(dem_to_align, ref)
+    transform = coregistration_.compute_coregistration(sec, ref)
     # Get coregistration results
     demcompare_results = coregistration_.demcompare_results
 
@@ -194,12 +194,12 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
 
-    # Modify cfg's sampling_source (default is "dem_to_align")
+    # Modify cfg's sampling_source (default is "sec")
     cfg["coregistration"]["sampling_source"] = SamplingSourceParameter.REF.value
 
     # Load dems
     ref = load_dem(cfg["input_ref"]["path"])
-    dem_to_align = load_dem(cfg["input_dem_to_align"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
 
     # Define ground truth offsets
     gt_xoff = -1.0864
@@ -231,7 +231,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     coregistration_ = coregistration.Coregistration(cfg["coregistration"])
 
     # Compute coregistration
-    transform = coregistration_.compute_coregistration(dem_to_align, ref)
+    transform = coregistration_.compute_coregistration(sec, ref)
     # Get coregistration results
     demcompare_results = coregistration_.demcompare_results
 
@@ -334,12 +334,12 @@ def test_compute_coregistration_with_strm_sampling_dem_and_initial_disparity():
 
     # Load dems
     ref = load_dem(cfg["input_ref"]["path"])
-    dem_to_align = load_dem(cfg["input_dem_to_align"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
 
     # Define ground truth offsets
     gt_xoff = 0.99999
     gt_yoff = 2.00000
-    gt_sampling_source = "dem_to_align"
+    gt_sampling_source = "sec"
     gt_plani_results = {
         "dx": {
             "nuth_offset": 1.0,
@@ -366,7 +366,7 @@ def test_compute_coregistration_with_strm_sampling_dem_and_initial_disparity():
     coregistration_ = coregistration.Coregistration(cfg["coregistration"])
 
     # Compute coregistration
-    transform = coregistration_.compute_coregistration(dem_to_align, ref)
+    transform = coregistration_.compute_coregistration(sec, ref)
     # Get coregistration results
     demcompare_results = coregistration_.demcompare_results
 
@@ -447,7 +447,7 @@ def test_compute_coregistration_with_strm_sampling_ref_and_initial_disparity():
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
 
-    # Modify cfg's sampling_source (default is "dem_to_align")
+    # Modify cfg's sampling_source (default is "sec")
     cfg["coregistration"]["sampling_source"] = SamplingSourceParameter.REF.value
 
     # Modify cfg's estimated_initial_shift
@@ -456,7 +456,7 @@ def test_compute_coregistration_with_strm_sampling_ref_and_initial_disparity():
 
     # Load dems
     ref = load_dem(cfg["input_ref"]["path"])
-    dem_to_align = load_dem(cfg["input_dem_to_align"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
 
     # Define ground truth offsets
     gt_xoff = 0.99699
@@ -488,7 +488,7 @@ def test_compute_coregistration_with_strm_sampling_ref_and_initial_disparity():
     coregistration_ = coregistration.Coregistration(cfg["coregistration"])
 
     # Compute coregistration
-    transform = coregistration_.compute_coregistration(dem_to_align, ref)
+    transform = coregistration_.compute_coregistration(sec, ref)
     # Get coregistration results
     demcompare_results = coregistration_.demcompare_results
 
@@ -574,17 +574,17 @@ def test_compute_coregistration_gironde_sampling_dem_and_initial_disparity():
 
     # Load dems
     ref = load_dem(cfg["input_ref"]["path"])
-    dem_to_align = load_dem(cfg["input_dem_to_align"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
 
     # Define ground truth offsets
     gt_xoff = -1.3065
     gt_yoff = -0.4796
-    gt_sampling_source = "dem_to_align"
+    gt_sampling_source = "sec"
 
     coregistration_ = coregistration.Coregistration(cfg["coregistration"])
 
     # Compute coregistration
-    transform = coregistration_.compute_coregistration(dem_to_align, ref)
+    transform = coregistration_.compute_coregistration(sec, ref)
 
     # Test that the output offsets and bias are the same as gt
     np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
@@ -614,7 +614,7 @@ def test_compute_coregistration_gironde_sampling_ref_and_initial_disparity():
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
 
-    # Modify cfg's sampling_source (default is "dem_to_align")
+    # Modify cfg's sampling_source (default is "sec")
     cfg["coregistration"]["sampling_source"] = SamplingSourceParameter.REF.value
 
     # Modify cfg's estimated_initial_shift
@@ -623,7 +623,7 @@ def test_compute_coregistration_gironde_sampling_ref_and_initial_disparity():
 
     # Load dems
     ref = load_dem(cfg["input_ref"]["path"])
-    dem_to_align = load_dem(cfg["input_dem_to_align"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
 
     # Define ground truth offsets
     gt_xoff = -1.0509
@@ -633,7 +633,7 @@ def test_compute_coregistration_gironde_sampling_ref_and_initial_disparity():
     coregistration_ = coregistration.Coregistration(cfg["coregistration"])
 
     # Compute coregistration
-    transform = coregistration_.compute_coregistration(dem_to_align, ref)
+    transform = coregistration_.compute_coregistration(sec, ref)
 
     # Test that the output offsets and bias are the same as gt
     np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
@@ -664,7 +664,7 @@ def test_compute_coregistration_with_default_coregistration_strm_sampling_dem():
 
     # Load dems
     ref = load_dem(cfg["input_ref"]["path"])
-    dem_to_align = load_dem(cfg["input_dem_to_align"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
 
     # Define ground truth offsets
     gt_xoff = 3.0
@@ -673,7 +673,7 @@ def test_compute_coregistration_with_default_coregistration_strm_sampling_dem():
     coregistration_ = coregistration.Coregistration()
 
     # Compute coregistration
-    transform = coregistration_.compute_coregistration(dem_to_align, ref)
+    transform = coregistration_.compute_coregistration(sec, ref)
 
     # Test that the output offsets and bias are the same as gt
     np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)

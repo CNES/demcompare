@@ -66,7 +66,6 @@ class Coregistration:
         :type cfg: ConfigType
         """
 
-        coreg = None
         # If no cfg is given, use default_application
         coreg_method = cls.default_application
         if bool(cfg):

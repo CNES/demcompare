@@ -20,7 +20,7 @@
 #
 # pylint:disable=too-many-branches
 """
-Init part of dsm_compare
+Init part of sec_compare
 This is where high level parameters are checked and default options are set
 TODO: move all init parts of __init__ here for consistency
 """
@@ -39,7 +39,7 @@ from astropy import units as u
 
 # Demcompare imports
 from .dem_tools import load_dem
-from .output_tree_design import supported_OTD
+from .output_tree_design import get_out_file_path, supported_OTD
 
 # Declare a configuration json type for type hinting
 ConfigType = Dict[str, Any]
@@ -99,9 +99,24 @@ def read_config_file(config_file: str) -> ConfigType:
             config["input_ref"]["path"] = make_relative_path_absolute(
                 config["input_ref"]["path"], config_dir
             )
-            config["input_dem_to_align"]["path"] = make_relative_path_absolute(
-                config["input_dem_to_align"]["path"], config_dir
+            if "classification_layers" in config["input_ref"]:
+                for _, classif_cfg in config["input_ref"][
+                    "classification_layers"
+                ].items():
+                    classif_cfg["map_path"] = make_relative_path_absolute(
+                        classif_cfg["map_path"], config_dir
+                    )
+        if "input_sec" in config:
+            config["input_sec"]["path"] = make_relative_path_absolute(
+                config["input_sec"]["path"], config_dir
             )
+            if "classification_layers" in config["input_sec"]:
+                for _, classif_cfg in config["input_sec"][
+                    "classification_layers"
+                ].items():
+                    classif_cfg["map_path"] = make_relative_path_absolute(
+                        classif_cfg["map_path"], config_dir
+                    )
     return config
 
 
@@ -126,36 +141,31 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
     :type cfg: Dict
     """
     # verify that input files are defined
-    if "input_dem_to_align" not in cfg or "input_ref" not in cfg:
+    if "input_sec" not in cfg or "input_ref" not in cfg:
         raise NameError("ERROR: missing input images description")
 
     # verify if input files are correctly defined :
-    if (
-        "path" not in cfg["input_dem_to_align"]
-        or "path" not in cfg["input_ref"]
-    ):
+    if "path" not in cfg["input_sec"] or "path" not in cfg["input_ref"]:
         raise NameError("ERROR: missing paths to input images")
-    cfg["input_dem_to_align"]["path"] = os.path.abspath(
-        str(cfg["input_dem_to_align"]["path"])
-    )
+    cfg["input_sec"]["path"] = os.path.abspath(str(cfg["input_sec"]["path"]))
     cfg["input_ref"]["path"] = os.path.abspath(str(cfg["input_ref"]["path"]))
 
     # verify z units
-    if "zunit" not in cfg["input_dem_to_align"]:
-        cfg["input_dem_to_align"]["zunit"] = "m"
+    if "zunit" not in cfg["input_sec"]:
+        cfg["input_sec"]["zunit"] = "m"
     else:
         try:
-            unit = u.Unit(cfg["input_dem_to_align"]["zunit"])
+            unit = u.Unit(cfg["input_sec"]["zunit"])
         except ValueError as value_error:
             raise NameError(
                 "ERROR: input DSM zunit ({}) not a supported unit".format(
-                    cfg["input_dem_to_align"]["zunit"]
+                    cfg["input_sec"]["zunit"]
                 )
             ) from value_error
         if unit.physical_type != u.m.physical_type:
             raise NameError(
                 "ERROR: input DSM zunit ({}) not a lenght unit".format(
-                    cfg["input_dem_to_align"]["zunit"]
+                    cfg["input_sec"]["zunit"]
                 )
             )
     if "zunit" not in cfg["input_ref"]:
@@ -177,20 +187,20 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
             )
 
     # check ref:
-    if "geoid" in cfg["input_dem_to_align"] or "geoid" in cfg["input_ref"]:
+    if "geoid" in cfg["input_sec"] or "geoid" in cfg["input_ref"]:
         logging.warning(
             "WARNING : geoid option is deprecated. \
             Use georef keyword now with EGM96 or WGS84 value"
         )
     # what we do below is just in case someone used georef as geoid was used...
-    if "georef" in cfg["input_dem_to_align"]:
-        if cfg["input_dem_to_align"]["georef"] is True:
-            cfg["input_dem_to_align"]["georef"] = "EGM96"
+    if "georef" in cfg["input_sec"]:
+        if cfg["input_sec"]["georef"] is True:
+            cfg["input_sec"]["georef"] = "EGM96"
         else:
-            if cfg["input_dem_to_align"]["georef"] is False:
-                cfg["input_dem_to_align"]["georef"] = "WGS84"
+            if cfg["input_sec"]["georef"] is False:
+                cfg["input_sec"]["georef"] = "WGS84"
     else:
-        cfg["input_dem_to_align"]["georef"] = "WGS84"
+        cfg["input_sec"]["georef"] = "WGS84"
     if "georef" in cfg["input_ref"]:
         if cfg["input_ref"]["georef"] is True:
             cfg["input_ref"]["georef"] = "EGM96"
@@ -208,100 +218,6 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
         )
     # else
     cfg["otd"] = "default_OTD"
-
-
-def initialization_stats_opts(cfg: ConfigType):
-    """
-    Init Stats options from configuration
-
-    :param cfg: Input demcompare configuration
-    :type cfg: Dict
-    """
-    # slope_range defines the intervals
-    # to classify the classification type image from
-    default_stats_opts = {
-        "to_be_classification_layers": {
-            "slope": {"ranges": [0, 10, 25, 50, 90], "ref": None, "dsm": None}
-        },
-        "classification_layers": {},
-        "alti_error_threshold": {"value": 0.1, "unit": "m"},
-        "elevation_thresholds": {"list": [0.5, 1, 3], "zunit": "m"},
-        "plot_real_hists": True,
-        "remove_outliers": False,
-    }
-
-    default_to_be_classification_layer = {
-        "slope": {"ranges": [0, 10, 25, 50, 90], "ref": None, "dsm": None}
-    }
-
-    # TODO Refactor to be more generic on each part !
-    # TODO If all is empty, empty classification_layers,
-    # TODO if not empty for each element
-
-    if "stats_opts" not in cfg:
-        cfg["stats_opts"] = default_stats_opts
-    else:
-        cfg["stats_opts"] = dict(
-            list(default_stats_opts.items()) + list(cfg["stats_opts"].items())
-        )
-
-        # check for None values
-        if cfg["stats_opts"]["to_be_classification_layers"] is None:
-            cfg["stats_opts"][
-                "to_be_classification_layers"
-            ] = default_to_be_classification_layer
-        if cfg["stats_opts"]["classification_layers"] is None:
-            cfg["stats_opts"][
-                "classification_layers"
-            ] = default_to_be_classification_layer
-
-        # in case slope erased by a user defined 'to_be_classification_layers'
-        if (
-            "slope" not in cfg["stats_opts"]["to_be_classification_layers"]
-            or cfg["stats_opts"]["to_be_classification_layers"]["slope"] is None
-        ):
-            cfg["stats_opts"]["to_be_classification_layers"][
-                "slope"
-            ] = default_to_be_classification_layer["slope"]
-
-        # in case ref and dsm support for slope erased
-        # by a user defined 'to_be_classification_layers'
-        if (
-            "ref"
-            not in cfg["stats_opts"]["to_be_classification_layers"]["slope"]
-            and "dsm"
-            not in cfg["stats_opts"]["to_be_classification_layers"]["slope"]
-        ):
-            cfg["stats_opts"]["to_be_classification_layers"]["slope"][
-                "ref"
-            ] = None
-            cfg["stats_opts"]["to_be_classification_layers"]["slope"][
-                "dsm"
-            ] = None
-
-        if (
-            "ranges"
-            not in cfg["stats_opts"]["to_be_classification_layers"]["slope"]
-            or cfg["stats_opts"]["to_be_classification_layers"]["slope"][
-                "ranges"
-            ]
-            is None
-        ):
-            cfg["stats_opts"]["to_be_classification_layers"]["slope"][
-                "ranges"
-            ] = default_to_be_classification_layer["slope"]["ranges"]
-
-        # for key in cfg['stats_opts']['to_be_classification_layers'].keys():
-        #     cfg['stats_opts']['to_be_classification_layers'][key] = \
-        #         {**default_to_be_classification_layer['slope'],
-        #          **cfg['stats_opts']['to_be_classification_layers'][key]}
-        #
-        # # classification_layers part
-        # if 'classification_layers' in cfg['stats_opts']:
-        #     for key in cfg['stats_opts']['classification_layers'].keys():
-        #         cfg['stats_opts']['classification_layers'][key] = \
-        #             {**default_classification_layer,
-        #              **cfg['stats_opts']['classification_layers'][key]}
 
 
 def get_tile_dir(cfg: Dict, col_1: int, row_1: int, width: int, height: int):
@@ -334,6 +250,7 @@ def get_tile_dir(cfg: Dict, col_1: int, row_1: int, width: int, height: int):
     )
 
 
+# TODO: to be modified by the refacto script demcompare
 def adjust_tile_size(image_size: int, tile_size: int) -> Tuple[int, int]:
     """
     Adjust the size of the tiles.
@@ -359,6 +276,7 @@ def adjust_tile_size(image_size: int, tile_size: int) -> Tuple[int, int]:
     return tile_w, tile_h
 
 
+# TODO: to be modified by the refacto script demcompare
 def compute_tiles_coordinates(
     roi: dict, tile_width: int, tile_height: int
 ) -> List[Tuple[int, int, int, int]]:
@@ -384,6 +302,7 @@ def compute_tiles_coordinates(
     return out
 
 
+# TODO: to be modified by the refacto script demcompare
 def divide_images(cfg: ConfigType):
     """
     List the tiles to process and prepare their output directories structures.
@@ -397,7 +316,7 @@ def divide_images(cfg: ConfigType):
 
     # compute biggest roi
     dem = load_dem(
-        cfg["input_dem_to_align"]["path"],
+        cfg["input_sec"]["path"],
         input_roi=(cfg["roi"] if "roi" in cfg else False),
     )
 
@@ -453,3 +372,45 @@ def divide_images(cfg: ConfigType):
             tile_file.write(tile["json"] + os.linesep)
 
     return tiles
+
+
+def compute_output_files_paths(
+    output_dir, name
+) -> Tuple[str, str, str, str, str, str]:
+    """
+    Return the paths of the output global files:
+    - dem.png
+    - dem.tiff
+    - dem_cdf.tiff and dem_cdf.csv
+    - dem_pdf.tiff and dem_pdf.csv
+
+    :param output_dir: output_dir
+    :type output_dir: str
+    :param name: name
+    :type name: str
+    :return: Output paths
+    :rtype: Tuple[str, str, str, str, str, str]
+    """
+    # Compute and save image tiff and image plot png
+    dem_path = os.path.join(output_dir, get_out_file_path(name + ".tif"))
+    plot_file_path = os.path.join(output_dir, get_out_file_path(name + ".png"))
+    plot_path_cdf = os.path.join(
+        output_dir, get_out_file_path(name + "_cdf.png")
+    )
+    csv_path_cdf = os.path.join(
+        output_dir, get_out_file_path(name + "_cdf.csv")
+    )
+    plot_path_pdf = os.path.join(
+        output_dir, get_out_file_path(name + "_pdf.png")
+    )
+    csv_path_pdf = os.path.join(
+        output_dir, get_out_file_path(name + "_pdf.csv")
+    )
+    return (
+        dem_path,
+        plot_file_path,
+        plot_path_cdf,
+        csv_path_cdf,
+        plot_path_pdf,
+        csv_path_pdf,
+    )

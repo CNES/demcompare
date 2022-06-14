@@ -16,22 +16,22 @@ Here is the list of the parameters of the input configuration file and its assoc
 +========================================================+=================================================+=============+=====================+==========+
 | *output_dir*                                           | Output directory path                           | string      |                     | Yes      |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *input_dem_to_align path*                              | Path of the input DSM                           | string      |                     | Yes      |
+| *input_sec path*                                       | Path of the input DSM                           | string      |                     | Yes      |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *input_dem_to_align zunit*                             | Z axes unit of the input DSM                    | string      |       m             | No       |
+| *input_sec zunit*                                      | Z axes unit of the input DSM                    | string      |       m             | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *input_dem_to_align geoid_georef*                      | | True if the georef of the input DSM           | bool        |     False           | No       |
+| *input_sec geoid_georef*                               | | True if the georef of the input DSM           | bool        |     False           | No       |
 |                                                        | | is "geoid". In that case, the according offset|             |                     |          |
 |                                                        | | will be added to the .crs of the raster.      |             |                     |          |
 |                                                        | | If set to "geoid_georef" and no "geoid_path"  |             |                     |          |
 |                                                        | | is given, then EGM96 geoid                    |             |                     |          |
 |                                                        | | will be used by default.                      |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *input_dem_to_align geoid_path*                        | Geoid path of the input DSM                     | string      |      None           | No       |
+| *input_sec geoid_path*                                 | Geoid path of the input DSM                     | string      |      None           | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *input_dem_to_align nodata*                            | No data value of the input DSM                  | int         |        None         | No       |
+| *input_sec nodata*                                     | No data value of the input DSM                  | int         |        None         | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *input_dem_to_align roi*                               | Processed Region of interest of the input DSM   | Dict        |        None         | No       |
+| *input_sec roi*                                        | Processed Region of interest of the input DSM   | Dict        |        None         | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 | *input_ref path*                                       | Path of the input Ref                           | string      |                     | Yes      |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
@@ -59,42 +59,42 @@ Here is the list of the parameters of the input configuration file and its assoc
 | *coregistration estimated_initial_shift_y*             | | Estimated initial y                           | int         |  0                  | No       |
 |                                                        | | coregistration shift                          |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts elevation_thresholds list*                 | | List of elevation thresholds for              | list[float] |[0.5, 1, 3]          | No       |
+| *statistics elevation_thresholds list*                 | | List of elevation thresholds for              | list[float] |[0.5, 1, 3]          | No       |
 |                                                        | | statistics                                    |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| | *stats_opts elevation_thresholds*                    | zunit of the elevation thresholds               | string      | m                   | No       |
+| | *statistics elevation_thresholds*                    | zunit of the elevation thresholds               | string      | m                   | No       |
 | | *zunit*                                              |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| | *stats_opts*                                         | | Slope ranges for classification               | list[int]   | [0, 10, 25, 50, 90] | No       |
+| | *statistics*                                         | | Slope ranges for classification               | list[int]   | [0, 10, 25, 50, 90] | No       |
 | | *to_be_classification_layers*                        | | layers                                        |             |                     |          |
 | | *slope ranges*                                       |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| | *stats_opts*                                         | | Slope reference for classification            | string      | None                | No       |
+| | *statistics*                                         | | Slope reference for classification            | string      | None                | No       |
 | | *to_be_classification_layers*                        | | layers                                        |             |                     |          |
 | | *slope ref*                                          |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| | *stats_opts*                                         | Slope dsm for classification layers             | string      | None                | No       |
+| | *statistics*                                         | Slope sec for classification layers             | string      | None                | No       |
 | | *to_be_classification_layers*                        |                                                 |             |                     |          |
-| | *slope dsm*                                          |                                                 |             |                     |          |
+| | *slope sec*                                          |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts remove_outliers*                           | | Remove outliers during statistics             | bool        | False               | No       |
+| *statistics remove_outliers*                           | | Remove outliers during statistics             | bool        | False               | No       |
 |                                                        | | computation                                   |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts plot_real_hists*                           | Plot histograms                                 | bool        | True                | No       |
+| *statistics plot_real_hists*                           | Plot histograms                                 | bool        | True                | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts alti_error_threshold value*                | Altimetric error threshold value                | float       | 0.1                 | No       |
+| *statistics alti_error_threshold value*                | Altimetric error threshold value                | float       | 0.1                 | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| *stats_opts alti_error_threshold unit*                 | Altimetric error threshold unit                 | string      | m                   | No       |
+| *statistics alti_error_threshold unit*                 | Altimetric error threshold unit                 | string      | m                   | No       |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| | *stats_opts*                                         | | Classification layer called                   | string      |                     | No       |
+| | *statistics*                                         | | Classification layer called                   | string      |                     | No       |
 | | *classification_layers*                              | | *name* 's ref                                 |             |                     |          |
 | | *name* *ref*                                         |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| | *stats_opts*                                         | | Classification layer called                   | string      |                     | No       |
-| | *classification_layers*                              | | *name* 's dsm                                 |             |                     |          |
-| | *name* *dsm*                                         |                                                 |             |                     |          |
+| | *statistics*                                         | | Classification layer called                   | string      |                     | No       |
+| | *classification_layers*                              | | *name* 's sec                                 |             |                     |          |
+| | *name* *sec*                                         |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-| | *stats_opts*                                         | | Classification layer called                   | Dict        |                     | No       |
+| | *statistics*                                         | | Classification layer called                   | Dict        |                     | No       |
 | | *classification_layers*                              | | *name* 's classes                             |             |                     |          |
 | | *name* *classes*                                     |                                                 |             |                     |          |
 +--------------------------------------------------------+-------------------------------------------------+-------------+---------------------+----------+

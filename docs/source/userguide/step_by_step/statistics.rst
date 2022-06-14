@@ -66,7 +66,7 @@ A valid *to_be_classification_layers* configuration could be:
 
 The user can set as many exogenous layers to classify the stats as he requires, for instance: land cover map, validity masks, etc.
 
-For every exogenous layer, the user should specify the superimposable DEM. **ref** and **dsm** keywords are designed to register the path of the exogenous layer, respectively superimposable to the **ref** or the **sec**.
+For every exogenous layer, the user should specify the superimposable DEM. **ref** and **sec** keywords are designed to register the path of the exogenous layer, respectively superimposable to the **ref** or the **sec**.
 
 All of the classification layers will be used separately to classify the stats, and then be merged into a full classification layer that will also be used to classify the stats.
 
@@ -74,7 +74,7 @@ A valid *classification_layers* configuration value could be:
 
 .. code-block:: bash
 
-    "classification_layers": {"status": {"dsm": 'path_to_land_cover_associated_with_the_dsm',
+    "classification_layers": {"status": {"sec": 'path_to_land_cover_associated_with_the_sec',
                                          "classes": {"valid": [0], "KO": [1],"Land": [2], "NoData": [3], "Outside_detector": [4]}}}
 
 
@@ -94,11 +94,11 @@ Now here is how the modes are defined:
 
  - This means nan values but also outliers (if `remove_outliers` was set to True) and masked ones are discarded. Note that the nan values can be originated from the altitude differences image and / or the exogenous classification layers themselves.
 
-2. The **coherent mode** is the standard mode where only the pixels sharing the same label for both DEMs classification layers are kept.
+2. The **intersection mode** is the standard mode where only the pixels sharing the same label for both DEMs classification layers are kept.
 
- - Say after a coregistration, a pixel *P* is associated to a 'grass land' inside a `ref` classification layer named `land_cover` and a `road` inside the `dsm` classification layer also named `land_cover`, then *P* is not coherent for **demcompare**.
+ - Say after a coregistration, a pixel *P* is associated to a 'grass land' inside a `ref` classification layer named `land_cover` and a `road` inside the `sec` classification layer also named `land_cover`, then *P* is not intersection for **demcompare**.
 
-3. The **incoherent mode** which is the coherent one complementary.
+3. The **exclusion mode** which is the intersection one complementary.
 
 The elevation thresholds (Experimental)
 ***************************************

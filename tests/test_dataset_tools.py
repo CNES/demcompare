@@ -76,7 +76,7 @@ def test_reproject_dataset():
     reproject_on_dataset = dem_tools.create_dem(
         data=data,
         transform=trans,
-        input_img=cfg["input_dem_to_align"]["path"],
+        input_img=cfg["input_sec"]["path"],
         no_data=nodata,
     )
 
@@ -98,7 +98,7 @@ def test_reproject_dataset():
     dataset_to_be_reprojected = dem_tools.create_dem(
         data=data,
         transform=trans,
-        input_img=cfg["input_dem_to_align"]["path"],
+        input_img=cfg["input_sec"]["path"],
         no_data=nodata,
     )
 
@@ -165,7 +165,7 @@ def test_get_geoid_offset():
     dataset = dem_tools.create_dem(
         data=data,
         transform=trans,
-        input_img=cfg["input_dem_to_align"]["path"],
+        input_img=cfg["input_sec"]["path"],
         no_data=nodata,
     )
 
@@ -210,7 +210,7 @@ def test_get_geoid_offset():
     dataset = dem_tools.create_dem(
         data=data,
         transform=trans,
-        input_img=cfg["input_dem_to_align"]["path"],
+        input_img=cfg["input_sec"]["path"],
         no_data=nodata,
     )
 

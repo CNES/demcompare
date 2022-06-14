@@ -27,11 +27,11 @@ import os
 # In what comes next : OTD stands for Output Tree Design
 default_OTD = {
     # first seen output
-    "initial_dh.tif": ".",
-    "final_dh.tif": ".",
+    "initial_dem_diff.tif": ".",
+    "final_dem_diff.tif": ".",
     "demcompare_results.json": ".",
-    "dh_col_wise_wave_detection.tif": ".",
-    "dh_row_wise_wave_detection.tif": ".",
+    "dh_col_wise_wave_detection.tif": "./stats",
+    "dh_row_wise_wave_detection.tif": "./stats",
     # coreg step
     "coreg_DEM.tif": "./coregistration/",
     "reproj_REF.tif": "./coregistration/",
@@ -52,14 +52,14 @@ default_OTD = {
     "final_dem_diff_cdf.png": "./snapshots/",
     "final_dem_diff_cdf.csv": "./snapshots/",
     # histograms
-    "histograms_dir": "./histograms",
+    "_histograms_dir": "./histograms",
     # stats
-    "stats_dir": "./stats",
-    "DSM_support.tif": "./stats",
-    "Ref_support.tif": "./stats",
-    "Ref_support-DSM_support.tif": "./stats",
+    "_stats_dir": "./stats",
+    "sec_support.tif": "./stats",
+    "ref_support.tif": "./stats",
+    "ref_support-sec_support.tif": "./stats",
     "DSM_support_classified.png": "./stats",
-    "Ref_support_classified.png": "./stats",
+    "ref_support_classified.png": "./stats",
     # doc
     "sphinx_built_doc": "./doc/published_report",
     "sphinx_src_doc": "./doc/src",
