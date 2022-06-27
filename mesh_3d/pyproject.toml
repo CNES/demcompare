@@ -1,0 +1,21 @@
+# pyproject.toml main python packaging configuration
+
+[build-system]
+# setup with setuptools and setuptools_scm (git automatic versioning)
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+# Tools configuration supporting pyproject.toml
+
+[tool.setuptools_scm]
+# Enable version inference: https://pypi.org/project/setuptools-scm/#description
+
+[tool.black]
+# https://github.com/psf/black
+line-length = 80
+exclude = "(.eggs|.git|.mypy_cache|.nox|.tox|_build|build|dist|venv)"
+
+[tool.isort]
+# https://github.com/PyCQA/isort
+profile = 'black'
+line_length = 80
