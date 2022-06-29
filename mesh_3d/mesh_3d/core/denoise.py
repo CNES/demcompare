@@ -1,7 +1,30 @@
+#!/usr/bin/env python
+# coding: utf8
+#
+# Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
+#
+# This file is part of mesh_3d
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 """
 Denoising methods aiming at smoothing surfaces without losing genuine high-frequency information.
 """
 
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import multiprocessing as mp
 from typing import Callable
 
@@ -11,9 +34,7 @@ from scipy.spatial import KDTree
 import open3d as o3d
 from tqdm import tqdm
 
-import os,sys
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from tools import point_cloud_handling
+from mesh_3d.tools import point_cloud_handling
 
 
 def compute_pcd_normals_o3d(cloud, weights=None):
@@ -38,7 +59,7 @@ def compute_pcd_normals_o3d(cloud, weights=None):
 
     # Compute normals
     pcd.estimate_normals(o3d.geometry.KDTreeSearchParamKNN(100), )
-    print(np.asarray(pcd.normals))
+    # print(np.asarray(pcd.normals))
 
     df_pcd = pd.DataFrame(data=np.concatenate((np.asarray(pcd.points), np.asarray(pcd.normals)), axis=1),
                           columns=["x", "y", "z", "n_x", "n_y", "n_z"])
@@ -114,11 +135,10 @@ def compute_pcd_normals(df_pcd: pd.DataFrame,
     if use_open3d:
         df_pcd = compute_pcd_normals_o3d(df_pcd)
 
-    else:
-        # Init
-        tree = KDTree(df_pcd[["x", "y", "z"]].to_numpy())
-        weights = None
-        results = []
+    # Init
+    tree = KDTree(df_pcd[["x", "y", "z"]].to_numpy())
+    weights = None
+    results = []
 
     # Query the knn for each point cloud data/ TODO test en recherchant les voisins dans une sphere avec rayon?
     _, ind = tree.query(df_pcd[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)

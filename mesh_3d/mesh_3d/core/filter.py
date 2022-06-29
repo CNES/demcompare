@@ -1,6 +1,30 @@
+#!/usr/bin/env python
+# coding: utf8
+#
+# Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
+#
+# This file is part of mesh_3d
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 """
 Filtering methods aiming at removing outliers or groups of outliers from the point cloud.
 """
+
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import pandas as pd
 import numpy as np
@@ -9,10 +33,7 @@ import laspy
 from scipy.spatial import KDTree
 
 from cars.steps import points_cloud
-# ~ from mesh3d_lib import tools
-import os,sys
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from tools import point_cloud_handling
+from mesh_3d.tools import point_cloud_handling
 
 
 def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=True):

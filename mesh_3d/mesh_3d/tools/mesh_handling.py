@@ -1,3 +1,23 @@
+#!/usr/bin/env python
+# coding: utf8
+#
+# Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
+#
+# This file is part of mesh_3d
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 """
 Tools to manipulate meshes
 """
@@ -5,7 +25,7 @@ Tools to manipulate meshes
 import open3d as o3d
 import numpy as np
 
-import mesh3d_lib.tools.point_cloud_handling as pcd_handler
+import mesh_3d.tools.point_cloud_handling as pcd_handler
 
 
 # -------------------------------------------------------------------------------------------------------- #
@@ -35,10 +55,16 @@ def dict2ply(filepath: str, dict_pcd_mesh: dict):
         raise ValueError(f"Filepath extension should be '.ply', but found: '{filepath.split('.')[-1]}'.")
 
     # Write point cloud
-    o3d.io.write_point_cloud(filepath, pcd_handler.df2o3d(dict_pcd_mesh["pcd"]))
+    if "o3d_pcd" in dict_pcd_mesh:
+        o3d.io.write_point_cloud(filepath, dict_pcd_mesh["o3d_pcd"])
+    else:
+        o3d.io.write_point_cloud(filepath, pcd_handler.df2o3d(dict_pcd_mesh["pcd"]))
 
     # Write mesh
-    o3d.io.write_triangle_mesh(filepath, dict2o3d(dict_pcd_mesh))
+    if "o3d_mesh" in dict_pcd_mesh:
+        o3d.io.write_triangle_mesh(filepath, dict_pcd_mesh["o3d_mesh"])
+    else:
+        o3d.io.write_triangle_mesh(filepath, dict2o3d(dict_pcd_mesh))
 
 
 # -------------------------------------------------------------------------------------------------------- #
