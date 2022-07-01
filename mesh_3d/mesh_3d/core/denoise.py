@@ -34,7 +34,7 @@ from scipy.spatial import KDTree
 import open3d as o3d
 from tqdm import tqdm
 
-from mesh_3d.tools import point_cloud_handling
+from tools import point_cloud_handling
 
 
 def compute_pcd_normals_o3d(cloud, weights=None):

@@ -31,7 +31,19 @@ Mesh 3D short description:
 
 ## Requirements
 
-TODO
+    importlib           ; python_version>"3.8"
+    argparse                      # Python Argument Parser
+    argcomplete                   # Autocompletion Argparse
+    numpy                         # array manipulation
+    laspy                         # las file manipulation
+    open3d                        # 3D library open source
+    pandas                        # data with many attributes manipulation
+    scipy                         # scientific library
+    plyfile                       # ply file manipulation
+    matplotlib                    # visualisation and meshing
+    loguru                        # logs handler
+    pyproj                        # coordinates conversion
+    transitions                   # state machine
 
 ## Features
 
@@ -43,7 +55,47 @@ TODO
 
 ## Quick Start
 
-TODO
+### Installation
+Git clone the repository, open a terminal and luanch the following commands:
+```bash
+cd patch/to/dir/mesh_3d
+make install
+```
+
+Then, configure the pipeline in a JSON file:
+```json
+{
+  "input_path": "/path/to/input/data.ply",
+  "output_dir": "/path/to/output_dir",
+  "initial_state": "initial_pcd",
+  "state_machine": [
+    {
+      "action": "filter",
+      "method": "radius_o3d",
+      "params": {"radius":  3}
+    },
+    {
+      "action": "mesh",
+      "method": "delaunay_2d"
+    }
+  ]
+}
+```
+
+Where:
+* `input_path`: Filepath to the input. Should either be a point cloud or a mesh.
+* `output_dir`: Directory path to the output folder where to save results.
+* `initial_state` (optional, default=`"initial_pcd"`): Initial state in the state machine. If you input a point cloud, it should be `"initial_pcd"`.
+If you input a mesh, it could either be `"initial_pcd"` (you can compute new values over the points) or `"meshed_pcd"` (if for instance you only want to texture an already existing mesh).
+* `state_machine`: List of steps to process the input according to a predefined state machine (see below). Each step has three possible keys:
+`action` (str) which corresponds to the trigger name, `method` (str) which specifies the method to use to do that step (possible methods are available in the `/mesh_3d/params.py` file, by default it is the first method that is selected),
+`params` (dict) which specifies in a dictionary the parameters for each method.
+<img src="fig_state_machine.png">
+
+**TODO**:
+* [ ] Take into account texture parameters in the configuration file
+* [ ] Implement texturing
+* [ ] Implement parameters for each method + check
 
 ## Documentation
 

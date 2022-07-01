@@ -32,11 +32,11 @@ import open3d as o3d
 import laspy
 from scipy.spatial import KDTree
 
-from cars.steps import points_cloud
-from mesh_3d.tools import point_cloud_handling
+# from cars.steps import points_cloud
+from tools import point_cloud_handling
 
 
-def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=True):
+def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=False):
     """
     This method removes points that have few neighbors in a given sphere around them
     For each point, it computes the number of neighbors contained in a sphere of choosen radius,
@@ -68,73 +68,74 @@ def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=True):
     pcd.points = o3d.utility.Vector3dVector(data)
 
     cl,ind = pcd.remove_radius_outlier(nb_points, radius)
-
     
     # get a final pandas cloud
     new_cloud = cloud.loc[ind]
     
     # serialize cloud in las
-    if (serialize):
+    if serialize:
         # ~ serializeDataFrameToLAS(new_cloud, "/home/data/radiuso3dpyramidedekmin_04.las")
         point_cloud_handling.serialize_point_cloud("/home/data/radiuso3dpyramidedekmin_04.las", new_cloud)
 
     return new_cloud
 
 
-def small_components_filtering_outliers_cars(cloud, radius, nb_points, serialize=True):
-    """
-    This method removes small components that have not enough points inside
-    For each point not yet processed, it computes the neighbors contained in a sphere of choosen radius, and the neighbors of neighbors ..
-    until there are none left around. Those points are considered as processed and the identified cluster is added to a list
-    For each cluster, if the number of points inside is lower than nb_point, this cluster is deleted
+# def small_components_filtering_outliers_cars(cloud, radius, nb_points, serialize=True):
+#     """
+#     This method removes small components that have not enough points inside
+#     For each point not yet processed, it computes the neighbors contained in a sphere of choosen radius, and the neighbors of neighbors ..
+#     until there are none left around. Those points are considered as processed and the identified cluster is added to a list
+#     For each cluster, if the number of points inside is lower than nb_point, this cluster is deleted
+#
+#     :param cloud: cloud point, it should be a pandas DataFrame or a numpy
+#     :param radius: defines the radius of the sphere that will be used for counting the neighbors
+#     :param nb_points: defines the minimm amount of points that the sphere should contain
+#     :return cloud: filtered pandas dataFrame cloud
+#     """
+#     if not (isinstance(cloud, pd.DataFrame) or isinstance(cloud, np.ndarray)):
+#         raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a numpy "
+#                         f"ndarray.")
+#     pos,_ = points_cloud.small_components_filtering(cloud,radius,nb_points)
+#
+#     # serialize cloud in las
+#     if (serialize):
+#         # ~ serializeDataFrameToLAS(pos, "/home/data/radiuscarstoulouuse.las")
+#         point_cloud_handling.serialize_point_cloud( "/home/data/radiuscarstoulouuse.las", pos)
+#
+#     return pos
 
-    :param cloud: cloud point, it should be a pandas DataFrame or a numpy
-    :param radius: defines the radius of the sphere that will be used for counting the neighbors
-    :param nb_points: defines the minimm amount of points that the sphere should contain
-    :return cloud: filtered pandas dataFrame cloud 
-    """
-    if not (isinstance(cloud, pd.DataFrame) or isinstance(cloud, np.ndarray)):
-        raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a numpy " 
-                        f"ndarray.")
-    pos,_ = points_cloud.small_components_filtering(cloud,radius,nb_points)
 
-    # serialize cloud in las
-    if (serialize):
-        # ~ serializeDataFrameToLAS(pos, "/home/data/radiuscarstoulouuse.las")
-        point_cloud_handling.serialize_point_cloud( "/home/data/radiuscarstoulouuse.las", pos)
+# def statistical_filtering_outliers_cars(cloud, nb_neighbors, std_factor, serialize=True):
+#     """
+#     This methode removes points which have mean distances with their k nearest neighbors
+#     that are greater than a distance threshold (dist_thresh).
+#
+#     This threshold is computed from the mean (mean_distances) and
+#     standard deviation (stddev_distances) of all the points mean distances
+#     with their k nearest neighbors:
+#
+#         dist_thresh = mean_distances + std_factor * stddev_distances
+#
+#     :param cloud: cloud point, it should be a pandas DataFrame or a numpy
+#     :param nb_neighbors: number of neighbors
+#     :param std_factor: multiplication factor to use to compute the distance threshold
+#     :return: filtered pandas dataFrame cloud
+#     """
+#     if not (isinstance(cloud, pd.DataFrame) or isinstance(cloud, np.ndarray)):
+#         raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a numpy "
+#                         f"ndarray.")
+#
+#     pos,_ = points_cloud.statistical_outliers_filtering(cloud,nb_neighbors,std_factor)
+#
+#     # serialize cloud in las
+#     if (serialize):
+#         # ~ serializeDataFrameToLAS(pos, "/home/data/statscarspyramide50_0_1.las")
+#         point_cloud_handling.serialize_point_cloud( "/home/data/statscarspyramide50_0_1.las", pos)
+#
+#     return pos
 
-    return pos
 
-def statistical_filtering_outliers_cars(cloud, nb_neighbors, std_factor, serialize=True):
-    """
-    This methode removes points which have mean distances with their k nearest neighbors
-    that are greater than a distance threshold (dist_thresh).
-
-    This threshold is computed from the mean (mean_distances) and
-    standard deviation (stddev_distances) of all the points mean distances
-    with their k nearest neighbors:
-
-        dist_thresh = mean_distances + std_factor * stddev_distances
-
-    :param cloud: cloud point, it should be a pandas DataFrame or a numpy
-    :param nb_neighbors: number of neighbors
-    :param std_factor: multiplication factor to use to compute the distance threshold
-    :return: filtered pandas dataFrame cloud
-    """
-    if not (isinstance(cloud, pd.DataFrame) or isinstance(cloud, np.ndarray)):
-        raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a numpy " 
-                        f"ndarray.")
-
-    pos,_ = points_cloud.statistical_outliers_filtering(cloud,nb_neighbors,std_factor)
-
-    # serialize cloud in las
-    if (serialize):
-        # ~ serializeDataFrameToLAS(pos, "/home/data/statscarspyramide50_0_1.las")
-        point_cloud_handling.serialize_point_cloud( "/home/data/statscarspyramide50_0_1.las", pos)
-
-    return pos
-
-def statistical_filtering_outliers_o3d(cloud, nb_neighbors, std_factor, serialize=True):
+def statistical_filtering_outliers_o3d(cloud, nb_neighbors, std_factor, serialize=False):
     """
     This methode removes points which have mean distances with their k nearest neighbors
     that are greater than a distance threshold (dist_thresh).
@@ -170,7 +171,7 @@ def statistical_filtering_outliers_o3d(cloud, nb_neighbors, std_factor, serializ
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(data)
 
-    cl,ind = pcd.remove_statistical_outlier(nb_neighbors,3)
+    cl, ind = pcd.remove_statistical_outlier(nb_neighbors, std_ratio=std_factor)
 
     # get a final pandas cloud
     new_cloud = cloud.loc[ind]
@@ -181,6 +182,7 @@ def statistical_filtering_outliers_o3d(cloud, nb_neighbors, std_factor, serializ
         point_cloud_handling.serialize_point_cloud("/home/data/statso3dpyramide.las", new_cloud)
 
     return new_cloud
+
 
 def local_density_analysis(cloud, nb_neighbors, serialize=True):
     

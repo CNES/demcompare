@@ -25,7 +25,7 @@ Tools to manipulate meshes
 import open3d as o3d
 import numpy as np
 
-import mesh_3d.tools.point_cloud_handling as pcd_handler
+import tools.point_cloud_handling as pcd_handler
 
 
 # -------------------------------------------------------------------------------------------------------- #
