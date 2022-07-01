@@ -62,7 +62,7 @@ cd patch/to/dir/mesh_3d
 make install
 ```
 
-Then, configure the pipeline in a JSON file:
+Then, configure the pipeline in a JSON file `/path/to/config.json`:
 ```json
 {
   "input_path": "/path/to/input/data.ply",
@@ -91,6 +91,13 @@ If you input a mesh, it could either be `"initial_pcd"` (you can compute new val
 `action` (str) which corresponds to the trigger name, `method` (str) which specifies the method to use to do that step (possible methods are available in the `/mesh_3d/params.py` file, by default it is the first method that is selected),
 `params` (dict) which specifies in a dictionary the parameters for each method.
 <img src="fig_state_machine.png">
+
+
+Finally, you can launch the following commands to activate the virtual environment and run the pipeline:
+```bash
+source /venv/bin/activate
+mesh_3d /path/to/config.json
+```
 
 **TODO**:
 * [ ] Take into account texture parameters in the configuration file
