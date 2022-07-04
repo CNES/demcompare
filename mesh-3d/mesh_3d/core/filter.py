@@ -31,53 +31,73 @@ import numpy as np
 import open3d as o3d
 import laspy
 from scipy.spatial import KDTree
+from loguru import logger
 
 # from cars.steps import points_cloud
-from tools import point_cloud_handling
+from ..tools import point_cloud_handling
 
 
-def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=False):
+def radius_filtering_outliers_o3(df_pcd: pd.DataFrame, radius: float, nb_points: int,
+                                 serialize: bool = False) -> pd.DataFrame:
     """
     This method removes points that have few neighbors in a given sphere around them
     For each point, it computes the number of neighbors contained in a sphere of choosen radius,
     if this number is lower than nb_point, this point is deleted
 
-    :param cloud: cloud point, it should be a pandas DataFrame or a numpy
-    :param radius: defines the radius of the sphere that will be used for counting the neighbors
-    :param nb_points: defines the minimm amount of points that the sphere should contain
-    :return cloud: filtered pandas dataFrame cloud 
+    Parameters
+    ----------
+    df_pcd: pd.DataFrame
+        Point cloud data
+    radius: float
+        Defines the radius of the sphere that will be used for counting the neighbors
+    nb_points: int
+        Defines the minimum amount of points that the sphere should contain
+
+    Returns
+    -------
+    df_pcd: pd.DataFrame
+        Filtered point cloud data
     """
-    if isinstance(cloud, pd.DataFrame):
-        data = cloud[["x", "y", "z"]]
+
+    if isinstance(df_pcd, pd.DataFrame):
+        data = df_pcd[["x", "y", "z"]]
         data = data.to_numpy()
 
-    elif isinstance(cloud, np.ndarray):
-        data = cloud
-
-        if len(data.shape) != 2:
-            raise ValueError(f"Data dimension is incorrect. It should be 2 dimensional. "
-                             f"Found {len(data.shape)} dimensions.")
-        if data.shape[1] != 3:
-            raise ValueError("Data should be expressed as points along the rows and coordinates along the columns.")
+    # Numpy option removed
+    # elif isinstance(cloud, np.ndarray):
+    #     data = cloud
+    #
+    #     if len(data.shape) != 2:
+    #         raise ValueError(f"Data dimension is incorrect. It should be 2 dimensional. "
+    #                          f"Found {len(data.shape)} dimensions.")
+    #     if data.shape[1] != 3:
+    #         raise ValueError("Data should be expressed as points along the rows and coordinates along the columns.")
 
     else:
-        raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a numpy " 
-                        f"ndarray.")
+        raise TypeError(f"Cloud is of an unknown type {type(df_pcd)}. It should either be a pandas DataFrame.")
 
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(data)
+    o3d_pcd = o3d.geometry.PointCloud()
+    o3d_pcd.points = o3d.utility.Vector3dVector(data)
 
-    cl,ind = pcd.remove_radius_outlier(nb_points, radius)
+    new_o3d_pcd, ind_valid_pts = o3d_pcd.remove_radius_outlier(nb_points, radius)
     
-    # get a final pandas cloud
-    new_cloud = cloud.loc[ind]
-    
-    # serialize cloud in las
+    # Get the point cloud filtered of the outlier points
+    df_pcd = df_pcd.loc[ind_valid_pts]
+
+    # Check if output point cloud is empty (and thus cannot suffer other processing)
+    if df_pcd.empty:
+        logger.error("Point cloud output by the outlier filtering step is empty.")
+        raise
+
+    ################################################################################################################
+    # Serialize cloud in las
+    # DEBUG
     if serialize:
         # ~ serializeDataFrameToLAS(new_cloud, "/home/data/radiuso3dpyramidedekmin_04.las")
-        point_cloud_handling.serialize_point_cloud("/home/data/radiuso3dpyramidedekmin_04.las", new_cloud)
+        point_cloud_handling.serialize_point_cloud("/home/data/radiuso3dpyramidedekmin_04.las", df_pcd)
+    ################################################################################################################
 
-    return new_cloud
+    return df_pcd
 
 
 # def small_components_filtering_outliers_cars(cloud, radius, nb_points, serialize=True):
@@ -135,9 +155,10 @@ def radius_filtering_outliers_o3(cloud, radius, nb_points, serialize=False):
 #     return pos
 
 
-def statistical_filtering_outliers_o3d(cloud, nb_neighbors, std_factor, serialize=False):
+def statistical_filtering_outliers_o3d(df_pcd: pd.DataFrame, nb_neighbors: int, std_factor: float,
+                                       serialize: bool = False) -> pd.DataFrame:
     """
-    This methode removes points which have mean distances with their k nearest neighbors
+    This method removes points which have mean distances with their k nearest neighbors
     that are greater than a distance threshold (dist_thresh).
 
     This threshold is computed from the mean (mean_distances) and
@@ -146,82 +167,119 @@ def statistical_filtering_outliers_o3d(cloud, nb_neighbors, std_factor, serializ
 
         dist_thresh = mean_distances + std_factor * stddev_distances
 
-    :param cloud: cloud point, it should be a pandas DataFrame or a numpy
-    :param nb_neighbors: number of neighbors
-    :param std_factor: multiplication factor to use to compute the distance threshold
-    :return: filtered pandas dataFrame cloud
+    Parameters
+    ----------
+    df_pcd: pd.DataFrame
+        Point cloud data
+    nb_neighbors: int
+        Number of neighbors
+    std_factor: float
+        Multiplication factor to use to compute the distance threshold
+
+    Returns
+    -------
+    df_pcd: pd.DataFrame
+        Filtered point cloud data
     """
-    if isinstance(cloud, pd.DataFrame):
-        data = cloud[["x", "y", "z"]]
+
+    if isinstance(df_pcd, pd.DataFrame):
+        data = df_pcd[["x", "y", "z"]]
         data = data.to_numpy()
 
-    elif isinstance(cloud, np.ndarray):
-        data = cloud
-
-        if len(data.shape) != 2:
-            raise ValueError(f"Data dimension is incorrect. It should be 2 dimensional. "
-                             f"Found {len(data.shape)} dimensions.")
-        if data.shape[1] != 3:
-            raise ValueError("Data should be expressed as points along the rows and coordinates along the columns.")
+    # Numpy option removed
+    # elif isinstance(cloud, np.ndarray):
+    #     data = cloud
+    #
+    #     if len(data.shape) != 2:
+    #         raise ValueError(f"Data dimension is incorrect. It should be 2 dimensional. "
+    #                          f"Found {len(data.shape)} dimensions.")
+    #     if data.shape[1] != 3:
+    #         raise ValueError("Data should be expressed as points along the rows and coordinates along the columns.")
 
     else:
-        raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a numpy " 
-                        f"ndarray.")
+        raise TypeError(f"Cloud is of an unknown type {type(df_pcd)}. It should either be a pandas DataFrame.")
 
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(data)
+    o3d_pcd = o3d.geometry.PointCloud()
+    o3d_pcd.points = o3d.utility.Vector3dVector(data)
 
-    cl, ind = pcd.remove_statistical_outlier(nb_neighbors, std_ratio=std_factor)
+    new_o3d_pcd, ind_valid_pts = o3d_pcd.remove_statistical_outlier(nb_neighbors, std_ratio=std_factor)
 
-    # get a final pandas cloud
-    new_cloud = cloud.loc[ind]
+    # Get the point cloud filtered of the outlier points
+    df_pcd = df_pcd.loc[ind_valid_pts]
 
+    # Check if output point cloud is empty (and thus cannot suffer other processing)
+    if df_pcd.empty:
+        logger.error("Point cloud output by the outlier filtering step is empty.")
+        raise
+
+    ################################################################################################################
     # serialize cloud in las
+    # DEBUG
     if (serialize):
         # ~ serializeDataFrameToLAS(new_cloud, "/home/data/statso3dpyramide.las")
-        point_cloud_handling.serialize_point_cloud("/home/data/statso3dpyramide.las", new_cloud)
+        point_cloud_handling.serialize_point_cloud("/home/data/statso3dpyramide.las", df_pcd)
+    ################################################################################################################
 
-    return new_cloud
+    return df_pcd
 
 
-def local_density_analysis(cloud, nb_neighbors, serialize=True):
-    
-    if not (isinstance(cloud, pd.DataFrame) or isinstance(cloud, np.ndarray)):
-        raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a numpy " 
-                        f"ndarray.")
-    cloud_xyz = cloud.loc[:, ["x", "y", "z"]].values
+def local_density_analysis(df_pcd: pd.DataFrame, nb_neighbors: int, serialize: bool = False):
+    """
+    TO COMPLETE
+
+    Parameters
+    ----------
+    df_pcd: pd.DataFrame
+        Point cloud data
+    nb_neighbors: int
+        Number of neighbors
+
+    Returns
+    -------
+    df_pcd: pd.DataFrame
+        Filtered point cloud data
+    """
+
+    if not isinstance(df_pcd, pd.DataFrame):
+        raise TypeError(f"Cloud is of an unknown type {type(df_pcd)}. It should either be a pandas DataFrame.")
+
+    cloud_xyz = df_pcd.loc[:, ["x", "y", "z"]].values
     cloud_tree = KDTree(cloud_xyz)
     remove_pts = []
     moy = []
-    deltas=[]
+    deltas = []
+
     for idx, _ in enumerate(cloud_xyz):
         # ~ if idx == 1:
         distances, pts = cloud_tree.query(cloud_xyz[idx], nb_neighbors)
         # ~ print(len(pts))
         # ~ print(pts)
         # ~ print(distances)
-        mean_neighbors_distances = np.sum(distances) /nb_neighbors
+        mean_neighbors_distances = np.sum(distances) / nb_neighbors
         # ~ print(mean_neighbors_distances)
-        density = (1/nb_neighbors)* np.sum(np.exp(-distances/mean_neighbors_distances))
+        density = (1 / nb_neighbors) * np.sum(np.exp(-distances / mean_neighbors_distances))
         # ~ print(density)
-        proba = 1-density
+        proba = 1 - density
         # ~ print(proba)
         moy.append(proba)
-        delta = 0.1*mean_neighbors_distances
+        delta = 0.1 * mean_neighbors_distances
         deltas.append(delta)
         # ~ print(delta)
         if proba > 0.6:
             remove_pts.append(idx)
+
     # ~ print(len(cloud))
     # ~ print(len(remove_pts))
-    cloud = cloud.drop(index=cloud.index.values[remove_pts])
+    df_pcd = df_pcd.drop(index=df_pcd.index.values[remove_pts])
     print(sum(moy)/len(moy))
     print('delta', sum(deltas)/len(deltas))
     # ~ print(len(cloud))p
+
+    ################################################################################################################
     if (serialize):
         # ~ serializeDataFrameToLAS(cloud, "/home/data/localdensity.las")
-        point_cloud_handling.serialize_point_cloud("/home/data/localdensity4.las", cloud)
-            
+        point_cloud_handling.serialize_point_cloud("/home/data/localdensity4.las", df_pcd)
+    ################################################################################################################
 
 
 # ~ def serializeDataFrameToLAS(cloud, pathout):
@@ -265,8 +323,6 @@ def main(df):
     print(int(kmin))
     print(nb_pts)
     print(radius)
-    
-
 
     print("tot", len(df))
     # ~ cloudo3 = radius_filtering_outliers_o3(df, 5, int(kmin))
@@ -278,6 +334,7 @@ def main(df):
     # ~ print(len(cloudcars))
     # ~ print(len(cloudcarstat))
     # ~ print(len(cloudo3stat))
+
 
 if __name__ == "__main__":
     fileName ='/home/code/stage/pyramide-points_color.pkl'

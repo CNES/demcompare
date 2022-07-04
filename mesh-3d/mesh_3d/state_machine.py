@@ -22,19 +22,10 @@
 Class associated to Mesh 3D state machine
 """
 
-"""
-Notes à retirer:
-- may_<trigger_name> pour vérifier que la transition est possible
-"""
-
-from typing import Callable
-
 from loguru import logger
 from transitions import Machine, MachineError
 
-
-class Mesh3DObject(object):
-    pass
+from . import param
 
 
 class Mesh3DMachine(Machine):
@@ -116,13 +107,6 @@ class Mesh3DMachine(Machine):
                 "dest": "textured_pcd",
                 "after": "texture_run"
             }
-            # # From the "textured_pcd" state
-            # {
-            #     "trigger": "reset",
-            #     "source": "textured_pcd",
-            #     "dest": f"{self.initial_state}",
-            # }
-
         ]
 
         # Initialize a machine model
@@ -134,7 +118,7 @@ class Mesh3DMachine(Machine):
             auto_transitions=False,
         )
 
-    def run(self, input_step: str, cfg: dict) -> None:
+    def run(self, step: dict, cfg: dict) -> None:
         """
         Run mesh 3d step by triggering the corresponding machine transition
 
@@ -147,57 +131,144 @@ class Mesh3DMachine(Machine):
         """
 
         try:
-            self.trigger(input_step, cfg)
+            self.trigger(step["action"], step, cfg)
 
         except (MachineError, KeyError, AttributeError):
-            logger.error(f"A problem occurs during Pandora running {input_step} step. Be sure of your sequencing.")
+            logger.error(f"A problem occurs during Mesh 3D running {step['action']} step. Be sure of your sequencing.")
             raise
 
-    def filter_run(self, cfg: dict, check_mode: bool = False):
-        """Filter the point cloud from outliers"""
+    def filter_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+        """
+        Filter the point cloud from outliers
+
+        Parameters
+        ----------
+        step: dict
+            Parameters of the step to run
+        cfg: dict
+            Configuration dictionary
+        check_mode: bool (default=False)
+            Option to run the transition checker
+        """
 
         if check_mode:
             # For checking transition validity
             return
 
         else:
-            from core import filter
+            # Apply the filtering method chosen by the user
+            self.dict_pcd_mesh["pcd"] = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.dict_pcd_mesh["pcd"], **step["params"])
 
+    def denoise_pcd_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+        """
+        Denoise the point cloud
 
+        Parameters
+        ----------
+        step: dict
+            Parameters of the step to run
+        cfg: dict
+            Configuration dictionary
+        check_mode: bool (default=False)
+            Option to run the transition checker
+        """
 
-
-    def denoise_pcd_run(self, cfg: dict, check_mode: bool = False):
         if check_mode:
+            # For checking transition validity
             return
-        else:
-            pass
 
-    def mesh_run(self, cfg: dict, check_mode: bool = False):
+        else:
+            # Apply the denoising method chosen by the user
+            self.dict_pcd_mesh["pcd"] = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.dict_pcd_mesh["pcd"], **step["params"])
+
+    def mesh_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+        """
+        Mesh the point cloud
+
+        Parameters
+        ----------
+        step: dict
+            Parameters of the step to run
+        cfg: dict
+            Configuration dictionary
+        check_mode: bool (default=False)
+            Option to run the transition checker
+        """
+
         if check_mode:
+            # For checking transition validity
             return
+
         else:
-            pass
+            # Apply the meshing method chosen by the user
+            self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.dict_pcd_mesh["pcd"], **step["params"])
 
-    def denoise_mesh_run(self, cfg: dict, check_mode: bool = False):
-        pass
+    def denoise_mesh_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+        """
+        Denoise the mesh
 
-    def texture_run(self, cfg: dict, check_mode: bool = False):
+        Parameters
+        ----------
+        step: dict
+            Parameters of the step to run
+        cfg: dict
+            Configuration dictionary
+        check_mode: bool (default=False)
+            Option to run the transition checker
+        """
+
         if check_mode:
+            # For checking transition validity
             return
-        else:
-            logger.debug("Bonjour moi je textuuuuuuuure lourd lourd")
 
-    def check_transitions(self, cfg: dict):
+        else:
+            # Apply the meshing method chosen by the user
+            self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.dict_pcd_mesh, **step["params"])
+
+    def texture_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+        """
+        Texture the mesh
+
+        Parameters
+        ----------
+        step: dict
+            Parameters of the step to run
+        cfg: dict
+            Configuration dictionary
+        check_mode: bool (default=False)
+            Option to run the transition checker
+        """
+
+        if check_mode:
+            # For checking transition validity
+            return
+
+        else:
+            # Apply the texturing method chosen by the user
+            self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.dict_pcd_mesh, **step["params"])
+
+    def check_transitions(self, cfg: dict) -> None:
         """
         Browse user defined steps and pass them just to check they are valid steps in the state machine.
         No action is done.
+
+        Parameters
+        ----------
+        cfg: dict
+            Configuration dictionary
         """
 
         logger.debug("Check state machine transitions' validity.")
 
         try:
+            # Check if the sequencing asked by the user is valid
             for k, step in enumerate(cfg["state_machine"]):
-                self.trigger(step['action'], cfg, check_mode=True)
+                self.trigger(step['action'], step, cfg, check_mode=True)
 
         except (MachineError, KeyError, AttributeError):
             logger.error(f"A problem occurs during Mesh 3D transition check. Be sure of your sequencing.")

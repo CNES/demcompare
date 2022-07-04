@@ -30,7 +30,7 @@ import numpy as np
 from scipy.spatial import Delaunay
 import matplotlib.tri as mtri
 
-from tools.point_cloud_handling import df2o3d
+from ..tools.point_cloud_handling import df2o3d
 
 
 def ball_pivoting_reconstruction(df_pcd: pd.DataFrame, radii: Union[list, float, None] = 0.6) -> dict:

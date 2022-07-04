@@ -34,7 +34,7 @@ from scipy.spatial import KDTree
 import open3d as o3d
 from tqdm import tqdm
 
-from tools import point_cloud_handling
+from ..tools import point_cloud_handling
 
 
 def compute_pcd_normals_o3d(cloud, weights=None):
@@ -208,13 +208,13 @@ def bilateral_denoising(df: pd.DataFrame,
 
 
 def bilateral_denoising_2(df: pd.DataFrame,
-                        radius: int=5,
-                        sigma_d: float=0.5,
-                        sigma_n: float=0.5,
-                        knn: int = 50,
-                        weights_distance: bool = False,
-                        weights_color: bool = False,
-                        workers: int = 1):
+                          radius: int = 5,
+                          sigma_d: float = 0.5,
+                          sigma_n: float = 0.5,
+                          knn: int = 50,
+                          weights_distance: bool = False,
+                          weights_color: bool = False,
+                          workers: int = 1):
     normals = compute_pcd_normals_o3d(df)
     cloud = df.loc[:, ["x", "y", "z"]].values
     cloud_tree = KDTree(cloud)
@@ -223,8 +223,8 @@ def bilateral_denoising_2(df: pd.DataFrame,
         distance = cloud_tree.data[neighbors_list, :] - cloud_tree.data[idx, :]
         d_d = [np.linalg.norm(i) for i in distance]
         d_n = np.dot(distance, normals[idx])
-        w = np.multiply(weight_exp_2(d_d,sigma_d),weight_exp_2(d_n,sigma_n))
-        delta_p = sum(w*d_n)
+        w = np.multiply(weight_exp_2(d_d, sigma_d), weight_exp_2(d_n, sigma_n))
+        delta_p = sum(w * d_n)
         sum_w = sum(w)
         p_new=  cloud_tree.data[idx,:]+(delta_p/sum_w)*normals[idx]
         df.loc[idx,'x':'z']=p_new

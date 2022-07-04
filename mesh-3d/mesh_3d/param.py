@@ -1,11 +1,3 @@
-# TRANSITIONS_METHODS = {
-#     "filter": ["radius", "statistics"],
-#     "denoise_pcd": ["bilateral"],
-#     "mesh": ["delaunay_2d"],
-#     "denoise_mesh": ["bilateral"],
-#     "texture": ["main"]
-# }
-
 from .core.filter import radius_filtering_outliers_o3, statistical_filtering_outliers_o3d
 from .core.denoise import bilateral_denoising
 from .core.mesh import delaunay_2d_reconstruction, poisson_reconstruction, ball_pivoting_reconstruction
