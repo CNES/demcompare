@@ -51,8 +51,10 @@ def o3d2df(o3d_pcd: o3d.geometry.PointCloud) -> pd.DataFrame:
     return df_pcd
 
 
-def las2df(filepath: str) -> (pd.DataFrame, laspy.LasHeader):
+def las2df(filepath: str) -> pd.DataFrame:
     """LAS or LAZ point cloud to pandas DataFrame"""
+    # TODO: Add color information
+
     las = laspy.read(filepath)
     metadata = las.header
 
@@ -63,7 +65,7 @@ def las2df(filepath: str) -> (pd.DataFrame, laspy.LasHeader):
 
     df.rename(columns={"X": "x", "Y": "y", "Z": "z"}, inplace=True)
 
-    return df, metadata
+    return df
 
 
 def pkl2df(filepath: str) -> pd.DataFrame:
@@ -182,25 +184,23 @@ def df2o3d(df_pcd: pd.DataFrame) -> o3d.geometry.PointCloud:
 # General functions
 # -------------------------------------------------------------------------------------------------------- #
 
-def deserialize_point_cloud(filepath: str) -> (pd.DataFrame, laspy.LasHeader):
+def deserialize_point_cloud(filepath: str) -> pd.DataFrame:
     """Convert a point cloud to a pandas dataframe"""
     extension = filepath.split(".")[-1]
 
     if extension == "las" or extension == "laz":
-        df, metadata = las2df(filepath)
+        df = las2df(filepath)
 
     elif extension == "pkl":
-        metadata = None
         df = pkl2df(filepath)
 
     elif extension == "ply":
-        metadata = None
         df = ply2df(filepath)
 
     else:
         raise NotImplementedError
 
-    return df, metadata
+    return df
 
 
 def serialize_point_cloud(filepath: str,

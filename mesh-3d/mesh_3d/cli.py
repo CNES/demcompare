@@ -23,22 +23,40 @@ Console script for mesh_3d.
 """
 
 import argparse
-import sys
+from . import mesh_3d
+
+
+def get_parser() -> argparse.ArgumentParser:
+    """
+    ArgumentParser for Mesh 3D
+
+    Returns
+    -------
+    parser
+    """
+    parser = argparse.ArgumentParser(description="3D textured reconstruction from remote sensing point cloud")
+    parser.add_argument(
+        "config",
+        help="Path to a json file containing the input files paths and algorithm parameters",
+    )
+    # parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
+    return parser
 
 
 def main():
     """Console script for mesh_3d."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument("_", nargs="*")
+
+    # get parser
+    parser = get_parser()
     args = parser.parse_args()
 
-    print("Arguments: " + str(args._))
-    print(
-        "Replace this message by putting your code into "
-        "mesh_3d.cli.main"
-    )
-    return 0
+    # run mesh 3d pipeline
+    mesh_3d.main(args.config)
+
+    # # DEBUG
+    # cfg_path = "/home/chthen/Documents/CNES_RT_Surfaces_3D/code/configs/baseline_pipeline_config.json"
+    # mesh_3d.main(cfg_path)
 
 
 if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+    main()

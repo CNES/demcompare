@@ -18,14 +18,16 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 #  Install mesh_3d
-WORKDIR /mesh_3d
-COPY . /mesh_3d
+# WORKDIR /mesh_3d
+# COPY . /mesh_3d
 
-# Version will be automatic with git versioning and tags
-RUN python3 -m pip --no-cache-dir install /mesh_3d/. \
-  # # Auto args completion
-  && register-python-argcomplete mesh_3d >> ~/.bashrc
+# RUN python3 -m pip install -e /mesh_3d/.
 
-# launch demcompare
-ENTRYPOINT ["mesh_3d"]
-CMD ["-h"]
+## Version will be automatic with git versioning and tags
+#RUN python3 -m pip --no-cache-dir install /mesh_3d/. \
+#  # # Auto args completion
+#  && register-python-argcomplete mesh_3d >> ~/.bashrc
+#
+## launch demcompare
+#ENTRYPOINT ["mesh_3d"]
+#CMD ["-h"]
