@@ -30,10 +30,11 @@ import numpy as np
 from scipy.spatial import Delaunay
 import matplotlib.tri as mtri
 
-from ..tools.point_cloud_handling import df2o3d
+from ..tools.point_cloud_io import df2o3d
+from ..tools.handlers import Mesh, PointCloud
 
 
-def ball_pivoting_reconstruction(df_pcd: pd.DataFrame, radii: Union[list, float, None] = 0.6) -> dict:
+def ball_pivoting_reconstruction(pcd: PointCloud, radii: Union[list, float, None] = 0.6) -> Mesh:
     """
     Bernardini, Fausto et al. “The ball-pivoting algorithm for surface reconstruction.” IEEE Transactions on
     Visualization and Computer Graphics 5 (1999): 349-359.
@@ -49,44 +50,44 @@ def ball_pivoting_reconstruction(df_pcd: pd.DataFrame, radii: Union[list, float,
 
     Parameters
     ----------
-    df_pcd: pd.DataFrame
-        Point cloud with the extra information attached by point
+    pcd: PointCloud
+        Point cloud object
     radii: Union[list, float, None], default=0.6
         Radius (unique or a list) of the ball.
 
     Returns
     -------
-    :dict
-       Dictionary with four keys:
-            - 'pcd': Point cloud and extra information expressed in a pandas DataFrame (=df_pcd)
-            - 'mesh': numpy array of the triangle vertex indexes regarding the df_pcd
-            - 'o3d_pcd': point cloud in open3d format
-            - 'o3d_mesh' mesh in open3d format
+    mesh: Mesh
+        Mesh object
     """
     # Convert the point cloud with normals to an open3d format
 
     # init o3d point cloud
-    o3d_pcd = df2o3d(df_pcd)
+    o3d_pcd = df2o3d(pcd.df)
 
     # add normals
-    if ("n_x" not in df_pcd) or ("n_y" not in df_pcd) or ("n_z" not in df_pcd):
+    if not pcd.has_normals:
         raise ValueError("Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
                          "or 'n_z'). Please launch again the normal computation.")
     else:
-        o3d_pcd.normals = o3d.utility.Vector3dVector(df_pcd[["n_x", "n_y", "n_z"]].to_numpy())
+        o3d_pcd.normals = o3d.utility.Vector3dVector(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
 
     # Mesh point cloud
     o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(o3d_pcd, o3d.utility.DoubleVector(radii))
 
-    return {"pcd": df_pcd, "mesh": np.asarray(o3d_mesh.triangles), "o3d_pcd": o3d_pcd, "o3d_mesh": o3d_mesh}
+    # Init Mesh object
+    mesh = Mesh(pcd=pcd.df, o3d_pcd=o3d_pcd, o3d_mesh=o3d_mesh)
+    mesh.set_df_from_vertices(np.asarray(o3d_mesh.triangles))
+
+    return mesh
 
 
-def poisson_reconstruction(df_pcd: pd.DataFrame,
+def poisson_reconstruction(pcd: PointCloud,
                            depth: int = 8,
                            width: int = 0,
                            scale: float = 1.1,
                            linear_fit: bool = False,
-                           n_threads: int = -1) -> dict:
+                           n_threads: int = -1) -> Mesh:
     """
     Kazhdan, Michael M. et al. “Poisson surface reconstruction.” SGP '06 (2006).
 
@@ -100,8 +101,8 @@ def poisson_reconstruction(df_pcd: pd.DataFrame,
 
     Parameters
     ----------
-    df_pcd: pd.DataFrame
-        Point cloud with the extra information attached by point
+    pcd: PointCloud
+        Point cloud object
     depth: int, default=8
         Maximum depth of the tree that will be used for surface reconstruction. Running at depth d corresponds to
         solving on a grid whose resolution is no larger than 2^d x 2^d x 2^d. Note that since the reconstructor
@@ -118,25 +119,20 @@ def poisson_reconstruction(df_pcd: pd.DataFrame,
 
     Returns
     -------
-    :dict
-       Dictionary with four keys:
-            - 'pcd': Point cloud and extra information expressed in a pandas DataFrame (=df_pcd)
-            - 'mesh': numpy array of the triangle vertex indexes. Warning: the points concerned are the ones in
-            'o3d_pcd'
-            - 'o3d_pcd': point cloud (vertices of the mesh) in open3d format
-            - 'o3d_mesh' mesh in open3d format
+    mesh: Mesh
+        Mesh object
     """
     # Convert the point cloud with normals to an open3d format
 
     # init o3d point cloud
-    o3d_pcd = df2o3d(df_pcd)
+    o3d_pcd = df2o3d(pcd.df)
 
     # add normals
-    if ("n_x" not in df_pcd) or ("n_y" not in df_pcd) or ("n_z" not in df_pcd):
+    if not pcd.has_normals:
         raise ValueError("Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
                          "or 'n_z'). Please launch again the normal computation.")
     else:
-        o3d_pcd.normals = o3d.utility.Vector3dVector(df_pcd[["n_x", "n_y", "n_z"]].to_numpy())
+        o3d_pcd.normals = o3d.utility.Vector3dVector(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
 
     # Mesh point cloud
     o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(o3d_pcd,
@@ -146,37 +142,43 @@ def poisson_reconstruction(df_pcd: pd.DataFrame,
                                                                          linear_fit,
                                                                          n_threads)
 
-    return {"pcd": df_pcd, "mesh": np.asarray(o3d_mesh[0].triangles), "o3d_pcd": o3d.geometry.PointCloud(points=o3d_mesh[0].vertices), "o3d_mesh": o3d_mesh[0]}
+    # Init Mesh object
+    mesh = Mesh(pcd=pcd.df, o3d_pcd=o3d.geometry.PointCloud(points=o3d_mesh[0].vertices), o3d_mesh=o3d_mesh[0])
+    mesh.set_df_from_vertices(np.asarray(o3d_mesh[0].triangles))
+
+    return mesh
 
 
-def delaunay_2d_reconstruction(df_pcd: pd.DataFrame, method: str = "matplotlib") -> dict:
+def delaunay_2d_reconstruction(pcd: PointCloud, method: str = "matplotlib") -> Mesh:
     """
     2.5D Delaunay triangulation: Delaunay triangulation on the planimetric points and add afterwards the z coordinates.
 
     Parameters
     ----------
-    df_pcd: pd.DataFrame
-        Point cloud with the extra information attached by point
+    pcd: PointCloud
+        Point cloud object
     method: str, default='matplotlib'
         Method to use for Delaunay 2.5D triangulation. Available methods are 'matplotlib' and 'scipy'.
 
     Returns
     -------
-    :dict
-       Dictionary with two keys:
-            - 'pcd': Point cloud and extra information expressed in a pandas DataFrame (=df_pcd)
-            - 'mesh': numpy array of the triangle vertex indexes regarding the df_pcd
+    mesh: Mesh
+        Mesh object
     """
 
     # Delaunay triangulation
 
+    mesh = Mesh(pcd=pcd.df)
+
     if method == "scipy":
-        mesh = Delaunay(df_pcd[["x", "y"]].to_numpy())
-        return {"pcd": df_pcd, "mesh": mesh.simplices}
+        mesh_data = Delaunay(pcd.df[["x", "y"]].to_numpy())
+        mesh.set_df_from_vertices(mesh_data.simplices)
+        return mesh
 
     elif method == "matplotlib":
-        mesh = mtri.Triangulation(df_pcd.x, df_pcd.y)
-        return {"pcd": df_pcd, "mesh": mesh.triangles}
+        mesh_data = mtri.Triangulation(pcd.df.x, pcd.df.y)
+        mesh.set_df_from_vertices(mesh_data.triangles)
+        return mesh
 
     else:
         raise NotImplementedError(f"Unknown library for Delaunay triangulation: '{method}'. Should either be 'scipy' "

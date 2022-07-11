@@ -32,8 +32,9 @@ from loguru import logger
 
 from . import param
 from .state_machine import Mesh3DMachine
-from .tools.point_cloud_handling import deserialize_point_cloud, serialize_point_cloud
-from .tools.mesh_handling import deserialize_mesh, serialize_mesh
+from .tools.point_cloud_io import deserialize_point_cloud, serialize_point_cloud
+from .tools.mesh_io import deserialize_mesh, serialize_mesh
+from .tools.handlers import PointCloud, Mesh
 
 
 def check_config(cfg_path: str) -> dict:
@@ -112,7 +113,7 @@ def check_config(cfg_path: str) -> dict:
     return cfg
 
 
-def run(mesh_3d_machine: Mesh3DMachine, cfg: dict) -> dict:
+def run(mesh_3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
     """
     Run the state machine
 
@@ -125,14 +126,13 @@ def run(mesh_3d_machine: Mesh3DMachine, cfg: dict) -> dict:
 
     Returns
     -------
-    dict_pcd_mesh: dict
-        Dictionary of the point cloud and the mesh
+    mesh: Mesh
+        Mesh object
     """
 
     if not cfg["state_machine"]:
         # There is no step given to the state machine
         logger.warning("State machine is empty. Returning the initial data.")
-        return mesh_3d_machine.dict_pcd_mesh
 
     else:
         logger.debug(f"Initial state: {mesh_3d_machine.initial_state}")
@@ -145,7 +145,7 @@ def run(mesh_3d_machine: Mesh3DMachine, cfg: dict) -> dict:
             logger.info(f"Step #{k + 1}: {step['action']} with {step['method']} method")
             mesh_3d_machine.run(step, cfg)
 
-    return mesh_3d_machine.dict_pcd_mesh
+    return mesh_3d_machine.mesh_data
 
 
 def main(cfg_path: str):
@@ -162,6 +162,9 @@ def main(cfg_path: str):
 
     # Check the validity of the config path
     cfg = check_config(cfg_path)
+
+    # Write logs to disk
+    logger.add(sink=os.path.join(cfg["output_dir"], "{time}_logs.txt"))
     logger.info("Configuration file checked.")
 
     # Read input data
@@ -169,39 +172,50 @@ def main(cfg_path: str):
 
         try:
             # Try reading input data as a mesh if the extension is valid
-            dict_pcd_mesh = deserialize_mesh(cfg["input_path"])
+            mesh = Mesh()
+            mesh.deserialize(cfg["input_path"])
             logger.debug("Input data read as a mesh format.")
 
         except BaseException:
             # If it does not work, try reading it with the point cloud deserializer
-            dict_pcd_mesh = {"pcd": deserialize_point_cloud(cfg["input_path"])}
+            # instanciate objects
+            mesh = Mesh()
+            mesh.pcd.deserialize(cfg["input_path"])
+
             logger.debug("Input data read as a point cloud format.")
 
     else:
 
         # If the extension is not a mesh extension, read the data as a point cloud and put it in a dict
-        dict_pcd_mesh = {"pcd": deserialize_point_cloud(cfg["input_path"])}
+        mesh = Mesh()
+        mesh.pcd.deserialize(cfg["input_path"])
         logger.debug("Input data read as a point cloud format.")
 
     # Init state machine model
-    mesh_3d_machine = Mesh3DMachine(dict_pcd_mesh)
+    mesh_3d_machine = Mesh3DMachine(mesh_data=mesh)
 
     # Run the pipeline according to the user configuration
-    output_dict_pcd_mesh = run(mesh_3d_machine, cfg)
+    out_mesh = run(mesh_3d_machine, cfg)
 
     # Serialize data
-    if "mesh" in output_dict_pcd_mesh:
+    if out_mesh.df is not None:
         extension = "ply"
         out_filename = "processed_mesh." + extension
-        serialize_mesh(filepath=os.path.join(cfg["output_dir"], out_filename),
-                       dict_pcd_mesh=output_dict_pcd_mesh,
-                       extension=extension)
-        logger.info("Mesh serialized")
+        out_mesh.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension=extension)
+        logger.info(f"Mesh serialized as a '{extension}' file")
 
     else:
         extension = "las"
         out_filename = "processed_point_cloud." + extension
-        serialize_point_cloud(filepath=os.path.join(cfg["output_dir"], out_filename),
-                              df=output_dict_pcd_mesh["pcd"],
-                              extension=extension)
-        logger.info("Point cloud serialized")
+        out_mesh.pcd.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension=extension)
+        logger.info(f"Point cloud serialized as a '{extension}' file")
+
+    # Save the point cloud information in a csv file
+    out_filename = "processed_point_cloud.csv"
+    out_mesh.pcd.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension="csv")
+    logger.info(f"Point cloud serialized as a 'csv' file")
+
+    # Save the mesh information in a csv file
+    out_filename = "processed_mesh.csv"
+    out_mesh.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension="csv")
+    logger.info(f"Mesh serialized as a 'csv' file")

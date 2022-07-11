@@ -1,5 +1,5 @@
 from .core.filter import radius_filtering_outliers_o3, statistical_filtering_outliers_o3d
-from .core.denoise import bilateral_denoising
+from .core.denoise import bilateral_filtering
 from .core.mesh import delaunay_2d_reconstruction, poisson_reconstruction, ball_pivoting_reconstruction
 
 
@@ -9,7 +9,7 @@ TRANSITIONS_METHODS = {
         "statistics_o3d": statistical_filtering_outliers_o3d
     },
     "denoise_pcd": {
-        "bilateral": bilateral_denoising
+        "bilateral": bilateral_filtering
     },
     "mesh": {
         "delaunay_2d": delaunay_2d_reconstruction,
