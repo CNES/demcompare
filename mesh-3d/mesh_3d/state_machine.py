@@ -26,13 +26,14 @@ from loguru import logger
 from transitions import Machine, MachineError
 
 from . import param
+from .tools.handlers import Mesh
 
 
 class Mesh3DMachine(Machine):
 
-    def __init__(self, dict_pcd_mesh: dict, initial_state: str = "initial_pcd") -> None:
+    def __init__(self, mesh_data: Mesh, initial_state: str = "initial_pcd") -> None:
         # Init arguments
-        self.dict_pcd_mesh = dict_pcd_mesh
+        self.mesh_data = mesh_data
         self.initial_state = initial_state
 
         # Available states
@@ -157,8 +158,11 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the filtering method chosen by the user
-            self.dict_pcd_mesh["pcd"] = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.dict_pcd_mesh["pcd"], **step["params"])
+            # self.dict_pcd_mesh["pcd"] = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+            #     self.dict_pcd_mesh["pcd"], **step["params"])
+
+            self.mesh_data.pcd = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.mesh_data.pcd, **step["params"])
 
     def denoise_pcd_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
         """
@@ -180,8 +184,11 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the denoising method chosen by the user
-            self.dict_pcd_mesh["pcd"] = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.dict_pcd_mesh["pcd"], **step["params"])
+            # self.dict_pcd_mesh["pcd"] = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+            #     self.dict_pcd_mesh["pcd"], **step["params"])
+
+            self.mesh_data.pcd = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.mesh_data.pcd, **step["params"])
 
     def mesh_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
         """
@@ -203,8 +210,11 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the meshing method chosen by the user
-            self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.dict_pcd_mesh["pcd"], **step["params"])
+            # self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+            #     self.dict_pcd_mesh["pcd"], **step["params"])
+
+            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.mesh_data.pcd, **step["params"])
 
     def denoise_mesh_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
         """
@@ -226,8 +236,11 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the meshing method chosen by the user
-            self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.dict_pcd_mesh, **step["params"])
+            # self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+            #     self.dict_pcd_mesh, **step["params"])
+
+            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.mesh_data, **step["params"])
 
     def texture_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
         """
@@ -249,8 +262,11 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the texturing method chosen by the user
-            self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.dict_pcd_mesh, **step["params"])
+            # self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+            #     self.dict_pcd_mesh, **step["params"])
+
+            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.mesh_data, **step["params"])
 
     def check_transitions(self, cfg: dict) -> None:
         """

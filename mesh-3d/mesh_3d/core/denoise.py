@@ -34,75 +34,85 @@ from scipy.spatial import KDTree
 import open3d as o3d
 from tqdm import tqdm
 
-from ..tools import point_cloud_handling
+from ..tools import point_cloud_io
+from ..tools.handlers import PointCloud
 
 
-def compute_pcd_normals_o3d(cloud, weights=None):
-    if isinstance(cloud, pd.DataFrame):
-        data = cloud[["x", "y", "z"]].to_numpy()
+def compute_pcd_normals_o3d(pcd: PointCloud,
+                            neighbour_search_method: str = "ball",
+                            knn: int = 100,
+                            radius: float = 5.) -> PointCloud:
+    """
+    Compute point cloud normals with open3d library
 
-    elif isinstance(cloud, np.ndarray):
-        data = cloud
+    Parameters
+    ----------
+    pcd: PointCloud
+        Point cloud instance
+    neighbour_search_method: str (default="ball")
+        Neighbour search method
+    knn: int (default=30)
+        If "neighbour_search_method" is "knn", number of neighbours to consider
+    radius: float (default=5.)
+        If "neighbour_search_method" is "ball", ball radius in which to find the neighbours
+    """
 
-        if len(data.shape) != 2:
-            raise ValueError(f"Data dimension is incorrect. It should be 2 dimensional. "
-                             f"Found {len(data.shape)} dimensions.")
-        if data.shape[1] != 3:
-            raise ValueError("Data should be expressed as points along the rows and coordinates along the columns.")
+    if neighbour_search_method not in ["knn", "ball"]:
+        raise ValueError(f"Neighbour search method should either be 'knn' or 'ball'. Here found "
+                         f"'{neighbour_search_method}'.")
 
-    else:
-        raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a numpy " 
-                        f"ndarray.")
-
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(data)
+    # Init
+    o3d_pcd = o3d.geometry.PointCloud()
+    o3d_pcd.points = o3d.utility.Vector3dVector(pcd.df[["x", "y", "z"]].to_numpy())
 
     # Compute normals
-    pcd.estimate_normals(o3d.geometry.KDTreeSearchParamKNN(100), )
-    # print(np.asarray(pcd.normals))
+    if neighbour_search_method == "knn":
+        o3d_pcd.estimate_normals(o3d.geometry.KDTreeSearchParamKNN(knn), )
+    elif neighbour_search_method == "ball":
+        # Compute normals
+        o3d_pcd.estimate_normals(o3d.geometry.KDTreeSearchParamRadius(radius), )
+    else:
+        raise NotImplementedError
 
-    df_pcd = pd.DataFrame(data=np.concatenate((np.asarray(pcd.points), np.asarray(pcd.normals)), axis=1),
-                          columns=["x", "y", "z", "n_x", "n_y", "n_z"])
+    # Assign it to the df
+    pcd.df = pd.concat([pcd.df, pd.DataFrame(data=np.asarray(o3d_pcd.normals), columns=["n_x", "n_y", "n_z"])])
 
-    return df_pcd
+    return pcd
 
 
-def compute_point_normal(pcd, weights=None):
+def compute_point_normal(point_coordinates: np.array, weights: float = None) -> np.array:
     """
-    Compute normal with the PCA approach
+    Compute unitary normal with the PCA approach from a point and its neighbours
     The normal to a point on the surface of an object is approximated to the normal to the tangent plane
     defined by the point and its neighbours. It becomes a least square problem.
     See https://pcl.readthedocs.io/projects/tutorials/en/latest/normal_estimation.html
 
     The normal vector corresponds to the vector associated with the smallest eigen value of the neighborhood point
     covariance matrix.
+
+    Parameters
+    ----------
+    point_coordinates: np.array
+        Point coordinates
+    weights: float (default=None)
+        Absolute Weights for the covariance matrix (see numpy.cov documentation)
+
+    Returns
+    -------
+    normal: np.array
+        Local normal vector
     """
-    if isinstance(pcd, pd.DataFrame):
-        data = pcd.loc[["x", "y", "z"]]
+    print(f"Number of points: {point_coordinates.shape[0]}")
 
-        # Compute the centroid of the nearest neighbours
-        centroid = data.mean(axis=0)
+    if point_coordinates.shape[0] <= 1:
+        raise ValueError(f"The cluster of points from which to compute the local normal is empty or with just "
+                         f"one point. Increase the ball radius.")
 
-        data = data.to_numpy()
-
-    elif isinstance(pcd, np.ndarray):
-        data = pcd
-
-        if len(data.shape) != 2:
-            raise ValueError(f"Data dimension is incorrect. It should be 2 dimensional. "
-                             f"Found {len(data.shape)} dimensions.")
-        if data.shape[1] != 3:
-            raise ValueError("Data should be expressed as points along the rows and coordinates along the columns.")
-
-        # Compute the centroid of the nearest neighbours
-        centroid = np.mean(data, axis=0)
-
-    else:
-        raise TypeError(f"Cloud is of an unknown type {type(pcd)}. It should either be a pandas DataFrame or a numpy " 
-                        f"ndarray.")
+    # Compute the centroid of the nearest neighbours
+    centroid = np.mean(point_coordinates, axis=0)
 
     # Compute the covariance matrix
-    cov_mat = np.cov(data - centroid, rowvar=False, aweights=weights)
+    cov_mat = np.cov(point_coordinates - centroid, rowvar=False, aweights=weights)
 
     # Find eigen values and vectors
     # use the Singular Value Decomposition A = U * S * V^T
@@ -110,126 +120,287 @@ def compute_point_normal(pcd, weights=None):
 
     # TODO: find the right orientation for the normal
 
-    return u[:, -1]
+    # Extract local normal
+    normal = u[:, -1]
+
+    return normal
 
 
-def weight_exp(distance: np.ndarray, mean_distance: np.ndarray):
+def weight_exp(distance: np.ndarray, mean_distance: np.ndarray) -> np.array:
+    """Decreasing exponential function for weighting"""
     return np.exp(- distance ** 2 / mean_distance ** 2)
 
-#en entrée une liste (une valeur par voisin) et un chiffre, sortie liste
+
+# en entrée une liste (une valeur par voisin) et un chiffre, sortie liste
 def weight_exp_2(d, sigma):
     out = [ np.exp(- val ** 2 / 2 * (sigma ** 2)) for val in d]
     return out
 
 
-def compute_pcd_normals(df_pcd: pd.DataFrame,
+def compute_pcd_normals(pcd: PointCloud,
+                        neighbour_search_method: str = "ball",
                         knn: int = 30,
+                        radius: float = 5.,
                         weights_distance: bool = False,
                         weights_color: bool = False,
                         workers: int = 1,
-                        use_open3d=False):
+                        use_open3d: bool = False) -> PointCloud:
     """
     Compute the normal for each point of the cloud
+
+    Parameters
+    ----------
+    pcd: PointCloud
+        Point cloud instance
+    neighbour_search_method: str (default="ball")
+        Neighbour search method
+    knn: int (default=30)
+        If "neighbour_search_method" is "knn", number of neighbours to consider
+    radius: float (default=5.)
+        If "neighbour_search_method" is "ball", ball radius in which to find the neighbours
+    weights_distance: bool (default=False)
+        Whether to add a weighting to the neighbours on the distance information
+    weights_color: bool (default=False)
+        Whether to add a weighting to the neighbours on the color information
+    workers: int (default=1)
+        Number of workers to query the KDtree (neighbour search)
+    use_open3d: bool (default=False)
+        Whether to use open3d normal computation instead. No weighting is applied to neighbours in that case.
+
+    Returns
+    -------
+    pcd: PointCloud
+        Point cloud instance
     """
 
+    if neighbour_search_method not in ["knn", "ball"]:
+        raise ValueError(f"Neighbour search method should either be 'knn' or 'ball'. Here found "
+                         f"'{neighbour_search_method}'.")
+
     if use_open3d:
-        df_pcd = compute_pcd_normals_o3d(df_pcd)
+        pcd = compute_pcd_normals_o3d(pcd, neighbour_search_method, knn=knn, radius=radius)
 
-    # Init
-    tree = KDTree(df_pcd[["x", "y", "z"]].to_numpy())
-    weights = None
-    results = []
+    else:
+        # Init
+        tree = KDTree(pcd.df[["x", "y", "z"]].to_numpy())
+        weights = None
+        results = np.zeros_like(pcd.df[["x", "y", "z"]].to_numpy())
 
-    # Query the knn for each point cloud data/ TODO test en recherchant les voisins dans une sphere avec rayon?
-    _, ind = tree.query(df_pcd[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
-
-    # Loop on each point of the data to compute its normal
-    for k, row in tqdm(enumerate(ind)):
-
-        if weights_distance:
-            # Weighting of the variance according to the distance to the neighbours
-            distance = tree.data[row, :] - tree.data[k, :]
-            mean_distance = np.mean(distance)
-
-            weights = weight_exp(distance, mean_distance)
+        if neighbour_search_method == "knn":
+            # Query the tree by knn for each point cloud data
+            _, ind = tree.query(pcd.df[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
+        elif neighbour_search_method == "ball":
+            raise NotImplementedError("Due to memory consumption, scipy ball query is unusable: "
+                                      "https://github.com/scipy/scipy/issues/12956.")
+            # # Query the tree by radius for each point cloud data
+            # ind = tree.query_ball_point(pcd.df[["x", "y", "z"]].to_numpy(), r=radius, workers=workers,
+            #                             return_sorted=False, return_length=False)
+        else:
+            raise NotImplementedError
 
         if weights_color:
             # Weighting of the variance according to the radiometric difference with the neighbours
-            color_list = [color for color in ["red", "green", "blue", "nir"] if color in df_pcd]
-            if not color_list:
-                raise ValueError("Weights on radiometry has been asked but no color channel was found in data. "
-                                 "Color channels considered are among ['red', 'green', 'blue', 'nir'].")
+            color_data = pcd.get_colors()
 
-            color_data = df_pcd[color_list].to_numpy()
-            distance = color_data[row, :] - color_data[0, :]
-            mean_distance = np.mean(distance)
+        # Loop on each point of the data to compute its normal
+        for k, row in tqdm(enumerate(ind)):
 
-            weights = weight_exp(distance, mean_distance) if weights is None \
-                else weights * weight_exp(distance, mean_distance)
+            if weights_distance:
+                # Weighting of the variance according to the distance to the neighbours
+                distance = tree.data[row, :] - tree.data[k, :]
+                mean_distance = np.mean(distance)
 
-        # Compute the normal
-        results.append(compute_point_normal(tree.data[row, :], weights))
+                weights = weight_exp(distance, mean_distance)
 
-    results = np.asarray(results)
+            if weights_color:
+                distance = color_data[row, :] - color_data[0, :]
+                mean_distance = np.mean(distance)
 
-    # Add normals information to the dataframe
-    df_pcd = df_pcd.assign(n_x=results[:, 0], n_y=results[:, 1], n_z=results[:, 2])
+                weights = weight_exp(distance, mean_distance) if weights is None \
+                    else weights * weight_exp(distance, mean_distance)
 
-    return df_pcd
+            # Compute the normal
+            results[k, :] = compute_point_normal(tree.data[row, :], weights)
+
+        # results = np.asarray(results)
+
+        # Add normals information to the dataframe
+        pcd.df = pcd.df.assign(n_x=results[:, 0], n_y=results[:, 1], n_z=results[:, 2])
+
+    return pcd
 
 
-def bilateral_denoising(df: pd.DataFrame,
-                        radius: int=5,
-                        sigma_d: float=0.5,
-                        sigma_n: float=0.5,
-                        knn: int = 50,
+def bilateral_filtering(pcd: PointCloud,
+                        neighbour_search_method: str = "ball",
+                        knn: int = 30,
+                        radius: float = 5.,
+                        sigma_d: float = 0.5,
+                        sigma_n: float = 0.5,
+                        neighbour_search_method_normals: str = "ball",
+                        knn_normals: int = 50,
+                        radius_normals: float = 5.,
                         weights_distance: bool = False,
                         weights_color: bool = False,
-                        workers: int = 1):
-    df_pcd = compute_pcd_normals(df, knn, weights_distance, weights_color, workers)
-    # dans la méthode, les voisins sont calculés dans une sphere de rayon fixe, test ici avec knn idem que calul des normales
-    normal_cloud = KDTree(df_pcd[["n_x", "n_y", "n_z"]].to_numpy())
-    cloud = df_pcd.loc[:, ["x", "y", "z"]].values
+                        workers: int = 1,
+                        use_open3d: bool = False):
+    """
+    Bilateral denoising
+
+    Parameters
+    ----------
+    pcd: PointCloud
+        Point cloud instance
+    neighbour_search_method: str (default="ball")
+        Neighbour search method
+    knn: int (default=30)
+        If "neighbour_search_method" is "knn", number of neighbours to consider
+    radius: float (default=5.)
+        If "neighbour_search_method" is "ball", ball radius in which to find the neighbours
+    sigma_d: float (default=0.5)
+        Variance on the distance between a point and its neighbours
+    sigma_n: float (default=0.5)
+        Variance on the normal difference between the ones of a point and the ones of its neighbours
+    neighbour_search_method_normals: str (default="ball")
+        Neighbour search method to compute the normals at each point
+    knn_normals: int (default=30)
+        If "neighbour_search_method_normals" is "knn", number of neighbours to consider
+    radius_normals: float (default=5.)
+        If "neighbour_search_method_normals" is "ball", ball radius in which to find the neighbours
+    weights_distance: bool (default=False)
+        Whether to add a weighting to the neighbours on the distance information
+    weights_color: bool (default=False)
+        Whether to add a weighting to the neighbours on the color information
+    workers: int (default=1)
+        Number of workers to query the KDtree (neighbour search)
+    use_open3d: bool (default=False)
+        Whether to use open3d normal computation instead. No weighting is applied to neighbours in that case.
+
+    Returns
+    -------
+    pcd: PointCloud
+        Point cloud instance
+    """
+
+    # Compute normals
+    pcd = compute_pcd_normals(pcd, neighbour_search_method_normals, knn=knn_normals, radius=radius_normals,
+                              weights_distance=weights_distance, weights_color=weights_color, workers=workers,
+                              use_open3d=use_open3d)
+
+    # Build the KDTree for the normals
+    normal_cloud = KDTree(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
+
+    # Get point coordinates
+    cloud = pcd.df.loc[:, ["x", "y", "z"]].values
+    # Build the KDTree for the points
     cloud_tree = KDTree(cloud)
-    _, ind = cloud_tree.query(df_pcd[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
+
+    # Request the indexes of the neighbours according to the spatial coordinates
+    if neighbour_search_method == "knn":
+        # Query the tree by knn for each point cloud data
+        _, ind = cloud_tree.query(pcd.df[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
+    elif neighbour_search_method == "ball":
+        raise NotImplementedError("Due to memory consumption, scipy ball query is unusable: "
+                                  "https://github.com/scipy/scipy/issues/12956.")
+        # # Query the tree by radius for each point cloud data
+        # ind = cloud_tree.query_ball_point(pcd.df[["x", "y", "z"]].to_numpy(), r=radius, workers=workers,
+        #                                   return_sorted=False, return_length=False)
+    else:
+        raise NotImplementedError
+
+    # Iterate over the points
     for k, row in tqdm(enumerate(ind)):
-        sum_w=0
-        delta_p=0
+        # Euclidean distance from the point to its neighbors
+        # The bigger it is, the lesser the weighting is
         distance = cloud_tree.data[row, :] - cloud_tree.data[k, :]
         d_d = [np.linalg.norm(i) for i in distance]
-        d_n = np.dot(distance, normal_cloud.data[k,:])
-        w = np.multiply(weight_exp_2(d_d,sigma_d),weight_exp_2(d_n,sigma_n))
-        delta_p = sum(w*d_n)
-        sum_w = sum(w)
-        p_new=  cloud_tree.data[k,:]+(delta_p/sum_w)*normal_cloud.data[k,:]
-        df_pcd.loc[k,'x':'z']=p_new
 
-    return(df_pcd)
+        # Cosinus between the normal of the point and the ones of its neighbors
+        # The bigger it is, the lesser the weighting is
+        d_n = np.dot(distance, normal_cloud.data[k, :])
 
-
-def bilateral_denoising_2(df: pd.DataFrame,
-                          radius: int = 5,
-                          sigma_d: float = 0.5,
-                          sigma_n: float = 0.5,
-                          knn: int = 50,
-                          weights_distance: bool = False,
-                          weights_color: bool = False,
-                          workers: int = 1):
-    normals = compute_pcd_normals_o3d(df)
-    cloud = df.loc[:, ["x", "y", "z"]].values
-    cloud_tree = KDTree(cloud)
-    for idx, _ in tqdm(enumerate(cloud)):
-        neighbors_list = cloud_tree.query_ball_point(cloud[idx], 1)
-        distance = cloud_tree.data[neighbors_list, :] - cloud_tree.data[idx, :]
-        d_d = [np.linalg.norm(i) for i in distance]
-        d_n = np.dot(distance, normals[idx])
+        # Compute weighting of each neighbor according to
+        # - its distance from the point
+        # - its normal orientation
         w = np.multiply(weight_exp_2(d_d, sigma_d), weight_exp_2(d_n, sigma_n))
         delta_p = sum(w * d_n)
         sum_w = sum(w)
-        p_new=  cloud_tree.data[idx,:]+(delta_p/sum_w)*normals[idx]
-        df.loc[idx,'x':'z']=p_new
-        # ~ for neigh_idx in neighbors_list:
-    return(df)
+
+        # Change points' position along its normal as: p_new = p + w * n
+        p_new = cloud_tree.data[k, :] + (delta_p / sum_w) * normal_cloud.data[k, :]
+        pcd.df.loc[k, "x":"z"] = p_new
+
+    return pcd
+
+
+# def bilateral_denoising_radius(pcd: PointCloud,
+#                                radius: float = 5,
+#                                sigma_d: float = 0.5,
+#                                sigma_n: float = 0.5,
+#                                neighbour_search_method_normals: str = "ball",
+#                                knn_normals: int = 50,
+#                                radius_normals: float = 5.,
+#                                weights_distance: bool = False,
+#                                weights_color: bool = False,
+#                                workers: int = 1,
+#                                use_open3d: bool = False):
+#     """
+#     Bilateral denoising where neighbours are determined according to a ball of a user defined radius around the point.
+#
+#     Parameters
+#     ----------
+#     pcd: PointCloud
+#         Point cloud instance
+#     radius: float (default=5.)
+#         If "neighbour_search_method" is "ball", ball radius in which to find the neighbours
+#     sigma_d: float (default=0.5)
+#         Variance on the distance between a point and its neighbours
+#     sigma_n: float (default=0.5)
+#         Variance on the normal difference between the ones of a point and the ones of its neighbours
+#     neighbour_search_method_normals: str (default="ball")
+#         Neighbour search method to compute the normals at each point
+#     knn_normals: int (default=30)
+#         If "neighbour_search_method_normals" is "knn", number of neighbours to consider
+#     radius_normals: float (default=5.)
+#         If "neighbour_search_method_normals" is "ball", ball radius in which to find the neighbours
+#     weights_distance: bool (default=False)
+#         Whether to add a weighting to the neighbours on the distance information
+#     weights_color: bool (default=False)
+#         Whether to add a weighting to the neighbours on the color information
+#     workers: int (default=1)
+#         Number of workers to query the KDtree (neighbour search)
+#     use_open3d: bool (default=False)
+#         Whether to use open3d normal computation instead. No weighting is applied to neighbours in that case.
+#
+#     Returns
+#     -------
+#     pcd: PointCloud
+#         Point cloud instance
+#     """
+#
+#     # Compute normals
+#     pcd = compute_pcd_normals(pcd, neighbour_search_method_normals, knn=knn_normals, radius=radius_normals,
+#                               weights_distance=weights_distance, weights_color=weights_color, workers=workers,
+#                               use_open3d=use_open3d)
+#
+#     # Get point coordinates
+#     cloud = pcd.df.loc[:, ["x", "y", "z"]].values
+#     # Build the KDTree for the points
+#     cloud_tree = KDTree(cloud)
+#
+#     # Iterate over the points
+#     for idx, _ in tqdm(enumerate(cloud)):
+#         neighbors_list = cloud_tree.query_ball_point(cloud[idx], radius)
+#         distance = cloud_tree.data[neighbors_list, :] - cloud_tree.data[idx, :]
+#         d_d = [np.linalg.norm(i) for i in distance]
+#         d_n = np.dot(distance, normals[idx])
+#         w = np.multiply(weight_exp_2(d_d, sigma_d), weight_exp_2(d_n, sigma_n))
+#         delta_p = sum(w * d_n)
+#         sum_w = sum(w)
+#         p_new = cloud_tree.data[idx, :] + (delta_p / sum_w) * normals[idx]
+#         df.loc[idx, 'x':'z'] = p_new
+#         # ~ for neigh_idx in neighbors_list:
+#
+#     return df
             
 
     
@@ -422,18 +593,18 @@ def bilateral_denoising_2(df: pd.DataFrame,
 #     return normals
 
 
-def main(df):
-    # ~ compute_normal_o3d(df)
-    # ~ compute_pcd_normals(df)
-    # ~ df_f = bilateral_denoising(df)
-    df_f = bilateral_denoising_2(df)
-    point_cloud_handling.serialize_point_cloud("/home/data/bil_tlse2.las", df_f)
-
-
-if __name__ == "__main__":
-    fileName ='/home/code/stage/toulouse-points_color.pkl'
-    df = pd.read_pickle(fileName)
-    fileName2 ='/home/data/radiuso3dpyramidedekmin_04.las'
-    # ~ df = pd.read_pickle(fileName)
-    df2,_ = point_cloud_handling.las2df(fileName2)
-    main(df)
+# def main(df):
+#     # ~ compute_normal_o3d(df)
+#     # ~ compute_pcd_normals(df)
+#     # ~ df_f = bilateral_denoising_knn(df)
+#     df_f = bilateral_denoising_radius(df)
+#     point_cloud_io.serialize_point_cloud("/home/data/bil_tlse2.las", df_f)
+#
+#
+# if __name__ == "__main__":
+#     fileName ='/home/code/stage/toulouse-points_color.pkl'
+#     df = pd.read_pickle(fileName)
+#     fileName2 ='/home/data/radiuso3dpyramidedekmin_04.las'
+#     # ~ df = pd.read_pickle(fileName)
+#     df2,_ = point_cloud_io.las2df(fileName2)
+#     main(df)

@@ -86,6 +86,11 @@ def ply2df(filepath: str) -> pd.DataFrame:
     return df
 
 
+def csv2df(filepath: str) -> pd.DataFrame:
+    """CSV file to pandas DataFrame"""
+    return pd.read_csv(filepath)
+
+
 # -------------------------------------------------------------------------------------------------------- #
 # pandas DataFrame ===> any point cloud format
 # -------------------------------------------------------------------------------------------------------- #
@@ -180,6 +185,15 @@ def df2o3d(df_pcd: pd.DataFrame) -> o3d.geometry.PointCloud:
     return o3d_pcd
 
 
+def df2csv(filepath: str, df: pd.DataFrame, **kwargs):
+    """pandas DataFrame to csv file"""
+
+    if filepath.split(".")[-1] != "csv":
+        raise ValueError("Filepath extension is invalid. It should be 'csv'.")
+
+    df.to_csv(filepath, index=False, **kwargs)
+
+
 # -------------------------------------------------------------------------------------------------------- #
 # General functions
 # -------------------------------------------------------------------------------------------------------- #
@@ -196,6 +210,9 @@ def deserialize_point_cloud(filepath: str) -> pd.DataFrame:
 
     elif extension == "ply":
         df = ply2df(filepath)
+
+    elif extension == "csv":
+        df = csv2df(filepath)
 
     else:
         raise NotImplementedError
@@ -221,6 +238,9 @@ def serialize_point_cloud(filepath: str,
 
     elif extension == "ply":
         raise NotImplementedError
+
+    elif extension == "csv":
+        df2csv(filepath, df)
 
     else:
         raise NotImplementedError

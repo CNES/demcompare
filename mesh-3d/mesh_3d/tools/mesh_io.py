@@ -21,26 +21,83 @@
 """
 Tools to manipulate meshes
 """
+import os.path
+from typing import Union
 
 import open3d as o3d
 import numpy as np
+import pandas as pd
 
-from ..tools import point_cloud_handling as pcd_handler
+from ..tools import point_cloud_io as pcd_io
+from ..tools.handlers import Mesh
 
 
-def write_triangle_mesh_o3d(filepath: str, dict_pcd_mesh: dict, compressed: bool = True):
+def write_triangle_mesh_o3d(filepath: str, mesh: Union[dict, Mesh], compressed: bool = True):
     """Write triangle mesh to disk with open3d"""
 
     # # Write mesh
     # if "o3d_mesh" in dict_pcd_mesh:
     #     o3d.io.write_triangle_mesh(filepath, dict_pcd_mesh["o3d_mesh"], compressed=compressed)
     # else:
-    o3d.io.write_triangle_mesh(filepath, dict2o3d(dict_pcd_mesh), compressed=compressed)
+    if isinstance(mesh, dict):
+        o3d.io.write_triangle_mesh(filepath, dict2o3d(mesh), compressed=compressed)
+    elif isinstance(mesh, Mesh):
+        o3d.io.write_triangle_mesh(filepath, mesh2o3d(mesh), compressed=compressed)
+    else:
+        raise NotImplementedError
+    
 
+# -------------------------------------------------------------------------------------------------------- #
+# Mesh object ===> any mesh format
+# -------------------------------------------------------------------------------------------------------- #
+
+def mesh2o3d(mesh: Mesh) -> o3d.geometry.TriangleMesh:
+    """Mesh object to open3d Triangle Mesh"""
+
+    # init Triangle Mesh
+    o3d_mesh = o3d.geometry.TriangleMesh()
+
+    # add vertices
+    o3d_mesh.vertices = o3d.utility.Vector3dVector(mesh.pcd.df[["x", "y", "z"]].to_numpy())
+
+    # add colors (if applicable)
+    # TODO: implement
+    # is_color = [False] * 4
+    # colors = ["red", "green", "blue", "nir"]
+    # for k, c in enumerate(colors):
+    #     if c in dict_pcd_mesh["pcd"]:
+    #         is_color[k] = True
+
+    # colors need to be in [0, 1] and is 3-channel
+
+    # add normals
+    # TODO: implement
+
+    # add point indexes forming the triangular faces
+    o3d_mesh.triangles = o3d.utility.Vector3iVector(mesh.df[["p1", "p2", "p3"]].to_numpy().astype(np.int64))
+
+    return o3d_mesh
+
+
+def mesh2ply(filepath: str, mesh: Mesh, compressed: bool = True):
+    """Mesh object to PLY mesh"""
+
+    # Check consistency
+    if filepath.split(".")[-1] != "ply":
+        raise ValueError(f"Filepath extension should be '.ply', but found: '{filepath.split('.')[-1]}'.")
+
+    # # Write point cloud apart in a LAS file
+    # filepath_pcd = filepath[:-4] + "_pcd.las"
+    # pcd_io.df2las(filepath_pcd, dict_pcd_mesh["pcd"])
+
+    # Write mesh in PLY file
+    filepath_mesh = filepath[:-4] + "_mesh.ply"
+    write_triangle_mesh_o3d(filepath_mesh, mesh, compressed=compressed)
 
 # -------------------------------------------------------------------------------------------------------- #
 # dict of pandas DataFrame point cloud and numpy array mesh (vertex indexes of triangles) ===> any mesh format
 # -------------------------------------------------------------------------------------------------------- #
+
 
 def dict2o3d(dict_pcd_mesh: dict) -> o3d.geometry.TriangleMesh:
     """dict of pandas DataFrame point cloud and numpy array mesh to open3d Triangle Mesh"""
@@ -77,8 +134,13 @@ def dict2ply(filepath: str, dict_pcd_mesh: dict, compressed: bool = True):
     if filepath.split(".")[-1] != "ply":
         raise ValueError(f"Filepath extension should be '.ply', but found: '{filepath.split('.')[-1]}'.")
 
-    # Write mesh
-    write_triangle_mesh_o3d(filepath, dict_pcd_mesh, compressed=compressed)
+    # # Write point cloud apart in a LAS file
+    # filepath_pcd = filepath[:-4] + "_pcd.las"
+    # pcd_io.df2las(filepath_pcd, dict_pcd_mesh["pcd"])
+
+    # Write mesh in PLY file
+    filepath_mesh = filepath[:-4] + "_mesh.ply"
+    write_triangle_mesh_o3d(filepath_mesh, dict_pcd_mesh, compressed=compressed)
 
 
 def dict2obj(filepath: str, dict_pcd_mesh: dict, compressed: bool = True):
@@ -112,7 +174,28 @@ def ply2dict(filepath: str) -> dict:
     mesh = o3d.io.read_triangle_mesh(filepath)
 
     # Convert to df for pcd and numpy array for mesh
-    out = {"pcd": pcd_handler.o3d2df(pcd), "mesh": np.asarray(mesh.triangles)}
+    out = {"pcd": pcd_io.o3d2df(pcd), "mesh": np.asarray(mesh.triangles)}
+
+    return out
+
+
+def ply2mesh(filepath: str) -> Mesh:
+    """PLY mesh to Mesh object"""
+
+    # Check consistency
+    if filepath.split(".")[-1] != "ply":
+        raise ValueError(f"Filepath extension should be '.ply', but found: '{filepath.split('.')[-1]}'.")
+
+    # # Read point cloud
+    # pcd = o3d.io.read_point_cloud(filepath)
+    #
+    # # Read mesh
+    # mesh = o3d.io.read_triangle_mesh(filepath)
+
+    # Convert to df for pcd and numpy array for mesh
+    out = Mesh()
+    out.pcd.deserialize(filepath)
+    out.df = pd.DataFrame(data=np.asarray(o3d.io.read_triangle_mesh(filepath).triangles), columns=["p1, p2, p3"])
 
     return out
 
@@ -121,22 +204,22 @@ def ply2dict(filepath: str) -> dict:
 # General functions
 # -------------------------------------------------------------------------------------------------------- #
 
-def deserialize_mesh(filepath: str) -> dict:
+def deserialize_mesh(filepath: str) -> Mesh:
     """Deserialize a mesh"""
     extension = filepath.split(".")[-1]
 
     if extension == "ply":
-        dict_pcd_mesh = ply2dict(filepath)
+        mesh = ply2mesh(filepath)
 
     else:
         raise NotImplementedError
 
-    return dict_pcd_mesh
+    return mesh
 
 
 def serialize_mesh(filepath: str,
-                   dict_pcd_mesh: dict,
-                   extension: str = "ply"):
+                   mesh: Mesh,
+                   extension: str = "ply") -> None:
     """Serialize a mesh to disk in the format asked by the user"""
 
     if filepath.split(".")[-1] != extension:
@@ -144,7 +227,10 @@ def serialize_mesh(filepath: str,
                          f"asked ('{extension}').")
 
     if extension == "ply":
-        dict2ply(filepath, dict_pcd_mesh)
+        mesh2ply(filepath, mesh)
+
+    elif extension == "csv":
+        pcd_io.df2csv(filepath, mesh.df)
 
     else:
         raise NotImplementedError
