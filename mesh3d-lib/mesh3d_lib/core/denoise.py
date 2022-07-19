@@ -120,7 +120,7 @@ def compute_pcd_normals(df_pcd: pd.DataFrame,
         weights = None
         results = []
 
-    # Query the knn for each point cloud data/ TODO test en recherchant les voisins dans une sphere avec rayon?
+    # Query the knn for each point cloud data
     _, ind = tree.query(df_pcd[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
 
     # Loop on each point of the data to compute its normal
@@ -188,7 +188,7 @@ def bilateral_denoising(df: pd.DataFrame,
 
 
 def bilateral_denoising_2(df: pd.DataFrame,
-                        radius: int=50,
+                        radius: int=3,
                         sigma_d: float=0.5,
                         sigma_n: float=0.5,
                         knn: int = 10,
@@ -196,17 +196,18 @@ def bilateral_denoising_2(df: pd.DataFrame,
                         weights_color: bool = False,
                         workers: int = 1):
     normals = compute_pcd_normals_o3d(df)
+    normal_cloud = KDTree(normals[["n_x", "n_y", "n_z"]].to_numpy())
     cloud = df.loc[:, ["x", "y", "z"]].values
     cloud_tree = KDTree(cloud)
     for idx, _ in tqdm(enumerate(cloud)):
         neighbors_list = cloud_tree.query_ball_point(cloud[idx], radius)
         distance = cloud_tree.data[neighbors_list, :] - cloud_tree.data[idx, :]
         d_d = [np.linalg.norm(i) for i in distance]
-        d_n = np.dot(distance, normals[idx])
+        d_n = np.dot(distance, normal_cloud.data[idx,:])
         w = np.multiply(weight_exp_2(d_d,sigma_d),weight_exp_2(d_n,sigma_n))
         delta_p = sum(w*d_n)
         sum_w = sum(w)
-        p_new=  cloud_tree.data[idx,:]+(delta_p/sum_w)*normals[idx]
+        p_new=  cloud_tree.data[idx,:]+(delta_p/sum_w)*normal_cloud.data[idx,:]
         df.loc[idx,'x':'z']=p_new
         # ~ for neigh_idx in neighbors_list:
     return(df)
