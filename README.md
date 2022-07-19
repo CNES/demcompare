@@ -1,6 +1,8 @@
 # R&T Reconstruction de surface 3D, texturée et sémantisée
 
 ## Données
+
+### Simu3D
 Les données utilisées sont tirées du modèle 3D texturé de Nanterre (`/work/OT/siqi/simu3D/data/mesh/Nanterre15cm_ECEF/`). 
 Ces dernières sont injectées dans la [chaîne complète de Simu3D](https://gitlab.cnes.fr/ctsiqi/Simulation_3D_complete).
 
@@ -77,6 +79,11 @@ CARS (version `0.4.0`) est lancé sur ces données (`prepare` et `compute_dsm` e
 du répertoire [cars-pctolas](https://gitlab.cnes.fr/cars/tools/cars-pctolas) sont ensuite utilisés pour obtenir un seul nuage de points au format `las`.
 
 La dernière transformation consiste à passer les points du nuage du repère cartésien au repère projeté UTM adéquate.
+
+
+### PHR
+Des données PHR sont utilisées en guise de comparaison.
+Ces dernières sont situées ici: `/work/OT/siaa/3D/Development/rt_mesh_3d/data/Nanterre/PHR`
 
 ## Connexion au dépôt Gitlab CNES depuis l'extérieur
 
