@@ -30,6 +30,25 @@ import numpy as np
 import pyproj
 import open3d as o3d
 
+# LAS tools
+
+
+def get_offset(arr_max, arr_min):
+    return (arr_max + arr_min) / 2
+
+
+def get_scale(arr_max, arr_min, number_values):
+    return (arr_max - arr_min) / number_values
+
+
+def apply_scale_offset(arr, scale, offset, is_inverse=False, clip_min=None, clip_max=None):
+    if not is_inverse:
+        # X ==> x
+        return np.clip(arr * scale + offset, a_min=clip_min, a_max=clip_max)
+    else:
+        # x ==> X
+        return np.clip((arr - offset) / scale, a_min=clip_min, a_max=clip_max)
+
 
 # -------------------------------------------------------------------------------------------------------- #
 # any point cloud format ===> pandas DataFrame
@@ -53,17 +72,15 @@ def o3d2df(o3d_pcd: o3d.geometry.PointCloud) -> pd.DataFrame:
 
 def las2df(filepath: str) -> pd.DataFrame:
     """LAS or LAZ point cloud to pandas DataFrame"""
-    # TODO: Add color information
 
     las = laspy.read(filepath)
-    metadata = las.header
+    dimensions = las.points.array.dtype.names
 
-    df = pd.DataFrame.from_records(las.points.array)
-    df["X"] = las.xyz[:, 0]
-    df["Y"] = las.xyz[:, 1]
-    df["Z"] = las.xyz[:, 2]
+    df = pd.DataFrame(data=las.xyz, columns=["x", "y", "z"])
 
-    df.rename(columns={"X": "x", "Y": "y", "Z": "z"}, inplace=True)
+    for c in ["red", "green", "blue", "nir", "classification"]:
+        if c in dimensions:
+            df[c] = las.points.array[c]
 
     return df
 
@@ -115,21 +132,7 @@ def df2las(filepath: str, df: pd.DataFrame, metadata: Union[laspy.LasHeader, Non
     # x_max = s * X_max + o <==> x_max = 2 ** 31 * s + o
     # x_min = s * X_min + o <==> x_min = - 2 ** 31 * s + o
 
-    def get_offset(arr_max, arr_min):
-        return (arr_max + arr_min) / 2
-
-    def get_scale(arr_max, arr_min):
-        return (arr_max - arr_min) / number_values
-
-    def apply_scale_offset(arr, scale, offset, is_inverse=False, clip_min=None, clip_max=None):
-        if not is_inverse:
-            # X ==> x
-            return np.clip(arr * scale + offset, a_min=clip_min, a_max=clip_max)
-        else:
-            # x ==> X
-            return np.clip((arr - offset) / scale, a_min=clip_min, a_max=clip_max)
-
-    header.scales = [get_scale(df[coord].max(), df[coord].min()) for coord in ["x", "y", "z"]]
+    header.scales = [get_scale(df[coord].max(), df[coord].min(), number_values) for coord in ["x", "y", "z"]]
     header.offsets = [get_offset(df[coord].max(), df[coord].min()) for coord in ["x", "y", "z"]]
 
     # Fill data points
@@ -144,15 +147,9 @@ def df2las(filepath: str, df: pd.DataFrame, metadata: Union[laspy.LasHeader, Non
                                                  clip_max=2 ** 31)).astype(np.int32)
                              for k, coord in enumerate(["x", "y", "z"])]
 
-    # if there are colors assigned
-    if "red" in df:
-        las.red = df["red"]
-    if "green" in df:
-        las.green = df["green"]
-    if "blue" in df:
-        las.blue = df["blue"]
-    if "nir" in df:
-        las.nir = df["nir"]
+    for c in ["red", "green", "blue", "nir", "classification"]:
+        if c in df:
+            las.points.array[c] = df[c]
 
     # Write file to disk
     las.write(filepath)

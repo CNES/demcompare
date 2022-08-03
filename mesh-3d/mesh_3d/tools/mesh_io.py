@@ -42,7 +42,8 @@ def write_triangle_mesh_o3d(filepath: str, mesh: Union[dict, Mesh], compressed: 
     if isinstance(mesh, dict):
         o3d.io.write_triangle_mesh(filepath, dict2o3d(mesh), compressed=compressed)
     elif isinstance(mesh, Mesh):
-        o3d.io.write_triangle_mesh(filepath, mesh2o3d(mesh), compressed=compressed)
+        mesh.set_o3d_mesh_from_df()
+        o3d.io.write_triangle_mesh(filepath, mesh.o3d_mesh, compressed=compressed)
     else:
         raise NotImplementedError
     
@@ -50,34 +51,6 @@ def write_triangle_mesh_o3d(filepath: str, mesh: Union[dict, Mesh], compressed: 
 # -------------------------------------------------------------------------------------------------------- #
 # Mesh object ===> any mesh format
 # -------------------------------------------------------------------------------------------------------- #
-
-def mesh2o3d(mesh: Mesh) -> o3d.geometry.TriangleMesh:
-    """Mesh object to open3d Triangle Mesh"""
-
-    # init Triangle Mesh
-    o3d_mesh = o3d.geometry.TriangleMesh()
-
-    # add vertices
-    o3d_mesh.vertices = o3d.utility.Vector3dVector(mesh.pcd.df[["x", "y", "z"]].to_numpy())
-
-    # add colors (if applicable)
-    # TODO: implement
-    # is_color = [False] * 4
-    # colors = ["red", "green", "blue", "nir"]
-    # for k, c in enumerate(colors):
-    #     if c in dict_pcd_mesh["pcd"]:
-    #         is_color[k] = True
-
-    # colors need to be in [0, 1] and is 3-channel
-
-    # add normals
-    # TODO: implement
-
-    # add point indexes forming the triangular faces
-    o3d_mesh.triangles = o3d.utility.Vector3iVector(mesh.df[["p1", "p2", "p3"]].to_numpy().astype(np.int64))
-
-    return o3d_mesh
-
 
 def mesh2ply(filepath: str, mesh: Mesh, compressed: bool = True):
     """Mesh object to PLY mesh"""
@@ -179,25 +152,20 @@ def ply2dict(filepath: str) -> dict:
     return out
 
 
-def ply2mesh(filepath: str) -> Mesh:
+def ply2mesh(filepath: str) -> (pd.DataFrame, pd.DataFrame):
     """PLY mesh to Mesh object"""
 
     # Check consistency
     if filepath.split(".")[-1] != "ply":
         raise ValueError(f"Filepath extension should be '.ply', but found: '{filepath.split('.')[-1]}'.")
 
-    # # Read point cloud
-    # pcd = o3d.io.read_point_cloud(filepath)
-    #
-    # # Read mesh
-    # mesh = o3d.io.read_triangle_mesh(filepath)
+    # Read point cloud
+    df_pcd = pcd_io.deserialize_point_cloud(filepath)
 
-    # Convert to df for pcd and numpy array for mesh
-    out = Mesh()
-    out.pcd.deserialize(filepath)
-    out.df = pd.DataFrame(data=np.asarray(o3d.io.read_triangle_mesh(filepath).triangles), columns=["p1, p2, p3"])
+    # Read faces
+    df_mesh = pd.DataFrame(data=np.asarray(o3d.io.read_triangle_mesh(filepath).triangles), columns=["p1", "p2", "p3"])
 
-    return out
+    return df_pcd, df_mesh
 
 
 # -------------------------------------------------------------------------------------------------------- #

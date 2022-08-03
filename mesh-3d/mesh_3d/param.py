@@ -1,6 +1,7 @@
 from .core.filter import radius_filtering_outliers_o3, statistical_filtering_outliers_o3d
-from .core.denoise import bilateral_filtering
+from .core.denoise_pcd import bilateral_filtering
 from .core.mesh import delaunay_2d_reconstruction, poisson_reconstruction, ball_pivoting_reconstruction
+from .core.simplify_mesh import simplify_quadric_decimation
 
 
 TRANSITIONS_METHODS = {
@@ -15,6 +16,9 @@ TRANSITIONS_METHODS = {
         "delaunay_2d": delaunay_2d_reconstruction,
         "poisson": poisson_reconstruction,
         "bpa": ball_pivoting_reconstruction
+    },
+    "simplify_mesh": {
+        "garland-heckbert": simplify_quadric_decimation
     },
     "denoise_mesh": {},
     "texture": {}

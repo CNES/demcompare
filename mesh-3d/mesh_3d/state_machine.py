@@ -97,6 +97,12 @@ class Mesh3DMachine(Machine):
 
             # From the 'meshed_pcd' state
             {
+                "trigger": "simplify_mesh",
+                "source": "meshed_pcd",
+                "dest": "meshed_pcd",
+                "after": "simplify_mesh_run"
+            },
+            {
                 "trigger": "denoise_mesh",
                 "source": "meshed_pcd",
                 "dest": "meshed_pcd",
@@ -158,9 +164,6 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the filtering method chosen by the user
-            # self.dict_pcd_mesh["pcd"] = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-            #     self.dict_pcd_mesh["pcd"], **step["params"])
-
             self.mesh_data.pcd = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
                 self.mesh_data.pcd, **step["params"])
 
@@ -184,9 +187,6 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the denoising method chosen by the user
-            # self.dict_pcd_mesh["pcd"] = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-            #     self.dict_pcd_mesh["pcd"], **step["params"])
-
             self.mesh_data.pcd = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
                 self.mesh_data.pcd, **step["params"])
 
@@ -210,11 +210,31 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the meshing method chosen by the user
-            # self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-            #     self.dict_pcd_mesh["pcd"], **step["params"])
-
             self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
                 self.mesh_data.pcd, **step["params"])
+
+    def simplify_mesh_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+        """
+        Simplify the mesh to reduce the number of faces
+
+        Parameters
+        ----------
+        step: dict
+            Parameters of the step to run
+        cfg: dict
+            Configuration dictionary
+        check_mode: bool (default=False)
+            Option to run the transition checker
+        """
+
+        if check_mode:
+            # For checking transition validity
+            return
+
+        else:
+            # Apply the meshing method chosen by the user
+            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
+                self.mesh_data, **step["params"])
 
     def denoise_mesh_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
         """
@@ -236,9 +256,6 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the meshing method chosen by the user
-            # self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-            #     self.dict_pcd_mesh, **step["params"])
-
             self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
                 self.mesh_data, **step["params"])
 
@@ -262,9 +279,6 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the texturing method chosen by the user
-            # self.dict_pcd_mesh = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-            #     self.dict_pcd_mesh, **step["params"])
-
             self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
                 self.mesh_data, **step["params"])
 
