@@ -396,7 +396,7 @@ def stats_computation(
             "min": round(float(np.min(array)), 5),
             "mean": round(float(np.mean(array)), 5),
             "std": round(float(np.std(array)), 5),
-            "rmse": round(float(np.sqrt(np.mean(array * array)))),
+            "rmse": round(float(np.sqrt(np.mean(array * array))), 5),
             "median": round(float(np.nanmedian(array)), 5),
             "nmad": round(
                 float(
