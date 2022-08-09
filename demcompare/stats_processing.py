@@ -22,12 +22,12 @@
 Mainly contains the StatsProcessing class
 for stats computation of an input dem
 """
-# pylint:disable=no-member
 
 import copy
 
 # Standard imports
 import logging
+import os
 import sys
 import traceback
 from typing import Dict, List, Union
@@ -40,6 +40,7 @@ from demcompare.classification_layer import (
     FusionClassificationLayer,
 )
 from demcompare.metric import Metric
+from demcompare.output_tree_design import get_out_dir
 
 from .initialization import ConfigType
 from .stats_dataset import StatsDataset
@@ -53,13 +54,11 @@ class StatsProcessing:
     # Default parameters in case they are not specified in the cfg
     # Save results option
     _SAVE_RESULTS = False
-    # Default segmentation layer
+    # Default global layer
     _DEFAULT_GLOBAL_LAYER_NAME = "global"
     _DEFAULT_GLOBAL_LAYER = {
         "type": "global",
     }
-    # Plot real histograms option
-    _PLOT_REAL_HISTS = False
     # Remove outliers option
     _REMOVE_OUTLIERS = False
 
@@ -84,13 +83,19 @@ class StatsProcessing:
         self.cfg = cfg
         # Output directory
         self.output_dir = self.cfg["output_dir"]
+        if self.output_dir:
+            # Create plots dir
+            self._plots_dir = os.path.join(
+                self.output_dir, get_out_dir("snapshots_dir")
+            )
+            os.makedirs(self._plots_dir, exist_ok=True)
+
         # Remove outliers option
         self.remove_outliers = self.cfg["remove_outliers"]
         # Save results boolean
         self.save_results = self.cfg["save_results"]
         # Input dem
         self.dem = dem
-
         # Initialize StatsDataset object
         self.stats_dataset = StatsDataset(self.dem["image"].data)
         # Classification layers
@@ -109,15 +114,19 @@ class StatsProcessing:
         :param cfg: Input demcompare configuration
         :type cfg: ConfigType
         """
+
         # Initialize if cfg is not defined
         if cfg is None:
             cfg = {}
+        # Initialize if classification_layers is not defined
         if "classification_layers" not in cfg:
             cfg["classification_layers"] = {}
+
         # Add default global layer
         cfg["classification_layers"][
             self._DEFAULT_GLOBAL_LAYER_NAME
         ] = copy.deepcopy(self._DEFAULT_GLOBAL_LAYER)
+
         # If metrics have been specified,
         # add them to all classif layers
         if "metrics" in cfg:
@@ -138,7 +147,6 @@ class StatsProcessing:
             cfg["save_results"] = cfg["save_results"] == "True"
         else:
             cfg["save_results"] = self._SAVE_RESULTS
-
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
             if cfg["save_results"]:
@@ -149,7 +157,6 @@ class StatsProcessing:
                     " the saving options."
                 )
                 sys.exit(1)
-
         return cfg
 
     def _create_classif_layers(self):
@@ -195,10 +202,12 @@ class StatsProcessing:
                         )
                     )
         # Compute fusion layer it specified in the conf
+        # Fusion layers specify its support on the input cfg
         if "fusion" in list(self.cfg["classification_layers"].keys()):
             for support, classif_names in self.cfg["classification_layers"][
                 "fusion"
             ].items():
+                # Add the layers to be fusionned from the conf
                 layers_to_fusion = []
                 for name in classif_names:
                     layers_to_fusion.append(
@@ -206,13 +215,16 @@ class StatsProcessing:
                             self.classification_layers_names.index(name)
                         ]
                     )
+                # Adapt support to int values
                 if support == "ref":
                     support_idx = 0
                 else:
                     support_idx = 1
+                # Create fusion layer
                 self.classification_layers.append(
                     FusionClassificationLayer(layers_to_fusion, support_idx)
                 )
+                # Add fusion layer name on the classif_layers_names
                 self.classification_layers_names.append(
                     self.classification_layers[-1].name
                 )

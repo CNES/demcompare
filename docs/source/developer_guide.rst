@@ -167,7 +167,7 @@ Pylint
 **Demcompare**'s ``pylint`` configuration is done in dedicated `.pylintrc <https://raw.githubusercontent.com/CNES/demcompare/master/.pylintrc>`_ file.
 
 `Pylint`_ messages can be avoided (in particular cases !) adding "# pylint: disable=error-message-name" in the file or line.
-Look at examples in source code.
+Look at examples in source code. For instance, member attributes are ignored for the different factory classes on the .pylintrc file since the no-member pylint error raises due to the factory dynamics.
 
 Pylint manual usage examples:
 

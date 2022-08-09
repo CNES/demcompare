@@ -49,7 +49,7 @@ from ..stats_dataset import StatsDataset
 class ClassificationLayerTemplate(metaclass=ABCMeta):
     """
     ClassificationLayer class
-    A classification_layer defines a way to classify the DEMs alti differences
+    A classification_layer defines a way to classify the DEM
     for the stats computation.
     """
 
@@ -104,6 +104,8 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layers: 3D (row, col, nb_classif)
+                  xr.DataArray
         :param cfg: layer's configuration
         :type cfg: ConfigType
         :return: None
@@ -117,7 +119,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         self.schema = None
         # Init classes
         self.classes = None
-        # dem
+        # Dem to be classified
         self.dem = dem
         # Fill configuration file
         self.cfg = self.fill_conf_and_schema(cfg)
@@ -135,20 +137,20 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         self._plots_dir = None
         # Output directory for stats
         self._stats_dir = None
-        # Output directory for histograms
-        self._histograms_dir = None
         # Create output dir (where to store classification_layer results & data)
         if self.save_results:
-            self._create_output_dir()
+            # Create stats dir
+            self._stats_dir = os.path.join(
+                self._output_dir, get_out_dir("_stats_dir"), self.name
+            )
+            os.makedirs(self._stats_dir, exist_ok=True)
 
         # Init labelled map data
         self.map_image = []
-        # Init sets masks list
+        # Init classes masks list
         self.classes_masks = []
         # Init outliers free mask
         self.outliers_free_mask = None
-        # Init stats mode json dict
-        self._stats_mode_json_dict = None
 
     @abstractmethod
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
@@ -222,12 +224,12 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
     ):
         """
         Stats are computed based on the classification layers, which define
-        sets of pixels that classify divide the input image.
-        Stats are computed on each set separately.
+        classes of pixels that classify divide the input image.
+        Stats are computed on each classes separately.
 
-        One or both input dems can be classified by the
-        classification_layer.
-        If both dems are classified,
+        Input dems can be classified by two maps belonging
+        to the same classification_layer.
+        If both maps exist,
         then this method produces stats based on 3 modes:
 
         standard mode, intersection mode: where only alti
@@ -240,6 +242,8 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layers: 3D (row, col, nb_classif)
+                  xr.DataArray
         :param stats_dataset: StatsDataset object
         :type stats_dataset: StatsDataset
         :param metrics: metrics to be computed
@@ -256,7 +260,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
         # Compute stats for each mode
         for mode_idx, mode_name in enumerate(mode_names):
-            # Compute stats for all sets of a single mode
+            # Compute stats for all classes of a single mode
             # and add them to the stats_dataset object
             stats_dataset = self._compute_mode_stats(
                 copy.deepcopy(data["image"].data),
@@ -338,11 +342,9 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         no_data_free_mask = self._get_nonan_mask(array, no_data_value)
         # Apply the nonan and nodata mask to the input array
         array_without_nan = array[np.where(no_data_free_mask)]
-        # Compute mean and std of the input array using the corresponding metric
-        mean_metric = Metric("mean")
-        mu = mean_metric.compute_metric(array_without_nan)
-        std_metric = Metric("std")
-        sigma = std_metric.compute_metric(array_without_nan)
+        # Compute mean and std of the input array
+        mu = np.mean(array_without_nan)
+        sigma = np.std(array_without_nan)
         # Compute the outliers free mask on the input array
         return np.apply_along_axis(
             lambda x: (x > mu - 3 * sigma) * (x < mu + 3 * sigma), 0, array
@@ -363,13 +365,15 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
         Note that 'intersection'
         and 'exclusion' mode masks
-        can only be computed if len(_sets_masks)==2
+        can only be computed if len(classes_masks)==2
 
         :param alti_map: alti differences
         :type alti_map:    xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layers: 3D (row, col, nb_classif)
+                  xr.DataArray
         :return: list of masks, associated modes, and error_img read as array
         :rtype: List[np.ndarray]
         """
@@ -385,26 +389,26 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 alti_map["image"].data, alti_map.attrs["no_data"]
             )
         )
-        # If both sets masks have been defined, compute
+        # If two classes_masks have been defined, compute
         # the cross classification (intersection & exclusion) masks
         if len(self.classes_masks) > 1:
             mode_names.append("intersection")
-            # Combine pairs of sets together
-            # (meaning pixels belonging for the same set on
+            # Combine pairs of classes together
+            # (meaning pixels belonging for the same class on
             # boths ref and sec dems)
-            # for each single class / set,
+            # for each single class / class,
             #    we know which pixels are intersection between both
             #    classification_layers
-            # combine_sets[0].shape[0] = number of sets (classes)
-            # combine_sets[0].shape[1] = number of pixels inside a single DEM
-            combine_sets = np.array(
+            # combine_classes[0].shape[0] = number of classes
+            # combine_classes[0].shape[1] = number of pixels inside a single DEM
+            combine_classes = np.array(
                 [
-                    self.classes_masks[0][set_idx][:]
-                    == self.classes_masks[1][set_idx][:]
-                    for set_idx in range(0, len(self.classes_masks[0]))
+                    self.classes_masks[0][class_idx][:]
+                    == self.classes_masks[1][class_idx][:]
+                    for class_idx in range(0, len(self.classes_masks[0]))
                 ]
             )
-            coherent_mask = np.all(combine_sets, axis=0)
+            coherent_mask = np.all(combine_classes, axis=0)
             mode_masks.append(mode_masks[0] * coherent_mask)
 
             # Add the exclusion one as the intersection complementary
@@ -480,7 +484,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         # is only considered for the intersection-exclusion
         class_masks = self.classes_masks[0]
 
-        # Compute stats for all classes
+        # Compute stats for each class
         if class_masks is not None:
             for idx, (class_name, class_item) in enumerate(
                 self.classes.items()
@@ -526,29 +530,6 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
             classif_name=self.name, input_stats=stats_list, mode_name=mode_name
         )
         return stats_dataset
-
-    def _create_output_dir(self):
-        """
-        Create folder stats results
-        :return: None
-        """
-        # Create stats dir
-        self._stats_dir = os.path.join(
-            self._output_dir, get_out_dir("_stats_dir"), self.name
-        )
-        os.makedirs(self._stats_dir, exist_ok=True)
-
-        # Create histograms dir
-        self._histograms_dir = os.path.join(
-            self._output_dir, get_out_dir("_histograms_dir"), self.name
-        )
-        os.makedirs(self._histograms_dir, exist_ok=True)
-
-        # Create plots dir
-        self._plots_dir = os.path.join(
-            self._output_dir, get_out_dir("snapshots_dir"), self.name
-        )
-        os.makedirs(self._plots_dir, exist_ok=True)
 
     def _create_class_masks(self):
         """
@@ -630,6 +611,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
             if array.size:
                 computed_metric = metric_object.compute_metric(array)
                 # Format output list according to the metric type
+                # Round the float results
                 if metric_object.type == "scalar":
                     metric_results[metric_name] = round(
                         float(computed_metric), 5
@@ -647,11 +629,11 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                         computed_metric[1],
                     )
             else:
-                # if the input array is empty, the metric is np.nan
-                if metric_object.type == "vector":
-                    metric_results[metric_name] = (np.nan, np.nan)
-                elif metric_object.type == "scalar":
+                # If the input array is empty, the metric is np.nan
+                if metric_object.type == "scalar":
                     metric_results[metric_name] = np.nan
+                elif metric_object.type == "vector":
+                    metric_results[metric_name] = (np.nan, np.nan)
 
         return metric_results
 

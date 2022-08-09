@@ -75,7 +75,7 @@ class StatsDataset:
         # Dictionary with the different classification layers
         # and the modes of each layer
         self.classif_layers_and_modes = {}
-        # Altitude diff map
+        # Image map
         self.image = image
         # List of xr.Dataset for each classification layer
         self.classif_layers_dataset = []
@@ -116,7 +116,7 @@ class StatsDataset:
             # Add the created dataset to the classif_layers_dataset list
             self.classif_layers_dataset.append(new_dataset)
 
-        # Indicator name of the image and stats
+        # Image and stats indicator name
         if mode_name == "standard":
             image_indicator = "image_by_class"
             stats_indicator = "stats_by_class"
@@ -124,7 +124,7 @@ class StatsDataset:
             image_indicator = "image_by_class_" + mode_name
             stats_indicator = "stats_by_class_" + mode_name
 
-        # Add the mode to the corresponding classification layer name on the
+        # Add the mode of the corresponding classification layer on the
         # classif_layers_and_modes dictionary
         self.classif_layers_and_modes[classif_name]["modes"].append(mode_name)
         # Get the corresponding dataset idx
@@ -134,16 +134,15 @@ class StatsDataset:
         # Initialize the classification layer classes
         classes = list(np.arange(len(input_stats)))
         # Define coords, the third col is the indicator
-        # with the classification layer name
+        # with the number of classes
         coords_classification_layers = [
             self.classif_layers_dataset[dataset_idx].coords["row"],
             self.classif_layers_dataset[dataset_idx].coords["col"],
             classes,
         ]
-        # Initialize the data of the image by class
+        # Initialize the image data by class
         # Each dataset has one xr.DataArray per mode indicating
-        # the image
-        # by class of this mode
+        # the image by class
         image_maps = np.full(
             (
                 self.image.shape[0],
@@ -207,7 +206,6 @@ class StatsDataset:
         for _, mode_name_item in enumerate(
             self.classif_layers_and_modes[classif_name]["modes"]
         ):
-
             # Get the dataset idx of the corresponding classification layer
             dataset_idx = list(self.classif_layers_and_modes.keys()).index(
                 classif_name

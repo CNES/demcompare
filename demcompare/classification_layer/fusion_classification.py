@@ -134,7 +134,7 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         self.map_image.append(map_fusion)
         # Save results
         if self.save_results:
-            self.save_map_img(map_fusion, "0")
+            self.save_map_img(map_fusion, 0)
 
     def _merge_classes_and_create_classes_masks(self, map_idx):
         """

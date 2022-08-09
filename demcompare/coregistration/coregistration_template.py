@@ -161,6 +161,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         # Give the default value if the required element
         # is not in the configuration
         if "method_name" not in cfg:
+            # Necessary disable to allow the default method
             cfg["method_name"] = self.method_name  # pylint:disable=no-member
         if "sampling_source" not in cfg:
             cfg["sampling_source"] = self._SAMPLING_SOURCE

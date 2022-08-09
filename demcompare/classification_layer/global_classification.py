@@ -111,5 +111,4 @@ class GlobalClassificationLayer(ClassificationLayerTemplate):
         self.map_image.append(map_img)
         # If save_results, create map_dataset and save
         if self.save_results:
-            indicator = len(self.map_image) - 1
-            self.save_map_img(map_img, indicator)
+            self.save_map_img(map_img, 0)

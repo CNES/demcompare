@@ -253,10 +253,14 @@ ignore-on-opaque-inference=yes
 # for classes with dynamically set attributes). This supports the use of
 # qualified names.
 <<<<<<< HEAD
+<<<<<<< HEAD
 ignored-classes=optparse.Values,thread._local,_thread._local
 =======
 ignored-classes=Coregistration
 >>>>>>> e5f981e... fix: update coregistration factory and template, clean, pylint clean,
+=======
+ignored-classes=Coregistration, Metric, ClassificationLayer
+>>>>>>> 089ffda... refactor: add exceptions on pylintrc due to no-member errors
 
 # List of module names for which member attributes should not be checked
 # (useful for modules/projects where namespaces are manipulated during runtime
