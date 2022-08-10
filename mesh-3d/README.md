@@ -105,11 +105,6 @@ source /venv/bin/activate
 mesh_3d /path/to/config.json
 ```
 
-**TODO**:
-* [ ] Take into account texture parameters in the configuration file
-* [ ] Implement texturing
-* [ ] Implement parameters for each method + check
-
 ## Documentation
 
 Go in docs/ directory

@@ -24,6 +24,8 @@ Define classes for handling common objects
 
 from typing import Union
 
+import numpy as np
+
 import pandas as pd
 import open3d as o3d
 
@@ -48,6 +50,33 @@ class PointCloud(object):
 
         self.df = df
         self.o3d_pcd = o3d_pcd
+
+    def set_df_from_vertices(self, vertices: np.ndarray) -> None:
+        """Set point coordinates in the pandas DataFrame"""
+        self.df = pd.DataFrame(data=np.asarray(vertices, dtype=np.float64), columns=["x", "y", "z"])
+
+    def set_df_colors(self, colors: np.ndarray, color_names: list) -> None:
+        """Set color attributes per point in the pandas DataFrame"""
+        colors = np.asarray(colors)
+
+        for c in color_names:
+            if c not in COLORS:
+                raise ValueError(f"{c} is not a possible color. Should be in {COLORS}.")
+
+        if colors.shape[1] != len(color_names):
+            raise ValueError(f"The number of columns ({colors.shape[1]}) is not equal to the number "
+                             f"of column names ({len(color_names)}).")
+
+        self.df[color_names] = colors
+
+    def set_df_normals(self, normals: np.ndarray) -> None:
+        """Set normal attributes per point in the pandas DataFrame"""
+        normals = np.asarray(normals)
+
+        if normals.shape[1] != 3:
+            raise ValueError(f"Normals should have three columns (x, y, z). Found ({normals.shape[1]}).")
+
+        self.df[NORMALS] = normals
 
     def get_colors(self) -> pd.DataFrame:
         """Get color data"""
@@ -80,7 +109,7 @@ class PointCloud(object):
         if self.df is None:
             raise ValueError("Point cloud (pandas DataFrame) is not assigned.")
         else:
-            return "class" in self.df.head()
+            return "classification" in self.df.head()
 
     def serialize(self, filepath: str, **kwargs) -> None:
         """Serialize point cloud"""
@@ -106,8 +135,44 @@ class Mesh(object):
 
         self.o3d_mesh = o3d_mesh
 
-    def set_df_from_vertices(self, vertices):
+    def set_df_from_vertices(self, vertices) -> None:
         self.df = pd.DataFrame(data=vertices, columns=["p1", "p2", "p3"])
+
+    def set_o3d_mesh_from_df(self) -> None:
+        if self.df is None:
+            raise ValueError("Could not set open3d mesh from df mesh because it is empty.")
+        if self.pcd.df is None:
+            raise ValueError("Could not set open3d mesh from df pcd because it is empty.")
+
+        self.o3d_mesh = o3d.geometry.TriangleMesh(
+            vertices=o3d.utility.Vector3dVector(self.pcd.df[["x", "y", "z"]].to_numpy()),
+            triangles=o3d.utility.Vector3iVector(self.df[["p1", "p2", "p3"]].to_numpy())
+        )
+
+        # Add attributes if available
+        if self.pcd.has_colors:
+            self.o3d_mesh.vertex_colors = o3d.utility.Vector3dVector(self.pcd.df[["red", "green", "blue"]].to_numpy())
+        if self.pcd.has_normals:
+            self.o3d_mesh.vertex_normals = o3d.utility.Vector3dVector(self.pcd.df[NORMALS].to_numpy())
+        # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
+        #  point order might be different
+
+    def set_df_from_o3d_mesh(self) -> None:
+        if self.o3d_mesh is None:
+            raise ValueError("Could not set df from open3d mesh because it is empty.")
+
+        # Set face indexes
+        self.set_df_from_vertices(np.asarray(self.o3d_mesh.triangles))
+
+        # Set point cloud data
+        self.pcd.set_df_from_vertices(np.asarray(self.o3d_mesh.vertices))
+        # Add attributes if available
+        if self.o3d_mesh.has_vertex_colors():
+            self.pcd.set_df_colors(colors=np.asarray(self.o3d_mesh.vertex_colors), color_names=["red", "green", "blue"])
+        if self.o3d_mesh.has_vertex_normals():
+            self.pcd.set_df_normals(np.asarray(self.o3d_mesh.vertex_normals))
+        # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
+        #  point order might be different
 
     @property
     def has_texture(self) -> bool:
@@ -125,7 +190,7 @@ class Mesh(object):
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
         else:
-            return "class" in self.df.head()
+            return "classification" in self.df.head()
 
     def serialize(self, filepath: str, **kwargs) -> None:
         """Serialize mesh"""
@@ -135,4 +200,4 @@ class Mesh(object):
     def deserialize(self, filepath: str) -> None:
         """Deserialize mesh"""
         from .mesh_io import deserialize_mesh
-        deserialize_mesh(filepath)
+        self.pcd.df, self.df = deserialize_mesh(filepath)
