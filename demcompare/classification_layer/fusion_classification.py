@@ -24,13 +24,14 @@ Mainly contains the FussionClassification class.
 import collections
 import itertools
 import logging
-from typing import List
+from typing import Dict, List
 
 # Third party imports
 import numpy as np
 from json_checker import Or
 
-from ..initialization import ConfigType
+from ..helpers_init import ConfigType
+from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
 
@@ -47,70 +48,80 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
 
     def __init__(
         self,
-        classification_layers: List[ClassificationLayerTemplate],
-        map_idx: int,
+        classification_layer_masks: List[ClassificationLayer],
+        support: str,
+        name: str,
+        metrics: List = None,
     ):
         """
-        :param classification_layers: list of ClassificationLayers
-        :type classification_layers: List[ClassificationLayerTemplate]
-        :map_idx: index map to fusion from each ClassificationLayer
-        :type map_idx: int
+        :param classification_layer_masks: list of ClassificationLayers
+        :type classification_layer_masks: List[ClassificationLayerTemplate]
+        :support: support dem, ref or sec
+        :type support: str
+        :name: layer name
+        :type name: str
+        :metrics: optional input metrics
+        :type metrics: List
         """
 
         # If only one classification_layer is given, raise error
-        if len(classification_layers) == 1:
+        if len(classification_layer_masks) == 1:
             logging.error(
                 "There must be at least 2"
-                " classification_layers"
+                " classification_layer_masks"
                 " to be merged together"
             )
             raise self.NotEnoughDataToClassificationLayerError
         # Store classification layers
-        self.classification_layers = classification_layers
-        # Initialize and fill cfg
-        cfg = self.fill_conf_and_schema()
-        # Fusion layer name
-        self.name = "fusion_layer" + str(map_idx)
-
+        self.classification_layer_masks = classification_layer_masks
+        # Initialize fusion conf
+        cfg = self.fill_fusion_conf(metrics)
+        # Support
+        self.support = support
+        # Name
+        self.name = name
         super().__init__(
             name=self.name,
-            classification_layer_kind="classification_layers",
-            dem=classification_layers[0].dem,
+            classification_layer_kind="classification_layer_masks",
+            dem=classification_layer_masks[0].dem,
             cfg=cfg,
         )
 
         # Create classification_layer classes
         # (labelled map with associated classes)
-        self._merge_classes_and_create_classes_masks(map_idx)
+        self._merge_classes_and_create_classes_masks()
         self._create_labelled_map()
 
-        logging.info("ClassificationLayer created as: {}".format(self))
+        logging.debug("ClassificationLayer created as: {}".format(self))
 
-    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
+    def fill_fusion_conf(self, metrics: List = None) -> ConfigType:
         """
-        Add default values to the dictionary if there are missing
-        elements and define the configuration schema
+        Fill the fusion layer configuration
 
-        :param cfg: coregistration configuration
-        :type cfg: ConfigType
-        :return cfg: coregistration configuration updated
+        :param metrics: optinal input metrics
+        :type metrics: List
+        :return cfg: configuration updated
         :rtype: ConfigType
         """
         # Initialize cfg layer with necessary parameters
-        cfg = {}
-        cfg["save_results"] = self.classification_layers[0].save_results
-        cfg["remove_outliers"] = self.classification_layers[0].remove_outliers
-        cfg["output_dir"] = self.classification_layers[0]._output_dir
-        cfg["type"] = "segmentation"
-        cfg["no_data"] = self.classification_layers[0].nodata
-        if "metric" not in cfg:
-            cfg.update(self._DEFAULT_METRICS)
+        cfg: Dict = {}
+        cfg["save_results"] = str(
+            self.classification_layer_masks[0].save_results
+        )
+        cfg["remove_outliers"] = str(
+            self.classification_layer_masks[0].remove_outliers
+        )
+        cfg["output_dir"] = self.classification_layer_masks[0]._output_dir
+        cfg["type"] = "fusion"
+        cfg["nodata"] = self.classification_layer_masks[0].nodata
+        # If metrics have been defined, add them
+        cfg["metrics"] = metrics
 
         self.schema = {
             "save_results": bool,
             "output_dir": Or(str, None),
-            "no_data": Or(float, int),
-            "type": "segmentation",
+            "nodata": Or(float, int),
+            "type": "fusion",
             "metrics": list,
             "remove_outliers": bool,
         }
@@ -129,31 +140,34 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         map_fusion = np.ones(dems_shape) * self.nodata
         for idx, (_, class_item) in enumerate(self.classes.items()):
             # Fill fusion map with classes masks
-            map_fusion[np.where(self.classes_masks[0][idx])] = class_item
+            map_fusion[
+                np.where(self.classes_masks[self.support][idx])
+            ] = class_item
         # Add map_fusion on the map_image
-        self.map_image.append(map_fusion)
+        self.map_image[self.support] = map_fusion
         # Save results
         if self.save_results:
-            self.save_map_img(map_fusion, 0)
+            self.save_map_img(map_fusion, self.support)
 
-    def _merge_classes_and_create_classes_masks(self, map_idx):
+    def _merge_classes_and_create_classes_masks(self):
         """
         Merge classes of the classification layers
         and create the classes_masks
+
         :return: None
         """
         # Create all combinations and new classes
         all_combi_labels, self.classes = self._create_merged_classes(
-            self.classification_layers
+            self.classification_layer_masks
         )
         # Dem shape
         dems_shape = self.dem["image"].data.shape
         # Create dict to easily access each classification layer
         dict_classification_layers = {
-            classif.name: classif for classif in self.classification_layers
+            classif.name: classif for classif in self.classification_layer_masks
         }
         # Iterate over the fusionned maps
-        for _ in self.classification_layers:
+        for _ in self.classification_layer_masks:
             # Initialize support masks
             support_masks = []
             # Iterate over all combined layers
@@ -163,17 +177,9 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
                 for elm in combi:
                     layer_name = elm[0]
                     label_idx = elm[1]
-                    if map_idx == 0:
-                        class_mask = dict_classification_layers[
-                            layer_name
-                        ].classes_masks[map_idx][label_idx]
-                    # If map_idx is 1, access the maximum available
-                    # class mask (1 if both are defined,
-                    # 0 if only one is defined)
-                    else:
-                        class_mask = dict_classification_layers[
-                            layer_name
-                        ].classes_masks[-1][label_idx]
+                    class_mask = dict_classification_layers[
+                        layer_name
+                    ].classes_masks[self.support][label_idx]
 
                     # Resulting mask is the superposition of
                     # all combined layer's mask
@@ -181,22 +187,22 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
 
                 # Append new classe's support mask
                 support_masks.append(masks)
-            self.classes_masks.append(support_masks)
+            self.classes_masks[self.support] = support_masks
 
     @staticmethod
     def _create_merged_classes(
-        classification_layers: List[ClassificationLayerTemplate],
+        classification_layer_masks: List[ClassificationLayer],
     ):
         """
         Generate the 'classes' dictionary for merged layers
-        :param classification_layers: list of classes to merge
-        :type classification_layers: List[ClassificationLayerTemplate]
+        :param classification_layer_masks: list of classes to merge
+        :type classification_layer_masks: List[ClassificationLayer]
         :return:
         """
         # Initialize list of all classes to be combined
         classes_to_merge = []
         # Iterate over classification layers
-        for classification_layer in classification_layers:
+        for classification_layer in classification_layer_masks:
             # Add all the classes of each classification layer
             classes_to_merge.append(
                 [

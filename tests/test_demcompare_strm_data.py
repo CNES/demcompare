@@ -34,7 +34,7 @@ import pytest
 
 # Demcompare imports
 import demcompare
-from demcompare.initialization import read_config_file, save_config_file
+from demcompare.helpers_init import read_config_file, save_config_file
 from demcompare.output_tree_design import get_out_file_path
 
 # Tests helpers
@@ -231,32 +231,20 @@ def test_demcompare_strm_test_data():
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test coreg_DEM.tif
-        img = get_out_file_path("coreg_DEM.tif")
+        # Test coreg_SEC.tif
+        img = get_out_file_path("coreg_SEC.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test reproj_coreg_DEM.tif
-        img = get_out_file_path("reproj_coreg_DEM.tif")
+        # Test reproj_coreg_SEC.tif
+        img = get_out_file_path("reproj_coreg_SEC.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test reproj_coreg_REF.tif
         img = get_out_file_path("reproj_coreg_REF.tif")
-        ref_output_data = os.path.join(test_ref_output_path, img)
-        output_data = os.path.join(tmp_dir_, img)
-        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
-
-        # TEST WAVEFORM TIFS
-
-        img = get_out_file_path("dh_row_wise_wave_detection.tif")
-        ref_output_data = os.path.join(test_ref_output_path, img)
-        output_data = os.path.join(tmp_dir_, img)
-        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
-
-        img = get_out_file_path("dh_col_wise_wave_detection.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)

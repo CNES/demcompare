@@ -44,7 +44,7 @@ from scipy.optimize import leastsq
 
 # Demcompare imports
 from ..dem_tools import DEFAULT_NODATA, create_dem
-from ..initialization import ConfigType
+from ..helpers_init import ConfigType
 from ..output_tree_design import get_out_dir
 from ..transformation import Transformation
 from .coregistration import Coregistration
@@ -82,13 +82,13 @@ class NuthKaabInternal(
          "estimated_initial_shift_y": optional. estimated initial
            y shift. int or float. 0 by default,
          "output_dir": optional output directory. str. If given,
-           the coreg_dem is saved,
+           the coreg_sec is saved,
          "save_coreg_method_outputs": optional. bool. Requires output_dir
            to be set. If activated, the outputs of the coregistration method
            (such as nuth et kaab iteration plots) are saved,
          "save_internal_dems": optional. bool. Requires output_dir to be set.
            If activated, the internal dems of the coregistration
-           such as reproj_dem, reproj_ref, reproj_coreg_dem,
+           such as reproj_dem, reproj_ref, reproj_coreg_sec,
            reproj_coreg_ref, initial_dh and final_dh are saved.
         }
 
@@ -100,7 +100,7 @@ class NuthKaabInternal(
         # Number of iterations specific to Nuth et kaab internal algorithm
         self.iterations = self.cfg["number_of_iterations"]
         # Aspect bounds for the Nuth et kaab internal algorithm
-        self.aspect_bounds: np.array = None
+        self.aspect_bounds: Union[np.ndarray, None] = None
 
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
@@ -142,31 +142,37 @@ class NuthKaabInternal(
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :type sec: xarray Dataset
         :param ref: ref xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :type ref: xarray Dataset
         :return: transformation, reproj_coreg_sec xr.DataSet,
                  reproj_coreg_ref xr.DataSet. The xr.Datasets containing :
 
-                 - image : 2D (row, col) xr.DataArray float32
-                 - georef_transform: 1D (trans_len) xr.DataArray
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :rtype: Tuple[Transformation, xr.Dataset, xr.Dataset]
         """
         # Copy dataset and extract image array
-        dem_im = sec["image"].data
+        sec_im = sec["image"].data
         ref_im = ref["image"].data
 
         # Set target dem grid for interpolation purpose
-        xgrid = np.arange(dem_im.shape[1])
-        ygrid = np.arange(dem_im.shape[0])
+        xgrid = np.arange(sec_im.shape[1])
+        ygrid = np.arange(sec_im.shape[0])
         # Set spline interpolation
         spline_1, spline_2 = self.interpolate_dem_on_grid(ref_im, xgrid, ygrid)
 
         # Compute inital_dh and initialize ref
-        initial_dh = ref_im - dem_im
+        initial_dh = ref_im - sec_im
         coreg_ref = ref_im
 
         # Compute median, nmad and initial elevation difference plot
@@ -190,9 +196,9 @@ class NuthKaabInternal(
             )
         pl.close()
         # Initialize offsets
-        x_offset, y_offset = 0, 0
-        logging.info("Nuth & Kaab iterations: {}".format(self.iterations))
-        coreg_dem = dem_im
+        x_offset, y_offset = 0.0, 0.0
+        logging.debug("Nuth & Kaab iterations: {}".format(self.iterations))
+        coreg_sec = sec_im
 
         # Compute bounds for different aspect slices
         self.aspect_bounds = np.arange(0, 2 * np.pi, np.pi / 36)
@@ -200,9 +206,9 @@ class NuthKaabInternal(
             # Remove bias from ref
             coreg_ref -= median
             # Compute new elevation difference
-            dh = coreg_dem - coreg_ref
+            dh = coreg_sec - coreg_ref
             # Compute slope and aspect
-            slope, aspect = self._grad2d(coreg_dem)
+            slope, aspect = self._grad2d(coreg_sec)
 
             if self.save_coreg_method_outputs:
                 output_dir_ = os.path.join(
@@ -219,7 +225,7 @@ class NuthKaabInternal(
                 dh, slope, aspect, plot_file=plotfile
             )
 
-            logging.info(
+            logging.debug(
                 "# {} - Offset in pixels : "
                 "({:.2f},{:.2f}), -bias : ({:.2f})".format(
                     i + 1, east, north, z
@@ -243,15 +249,15 @@ class NuthKaabInternal(
 
             # Crop dems with offset
             coreg_ref = self.crop_dem_with_offset(znew, x_offset, y_offset)
-            coreg_dem = self.crop_dem_with_offset(dem_im, x_offset, y_offset)
+            coreg_sec = self.crop_dem_with_offset(sec_im, x_offset, y_offset)
 
             # Logging of some statistics
-            diff = coreg_ref - coreg_dem
+            diff = coreg_ref - coreg_sec
             diff = diff[np.isfinite(diff)]
             nmad_new = 1.4826 * np.median(np.abs(diff - np.median(diff)))
             median = np.median(diff)
 
-            logging.info(
+            logging.debug(
                 (
                     "\tMedian : {0:.2f}, NMAD = {1:.2f}, Gain : {2:.2f}".format(
                         median, nmad_new, (nmad_new - nmad_old) / nmad_old * 100
@@ -262,42 +268,42 @@ class NuthKaabInternal(
 
         # Initialize coregistered classification layers
         coreg_ref_classif = None
-        coreg_dem_classif = None
+        coreg_sec_classif = None
         # If classification layers in ref, interpolate and crop them
         # To have the same modifications as ref
         if "indicator" in ref.coords:
             coreg_ref_classif = self.interpolate_classif_layers(
-                ref.classification_layers, xgrid, ygrid, x_offset, y_offset
+                ref.classification_layer_masks, xgrid, ygrid, x_offset, y_offset
             )
             coreg_ref_classif = self.crop_classif_layers(
                 coreg_ref_classif, x_offset, y_offset
             )
         if "indicator" in sec.coords:
-            coreg_dem_classif = self.crop_classif_layers(
-                sec.classification_layers, x_offset, y_offset
+            coreg_sec_classif = self.crop_classif_layers(
+                sec.classification_layer_masks, x_offset, y_offset
             )
 
         # Generate the dataset dems
-        coreg_dem_dataset = create_dem(
-            coreg_dem,
+        coreg_sec_dataset = create_dem(
+            coreg_sec,
             transform=sec.georef_transform.data,
-            no_data=DEFAULT_NODATA,
+            nodata=DEFAULT_NODATA,
             img_crs=sec.crs,
-            classification_layers=coreg_dem_classif,
+            classification_layer_masks=coreg_sec_classif,
         )
         coreg_ref_dataset = create_dem(
             coreg_ref,
             transform=sec.georef_transform.data,
-            no_data=DEFAULT_NODATA,
+            nodata=DEFAULT_NODATA,
             img_crs=sec.crs,
-            classification_layers=coreg_ref_classif,
+            classification_layer_masks=coreg_ref_classif,
         )
-        logging.info(
+        logging.debug(
             "Nuth & Kaab Final Offset in pixels (east, north):"
             "({:.2f},{:.2f})".format(x_offset, y_offset)
         )
         # Display
-        final_dh = coreg_ref - coreg_dem
+        final_dh = coreg_ref - coreg_sec
         median = np.median(final_dh[np.isfinite(final_dh)])
         nmad_old = 1.4826 * np.median(
             np.abs(final_dh[np.isfinite(final_dh)] - median)
@@ -316,6 +322,7 @@ class NuthKaabInternal(
                 dpi=100,
                 bbox_inches="tight",
             )
+        pl.close()
         z_offset = float(np.nanmean(final_dh))
         transform = Transformation(
             x_offset=x_offset,
@@ -326,7 +333,7 @@ class NuthKaabInternal(
             estimated_initial_shift_y=self.estimated_initial_shift_y,
             adapting_factor=self.adapting_factor,
         )
-        return transform, coreg_dem_dataset, coreg_ref_dataset
+        return transform, coreg_sec_dataset, coreg_ref_dataset
 
     @staticmethod
     def interpolate_dem_on_grid(
@@ -576,7 +583,12 @@ class NuthKaabInternal(
         yfit = peval(self.aspect_bounds, plsq[0])
         if plot_file:
             self._save_fit_plots(
-                plot_file, aspect, target, target_filt, slice_filt_median, yfit
+                str(plot_file),
+                aspect,
+                target,
+                target_filt,
+                slice_filt_median,
+                yfit,
             )
         a, b, c = plsq[0]
         east = a * np.sin(b)  # with b=0 when north (origin=y-axis)
@@ -707,7 +719,7 @@ class NuthKaabInternal(
         pl.savefig(plot_file, dpi=100, bbox_inches="tight")
         pl.close()
 
-    def compute_results(self):
+    def save_results_dict(self):
         """
         Save the coregistration results on a Dict
         The altimetric and coregistration results are saved.
@@ -715,8 +727,8 @@ class NuthKaabInternal(
 
         :return: None
         """
-        # Call generic compute_results before supercharging
-        super().compute_results()
+        # Call generic save_results_dict before supercharging
+        super().save_results_dict()
         # Add Nuth offsets to demcompare_results
         self.demcompare_results["coregistration_results"]["dx"][
             "nuth_offset"

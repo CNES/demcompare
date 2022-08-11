@@ -29,7 +29,7 @@ with coregistration configuration "method_name"
 import logging
 
 # Demcompare imports
-from ..initialization import ConfigType
+from ..helpers_init import ConfigType
 
 
 class Coregistration:

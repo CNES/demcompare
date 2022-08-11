@@ -32,6 +32,7 @@ TODO:
 # pylint:disable = duplicate-code
 # Standard imports
 import os
+from typing import Dict
 
 # Third party imports
 import numpy as np
@@ -42,7 +43,7 @@ import xarray as xr
 # Demcompare imports
 from demcompare import dataset_tools, dem_tools
 from demcompare.dem_tools import DEFAULT_NODATA
-from demcompare.initialization import read_config_file
+from demcompare.helpers_init import read_config_file
 
 # Tests helpers
 from .helpers import demcompare_path, demcompare_test_data_path
@@ -68,7 +69,7 @@ def test_load_dem():
     dem = dem_tools.load_dem(cfg["input_ref"]["path"])
 
     # Define ground truth values
-    gt_no_data = -32768.0
+    gt_nodata = -32768.0
     gt_xres = 0.000833333333333333
     gt_yres = -0.0008333333333333334
     gt_plani_unit = "deg"
@@ -86,7 +87,7 @@ def test_load_dem():
         ]
     )
     # Test that the loaded dem has the groud truth values
-    assert gt_no_data == dem.attrs["no_data"]
+    assert gt_nodata == dem.attrs["nodata"]
     np.testing.assert_allclose(gt_xres, dem.attrs["xres"], rtol=1e-02)
     np.testing.assert_allclose(gt_yres, dem.attrs["yres"], rtol=1e-02)
     assert gt_plani_unit == dem.attrs["plani_unit"]
@@ -376,7 +377,7 @@ def test_reproject_dems():
     )
 
     # Define ground truth values
-    gt_intersection_roi = (600255.0, 4990745.0, 689753.076, 5090117.757)
+    gt_intersection_roi = (601255.0, 4992245.0, 690753.076977, 5091617.757489)
     # Since sampling value is "sec",
     # output resolutions is "sec"'s resolution
     gt_output_yres = -500.00
@@ -452,8 +453,8 @@ def test_compute_dems_diff():
         dtype=np.float32,
     )
 
-    sec_dataset = dem_tools.create_dem(data=sec, no_data=-37)
-    ref_dataset = dem_tools.create_dem(data=ref, no_data=99)
+    sec_dataset = dem_tools.create_dem(data=sec, nodata=-37)
+    ref_dataset = dem_tools.create_dem(data=ref, nodata=99)
 
     # Define ground truth value
     diff_gt = np.array(
@@ -487,7 +488,7 @@ def test_compute_dems_diff():
         dtype=np.float32,
     )
 
-    sec_dataset = dem_tools.create_dem(data=sec, no_data=-33)
+    sec_dataset = dem_tools.create_dem(data=sec, nodata=-33)
     ref_dataset = dem_tools.create_dem(data=ref)
 
     # Define ground truth value
@@ -545,18 +546,18 @@ def test_create_dem():
         transform=trans,
         input_img=cfg["input_sec"]["path"],
         bounds=bounds_dem,
-        no_data=nodata,
+        nodata=nodata,
     )
     # Define the ground truth values
     # The created dataset should have the gironde_test_data DSM georef
     gt_img_crs = "EPSG:32630"
     gt_zunit = "m"
-    gt_no_data = -3
+    gt_nodata = -3
     gt_plani_unit = "m"
 
     # Test that the created dataset has the ground truth values
     np.testing.assert_allclose(trans, dataset.georef_transform, rtol=1e-02)
-    np.testing.assert_allclose(gt_no_data, dataset.attrs["no_data"], rtol=1e-02)
+    np.testing.assert_allclose(gt_nodata, dataset.attrs["nodata"], rtol=1e-02)
     assert gt_plani_unit == dataset.attrs["plani_unit"]
     assert gt_zunit == dataset.attrs["zunit"]
     np.testing.assert_allclose(bounds_dem, dataset.attrs["bounds"], rtol=1e-02)
@@ -578,7 +579,7 @@ def test_create_dem():
         transform=trans,
         input_img=cfg["input_sec"]["path"],
         bounds=bounds_dem,
-        no_data=nodata,
+        nodata=nodata,
         geoid_georef=True,
     )
 
@@ -623,35 +624,36 @@ def test_create_dem_with_classification_layers():
     )
     # Create the sec dataset
     dataset_dem = dem_tools.create_dem(
-        data=data, classification_layers=seg_classif_layer
+        data=data, classification_layer_masks=seg_classif_layer
     )
 
     # Test that the classification layers have been correctly loaded
     np.testing.assert_array_equal(
-        dataset_dem.classification_layers.data, classif_data
+        dataset_dem.classification_layer_masks.data, classif_data
     )
     np.testing.assert_array_equal(
-        dataset_dem.classification_layers.indicator.data, classif_name
+        dataset_dem.classification_layer_masks.indicator.data, classif_name
     )
 
     # Test with input classification layer as a dictionary ---------------
 
     # Initialize the classification layer data as a dictionary
-    classif_layer_dict = {}
+    classif_layer_dict: Dict = {}
     classif_layer_dict["map_arrays"] = classif_data
     classif_layer_dict["names"] = classif_name
 
     # Create the sec dataset
     dataset_dem_from_dict = dem_tools.create_dem(
-        data=data, classification_layers=classif_layer_dict
+        data=data, classification_layer_masks=classif_layer_dict
     )
 
     # Test that the classification layers have been correctly loaded
     np.testing.assert_array_equal(
-        dataset_dem_from_dict.classification_layers.data, classif_data
+        dataset_dem_from_dict.classification_layer_masks.data, classif_data
     )
     np.testing.assert_array_equal(
-        dataset_dem_from_dict.classification_layers.indicator.data, classif_name
+        dataset_dem_from_dict.classification_layer_masks.indicator.data,
+        classif_name,
     )
 
 
@@ -738,7 +740,7 @@ def test_compute_dem_slope():
     # Test that the output_slope is the same as ground_truth
     np.testing.assert_allclose(
         gt_slope,
-        output_slope["classification_layers"].data[:, :, 0],
+        output_slope["ref_slope"].data[:, :],
         rtol=1e-02,
     )
 
@@ -789,7 +791,7 @@ def test_verify_fusion_layers():
             "type": "slope",
             "ranges": [0, 10, 25, 50, 90],
         },
-        "fusion": {"sec": ["Slope0", "Status"]},
+        "Fusion0": {"sec": ["Slope0", "Status"], "type": "fusion"},
     }
 
     dem_tools.verify_fusion_layers(sec, input_classif_cfg, "sec")
@@ -813,7 +815,7 @@ def test_verify_fusion_layers():
             "type": "slope",
             "ranges": [0, 10, 25, 50, 90],
         },
-        "fusion": {"ref": ["Slope0", "Status"]},
+        "Fusion0": {"ref": ["Slope0", "Status"], "type": "fusion"},
     }
 
     dem_tools.verify_fusion_layers(sec, input_classif_cfg, "sec")
@@ -830,7 +832,7 @@ def test_verify_fusion_layers():
             "type": "slope",
             "ranges": [0, 10, 25, 50, 90],
         },
-        "fusion": {"ref": ["Slope0", "Status"]},
+        "Fusion0": {"ref": ["Slope0", "Status"], "type": "fusion"},
     }
 
     # Test that an error is raised

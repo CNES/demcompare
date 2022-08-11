@@ -53,12 +53,12 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
     img_crs: Union[rasterio.crs.CRS, None] = None,
     input_img: Union[str, None] = None,
     bounds: rasterio.coords.BoundingBox = None,
-    no_data: float = None,
+    nodata: float = None,
     geoid_path: Union[str, None] = None,
     plani_unit: u = None,
     zunit: str = "m",
     source_rasterio: Dict[str, rasterio.DatasetReader] = None,
-    classification_layers: Union[Dict, xr.DataArray] = None,
+    classification_layer_masks: Union[Dict, xr.DataArray] = None,
 ) -> xr.Dataset:
     """
     Creates dataset from input array and transform,
@@ -75,7 +75,7 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
                 - d: rotation about y-axis,
                 - e: pixel size in the y-direction in map units, negative
 
-    :classification_layers: 3D (row, col, indicator) xarray.DataArray:
+    :classification_layer_masks: 3D (row, col, indicator) xarray.DataArray:
 
                 It contains the maps of all classification layers,
                 being the indicator a list with each
@@ -83,7 +83,7 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
 
     :attributes:
 
-                - no_data : image nodata value. float
+                - nodata : image nodata value. float
                 - input_img : image input path. str or None
                 - crs : image crs. rasterio.crs.CRS
                 - xres : x resolution (value of transform[1]). float
@@ -93,7 +93,6 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
                 - bounds : image bounds. rasterio.coords.BoundingBox
                 - geoid_path : geoid path. str or None
                 - source_rasterio : rasterio's DatasetReader object or None.
-                - support_list : list of support for each classif. List[str]
 
     :param data: image data
     :type data: np.ndarray
@@ -103,20 +102,22 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
     :type input_img: str
     :param bounds: dem bounds
     :type bounds: rasterio.coords.BoundingBox or None
-    :param no_data: no_data value in the image
-    :type no_data: float or None
+    :param nodata: nodata value in the image
+    :type nodata: float or None
     :param geoid_path: optional path to local geoid, default is EGM96
     :type geoid_path: str or None
     :param zunit: unit
     :type zunit: str
     :param source_rasterio: rasterio dataset reader object
     :type source_rasterio: Dict[str,rasterio.DatasetReader] or None
-    :param classification_layers: classification layers
-    :type classification_layers: Dict, xr.DataArray or None
+    :param classification_layer_masks: classification layers
+    :type classification_layer_masks: Dict, xr.DataArray or None
     :return:  xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
     :type data: xr.Dataset
     """
 
@@ -129,22 +130,22 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
     )
 
     # Add classification layers
-    if isinstance(classification_layers, dict):
+    if isinstance(classification_layer_masks, dict):
         # Define coords, the third col is the indicator
         # with the classification layer name
         coords_classification_layers = [
             dataset.coords["row"],
             dataset.coords["col"],
-            classification_layers["names"],
+            classification_layer_masks["names"],
         ]
         # Create the dataarray
-        dataset["classification_layers"] = xr.DataArray(
-            data=classification_layers["map_arrays"],
+        dataset["classification_layer_masks"] = xr.DataArray(
+            data=classification_layer_masks["map_arrays"],
             coords=coords_classification_layers,
             dims=["row", "col", "indicator"],
         )
-    elif isinstance(classification_layers, xr.DataArray):
-        dataset["classification_layers"] = classification_layers
+    elif isinstance(classification_layer_masks, xr.DataArray):
+        dataset["classification_layer_masks"] = classification_layer_masks
 
     # Add transform to dataset
     trans_len = np.arange(0, len(transform))
@@ -155,7 +156,7 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
 
     # Add image attributes to the image dataset
     dataset.attrs = {
-        "no_data": no_data,
+        "nodata": nodata,
         "input_img": input_img,
         "crs": img_crs,
         "xres": transform[1],
@@ -191,12 +192,16 @@ def reproject_dataset(
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
     :type dataset: xr.Dataset
     :param from_dataset: Dataset to get projection from
                 xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
     :type from_dataset: xr.Dataset
     :param interp: interpolation method
     :type interp: str
@@ -204,6 +209,8 @@ def reproject_dataset(
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
     :rtype: xr.Dataset
     """
 
@@ -241,7 +248,7 @@ def reproject_dataset(
     source_array = dataset["image"].data
     # Define dest_array with the output size and fill with nodata
     dest_array = np.zeros_like(from_dataset["image"].data)
-    dest_array[:, :] = from_dataset.no_data
+    dest_array[:, :] = from_dataset.nodata
     # Obtain datasets CRSs
     src_crs = rasterio.crs.CRS.from_dict(dataset.attrs["crs"])
     dst_crs = rasterio.crs.CRS.from_dict(from_dataset.attrs["crs"])
@@ -255,19 +262,21 @@ def reproject_dataset(
         dst_transform=dst_transform,
         dst_crs=dst_crs,
         resampling=interpolation_method,
-        src_nodata=dataset.attrs["no_data"],
-        dst_nodata=from_dataset.attrs["no_data"],
+        src_nodata=dataset.attrs["nodata"],
+        dst_nodata=from_dataset.attrs["nodata"],
     )
 
     # Convert output dataset's remaining nodata values to nan
-    dest_array[dest_array == dataset.attrs["no_data"]] = np.nan
+    dest_array[dest_array == dataset.attrs["nodata"]] = np.nan
     # Charge reprojected_dataset's data and nodata values
     reprojected_dataset["image"].data = dest_array
-    reprojected_dataset.attrs["no_data"] = dataset.attrs["no_data"]
+    reprojected_dataset.attrs["nodata"] = dataset.attrs["nodata"]
 
     if "indicator" in dataset.coords:
-        indicator = dataset["classification_layers"].coords["indicator"].data
-        classification_layers = np.full(
+        indicator = (
+            dataset["classification_layer_masks"].coords["indicator"].data
+        )
+        classification_layer_masks = np.full(
             (
                 reprojected_dataset["image"].shape[0],
                 reprojected_dataset["image"].shape[1],
@@ -279,9 +288,9 @@ def reproject_dataset(
         for idx in np.arange(len(indicator)):
             # Define dest_array with the output size and fill with nodata
             dest_array_classif = np.zeros_like(from_dataset["image"].data)
-            dest_array_classif[:, :] = dataset.no_data
+            dest_array_classif[:, :] = dataset.nodata
             # Get source array
-            source_array_classif = dataset["classification_layers"][
+            source_array_classif = dataset["classification_layer_masks"][
                 :, :, idx
             ].data
             # Reproject with rasterio
@@ -293,10 +302,12 @@ def reproject_dataset(
                 dst_transform=dst_transform,
                 dst_crs=dst_crs,
                 resampling=interpolation_method,
-                src_nodata=dataset.attrs["no_data"],
-                dst_nodata=from_dataset.attrs["no_data"],
+                src_nodata=dataset.attrs["nodata"],
+                dst_nodata=from_dataset.attrs["nodata"],
             )
-            classification_layers[:, :, idx].data = dest_array_classif
+            classification_layer_masks[
+                :, :, idx
+            ].data = dest_array_classif  # type: ignore
 
         # Define coords, the third col is the indicator
         # with the classification layer name
@@ -306,8 +317,8 @@ def reproject_dataset(
             indicator,
         ]
         # Create the dataarray
-        reprojected_dataset["classification_layers"] = xr.DataArray(
-            data=classification_layers,
+        reprojected_dataset["classification_layer_masks"] = xr.DataArray(
+            data=classification_layer_masks,
             coords=coords_classification_layers,
             dims=["row", "col", "indicator"],
         )
@@ -321,7 +332,7 @@ def compute_offset_adapting_factor(
     Compute the factor to adapt the coregistration offsets
     to the dem resolution
 
-    TODO: not used yet, rename and clarify with coregistration refacto
+    TODO: rename and clarify
     The name is too generic to know the usage quickly. Is the function
     in dem_tools or here ?
 
@@ -355,6 +366,8 @@ def _get_geoid_offset(
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
     :type dataset: xr.Dataset
     :param geoid_path: optional absolut geoid_path, if None egm96 is used
     :type geoid_path: str or None

@@ -57,15 +57,15 @@ class CumulativeProbabilityFunction(MetricTemplate):
         # Metric type
         self.type = "vector"
         # Plot attributes
-        self.nb_bins = None
-        self.max_diff = None
-        self.nb_nans = None
-        self.nb_pixels = None
-        self.bins_count = None
-        self.cdf = None
-        self.output_csv_path = None
-        self.output_plot_path = None
-        self.bin_step = self._BIN_STEP
+        self.nb_bins: int = None
+        self.max_diff: float = None
+        self.nb_nans: int = None
+        self.nb_pixels: int = None
+        self.bins_count: np.ndarray = None
+        self.cdf: np.ndarray = None
+        self.output_csv_path: str = None
+        self.output_plot_path: str = None
+        self.bin_step: float = self._BIN_STEP
 
         # Bin step
         if parameters:
@@ -78,11 +78,7 @@ class CumulativeProbabilityFunction(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
 
         """
         Metric computation method
@@ -194,13 +190,13 @@ class ProbabilityDensityFunction(MetricTemplate):
         # Metric type
         self.type = "vector"
         # Plot attributes
-        self.bin_step = None
-        self.width = None
-        self.filter_p98 = None
-        self.pdf = None
-        self.bins = None
-        self.output_csv_path = None
-        self.output_plot_path = None
+        self.bin_step: float = None
+        self.width: float = None
+        self.filter_p98: float = None
+        self.pdf: np.ndarray = None
+        self.bins: np.ndarray = None
+        self.output_csv_path: str = None
+        self.output_plot_path: str = None
 
         if parameters:
             if "bin_step" in parameters:
@@ -222,11 +218,7 @@ class ProbabilityDensityFunction(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 
@@ -327,8 +319,8 @@ class RatioAboveThreshold(MetricTemplate):
         super().__init__(parameters)
         # Metric type
         self.type = "vector"
-        self.ratio_above_thrshld = None
-        self.output_csv_path = None
+        self.ratio_above_thrshld: List = None
+        self.output_csv_path: str = None
         # Elevation thresholds
         if parameters:
             threshold = parameters["elevation_threshold"]
@@ -360,11 +352,7 @@ class RatioAboveThreshold(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
 
         """
         Metric computation method
@@ -381,7 +369,9 @@ class RatioAboveThreshold(MetricTemplate):
             )
         if self.output_csv_path:
             self.save_csv_metric(self.output_csv_path)
-        return self.ratio_above_thrshld, self.elevation_threshold
+        return np.array(self.ratio_above_thrshld), np.array(
+            self.elevation_threshold
+        )
 
     def save_csv_metric(self, output_file: str):
         """

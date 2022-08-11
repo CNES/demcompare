@@ -74,13 +74,14 @@ def demcompare_path(directory_name: str) -> str:
     return os.path.join(test_data_folder, directory_name)
 
 
-def read_csv_file(csv_file: str) -> List[float]:
+def read_csv_file(csv_file: str) -> List[np.ndarray]:
     """
     Read a csv file and save its number values to float
 
     :param csv_file: path to a csv file
     :type csv_file: string
     :returns: List of floats of input csv file
+    :rtype: List[np.ndarray]
     """
     output_file = []
 

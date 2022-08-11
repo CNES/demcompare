@@ -60,12 +60,13 @@ def test_classify_slope_by_ranges():
         "ranges": [0, 5, 10, 25, 45],
         "save_results": False,
         "output_dir": "",
+        "metrics": ["mean"],
     }
 
     # Initialize slope classification layer object
     slope_classif_layer_ = ClassificationLayer(
         name=layer_name,
-        classification_layer_kind=clayer["type"],
+        classification_layer_kind=str(clayer["type"]),
         dem=dem_dataset,
         cfg=clayer,
     )
@@ -80,7 +81,7 @@ def test_classify_slope_by_ranges():
 
     # Obtain output classified slope by ranges of the input slope_dataset
     slope_classif_layer_._classify_slope_by_ranges(slope_dataset)
-    output_classified_slope = slope_classif_layer_.map_image[-1]
+    output_classified_slope = slope_classif_layer_.map_image["ref"]
 
     # Ground truth classified slope by ranges
     # The input range is [0, 5, 10, 25, 45]
@@ -116,12 +117,13 @@ def test_create_class_masks():
         "ranges": [0, 5, 10, 25, 45],
         "save_results": False,
         "output_dir": "",
+        "metrics": ["mean"],
     }
 
     # Initialize slope classification layer object
     slope_classif_layer_ = ClassificationLayer(
         name=layer_name,
-        classification_layer_kind=clayer["type"],
+        classification_layer_kind=str(clayer["type"]),
         dem=dem_dataset,
         cfg=clayer,
     )
@@ -133,7 +135,7 @@ def test_create_class_masks():
     )
     # Add ground truth classified slope by ranges
     # The input range is [0, 5, 10, 25, 45]
-    slope_classif_layer_.map_image.append(classified_slope)
+    slope_classif_layer_.map_image["ref"] = classified_slope
     # Create sets_masks on the input classified slope
     slope_classif_layer_._create_class_masks()
     # Create ground truth sets masks dict for the input classified slope
@@ -159,6 +161,6 @@ def test_create_class_masks():
     # Test that the computed sets_masks_dict is the same as ground truth
     np.testing.assert_allclose(
         gt_classes_masks_masks,
-        slope_classif_layer_.classes_masks[-1],
+        slope_classif_layer_.classes_masks["ref"],
         rtol=1e-02,
     )

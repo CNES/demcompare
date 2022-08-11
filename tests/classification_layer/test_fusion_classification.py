@@ -63,7 +63,8 @@ def test_create_mode_masks():
         "classes": {"sea": [0], "deep_land": [1]},
         "save_results": False,
         "output_dir": "",
-        "no_data": -9999,
+        "nodata": -9999,
+        "metrics": ["mean"],
     }
 
     # Create the ref dataset
@@ -94,7 +95,7 @@ def test_create_mode_masks():
 
     # Create the sec dataset
     dataset_sec = dem_tools.create_dem(
-        data=data, classification_layers=seg_classif_layer
+        data=data, classification_layer_masks=seg_classif_layer
     )
 
     # Compute slope and add it as a classification_layer
@@ -108,7 +109,7 @@ def test_create_mode_masks():
     # Initialize classification layer object
     seg_classif_layer_ = ClassificationLayer(
         name=seg_name,
-        classification_layer_kind=seg_clayer["type"],
+        classification_layer_kind=str(seg_clayer["type"]),
         dem=final_altitude_diff,
         cfg=seg_clayer,
     )
@@ -120,13 +121,14 @@ def test_create_mode_masks():
         "ranges": [0, 5, 10],
         "save_results": False,
         "output_dir": "",
-        "no_data": -9999,
+        "nodata": -9999,
+        "metrics": ["mean"],
     }
 
     # Initialize slope classification layer object
     slope0_classif_layer_ = ClassificationLayer(
         name=slope_name,
-        classification_layer_kind=slope_clayer["type"],
+        classification_layer_kind=str(slope_clayer["type"]),
         dem=final_altitude_diff,
         cfg=slope_clayer,
     )
@@ -143,13 +145,16 @@ def test_create_mode_masks():
     )
     # Set ground truth map_image on the classification_layer object
     # It will be placed on idx 1
-    slope0_classif_layer_.map_image.append(slope_dem_map_img)
+    slope0_classif_layer_.map_image["sec"] = slope_dem_map_img
     # Create sets_masks on the input map_image
     slope0_classif_layer_._create_class_masks()
     # Create a fusion layer with the two input classes
     # Since we want to fusion sec images, map_idx is 1
     fusion_layer_ = FusionClassificationLayer(
-        [seg_classif_layer_, slope0_classif_layer_], map_idx=1
+        [seg_classif_layer_, slope0_classif_layer_],
+        support="sec",
+        name="Fusion0",
+        metrics=["mean"],
     )
 
     # Test the _create_merged_classes function ------------------
@@ -225,7 +230,7 @@ def test_create_mode_masks():
     # Test that the computed sets_masks_dict is the same as gt
     np.testing.assert_allclose(
         gt_classes_masks["fusion_layer"],
-        fusion_layer_.classes_masks[0],
+        fusion_layer_.classes_masks["sec"],
         rtol=1e-02,
     )
 
@@ -236,5 +241,5 @@ def test_create_mode_masks():
     )
 
     np.testing.assert_allclose(
-        gt_map_image, fusion_layer_.map_image[0], rtol=1e-02
+        gt_map_image, fusion_layer_.map_image["sec"], rtol=1e-02
     )

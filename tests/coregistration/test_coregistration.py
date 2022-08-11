@@ -27,6 +27,7 @@ methods in the coregistration step.
 
 # Standard imports
 import os
+from typing import Dict
 
 # Third party imports
 import numpy as np
@@ -35,7 +36,7 @@ import pytest
 # Demcompare imports
 from demcompare import coregistration
 from demcompare.dem_tools import SamplingSourceParameter, load_dem
-from demcompare.initialization import read_config_file
+from demcompare.helpers_init import read_config_file
 
 # Tests helpers
 from tests.helpers import demcompare_test_data_path
@@ -72,7 +73,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
     gt_xoff = -1.43664
     gt_yoff = -0.41903
     gt_sampling_source = "sec"
-    gt_plani_results = {
+    gt_plani_results: Dict = {
         "dx": {
             "nuth_offset": -1.43664,
             "total_offset": -1.43664,
@@ -205,7 +206,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     gt_xoff = -1.0864
     gt_yoff = -0.22552
     gt_sampling_source = "ref"
-    gt_plani_results = {
+    gt_plani_results: Dict = {
         "dx": {
             "nuth_offset": -1.08642,
             "total_offset": -1.08642,
@@ -340,7 +341,7 @@ def test_compute_coregistration_with_strm_sampling_dem_and_initial_disparity():
     gt_xoff = 0.99999
     gt_yoff = 2.00000
     gt_sampling_source = "sec"
-    gt_plani_results = {
+    gt_plani_results: Dict = {
         "dx": {
             "nuth_offset": 1.0,
             "total_offset": 3.0,
@@ -462,7 +463,7 @@ def test_compute_coregistration_with_strm_sampling_ref_and_initial_disparity():
     gt_xoff = 0.99699
     gt_yoff = 1.99000
     gt_sampling_source = "ref"
-    gt_plani_results = {
+    gt_plani_results: Dict = {
         "dx": {
             "nuth_offset": 0.997,
             "total_offset": 3.0,

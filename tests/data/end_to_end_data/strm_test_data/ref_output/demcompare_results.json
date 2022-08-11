@@ -7,7 +7,7 @@
       "nb_valid_points": 983070
     },
     "reproj_coreg_sec": {
-      "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_DEM.tif",
+      "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_SEC.tif",
       "nodata": -32768,
       "nb_points": 983070,
       "nb_valid_points": 983070
@@ -63,7 +63,7 @@
         "nb_valid_points": 983070
       }
     },
-    "classification_layers": {
+    "classification_layer_masks": {
       "slope": {
         "standard": {
           "ref_support": {

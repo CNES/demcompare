@@ -35,7 +35,7 @@ import pytest
 
 # Demcompare imports
 from demcompare import dataset_tools, dem_tools
-from demcompare.initialization import read_config_file
+from demcompare.helpers_init import read_config_file
 
 # Tests helpers
 from .helpers import demcompare_path, demcompare_test_data_path
@@ -77,7 +77,7 @@ def test_reproject_dataset():
         data=data,
         transform=trans,
         input_img=cfg["input_sec"]["path"],
-        no_data=nodata,
+        nodata=nodata,
     )
 
     # Generate the "dataset_to_be_reprojected" with
@@ -99,7 +99,7 @@ def test_reproject_dataset():
         data=data,
         transform=trans,
         input_img=cfg["input_sec"]["path"],
-        no_data=nodata,
+        nodata=nodata,
     )
 
     # Reproject the dataset_to_be_reprojected on
@@ -121,10 +121,10 @@ def test_reproject_dataset():
         == output_reprojected_dataset.attrs["crs"]
     )
     # Test that the output dataset still has
-    # its original no_data value
+    # its original nodata value
     np.testing.assert_allclose(
-        dataset_to_be_reprojected.attrs["no_data"],
-        output_reprojected_dataset.attrs["no_data"],
+        dataset_to_be_reprojected.attrs["nodata"],
+        output_reprojected_dataset.attrs["nodata"],
         rtol=1e-02,
     )
 
@@ -166,7 +166,7 @@ def test_get_geoid_offset():
         data=data,
         transform=trans,
         input_img=cfg["input_sec"]["path"],
-        no_data=nodata,
+        nodata=nodata,
     )
 
     # Define data coordinates
@@ -211,7 +211,7 @@ def test_get_geoid_offset():
         data=data,
         transform=trans,
         input_img=cfg["input_sec"]["path"],
-        no_data=nodata,
+        nodata=nodata,
     )
 
     # Test that an error is raised

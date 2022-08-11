@@ -27,8 +27,6 @@ Steps:
 - create all data and documentation structure for each classif_layer and mode
 - create sphinx source rst report and add to SphinxProjectManager object
 - Compile SphinxProjectManager object to generate html and pdf report
-
-TODO: if this report part is kept "as is", split generate_report in subfunctions
 """
 
 # Standard imports
@@ -39,19 +37,24 @@ import glob
 import logging
 import os
 import sys
+from typing import List
 
 # DEMcompare imports
 from .sphinx_project_generator import SphinxProjectManager
+from .stats_dataset import StatsDataset
 
 
-def recursive_search(directory: str, pattern: str):
+def recursive_search(directory: str, pattern: str) -> List[str]:
     """
     Recursively look up pattern filename into dir tree
 
-    :param directory:
-    :param pattern:
+    :param directory: directory
+    :type directory: str
+    :param pattern: pattern
+    :type pattern: str
     :return: search matches
-    """ ""
+    :rtype: List[str]
+    """
 
     if sys.version[0:3] < "3.5":
         matches = []
@@ -72,11 +75,11 @@ def first_recursive_search(directory: str, pattern: str):
     with first found result
     if no results return None
 
-    :param directory:
+    :param directory: directory
     :type directory: str
-    :param pattern:
+    :param pattern: pattern
     :type pattern: str
-    :return: matches_number matches result
+    :return: None
     """
     result = recursive_search(directory, pattern)
     if len(result) > 0:
@@ -85,53 +88,32 @@ def first_recursive_search(directory: str, pattern: str):
     return None
 
 
-def generate_report(  # noqa: C901
-    working_dir: str,
-    stats_dataset,
-    sec_name: str,
-    ref_name: str,
-    coreg_sec_name: str,
-    coreg_ref_name: str,
-    doc_dir: str = ".",
-    project_dir: str = ".",
-):
+def fill_report_stats(
+    working_dir: str, stats_dataset: StatsDataset, src: str
+) -> str:
     """
-    Create pdf and html report from png graph and csv stats summary
+    Fill report with statistics information
 
-    :param working_dir: directory in which to find *mode*.png
-            and *mode*.csv files for each mode in modename
+    :param working_dir: directory in which to find
+         *mode*.csv files for each mode in modename
     :type working_dir: str
-    :param sec_name: name or path to the
-      sec to be compared against the ref
-    :type sec_name: str
-    :param ref_name: name or path to the reference sec
-    :type ref_name: str
-    :param coreg_sec_name: name or path to the coreg sec
-    :type coreg_sec_name: str
-    :param coreg_ref_name: name or path to the ref sec
-    :type coreg_ref_name: str
-    :param classification_layers: list of classification_layer,
-      contains modes by classification_layer
-    :type classification_layers: List[str]
-    :param doc_dir: directory in which to find the output documentation
-    :type doc_dir: str
-    :param project_dir: directory of the sphinx src documentation
-    :type project_dir: str
-    :return:
+    :param stats_dataset: StatsDataset object
+    :type stats_dataset: StatsDataset
+    :param src: report source
+    :type src: str
+    :return: filled src
+    :rtype:
     """
 
-    classification_layers = list(stats_dataset.classif_layers_and_modes.keys())
-
-    # Initialize the sphinx project
-    spm = SphinxProjectManager(
-        project_dir, doc_dir, "demcompare_report", "DEM Compare Report"
+    classification_layer_masks = list(
+        stats_dataset.classif_layers_and_modes.keys()
     )
 
     # Initialize mode informations
-    modes_information = collections.OrderedDict()
+    modes_information: collections.OrderedDict = collections.OrderedDict()
 
-    # Loop on demcompare classification_layers
-    for classification_layer_name in classification_layers:
+    # Loop on demcompare classification_layer_masks
+    for classification_layer_name in classification_layer_masks:
         # Initialize mode informations for classification_layer
         modes_information[classification_layer_name] = collections.OrderedDict()
         modes_information[classification_layer_name]["standard"] = {
@@ -157,39 +139,18 @@ def generate_report(  # noqa: C901
         # Loop on demcompare modes.
         for mode in modes:
             # for mode in modes_information:
-            # find both graph and csv stats associated with the mode
-            # - histograms
-            result = recursive_search(
-                os.path.join(working_dir, "*", classification_layer_name),
-                "*Real*_{}*.png".format(mode),
-            )
-            if len(result) > 0:
-                modes_information[classification_layer_name][mode][
-                    "histo"
-                ] = result[0]
-            else:
-                modes_information[classification_layer_name][mode][
-                    "histo"
-                ] = None
-
-            # - graph
-            result = recursive_search(
-                os.path.join(working_dir, "*", classification_layer_name),
-                "*Fitted*_{}*.png".format(mode),
-            )
-            if len(result) > 0:
-                modes_information[classification_layer_name][mode][
-                    "fitted_histo"
-                ] = result[0]
-            else:
-                modes_information[classification_layer_name][mode][
-                    "fitted_histo"
-                ] = None
+            # find csv stats associated with the mode
             # - csv
-            result = recursive_search(
-                os.path.join(working_dir, "*", classification_layer_name),
-                "*_{}*.csv".format(mode),
-            )
+            if mode == "standard":
+                result = recursive_search(
+                    os.path.join(working_dir, "*", classification_layer_name),
+                    "*.csv",
+                )
+            else:
+                result = recursive_search(
+                    os.path.join(working_dir, "*", classification_layer_name),
+                    "*_{}*.csv".format(mode),
+                )
             if len(result) > 0:
                 if os.path.exists(result[0]):
                     csv_data = []
@@ -225,140 +186,15 @@ def generate_report(  # noqa: C901
         # End of mode loop
     # End of classification_layer loop
 
-    # Find DSMs differences files
-    dem_diff_without_coreg = first_recursive_search(
-        working_dir, "initial_dem_diff.png"
-    )
-    dem_diff_with_coreg = first_recursive_search(
-        working_dir, "final_dem_diff.png"
-    )
-
-    # Find DSMs CDF differences
-    dem_diff_cdf_without_coreg = first_recursive_search(
-        working_dir, "initial_dem_diff_cdf.png"
-    )
-    dem_diff_cdf_with_coreg = first_recursive_search(
-        working_dir, "final_dem_diff_cdf.png"
-    )
-
-    # Find histogram files
-    initial_dem_diff_pdf = first_recursive_search(
-        working_dir, "initial_dem_diff_pdf.png"
-    )
-    final_dem_diff_pdf = first_recursive_search(
-        working_dir, "final_dem_diff_pdf.png"
-    )
-    # Get ref_name
-    sec_name_dir, sec_name = os.path.split(sec_name)
-    ref_name_dir, ref_name = os.path.split(ref_name)
-    if dem_diff_with_coreg:
-        coreg_sec_name_dir, coreg_sec_name = os.path.split(coreg_sec_name)
-        coreg_ref_name_dir, coreg_ref_name = os.path.split(coreg_ref_name)
-
-    # Create source
-    # -> header part
-    src = "\n".join(
-        [
-            ".. _DEM_COMPARE_REPORT:",
-            "",
-            "*********************",
-            " Demcompare Report ",
-            "*********************" "",
-            "This report is generated by "
-            "`DEMCompare <https://github.com/CNES/demcompare>`_",
-            "",
-        ]
-    )
-    # -> DSM differences without coregistration
-    src = "\n".join(
-        [
-            src,
-            "",
-            "Elevation differences",
-            "==========================",
-            "",
-            "**Without coregistration**",
-            "--------------------------",
-            ".. image:: /{}".format(dem_diff_without_coreg),
-            ".. image:: /{}".format(dem_diff_cdf_without_coreg),
-            "",
-            "*Input Initial DEMs:*",
-            "",
-            "* Tested DEM (SEC): {}".format(sec_name),
-            "   * dir: {}".format(sec_name_dir),
-            "* Reference DEM (REF): {}".format(ref_name),
-            "   * dir: {}".format(ref_name_dir),
-            "",
-        ]
-    )
-    # -> Elevation Difference Histogram without coregistration
-    src = "\n".join(
-        [
-            src,
-            "**Elevation difference histogram on all pixels"
-            + " without coregistration**",
-            "-----------------------",
-            ".. image:: /{}".format(initial_dem_diff_pdf),
-            "",
-        ]
-    )
-
-    # if exists : -> DSM differences with coregistration
-    if dem_diff_with_coreg:
-        src = "\n".join(
-            [
-                src,
-                "**With coregistration**",
-                "-----------------------",
-                ".. image:: /{}".format(dem_diff_with_coreg),
-                ".. image:: /{}".format(dem_diff_cdf_with_coreg),
-                "",
-            ]
-        )
-        src = "\n".join(
-            [
-                src,
-                "**Generated coregistered DEMs:**",
-                "",
-                "* Tested Coreg DEM (COREG_SEC): {}".format(coreg_sec_name),
-                "   * dir: {} ".format(coreg_sec_name_dir),
-                "* Reference Coreg DEM (COREG_REF): {}".format(coreg_ref_name),
-                "   * dir: {}".format(coreg_ref_name_dir),
-                "",
-            ]
-        )
-
-        # -> Elevation Difference Histogram with coregistration
-        src = "\n".join(
-            [
-                src,
-                "**Elevation difference histogram on all pixels "
-                + "with coregistration**",
-                "-----------------------",
-                ".. image:: /{}".format(final_dem_diff_pdf),
-                "",
-            ]
-        )
-
     # -> stats results table of contents
     src = "\n".join([src, "Stats Results", "===============", ""])
-    if dem_diff_with_coreg:
-        src = "\n".join(
-            [
-                src,
-                "*Important: stats are generated on "
-                + "COREG_SEC - COREG_REF difference*",
-                "",
-            ]
-        )
-    else:
-        src = "\n".join(
-            [
-                src,
-                "*Important: stats are generated on REF - DEM difference*",
-                "",
-            ]
-        )
+    src = "\n".join(
+        [
+            src,
+            "*Important: stats are generated on stats DEM *",
+            "",
+        ]
+    )
 
     src = "\n".join(
         [
@@ -455,6 +291,212 @@ def generate_report(  # noqa: C901
                         "",
                     ]
                 )
+    return src
+
+
+def fill_report_coreg(  # noqa: C901
+    working_dir: str,
+    sec_name: str,
+    ref_name: str,
+    coreg_sec_name: str,
+    coreg_ref_name: str,
+    src: str,
+) -> str:
+    """
+    Fill report with coregistration information
+
+    :param working_dir: directory in which to find
+         *mode*.csv files for each mode in modename
+    :type working_dir: str
+    :param sec_name: name or path to the
+      sec to be compared against the ref
+    :type sec_name: str
+    :param ref_name: name or path to the reference sec
+    :type ref_name: str
+    :param coreg_sec_name: name or path to the coreg sec
+    :type coreg_sec_name: str
+    :param coreg_ref_name: name or path to the ref sec
+    :type coreg_ref_name: str
+    :param src: report source
+    :type src: str
+    :return: filled src
+    :rtype: str
+    """
+
+    # Find DSMs differences files
+    dem_diff_without_coreg = first_recursive_search(
+        working_dir, "initial_dem_diff.png"
+    )
+    dem_diff_with_coreg = first_recursive_search(
+        working_dir, "final_dem_diff.png"
+    )
+
+    # Find DSMs CDF differences
+    dem_diff_cdf_without_coreg = first_recursive_search(
+        working_dir, "initial_dem_diff_cdf.png"
+    )
+    dem_diff_cdf_with_coreg = first_recursive_search(
+        working_dir, "final_dem_diff_cdf.png"
+    )
+
+    # Find histogram files
+    initial_dem_diff_pdf = first_recursive_search(
+        working_dir, "initial_dem_diff_pdf.png"
+    )
+    final_dem_diff_pdf = first_recursive_search(
+        working_dir, "final_dem_diff_pdf.png"
+    )
+    # Get ref_name
+    sec_name_dir, sec_name = os.path.split(sec_name)
+    ref_name_dir, ref_name = os.path.split(ref_name)
+    coreg_sec_name_dir, coreg_sec_name = os.path.split(coreg_sec_name)
+    coreg_ref_name_dir, coreg_ref_name = os.path.split(coreg_ref_name)
+
+    # -> DSM differences without coregistration
+    src = "\n".join(
+        [
+            src,
+            "",
+            "Elevation differences",
+            "==========================",
+            "",
+            "**Without coregistration**",
+            "--------------------------",
+            ".. image:: /{}".format(dem_diff_without_coreg),
+            ".. image:: /{}".format(dem_diff_cdf_without_coreg),
+            "",
+            "*Input Initial DEMs:*",
+            "",
+            "* Tested DEM (SEC): {}".format(sec_name),
+            "   * dir: {}".format(sec_name_dir),
+            "* Reference DEM (REF): {}".format(ref_name),
+            "   * dir: {}".format(ref_name_dir),
+            "",
+        ]
+    )
+    # -> Elevation Difference Histogram without coregistration
+    src = "\n".join(
+        [
+            src,
+            "**Elevation difference histogram on all pixels"
+            + " without coregistration**",
+            "-----------------------",
+            ".. image:: /{}".format(initial_dem_diff_pdf),
+            "",
+        ]
+    )
+
+    # if exists : -> DSM differences with coregistration
+    if dem_diff_with_coreg:
+        src = "\n".join(
+            [
+                src,
+                "**With coregistration**",
+                "-----------------------",
+                ".. image:: /{}".format(dem_diff_with_coreg),
+                ".. image:: /{}".format(dem_diff_cdf_with_coreg),
+                "",
+            ]
+        )
+        src = "\n".join(
+            [
+                src,
+                "**Generated coregistered DEMs:**",
+                "",
+                "* Tested Coreg DEM (COREG_SEC): {}".format(coreg_sec_name),
+                "   * dir: {} ".format(coreg_sec_name_dir),
+                "* Reference Coreg DEM (COREG_REF): {}".format(coreg_ref_name),
+                "   * dir: {}".format(coreg_ref_name_dir),
+                "",
+            ]
+        )
+
+        # -> Elevation Difference Histogram with coregistration
+        src = "\n".join(
+            [
+                src,
+                "**Elevation difference histogram on all pixels "
+                + "with coregistration**",
+                "-----------------------",
+                ".. image:: /{}".format(final_dem_diff_pdf),
+                "",
+            ]
+        )
+    return src
+
+
+def generate_report(  # noqa: C901
+    working_dir: str,
+    stats_dataset: StatsDataset = None,
+    sec_name: str = None,
+    ref_name: str = None,
+    coreg_sec_name: str = None,
+    coreg_ref_name: str = None,
+    doc_dir: str = ".",
+    project_dir: str = ".",
+):
+    """
+    Generate demcompare report
+
+    :param working_dir: directory in which to find
+         *mode*.csv files for each mode in modename
+    :type working_dir: str
+    :param sec_name: name or path to the
+      sec to be compared against the ref
+    :type sec_name: str
+    :param ref_name: name or path to the reference sec
+    :type ref_name: str
+    :param coreg_sec_name: name or path to the coreg sec
+    :type coreg_sec_name: str
+    :param coreg_ref_name: name or path to the ref sec
+    :type coreg_ref_name: str
+    :param src: report source
+    :type src: str
+    :return: filled src
+    :rtype: str
+    """
+    # Initialize the sphinx project
+    spm = SphinxProjectManager(
+        project_dir, doc_dir, "demcompare_report", "DEM Compare Report"
+    )
+
+    # Create source
+    # -> header part
+    src = "\n".join(
+        [
+            ".. _DEM_COMPARE_REPORT:",
+            "",
+            "*********************",
+            " Demcompare Report ",
+            "*********************" "",
+            "This report is generated by "
+            "`DEMCompare <https://github.com/CNES/demcompare>`_",
+            "",
+        ]
+    )
+
+    if sec_name and ref_name and coreg_ref_name and coreg_sec_name:
+        src = fill_report_coreg(
+            working_dir, sec_name, ref_name, coreg_sec_name, coreg_ref_name, src
+        )
+
+    if stats_dataset:
+        src = fill_report_stats(working_dir, stats_dataset, src)
+
+    build_report(spm, src)
+
+
+def build_report(spm: SphinxProjectManager, src: str) -> None:
+    """
+    Build the demcompare report
+
+    :param src: report source
+    :type src: str
+    :param spm: SphinxProjectManager
+    :type spm: SphinxProjectManager
+    :return: None
+    """
+
     # Add source to the project
     spm.write_body(src)
 

@@ -44,8 +44,8 @@ from ..dem_tools import (
     reproject_dems,
     save_dem,
 )
+from ..helpers_init import ConfigType
 from ..img_tools import compute_gdal_translate_bounds
-from ..initialization import ConfigType
 from ..output_tree_design import get_out_file_path
 from ..transformation import Transformation
 
@@ -84,13 +84,13 @@ class CoregistrationTemplate(metaclass=ABCMeta):
          "estimated_initial_shift_y": optional. estimated initial
            y shift. int or float. 0 by default,
          "output_dir": optional output directory. str. If given,
-           the coreg_dem is saved,
+           the coreg_sec is saved,
          "save_coreg_method_outputs": optional. bool. Requires output_dir
            to be set. If activated, the outputs of the coregistration method
            (such as nuth et kaab iteration plots) are saved,
          "save_internal_dems": optional. bool. Requires output_dir to be set.
            If activated, the internal dems of the coregistration
-           such as reproj_dem, reproj_ref, reproj_coreg_dem,
+           such as reproj_dem, reproj_ref, reproj_coreg_sec,
            reproj_coreg_ref are saved.
         }
 
@@ -212,7 +212,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
     def check_conf(self, cfg: ConfigType = None) -> ConfigType:
         """
         Check if the config is correct according
-        to the class configuration schema and return updated configuration
+        to the class configuration schema
 
         raises CheckerError if configuration invalid.
 
@@ -241,24 +241,30 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :param ref: ref xr.Dataset containing
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :return: reproj_sec xr.Dataset, reproj_ref xr.Dataset,
                 orig_sec xr.Dataset, adapting_factor
                 Tuple[float, float].
                 The xr.Datasets containing :
 
-                 - image : 2D (row, col) xr.DataArray float32
-                 - georef_transform: 1D (trans_len) xr.DataArray
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :rtype: Transformation
         """
 
-        logging.info(
+        logging.debug(
             "Input Coregistration SEC: {}".format(sec.attrs["input_img"])
         )
-        logging.info(
+        logging.debug(
             "Input Coregistration REF: {}".format(ref.attrs["input_img"])
         )
         # Store the original sec prior to reprojection
@@ -296,10 +302,14 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :param ref: ref xr.Dataset containing
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :return: transformation
         :rtype: Transformation
         """
@@ -320,7 +330,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         ) = self._coregister_dems_algorithm(self.reproj_sec, self.reproj_ref)
 
         # Compute and store the demcompare_results dict
-        self.compute_results()
+        self.save_results_dict()
         # Save internal_dems if the option was chosen
         if self.save_internal_dems:
             self.save_internal_outputs()
@@ -342,17 +352,23 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :type sec: xarray Dataset
         :param ref: ref xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :type ref: xarray Dataset
         :return: transformation, reproj_coreg_sec xr.DataSet,
                  reproj_coreg_ref xr.DataSet. The xr.Datasets containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :rtype: Tuple[Transformation, xr.Dataset, xr.Dataset]
         """
 
@@ -363,7 +379,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
             - ./coregistration/reproj_DEM.tif -> reprojected sec
             - ./coregistration/reproj_REF.tif -> reprojected ref
-            - ./coregistration/reproj_coreg_DEM.tif -> reprojected
+            - ./coregistration/reproj_coreg_SEC.tif -> reprojected
                coregistered sec
             - ./coregistration/reproj_coreg_REF.tif -> reprojected
                coregistered ref
@@ -384,7 +400,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         self.reproj_coreg_sec = save_dem(
             self.reproj_coreg_sec,
             os.path.join(
-                self.output_dir, get_out_file_path("reproj_coreg_DEM.tif")
+                self.output_dir, get_out_file_path("reproj_coreg_SEC.tif")
             ),
         )
         # Saves reprojected coregistered REF to file system
@@ -409,7 +425,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
             ] = self.final_dh.attrs["input_img"]
 
     @abstractmethod
-    def compute_results(self):
+    def save_results_dict(self):
         """
         Save the coregistration results on a Dict
         The altimetric and coregistration results are saved.
@@ -432,7 +448,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         ] = self.reproj_coreg_ref.attrs["input_img"]
         self.demcompare_results["alti_results"]["reproj_coreg_ref"][
             "nodata"
-        ] = self.reproj_coreg_ref.attrs["no_data"]
+        ] = self.reproj_coreg_ref.attrs["nodata"]
         self.demcompare_results["alti_results"]["reproj_coreg_ref"][
             "nb_points"
         ] = self.reproj_coreg_ref["image"].data.size
@@ -447,7 +463,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         ] = self.reproj_coreg_sec.attrs["input_img"]
         self.demcompare_results["alti_results"]["reproj_coreg_sec"][
             "nodata"
-        ] = self.reproj_coreg_sec.attrs["no_data"]
+        ] = self.reproj_coreg_sec.attrs["nodata"]
         self.demcompare_results["alti_results"]["reproj_coreg_sec"][
             "nb_points"
         ] = self.reproj_coreg_sec["image"].data.size
@@ -473,7 +489,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
                 / self.final_dh["image"].data.size,
                 5,
             ),
-            "nodata": self.final_dh.attrs["no_data"],
+            "nodata": self.final_dh.attrs["nodata"],
             "nb_points": self.final_dh["image"].data.size,
             "nb_valid_points": np.count_nonzero(
                 ~np.isnan(self.final_dh["image"].data)
@@ -505,24 +521,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         ulx, uly, lrx, lry = compute_gdal_translate_bounds(
             self.transform.y_offset,
             self.transform.x_offset,
-            self.orig_sec["image"].shape,
-            self.orig_sec["georef_transform"].data,
-        )
-        self.demcompare_results["coregistration_results"][
-            "gdal_translate_bounds"
-        ] = {
-            "ulx": round(ulx, 5),
-            "uly": round(uly, 5),
-            "lrx": round(lrx, 5),
-            "lry": round(lry, 5),
-        }
-
-        # -> for the coordinate bounds to apply the offsets
-        #    to the original DSM with GDAL
-        ulx, uly, lrx, lry = compute_gdal_translate_bounds(
-            self.transform.y_offset,
-            self.transform.x_offset,
-            self.orig_sec["image"].shape,
+            (self.orig_sec["image"].shape[0], self.orig_sec["image"].shape[1]),
             self.orig_sec["georef_transform"].data,
         )
         self.demcompare_results["coregistration_results"][
@@ -551,6 +550,14 @@ class CoregistrationTemplate(metaclass=ABCMeta):
                     "total_bias_value"
                 ]
                 * unit_bias_value
+            )
+        )
+        logging.info("GDAL translate bounds:")
+        logging.info(
+            (
+                " -> ulx : {}, -> uly : {}, -> lrx : {}, -> lry : {}".format(
+                    ulx, uly, lrx, lry
+                )
             )
         )
         logging.info("Altimetry shift between COREG_DEM and COREG_REF:")

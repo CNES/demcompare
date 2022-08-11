@@ -25,7 +25,6 @@ in the transformation class.
 """
 
 # Standard imports
-import copy
 import os
 
 # Third party imports
@@ -34,7 +33,8 @@ import pytest
 
 # Demcompare imports
 from demcompare import dem_tools, img_tools, transformation
-from demcompare.initialization import read_config_file
+from demcompare.dem_tools import copy_dem
+from demcompare.helpers_init import read_config_file
 
 # Tests helpers
 from .helpers import demcompare_test_data_path
@@ -64,12 +64,12 @@ def test_apply():
         [[1, 1, 1], [1, 1, 1], [-1, -32768, 1], [1, 2, -32768], [1, 1, -32768]],
         dtype=np.float32,
     )
-    # Create dataset from "strm_test_data" DSM and specific no_data value
+    # Create dataset from "strm_test_data" DSM and specific nodata value
     dataset = dem_tools.create_dem(
         data=data,
         transform=from_dataset.georef_transform.data,
         img_crs=from_dataset.crs,
-        no_data=-32768,
+        nodata=-32768,
     )
     # Define pixel offsets
     x_offset = -1.43664
@@ -81,7 +81,7 @@ def test_apply():
         x_offset=x_offset, y_offset=-y_offset, z_offset=z_offset
     )
     # Copy dataset to compute ground truth transformed dataset
-    gt_dataset_transformed = copy.copy(dataset)
+    gt_dataset_transformed = copy_dem(dataset)
     # Add offset to the ground truth dataset
     x_off_coord, y_off_coord = img_tools.convert_pix_to_coord(
         gt_dataset_transformed["georef_transform"].data, -y_offset, x_offset

@@ -33,7 +33,7 @@ import pytest
 
 # Demcompare imports
 from demcompare import dem_tools, img_tools
-from demcompare.initialization import read_config_file
+from demcompare.helpers_init import read_config_file
 
 # Tests helpers
 from .helpers import demcompare_test_data_path
@@ -145,7 +145,10 @@ def test_compute_gdal_translate_bounds():
     gt_lry = 39.17083
 
     ulx, uly, lrx, lry = img_tools.compute_gdal_translate_bounds(
-        -dy_px, dx_px, dem["image"].shape, dem["georef_transform"].data
+        -dy_px,
+        dx_px,
+        (dem["image"].shape[0], dem["image"].shape[1]),
+        dem["georef_transform"].data,
     )
     # Test that the reprojected offsets are the same as ground_truth
     np.testing.assert_allclose(ulx, gt_ulx, rtol=1e-04)
@@ -175,7 +178,10 @@ def test_compute_gdal_translate_bounds():
     gt_lry = 4990954.515
 
     ulx, uly, lrx, lry = img_tools.compute_gdal_translate_bounds(
-        -dy_nuth, dx_nuth, dem["image"].shape, dem["georef_transform"].data
+        -dy_nuth,
+        dx_nuth,
+        (dem["image"].shape[0], dem["image"].shape[1]),
+        dem["georef_transform"].data,
     )
 
     # Test that the reprojected offsets are the same as ground_truth

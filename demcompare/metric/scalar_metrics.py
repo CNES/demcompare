@@ -22,7 +22,7 @@
 """
 Mainly contains different scalar metric classes
 """
-from typing import List, Tuple, Union
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -38,11 +38,7 @@ class Mean(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 
@@ -63,11 +59,7 @@ class Max(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 
@@ -88,11 +80,7 @@ class Min(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 
@@ -114,11 +102,7 @@ class Std(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 
@@ -140,11 +124,7 @@ class Rmse(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 
@@ -165,11 +145,7 @@ class Median(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 
@@ -190,11 +166,7 @@ class Nmad(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 
@@ -215,11 +187,7 @@ class Sum(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 
@@ -240,11 +208,7 @@ class SumSquaredErr(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 
@@ -265,11 +229,7 @@ class Percentil90(MetricTemplate):
 
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
 

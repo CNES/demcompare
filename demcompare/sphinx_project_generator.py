@@ -33,7 +33,7 @@ import shutil
 import subprocess
 
 # DEMcompare imports
-from .initialization import mkdir_p
+from .helpers_init import mkdir_p
 
 
 class SphinxProjectManager:
@@ -93,7 +93,7 @@ class SphinxProjectManager:
             os.chdir(cur_dir)
             raise
         else:
-            logging.info("Sphinx clean succeeded ")
+            logging.debug("Sphinx clean succeeded ")
 
     def _create_makefile(self):
         # pylint: disable=line-too-long, anomalous-backslash-in-string
@@ -234,7 +234,7 @@ class SphinxProjectManager:
             os.chdir(cur_dir)
             raise
         else:
-            logging.info(("Sphinx build succeeded for {} mode".format(mode)))
+            logging.debug(("Sphinx build succeeded for {} mode".format(mode)))
 
     def install_project(self):
         """

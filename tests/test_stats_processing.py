@@ -40,7 +40,7 @@ from demcompare.classification_layer import (
     ClassificationLayer,
     FusionClassificationLayer,
 )
-from demcompare.initialization import read_config_file
+from demcompare.helpers_init import read_config_file
 from demcompare.metric import Metric
 
 # Tests helpers
@@ -95,9 +95,18 @@ def test_create_classif_layers():
             "Slope0": {
                 "type": "slope",
                 "ranges": [0, 10, 25, 50, 90],
+                "metrics": ["nmad"],
             },
-            "fusion": {"sec": ["Slope0", "Status"]},
+            "Fusion0": {
+                "type": "fusion",
+                "sec": ["Slope0", "Status"],
+                "metrics": ["sum"],
+            },
         },
+        "metrics": [
+            "mean",
+            {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}},
+        ],
     }
     # Create StatsProcessing object
     stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
@@ -116,6 +125,10 @@ def test_create_classif_layers():
                 "NoData": [3],
                 "Outside_detector": [4],
             },
+            "metrics": [
+                "mean",
+                {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}},
+            ],
         },
     )
     # Create ground truth Slope layer
@@ -123,18 +136,39 @@ def test_create_classif_layers():
         "Slope0",
         "slope",
         stats_dem,
-        {"type": "slope", "ranges": [0, 10, 25, 50, 90]},
+        {
+            "type": "slope",
+            "ranges": [0, 10, 25, 50, 90],
+            "metrics": [
+                "nmad",
+                "mean",
+                {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}},
+            ],
+        },
     )
     # Create ground truth Global layer
     gt_global_layer = ClassificationLayer(
         "global",
         "global",
         stats_dem,
-        {"type": "global"},
+        {
+            "type": "global",
+            "metrics": [
+                "mean",
+                {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}},
+            ],
+        },
     )
     # Create ground truth Fusion layer
     gt_fusion_layer = FusionClassificationLayer(
-        [gt_status_layer, gt_slope_layer], map_idx=1
+        [gt_status_layer, gt_slope_layer],
+        support="sec",
+        name="Fusion0",
+        metrics=[
+            "sum",
+            "mean",
+            {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}},
+        ],
     )
     # Get StatsProcessing created classification layers
     output_classification_layers = stats_processing.classification_layers
@@ -193,7 +227,18 @@ def test_create_classif_layers_without_input_classif():
         "global",
         "global",
         stats_dem,
-        {"type": "global"},
+        {
+            "type": "global",
+            "metrics": [
+                "mean",
+                "median",
+                "max",
+                "min",
+                "sum",
+                "squared_sum",
+                "std",
+            ],
+        },
     )
 
     # Get StatsProcessing created classification layers
@@ -207,7 +252,7 @@ def test_create_classif_layers_without_input_classif():
 def test_compute_stats():
     """
     Tests the compute_stats. Manually computes
-    the stats for the classification_layers for a given class
+    the stats for the classification_layer_masks for a given class
     and mode and tests that the compute_stats function obtains
     the same values.
     """
@@ -250,7 +295,6 @@ def test_compute_stats():
                 "type": "slope",
                 "ranges": [0, 10, 25, 50, 90],
             },
-            "fusion": {"ref": ["Slope0", "Status"]},
         },
     }
     # Create StatsProcessing object
@@ -267,18 +311,18 @@ def test_compute_stats():
     metric_sum = Metric("sum")
 
     # Compute nodata_nan_mask
-    no_data_value = stats_processing.classification_layers[dataset_idx].nodata
+    nodata_value = stats_processing.classification_layers[dataset_idx].nodata
     nodata_nan_mask = np.apply_along_axis(
-        lambda x: (~np.isnan(x)) * (x != no_data_value),
+        lambda x: (~np.isnan(x)) * (x != nodata_value),
         0,
         stats_processing.dem["image"].data,
     )
     # Get valid class indexes for status dataset and class 1
     idxes_map_class_1_dataset_0 = np.where(
         nodata_nan_mask
-        * stats_processing.classification_layers[dataset_idx].classes_masks[0][
-            classif_class
-        ]
+        * stats_processing.classification_layers[dataset_idx].classes_masks[
+            "ref"
+        ][classif_class]
     )
     # Get class pixels
     classif_map = stats_processing.dem["image"].data[
@@ -353,9 +397,9 @@ def test_compute_stats():
     classif_map = stats_processing.dem["image"].data
 
     # Compute nodata_nan_mask
-    no_data_value = stats_processing.classification_layers[dataset_idx].nodata
+    nodata_value = stats_processing.classification_layers[dataset_idx].nodata
     nodata_nan_mask = np.apply_along_axis(
-        lambda x: (~np.isnan(x)) * (x != no_data_value),
+        lambda x: (~np.isnan(x)) * (x != nodata_value),
         0,
         stats_processing.dem["image"].data,
     )
@@ -422,18 +466,18 @@ def test_compute_stats():
     dataset_idx = stats_processing.classification_layers_names.index("Slope0")
 
     # Compute nodata_nan_mask
-    no_data_value = stats_processing.classification_layers[dataset_idx].nodata
+    nodata_value = stats_processing.classification_layers[dataset_idx].nodata
     nodata_nan_mask = np.apply_along_axis(
-        lambda x: (~np.isnan(x)) * (x != no_data_value),
+        lambda x: (~np.isnan(x)) * (x != nodata_value),
         0,
         stats_processing.dem["image"].data,
     )
     # Get valid class indexes for slope dataset and class 1
     idxes_map_class_0_dataset_0 = np.where(
         nodata_nan_mask
-        * stats_processing.classification_layers[dataset_idx].classes_masks[0][
-            classif_class
-        ]
+        * stats_processing.classification_layers[dataset_idx].classes_masks[
+            "ref"
+        ][classif_class]
     )
     # Get class pixels
     classif_map = stats_processing.dem["image"].data[
@@ -555,9 +599,9 @@ def test_compute_stats_slope_classif_intersection_mode():
     dataset_idx = stats_processing.classification_layers_names.index("Slope0")
 
     # Compute nodata_nan_mask
-    no_data_value = stats_processing.classification_layers[dataset_idx].nodata
+    nodata_value = stats_processing.classification_layers[dataset_idx].nodata
     nodata_nan_mask = np.apply_along_axis(
-        lambda x: (~np.isnan(x)) * (x != no_data_value),
+        lambda x: (~np.isnan(x)) * (x != nodata_value),
         0,
         stats_processing.dem["image"].data,
     )
@@ -565,12 +609,12 @@ def test_compute_stats_slope_classif_intersection_mode():
     # Get valid class indexes for slope dataset and class 1 mode intersection
     idxes_map_class_0_dataset_0 = np.where(
         nodata_nan_mask
-        * stats_processing.classification_layers[dataset_idx].classes_masks[0][
-            classif_class
-        ]
-        * stats_processing.classification_layers[dataset_idx].classes_masks[1][
-            classif_class
-        ]
+        * stats_processing.classification_layers[dataset_idx].classes_masks[
+            "ref"
+        ][classif_class]
+        * stats_processing.classification_layers[dataset_idx].classes_masks[
+            "sec"
+        ][classif_class]
     )
     # Get class pixels
     classif_map = stats_processing.dem["image"].data[
@@ -701,9 +745,9 @@ def test_compute_stats_slope_classif_exclusion_mode():
     dataset_idx = stats_processing.classification_layers_names.index("Slope0")
 
     # Compute nodata_nan_mask
-    no_data_value = stats_processing.classification_layers[dataset_idx].nodata
+    nodata_value = stats_processing.classification_layers[dataset_idx].nodata
     nodata_nan_mask = np.apply_along_axis(
-        lambda x: (~np.isnan(x)) * (x != no_data_value),
+        lambda x: (~np.isnan(x)) * (x != nodata_value),
         0,
         stats_processing.dem["image"].data,
     )
@@ -711,18 +755,18 @@ def test_compute_stats_slope_classif_exclusion_mode():
     # Get valid class indexes for slope dataset and class 1 mode exclusion
     idxes_map_class_0_dataset_0 = np.where(
         nodata_nan_mask
-        * stats_processing.classification_layers[dataset_idx].classes_masks[0][
-            classif_class
-        ]
+        * stats_processing.classification_layers[dataset_idx].classes_masks[
+            "ref"
+        ][classif_class]
         * (
             1
             - (
                 stats_processing.classification_layers[
                     dataset_idx
-                ].classes_masks[0][classif_class]
+                ].classes_masks["ref"][classif_class]
                 * stats_processing.classification_layers[
                     dataset_idx
-                ].classes_masks[1][classif_class]
+                ].classes_masks["sec"][classif_class]
             )
         )
     )
@@ -800,7 +844,7 @@ def test_compute_stats_slope_classif_exclusion_mode():
 def test_compute_stats_from_cfg():
     """
     Tests the compute_stats. Manually computes
-    the stats for the classification_layers for a given class
+    the stats for the classification_layer_masks for a given class
     and mode and tests that the compute_stats function obtains
     the same values.
     """
@@ -872,18 +916,18 @@ def test_compute_stats_from_cfg():
     )
 
     # Compute nodata_nan_mask
-    no_data_value = stats_processing.classification_layers[dataset_idx].nodata
+    nodata_value = stats_processing.classification_layers[dataset_idx].nodata
     nodata_nan_mask = np.apply_along_axis(
-        lambda x: (~np.isnan(x)) * (x != no_data_value),
+        lambda x: (~np.isnan(x)) * (x != nodata_value),
         0,
         stats_processing.dem["image"].data,
     )
     # Get valid class indexes for status dataset and class 1
     idxes_map_class_1_dataset_0 = np.where(
         nodata_nan_mask
-        * stats_processing.classification_layers[dataset_idx].classes_masks[0][
-            classif_class
-        ]
+        * stats_processing.classification_layers[dataset_idx].classes_masks[
+            "ref"
+        ][classif_class]
     )
     # Get class pixels
     classif_map = stats_processing.dem["image"].data[
@@ -937,18 +981,18 @@ def test_compute_stats_from_cfg():
     metric_nmad = Metric("nmad")
 
     # Compute nodata_nan_mask
-    no_data_value = stats_processing.classification_layers[dataset_idx].nodata
+    nodata_value = stats_processing.classification_layers[dataset_idx].nodata
     nodata_nan_mask = np.apply_along_axis(
-        lambda x: (~np.isnan(x)) * (x != no_data_value),
+        lambda x: (~np.isnan(x)) * (x != nodata_value),
         0,
         stats_processing.dem["image"].data,
     )
     # Get valid class indexes for status dataset and class 1
     idxes_map_class_1_dataset_0 = np.where(
         nodata_nan_mask
-        * stats_processing.classification_layers[dataset_idx].classes_masks[0][
-            classif_class
-        ]
+        * stats_processing.classification_layers[dataset_idx].classes_masks[
+            "ref"
+        ][classif_class]
     )
     # Get class pixels
     classif_map = stats_processing.dem["image"].data[

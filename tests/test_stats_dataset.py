@@ -25,14 +25,20 @@ methods in the StatsPair class.
 
 # Standard imports
 
+import os
+
 import numpy as np
 
 # Third party imports
 import pytest
 
+import demcompare
+from demcompare import dem_tools
+from demcompare.helpers_init import read_config_file
 from demcompare.stats_dataset import StatsDataset
 
-# Demcompare imports
+# Tests helpers
+from .helpers import demcompare_test_data_path
 
 # Tests helpers
 
@@ -227,13 +233,13 @@ def test_add_classif_layer_and_mode_stats():
     )
     # Test alti diff by class
     # Standard mode
-    np.testing.assert_allclose(
+    np.testing.assert_allclose(  # type:ignore
         status_dataset.image_by_class.data[:, :, class_idx],
         input_stats_status_standard[class_idx]["dz_values"],
         rtol=1e-02,
     )
     # Intersection mode
-    np.testing.assert_allclose(
+    np.testing.assert_allclose(  # type:ignore
         status_dataset.image_by_class_intersection.data[:, :, class_idx],
         input_stats_status_intersection[class_idx]["dz_values"],
         rtol=1e-02,
@@ -264,13 +270,13 @@ def test_add_classif_layer_and_mode_stats():
 
     # Test alti diff by class
     # Standard mode
-    np.testing.assert_allclose(
+    np.testing.assert_allclose(  # type:ignore
         status_dataset.image_by_class.data[:, :, class_idx],
         input_stats_status_standard[class_idx]["dz_values"],
         rtol=1e-02,
     )
     # Intersection mode
-    np.testing.assert_allclose(
+    np.testing.assert_allclose(  # type:ignore
         status_dataset.image_by_class_intersection[:, :, class_idx],
         input_stats_status_intersection[class_idx]["dz_values"],
         rtol=1e-02,
@@ -320,19 +326,19 @@ def test_add_classif_layer_and_mode_stats():
     )
     # Test alti diff by class
     # Standard mode
-    np.testing.assert_allclose(
+    np.testing.assert_allclose(  # type:ignore
         slope_dataset.image_by_class.data[:, :, class_idx],
         input_stats_slope_standard[class_idx]["dz_values"],
         rtol=1e-02,
     )
     # Intersection mode
-    np.testing.assert_allclose(
+    np.testing.assert_allclose(  # type:ignore
         slope_dataset.image_by_class_intersection.data[:, :, class_idx],
         input_stats_slope_intersection[class_idx]["dz_values"],
         rtol=1e-02,
     )
     # Exclusion mode
-    np.testing.assert_allclose(
+    np.testing.assert_allclose(  # type:ignore
         slope_dataset.image_by_class_exclusion.data[:, :, class_idx],
         input_stats_slope_exclusion[class_idx]["dz_values"],
         rtol=1e-02,
@@ -372,19 +378,19 @@ def test_add_classif_layer_and_mode_stats():
 
     # Test alti diff by class
     # Standard mode
-    np.testing.assert_allclose(
+    np.testing.assert_allclose(  # type:ignore
         slope_dataset.image_by_class.data[:, :, class_idx],
         input_stats_slope_standard[class_idx]["dz_values"],
         rtol=1e-02,
     )
     # Intersection mode
-    np.testing.assert_allclose(
+    np.testing.assert_allclose(  # type:ignore
         slope_dataset.image_by_class_intersection.data[:, :, class_idx],
         input_stats_slope_intersection[class_idx]["dz_values"],
         rtol=1e-02,
     )
     # Exclusion mode
-    np.testing.assert_allclose(
+    np.testing.assert_allclose(  # type:ignore
         slope_dataset.image_by_class_exclusion.data[:, :, class_idx],
         input_stats_slope_exclusion[class_idx]["dz_values"],
         rtol=1e-02,
@@ -535,12 +541,12 @@ def test_get_classification_layer_metric():
 
 
 @pytest.mark.unit_tests
-def test_get_classification_layer_metric_names():
+def test_get_classification_layer_metrics():
     """
-    Test the get_classification_layer_metric_names function.
+    Test the get_classification_layer_metrics function.
     Manually computes input stats for one classification
     layers and different modes, and tests that the
-    get_classification_layer_metric_names function correctly
+    get_classification_layer_metrics function correctly
     returns the corresponding metric names.
     """
     # Create input datasets
@@ -579,10 +585,8 @@ def test_get_classification_layer_metric_names():
     # Test specifying the class ------------------------
     # Get the mean metric for class 0 and mode standard
 
-    output_available_metrics = (
-        stats_dataset.get_classification_layer_metric_names(
-            classification_layer="Status"
-        )
+    output_available_metrics = stats_dataset.get_classification_layer_metrics(
+        classification_layer="Status"
     )
     gt_available_metrics = [
         "mean",
@@ -592,3 +596,98 @@ def test_get_classification_layer_metric_names():
         "percent_valid_points",
     ]
     assert gt_available_metrics == output_available_metrics
+
+
+@pytest.mark.unit_tests
+def test_get_classification_layer_metrics_from_stats_processing():
+    """
+    Tests the get_classification_layer_metrics function.
+    Manually computes input stats for one classification
+    layer and different modes, then computes more stats via the
+    StatsProcessing.compute_stats API and tests that the
+    get_classification_layer_metrics function correctly
+    returns the metric names.
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
+
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Initialize sec and ref, necessary for StatsProcessing creation
+    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
+    ref = dem_tools.load_dem(
+        cfg["input_ref"]["path"],
+        classification_layers=(cfg["input_ref"]["classification_layers"]),
+    )
+    sec, ref, _ = dem_tools.reproject_dems(sec, ref, sampling_source="ref")
+
+    # Compute altitude diff for stats computation
+    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
+    # Initialize stats input configuration
+    input_stats_cfg = {
+        "remove_outliers": "False",
+        "save_results": "False",
+        "classification_layers": {
+            "Status": {
+                "type": "segmentation",
+                "classes": {
+                    "valid": [0],
+                    "KO": [1],
+                    "Land": [2],
+                    "NoData": [3],
+                    "Outside_detector": [4],
+                },
+            }
+        },
+    }
+    # Create StatsProcessing object
+    stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
+
+    # Compute stats from input cfg  -----------------------------------------
+
+    # Compute stats with stats processing
+    stats_dataset = stats_processing.compute_stats(metrics=["mean", "sum"])
+    # Define gt metric names
+    gt_metrics_global = ["mean", "sum", "nbpts", "percent_valid_points"]
+    gt_metrics_status = ["mean", "sum", "nbpts", "percent_valid_points"]
+    # Compute output metric names
+    output_metrics_global = stats_dataset.get_classification_layer_metrics(
+        "global"
+    )
+    output_metrics_status = stats_dataset.get_classification_layer_metrics(
+        "Status"
+    )
+    # Verify that the metrics are correctly obtained
+    assert output_metrics_global == gt_metrics_global
+    assert output_metrics_status == gt_metrics_status
+
+    # Compute an additional metric on one of the datasets
+    elevation_thrlds = [-3, 2, 90]
+    stats_dataset = stats_processing.compute_stats(
+        classification_layer=["Status"],
+        metrics=[
+            {"ratio_above_threshold": {"elevation_threshold": elevation_thrlds}}
+        ],
+    )
+    # Define gt metric names
+    gt_metrics_global = ["mean", "sum", "nbpts", "percent_valid_points"]
+    gt_metrics_status = [
+        "mean",
+        "sum",
+        "nbpts",
+        "percent_valid_points",
+        "ratio_above_threshold",
+    ]
+    # Compute output metric names
+    output_metrics_global = stats_dataset.get_classification_layer_metrics(
+        "global"
+    )
+    output_metrics_status = stats_dataset.get_classification_layer_metrics(
+        "Status"
+    )
+
+    # Verify that the status metrics have been updated
+    assert output_metrics_global == gt_metrics_global
+    assert output_metrics_status == gt_metrics_status

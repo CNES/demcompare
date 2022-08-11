@@ -28,7 +28,7 @@ from typing import Dict
 import numpy as np
 import xarray as xr
 
-from ..initialization import ConfigType
+from ..helpers_init import ConfigType
 from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
@@ -60,6 +60,8 @@ class GlobalClassificationLayer(ClassificationLayerTemplate):
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :param cfg: layer's configuration
         :type cfg: ConfigType
         :return: None
@@ -74,7 +76,7 @@ class GlobalClassificationLayer(ClassificationLayerTemplate):
         # Create class masks
         self._create_class_masks()
 
-        logging.info("ClassificationLayer created as: {}".format(self))
+        logging.debug("ClassificationLayer created as: {}".format(self))
 
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
@@ -108,7 +110,7 @@ class GlobalClassificationLayer(ClassificationLayerTemplate):
         map_img[np.where(np.isnan(self.dem["image"].data))] = np.nan
 
         # Store map_image
-        self.map_image.append(map_img)
+        self.map_image["ref"] = map_img
         # If save_results, create map_dataset and save
         if self.save_results:
-            self.save_map_img(map_img, 0)
+            self.save_map_img(map_img, "ref")

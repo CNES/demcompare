@@ -34,3 +34,22 @@ exclude = "(.eggs|.git|.mypy_cache|.nox|.tox|_build|build|dist|venv)"
 profile = 'black'
 line_length = 80
 
+[tool.mypy]
+no_implicit_optional = false
+strict_optional = false
+allow_redefinition = true
+allow_untyped_globals = true
+local_partial_types = false
+warn_unused_ignores = true
+check_untyped_defs = true
+ignore_missing_imports = true
+disable_error_code = 'attr-defined'
+
+[[tool.mypy.overrides]]
+module = [
+    'setuptools',
+    'matplotlib',
+    'rasterio',
+    'astropy',
+]
+ignore_missing_imports = true

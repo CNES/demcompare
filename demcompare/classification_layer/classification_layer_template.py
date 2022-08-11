@@ -22,6 +22,8 @@
 Mainly contains the ClassificationLayer class.
 A classification_layer defines a way to classify the DEMs alti differences.
 """
+import collections
+
 # Standard imports
 import copy
 import logging
@@ -41,7 +43,7 @@ from demcompare.metric import Metric
 # DEMcompare imports
 from demcompare.output_tree_design import get_out_dir
 
-from ..initialization import ConfigType
+from ..helpers_init import ConfigType
 from ..stats_dataset import StatsDataset
 
 
@@ -69,22 +71,6 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 "Use the 'ref' and/or 'sec' keys respectively."
             )
 
-    # Default metrics
-    _DEFAULT_METRICS = {
-        "metrics": [
-            "mean",
-            "median",
-            "max",
-            "min",
-            "sum",
-            {"percentil_90": {"remove_outliers": "False"}},
-            "squared_sum",
-            "nmad",
-            "rmse",
-            "std",
-        ]
-    }
-
     def __init__(
         self,
         name: str,
@@ -104,8 +90,8 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layers: 3D (row, col, nb_classif)
-                  xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :param cfg: layer's configuration
         :type cfg: ConfigType
         :return: None
@@ -116,27 +102,27 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         # Classification layer type
         self.type_layer = classification_layer_kind
         # Init cfg schema
-        self.schema = None
+        self.schema: Dict = None
         # Init classes
-        self.classes = None
+        self.classes: collections.OrderedDict = None
         # Dem to be classified
-        self.dem = dem
+        self.dem: xr.Dataset = dem
         # Fill configuration file
-        self.cfg = self.fill_conf_and_schema(cfg)
+        self.cfg: Dict = self.fill_conf_and_schema(cfg)
         # Check and update configuration file
         self.cfg = self.check_conf(self.cfg)
         # Nodata value
-        self.nodata = self.cfg["no_data"]
+        self.nodata: Union[float, int] = self.cfg["nodata"]
         # Remove outliers
-        self.remove_outliers = self.cfg["remove_outliers"]
+        self.remove_outliers: bool = self.cfg["remove_outliers"]
         # Save results option
-        self.save_results = self.cfg["save_results"]
+        self.save_results: bool = self.cfg["save_results"]
         # Output directory
-        self._output_dir = self.cfg["output_dir"]
+        self._output_dir: Union[str, None] = self.cfg["output_dir"]
         # Output directory for plots
-        self._plots_dir = None
+        self._plots_dir: Union[str, None] = None
         # Output directory for stats
-        self._stats_dir = None
+        self._stats_dir: Union[str, None] = None
         # Create output dir (where to store classification_layer results & data)
         if self.save_results:
             # Create stats dir
@@ -146,13 +132,13 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
             os.makedirs(self._stats_dir, exist_ok=True)
 
         # Init labelled map data
-        self.map_image = []
-        # Init classes masks list
-        self.classes_masks = []
-        # Init outliers free mask
-        self.outliers_free_mask = None
+        self.map_image: Dict = {"ref": None, "sec": None}
+        # Init sets masks dict
+        self.classes_masks: Dict = {"ref": [], "sec": []}
 
-    @abstractmethod
+        # Init outliers free mask
+        self.outliers_free_mask: np.ndarray = None
+
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
         Add default values to the dictionary if there are missing
@@ -166,8 +152,8 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
         # Give the default value if the required element
         # is not in the configuration
-        if "no_data" not in cfg:
-            cfg["no_data"] = DEFAULT_NODATA
+        if "nodata" not in cfg:
+            cfg["nodata"] = DEFAULT_NODATA
         if "save_results" in cfg:
             cfg["save_results"] = cfg["save_results"] == "True"
         else:
@@ -186,15 +172,13 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                     " the saving options."
                 )
                 sys.exit(1)
-        if "metrics" not in cfg:
-            cfg.update(self._DEFAULT_METRICS)
         # Configuration schema
         self.schema = {
-            "type": Or("slope", "segmentation", "global"),
+            "type": Or("slope", "segmentation", "global", "fusion"),
             "remove_outliers": bool,
             "save_results": bool,
             "output_dir": Or(str, None),
-            "no_data": Or(int, float),
+            "nodata": Or(int, float),
             "metrics": list,
         }
         return cfg
@@ -202,7 +186,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
     def check_conf(self, cfg: ConfigType = None) -> ConfigType:
         """
         Check if the config is correct according
-        to the class configuration schema and return updated configuration
+        to the class configuration schema
 
         raises CheckerError if configuration invalid.
 
@@ -242,8 +226,8 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layers: 3D (row, col, nb_classif)
-                  xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :param stats_dataset: StatsDataset object
         :type stats_dataset: StatsDataset
         :param metrics: metrics to be computed
@@ -253,7 +237,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         """
         # Get outliers free mask (array of True where value is no outlier)
         self.outliers_free_mask = self._get_outliers_free_mask(
-            copy.deepcopy(data["image"].data), data.attrs["no_data"]
+            copy.deepcopy(data["image"].data), data.attrs["nodata"]
         )
         # Get mode masks and names
         mode_masks, mode_names = self._create_mode_masks(data)
@@ -275,7 +259,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
             stats_dataset.save_as_csv_and_json(self.name, self._stats_dir)
 
     def create_metrics(
-        self, input_metrics: Union[dict, str] = None
+        self, input_metrics: List[Union[dict, str]] = None
     ) -> Tuple[Dict[str, Metric], List[bool]]:
         """
         Create metric objects and remove_outliers_list
@@ -324,24 +308,24 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         return metrics, remove_outliers_list
 
     def _get_outliers_free_mask(
-        self, array: np.ndarray, no_data_value: Union[int, None] = None
+        self, array: np.ndarray, nodata_value: Union[int, None] = None
     ) -> np.ndarray:
         """
         Get outliers free mask (array of True where value is no outlier) with
         values outside (mu + 3 sigma) and (mu - 3 sigma).
-        Nan and no_data_value are not considered in mu and sigma computation.
+        Nan and nodata_value are not considered in mu and sigma computation.
 
         :param array: input array to get the mask from
         :type array: np.ndarray
-        :param no_data_value: no data value considered. Default: None
-        :type no_data_value: int or None
+        :param nodata_value: no data value considered. Default: None
+        :type nodata_value: int or None
         :return: outliers free mask (array of True where value is no outlier)
         :rtype: np.ndarray
         """
         # Get nonan and nodata mask
-        no_data_free_mask = self._get_nonan_mask(array, no_data_value)
+        nodata_free_mask = self._get_nonan_mask(array, nodata_value)
         # Apply the nonan and nodata mask to the input array
-        array_without_nan = array[np.where(no_data_free_mask)]
+        array_without_nan = array[np.where(nodata_free_mask)]
         # Compute mean and std of the input array
         mu = np.mean(array_without_nan)
         sigma = np.std(array_without_nan)
@@ -354,7 +338,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         """
         Compute Masks for every required modes :
 
-        the 'standard' mode: nan free, no_data free mask
+        the 'standard' mode: nan free, nodata free mask
 
         the 'intersection' mode:
         which is the 'standard' mode where only the pixels
@@ -365,15 +349,13 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
         Note that 'intersection'
         and 'exclusion' mode masks
-        can only be computed if len(classes_masks)==2
+        can only be computed if len(_sets_masks)==2
 
         :param alti_map: alti differences
         :type alti_map:    xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layers: 3D (row, col, nb_classif)
-                  xr.DataArray
         :return: list of masks, associated modes, and error_img read as array
         :rtype: List[np.ndarray]
         """
@@ -386,29 +368,29 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         # Remove alti_map nodata and nan indices
         mode_masks.append(
             self._get_nonan_mask(
-                alti_map["image"].data, alti_map.attrs["no_data"]
+                alti_map["image"].data, alti_map.attrs["nodata"]
             )
         )
-        # If two classes_masks have been defined, compute
+        # If both sets masks have been defined, compute
         # the cross classification (intersection & exclusion) masks
-        if len(self.classes_masks) > 1:
+        if self.classes_masks["ref"] and self.classes_masks["sec"]:
             mode_names.append("intersection")
-            # Combine pairs of classes together
-            # (meaning pixels belonging for the same class on
+            # Combine pairs of sets together
+            # (meaning pixels belonging for the same set on
             # boths ref and sec dems)
-            # for each single class / class,
+            # for each single class / set,
             #    we know which pixels are intersection between both
-            #    classification_layers
-            # combine_classes[0].shape[0] = number of classes
-            # combine_classes[0].shape[1] = number of pixels inside a single DEM
-            combine_classes = np.array(
+            #    classification_layer_masks
+            # combine_sets[0].shape[0] = number of sets (classes)
+            # combine_sets[0].shape[1] = number of pixels inside a single DEM
+            combine_sets = np.array(
                 [
-                    self.classes_masks[0][class_idx][:]
-                    == self.classes_masks[1][class_idx][:]
-                    for class_idx in range(0, len(self.classes_masks[0]))
+                    self.classes_masks["ref"][set_idx][:]
+                    == self.classes_masks["sec"][set_idx][:]
+                    for set_idx in range(0, len(self.classes_masks["ref"]))
                 ]
             )
-            coherent_mask = np.all(combine_classes, axis=0)
+            coherent_mask = np.all(combine_sets, axis=0)
             mode_masks.append(mode_masks[0] * coherent_mask)
 
             # Add the exclusion one as the intersection complementary
@@ -419,24 +401,24 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
     @staticmethod
     def _get_nonan_mask(
-        array: np.ndarray, no_data_value: Union[int, None] = None
+        array: np.ndarray, nodata_value: Union[int, None] = None
     ) -> np.ndarray:
         """
         Get no data and nan mask value
 
         :param array: input array to get the mask from
         :type array: np.ndarray
-        :param no_data_value: no data value considered. Default: None
-        :type no_data_value: int or None
-        :return: nan and no_data_value if exists mask on array.
+        :param nodata_value: no data value considered. Default: None
+        :type nodata_value: int or None
+        :return: nan and nodata_value if exists mask on array.
         :rtype: np.ndarray
         """
         # If no nodata value is specified, just detect nan values
-        if no_data_value is None:
+        if nodata_value is None:
             return np.apply_along_axis(lambda x: (~np.isnan(x)), 0, array)
         # If nodata value is specified, detect both nan and nodata values
         return np.apply_along_axis(
-            lambda x: (~np.isnan(x)) * (x != no_data_value), 0, array
+            lambda x: (~np.isnan(x)) * (x != nodata_value), 0, array
         )
 
     def _compute_mode_stats(
@@ -475,14 +457,16 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         if metrics is None:
             metrics = self.cfg["metrics"]
 
-        logging.info(
+        logging.debug(
             "Computing mode {}, metrics: {}".format(mode_name, metrics)
         )
 
-        # The first classes_mask is considered,
-        # as the second optional mask
-        # is only considered for the intersection-exclusion
-        class_masks = self.classes_masks[0]
+        # Consider either the "ref" or "sec" classes masks.
+        # If both exist, "ref" is considered
+        if self.classes_masks["ref"]:
+            class_masks = self.classes_masks["ref"]
+        else:
+            class_masks = self.classes_masks["sec"]
 
         # Compute stats for each class
         if class_masks is not None:
@@ -539,38 +523,42 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
         :return: None
         """
-        # For each support (classif name)
-        for map_img in self.map_image:
-            # Initialize support map
-            support_masks = []
-            # Get map_image to be classified by classes
-            img_to_classify = map_img
-            # For each class on the classification layer
-            for _, class_value in self.classes.items():
-                # Obtain the positions where the map image
-                # has the class value
-                if isinstance(class_value, list):
-                    if len(class_value) == 1:
-                        # transform it to value
-                        class_value = class_value[0]
-                if isinstance(class_value, list):
-                    class_positions = np.where(
-                        np.logical_or(
-                            *[
-                                np.equal(img_to_classify, label_i)
-                                for label_i in class_value
-                            ]
+        # For each support ("ref" and "sec")
+        for support in self.classes_masks:
+            # If the support is present
+            if self.map_image[support] is not None:
+                # Initialize support map
+                support_masks = []
+                # Get map_image to be classified by classes
+                img_to_classify = self.map_image[support]
+                # For each class on the classification layer
+                for _, class_value in self.classes.items():
+                    # Obtain the positions where the map image
+                    # has the class value
+                    if isinstance(class_value, list):
+                        if len(class_value) == 1:
+                            # transform it to value
+                            class_value = class_value[0]
+                    if isinstance(class_value, list):
+                        class_positions = np.where(
+                            np.logical_or(
+                                *[
+                                    np.equal(img_to_classify, label_i)
+                                    for label_i in class_value
+                                ]
+                            )
                         )
-                    )
 
-                else:
-                    class_positions = np.where(img_to_classify == class_value)
-                # Initialize class mask and add class positions to True
-                mask = np.ones(img_to_classify.shape) * False
-                mask[class_positions] = True
-                # Add class mask to the support mask
-                support_masks.append(mask)
-            self.classes_masks.append(support_masks)
+                    else:
+                        class_positions = np.where(
+                            img_to_classify == class_value
+                        )
+                    # Initialize class mask and add class positions to True
+                    mask = np.ones(img_to_classify.shape) * False
+                    mask[class_positions] = True
+                    # Add class mask to the support mask
+                    support_masks.append(mask)
+                self.classes_masks[support] = support_masks
 
     @abstractmethod
     def _create_labelled_map(self):
@@ -600,7 +588,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         # Create metrics and outliers indicator list
         metrics, remove_outliers_list = self.create_metrics(input_metrics)
         # Initialize metric results dict
-        metric_results = {}
+        metric_results: Dict = {}
         # Iterate over each metrics
         for idx, (metric_name, metric_object) in enumerate(metrics.items()):
             # Choose array according to outliers configuration of the metric
@@ -637,14 +625,14 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
         return metric_results
 
-    def save_map_img(self, map_img: np.ndarray, map_indicator: int):
+    def save_map_img(self, map_img: np.ndarray, map_support: str):
         """
         Save the classification layer map to file
 
         :param map_img: input data
         :type map_img: np.ndarray
-        :param map_indicator: map indicator, 0 or 1
-        :type map_indicator: int
+        :param map_support: map support "ref" or "sec
+        :type map_support: str
         :return: None
         """
 
@@ -652,9 +640,9 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
             map_img,
             self.dem.georef_transform.data,
             img_crs=self.dem.crs,
-            no_data=self.nodata,
+            nodata=self.nodata,
         )
         map_path = os.path.join(
-            self._stats_dir, str(map_indicator) + "_support_map.tif"
+            self._stats_dir, map_support + "_rectified_support_map.tif"
         )
-        save_dem(map_dataset, map_path, no_data=self.nodata)
+        save_dem(map_dataset, map_path, nodata=self.nodata)

@@ -30,7 +30,8 @@
         "type": "slope",
         "ranges": [0, 10, 25, 50, 90]
       },
-      "fusion": {
+      "Fusion0": {
+        "type": "fusion",
         "sec": ["Slope0", "Status"]
       }
     }

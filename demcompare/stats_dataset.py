@@ -44,17 +44,23 @@ class StatsDataset:
     xr.dataset per classification layer
 
     Each xr.Dataset contains :
-    :image: 2D (row, col) input image as
-        xarray.DataArray,
+
+    :image: 2D (row, col) input image as xarray.DataArray,
+
     :image_by_class: 3D (row, col; nb_classes)
+
         xarray.DataArray containing
         the image pixels belonging
         to each class considering the valid pixels
+
     :image_by_class_intersection: 3D (row, col; nb_classes)
+
         xarray.DataArray containing
         the image pixels belonging
         to each class considering the intersection mode
+
     :image_by_class_exclusion: 3D (row, col; nb_classes)
+
         xarray.DataArray containing
         the image pixels belonging
         to each class considering the exclusion mode
@@ -62,23 +68,26 @@ class StatsDataset:
     :attributes:
 
                 - name : name of the classification_layer. str
+
                 - stats_by_class : dictionary containing
-                the stats per class considering the standard mode
+                  the stats per class considering the standard mode
+
                 - stats_by_class_intersection : dictionary containing
-                the stats per class considering the intersection mode
+                  the stats per class considering the intersection mode
+
                 - stats_by_class_exclusion : dictionary containing
-                the stats per class considering the exclusion mode
+                  the stats per class considering the exclusion mode
 
     """
 
     def __init__(self, image: np.ndarray):
         # Dictionary with the different classification layers
         # and the modes of each layer
-        self.classif_layers_and_modes = {}
+        self.classif_layers_and_modes: Dict = {}
         # Image map
-        self.image = image
+        self.image: np.ndarray = image
         # List of xr.Dataset for each classification layer
-        self.classif_layers_dataset = []
+        self.classif_layers_dataset: List[xr.Dataset] = []
 
     def add_classif_layer_and_mode_stats(
         self, classif_name: str, input_stats: List[Dict], mode_name: str
@@ -154,7 +163,11 @@ class StatsDataset:
         )
         # Initialize the stats_by_class + mode_name dictionary on
         # the dataset attrs
-        self.classif_layers_dataset[dataset_idx].attrs[stats_indicator] = {}
+        if (
+            stats_indicator
+            not in self.classif_layers_dataset[dataset_idx].attrs
+        ):
+            self.classif_layers_dataset[dataset_idx].attrs[stats_indicator] = {}
         # Iterate to obtain the stats per class
         for class_idx, class_stats in enumerate(input_stats):
             # Fill the alti diff of the corresponding class
@@ -170,9 +183,15 @@ class StatsDataset:
             # of the dataset
             # Initialize the stats_by_class + mode_name +
             # class_idx dictionary
-            self.classif_layers_dataset[dataset_idx].attrs[stats_indicator][
+            if (
                 class_idx
-            ] = tmp_class_stats
+                not in self.classif_layers_dataset[dataset_idx].attrs[
+                    stats_indicator
+                ]
+            ):
+                self.classif_layers_dataset[dataset_idx].attrs[stats_indicator][
+                    class_idx
+                ] = {}
             # Add each metric on the dictionary
             for stat_name, stat_value in tmp_class_stats.items():
                 self.classif_layers_dataset[dataset_idx].attrs[stats_indicator][
@@ -221,7 +240,9 @@ class StatsDataset:
             stats_dict = classif_dataset.attrs[
                 "stats_by_class" + mode_name_item
             ]
-            scalar_metric_dict = collections.OrderedDict()
+            scalar_metric_dict: collections.OrderedDict = (
+                collections.OrderedDict()
+            )
             # Add each class stats on the results dict
             for class_idx in list(stats_dict.keys()):
                 scalar_metric_dict[class_idx] = {}
@@ -259,6 +280,14 @@ class StatsDataset:
                 for set_item in scalar_metric_dict:
                     writer.writerow(scalar_metric_dict[set_item])
 
+    def get_classification_layer_names(self):
+        """
+        Returns the available classification layers
+
+        :return: None
+        """
+        return list(self.classif_layers_and_modes.keys())
+
     def get_classification_layer_dataset(
         self, classification_layer: str
     ) -> xr.Dataset:
@@ -293,12 +322,12 @@ class StatsDataset:
         )
         return self.classif_layers_dataset[idx].attrs
 
-    def get_classification_layer_metric_names(
+    def get_classification_layer_metrics(
         self,
         classification_layer: str,
     ) -> List[str]:
         """
-        Returns the metric corresponding to the
+        Returns the metric names available on the
         input classification layer and mode
 
         :param classification_layer: classification_layer name
@@ -324,7 +353,7 @@ class StatsDataset:
         metric: str = None,
     ) -> Union[List, Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
-        Returns the metric names available on the
+        Returns the metric corresponding to the
         input classification layer and mode
 
         :param classification_layer: classification_layer name

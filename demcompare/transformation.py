@@ -92,6 +92,19 @@ class Transformation:
         # rotation
         self.rotation = rotation
 
+    def __repr__(self):
+        """
+        Represent transformation offsets
+        """
+        return (
+            "Transformation(x_offset = {}, "
+            "y_offset = {}, z_offset = {})".format(
+                round(self.x_offset, 5),
+                round(self.y_offset, 5),
+                round(self.z_offset, 5),
+            )
+        )
+
     def apply_transform(self, dem: xr.Dataset) -> xr.Dataset:
         """
         Apply Transformation to input dem, currently only
@@ -102,11 +115,15 @@ class Transformation:
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :type dem: xr.Dataset
         :return: transformed dem xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :rtype: xr.Dataset
         """
         # for this version of transform, (x,y) planimetric translation only

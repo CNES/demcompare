@@ -51,7 +51,8 @@
           90
         ]
       },
-      "fusion": {
+      "Fusion0": {
+        "type": "fusion",
         "ref": ["Slope0", "Status"]
       }
     }

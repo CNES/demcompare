@@ -32,7 +32,7 @@ import pytest
 
 # Demcompare imports
 import demcompare
-from demcompare.initialization import read_config_file, save_config_file
+from demcompare.helpers_init import read_config_file, save_config_file
 from demcompare.output_tree_design import get_out_file_path
 
 # Tests helpers
@@ -78,7 +78,7 @@ def test_demcompare_with_gironde_test_data():
         # Save the new configuration inside the tmp dir
         save_config_file(tmp_cfg_file, test_cfg)
 
-        # Run demcompare with "gironde_test_data_sampling_ref"
+        # Run demcompare with "gironde_test_data"
         # configuration (and replace conf file)
         demcompare.run(tmp_cfg_file)
 
@@ -179,32 +179,20 @@ def test_demcompare_with_gironde_test_data():
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test coreg_DEM.tif
-        img = get_out_file_path("coreg_DEM.tif")
+        # Test coreg_SEC.tif
+        img = get_out_file_path("coreg_SEC.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test reproj_coreg_DEM.tif
-        img = get_out_file_path("reproj_coreg_DEM.tif")
+        # Test reproj_coreg_SEC.tif
+        img = get_out_file_path("reproj_coreg_SEC.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test reproj_coreg_REF.tif
         img = get_out_file_path("reproj_coreg_REF.tif")
-        ref_output_data = os.path.join(test_ref_output_path, img)
-        output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
-
-        # TEST WAVEFORM TIFS
-
-        img = get_out_file_path("dh_row_wise_wave_detection.tif")
-        ref_output_data = os.path.join(test_ref_output_path, img)
-        output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
-
-        img = get_out_file_path("dh_col_wise_wave_detection.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -223,14 +211,14 @@ def test_demcompare_with_gironde_test_data():
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test Slope0/0_support_map.tif
-        img = "stats/Slope0/0_support_map.tif"
+        # Test Slope0/ref_rectified_support_map.tif
+        img = "stats/Slope0/ref_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test Slope0/1_support_map.tif
-        img = "stats/Slope0/1_support_map.tif"
+        # Test Slope0/sec_rectified_support_map.tif
+        img = "stats/Slope0/sec_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -243,8 +231,8 @@ def test_demcompare_with_gironde_test_data():
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, rtol=1e-2)
 
-        # Test Status/0_support_map.tif
-        img = "stats/Status/0_support_map.tif"
+        # Test Status/sec_rectified_support_map.tif
+        img = "stats/Status/sec_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -259,14 +247,14 @@ def test_demcompare_with_gironde_test_data():
 
         # TEST FUSION_LAYER STATS
 
-        # Test stats/fusion_layer1/stats_results.csv
-        file = "stats/fusion_layer1/stats_results.csv"
+        # Test stats/Fusion0/stats_results.csv
+        file = "stats/Fusion0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test fusion_layer1/0_support_map.tif
-        img = "stats/fusion_layer1/0_support_map.tif"
+        # Test Fusion0/sec_rectified_support_map.tif
+        img = "stats/Fusion0/sec_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -419,14 +407,14 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test coreg_DEM.tif
-        img = get_out_file_path("coreg_DEM.tif")
+        # Test coreg_SEC.tif
+        img = get_out_file_path("coreg_SEC.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test reproj_coreg_DEM.tif
-        img = get_out_file_path("reproj_coreg_DEM.tif")
+        # Test reproj_coreg_SEC.tif
+        img = get_out_file_path("reproj_coreg_SEC.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -451,14 +439,14 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test Slope0/1_support_map.tif
-        img = "stats/Slope0/1_support_map.tif"
+        # Test Slope0/sec_rectified_support_map.tif
+        img = "stats/Slope0/sec_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # Test Slope0/0_support_map.tif
-        img = "stats/Slope0/0_support_map.tif"
+        # Test Slope0/ref_rectified_support_map.tif
+        img = "stats/Slope0/ref_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -471,8 +459,8 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test Status/0_support_map.tif
-        img = "stats/Status/0_support_map.tif"
+        # Test Status/ref_rectified_support_map.tif
+        img = "stats/Status/ref_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -486,14 +474,14 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
         np.testing.assert_allclose(ref_output_csv, output_csv, rtol=1e-2)
         # TEST FUSION_LAYER STATS
 
-        # Test stats/fusion_layer0/stats_results.csv
-        file = "stats/fusion_layer0/stats_results.csv"
+        # Test stats/Fusion0/stats_results.csv
+        file = "stats/Fusion0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test fusion_layer0/0_support_map.tif
-        img = "stats/fusion_layer0/0_support_map.tif"
+        # Test Fusion0/ref_rectified_support_map.tif
+        img = "stats/Fusion0/ref_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)

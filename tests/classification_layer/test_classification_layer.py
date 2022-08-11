@@ -35,6 +35,19 @@ from demcompare.classification_layer.classification_layer import (
     ClassificationLayer,
 )
 
+_DEFAULT_TEST_METRICS = [
+    "mean",
+    "median",
+    "max",
+    "min",
+    "sum",
+    {"percentil_90": {"remove_outliers": "False"}},
+    "squared_sum",
+    "nmad",
+    "rmse",
+    "std",
+]
+
 
 @pytest.mark.unit_tests
 def test_get_outliers_free_mask():
@@ -74,12 +87,13 @@ def test_get_outliers_free_mask():
         "ranges": [0, 5, 10, 25, 45],
         "save_results": False,
         "output_dir": "",
+        "metrics": _DEFAULT_TEST_METRICS,
     }
 
     # Initialize slope classification layer object
     slope_classif_layer_ = ClassificationLayer(
         name=layer_name,
-        classification_layer_kind=clayer["type"],
+        classification_layer_kind=str(clayer["type"]),
         dem=dem_dataset,
         cfg=clayer,
     )
@@ -88,7 +102,7 @@ def test_get_outliers_free_mask():
         data, -9999
     )
 
-    # All no_data values of the input data
+    # All nodata values of the input data
     array_without_nodata = np.array(
         [0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 20, 1],
         dtype=np.float32,
@@ -123,6 +137,7 @@ def test_get_non_mask():
         "ranges": [0, 5, 10, 25, 45],
         "save_results": False,
         "output_dir": "",
+        "metrics": _DEFAULT_TEST_METRICS,
     }
 
     data = np.array(
@@ -137,7 +152,7 @@ def test_get_non_mask():
     # Initialize slope classification layer object
     slope_classif_layer_ = ClassificationLayer(
         name=layer_name,
-        classification_layer_kind=clayer["type"],
+        classification_layer_kind=str(clayer["type"]),
         dem=dem_dataset,
         cfg=clayer,
     )
@@ -192,7 +207,7 @@ def test_create_mode_masks():
     # Generate dsm with the following data and
     # "gironde_test_data" DSM's georef and resolution
     data = np.array([[1, 0, 1], [1, -9999, 1], [-1, 0, 1]], dtype=np.float32)
-    data_dataset = dem_tools.create_dem(data=data, no_data=-9999)
+    data_dataset = dem_tools.create_dem(data=data, nodata=-9999)
     # Compute slope and add it as a classification_layer
     data_dataset = dem_tools.compute_dem_slope(data_dataset)
     # Classification layer configuration
@@ -202,13 +217,14 @@ def test_create_mode_masks():
         "ranges": [0, 5, 10, 25, 45],
         "save_results": False,
         "output_dir": "",
-        "no_data": -9999,
+        "nodata": -9999,
+        "metrics": _DEFAULT_TEST_METRICS,
     }
 
     # Initialize slope classification layer object
     classif_layer_ = ClassificationLayer(
         name=layer_name,
-        classification_layer_kind=clayer["type"],
+        classification_layer_kind=str(clayer["type"]),
         dem=data_dataset,
         cfg=clayer,
     )
@@ -223,23 +239,25 @@ def test_create_mode_masks():
         [[0.0, 5.0, 5.0], [5.0, 10.0, 10.0], [25.0, 45.0, 25.0]]
     )
     # Reset and set ground truth map_image on the classification_layer object
-    classif_layer_.map_image[0] = ref_map_img
-    classif_layer_.map_image.append(dem_map_img)
+    classif_layer_.map_image["ref"] = ref_map_img
+    classif_layer_.map_image["sec"] = dem_map_img
     # Reset and create sets_masks on the input map_image
-    classif_layer_.classes_masks = []
+    classif_layer_.classes_masks["ref"] = None
+    classif_layer_.classes_masks["sec"] = None
+
     classif_layer_._create_class_masks()
     # Create mode_masks on the input map_image. We set the data_dataset as
     # input altitude dataset.
     mode_masks, _ = classif_layer_._create_mode_masks(alti_map=data_dataset)
 
     # standard mode will only have False where the input alti_map has
-    # no_data value
+    # nodata value
     gt_standard_mode_mask = np.array(
         [[True, True, True], [True, False, True], [True, True, True]]
     )
     # intersection_mode will only have True where both classified_dem_slope
     # and classified_ref_slope
-    # have the same class and input alti_map is not no_data
+    # have the same class and input alti_map is not nodata
     gt_intersection_mode_mask = np.array(
         [[True, False, True], [True, False, True], [True, True, False]]
     )

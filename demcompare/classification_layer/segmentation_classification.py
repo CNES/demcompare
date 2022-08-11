@@ -27,7 +27,7 @@ from typing import Dict
 
 import xarray as xr
 
-from ..initialization import ConfigType
+from ..helpers_init import ConfigType
 from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
@@ -48,32 +48,32 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
         """
         Init function
 
-                :param name: classification layer name
-                :type name: str
-                :param classification_layer_kind: classification layer kind
-                :type classification_layer_kind: str
-                :param dem: dem
-                :type dem:    xr.DataSet containing :
+        :param name: classification layer name
+        :type name: str
+        :param classification_layer_kind: classification layer kind
+        :type classification_layer_kind: str
+        :param dem: dem
+        :type dem:    xr.DataSet containing :
 
-                        - image : 2D (row, col) xr.DataArray float32
-                        - georef_transform: 1D (trans_len) xr.DataArray
-                :param cfg: layer's configuration
-                :type cfg: ConfigType
-                :return: None
+            - image : 2D (row, col) xr.DataArray float32
+            - georef_transform: 1D (trans_len) xr.DataArray
+            - classification_layer_masks : 3D (row, col, indicator) xr.DataArray
+        :param cfg: layer's configuration
+        :type cfg: ConfigType
+        :return: None
         """
         # Call generic init before supercharging
         super().__init__(name, classification_layer_kind, dem, cfg)
 
         # Classes
-        self.classes = self.cfg["classes"]
-        self.support = "ref"
+        self.classes: collections.OrderedDict = self.cfg["classes"]
         # Create labelled map to classification_layer from
         self._create_labelled_map()
 
         # Create class masks
         self._create_class_masks()
 
-        logging.info("ClassificationLayer created as: {}".format(self))
+        logging.debug("ClassificationLayer created as: {}".format(self))
 
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
@@ -99,14 +99,18 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
         Create the labelled map and save it if necessary
         :return: None
         """
-        indicators = list(self.dem.classification_layers.indicator.data)
+        indicators = list(self.dem.classification_layer_masks.indicator.data)
         for idx, map_indicator in enumerate(indicators):
             if self.name in map_indicator:
-                map_img = self.dem.classification_layers.data[:, :, idx]
-
+                map_img = self.dem.classification_layer_masks.data[:, :, idx]
+                # If support is included in the map_indicator, it will be placed
+                # at its beggining as ref_ or sec_
+                if "support_list" in self.dem.attrs:
+                    support = self.dem.attrs["support_list"][idx]
+                else:
+                    support = "ref"
                 # Store map_image
-                self.map_image.append(map_img)
+                self.map_image[support] = map_img
                 # If save_results, create map_dataset and save
                 if self.save_results:
-                    indicator = len(self.map_image) - 1
-                    self.save_map_img(map_img, indicator)
+                    self.save_map_img(map_img, support)

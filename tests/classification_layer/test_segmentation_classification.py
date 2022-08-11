@@ -53,7 +53,8 @@ def test_create_classification_layer_class_masks():
         "classes": {"sea": [0], "deep_land": [1], "coast": [2], "lake": [3]},
         "save_results": False,
         "output_dir": "",
-        "no_data": -9999,
+        "nodata": -9999,
+        "metrics": ["mean"],
     }
     # Create the dems data
     data = np.array(
@@ -88,7 +89,7 @@ def test_create_classification_layer_class_masks():
     ]
     # Add the datarray with input classification layers
     # to the dataset
-    dataset["classification_layers"] = xr.DataArray(
+    dataset["classification_layer_masks"] = xr.DataArray(
         data=classif_data,
         coords=coords_classification_layers,
         dims=["row", "col", "indicator"],
@@ -97,7 +98,7 @@ def test_create_classification_layer_class_masks():
     # Initialize classification layer object
     classif_layer_ = ClassificationLayer(
         name=layer_name,
-        classification_layer_kind=clayer["type"],
+        classification_layer_kind=str(clayer["type"]),
         dem=dataset,
         cfg=clayer,
     )
@@ -107,7 +108,7 @@ def test_create_classification_layer_class_masks():
     # on the dataset
     gt_map_image = classif_data[:, :, 0]
     np.testing.assert_allclose(
-        gt_map_image, classif_layer_.map_image[-1], rtol=1e-02
+        gt_map_image, classif_layer_.map_image["ref"], rtol=1e-02
     )
 
     # test _create_class_masks -------------------------------
@@ -132,6 +133,6 @@ def test_create_classification_layer_class_masks():
     # Test that the computed sets_masks_dict is the same as gt
     np.testing.assert_allclose(
         gt_classes_masks["Slope0"],
-        classif_layer_.classes_masks[-1],
+        classif_layer_.classes_masks["ref"],
         rtol=1e-02,
     )

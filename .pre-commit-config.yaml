@@ -29,6 +29,13 @@ repos:
     entry: pylint --rcfile=.pylintrc
     files: \.py$
 
+  - id: mypy
+    name: mypy
+    stages: [ commit ]
+    language: system
+    entry: mypy
+    files: \.py$
+
   - id: sphinx-build
     name: Build Sphinx Doc
     stages: [push]
@@ -36,3 +43,4 @@ repos:
     language: system
     files: ^(docs/.*|demcompare/.*)$
     pass_filenames: False
+

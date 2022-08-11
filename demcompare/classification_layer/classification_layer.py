@@ -29,7 +29,7 @@ from typing import Dict
 import xarray as xr
 
 # Demcompare imports
-from ..initialization import ConfigType
+from ..helpers_init import ConfigType
 
 
 class ClassificationLayer:
@@ -62,8 +62,8 @@ class ClassificationLayer:
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layers : 3D (row, col, nb_classif)
-                xr.DataArray float32
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :param cfg: layer's configuration
         :type cfg: ConfigType
         """
@@ -96,9 +96,9 @@ class ClassificationLayer:
         :type dem:   xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
-                - georef_transform : 1D (trans_len) xr.DataArray
-                - classification_layers : 3D (row, col, nb_classif)
-                  xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :param cfg: layer's configuration
         :type cfg: ConfigType
         """
@@ -113,7 +113,7 @@ class ClassificationLayer:
                 dem,
                 cfg,
             )
-            logging.info(
+            logging.debug(
                 "ClassificationLayer of type: {} and name: {}".format(
                     classification_layer_kind, name
                 )

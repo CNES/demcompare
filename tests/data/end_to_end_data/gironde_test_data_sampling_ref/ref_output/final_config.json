@@ -7,7 +7,7 @@
       "nb_valid_points": 927936
     },
     "interm_rectified_sec": {
-      "path": "TO/PATH/demcompare/test_output/coregistration/interm_coreg_DEM.tif",
+      "path": "TO/PATH/demcompare/test_output/coregistration/interm_coreg_SEC.tif",
       "nodata": -32768,
       "nb_points": 927936,
       "nb_valid_points": 85312
@@ -61,7 +61,7 @@
         "nb_valid_points": 85312
       }
     },
-    "classification_layers": {
+    "classification_layer_masks": {
       "slope": {
         "strm_test_data": {
           "ref_support": {

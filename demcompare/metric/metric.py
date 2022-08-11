@@ -28,7 +28,7 @@ import logging
 from typing import Dict, Union
 
 # Demcompare imports
-from ..initialization import ConfigType
+from ..helpers_init import ConfigType
 
 
 class Metric:

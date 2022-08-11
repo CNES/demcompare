@@ -33,11 +33,11 @@ default_OTD = {
     "dh_col_wise_wave_detection.tif": "./stats",
     "dh_row_wise_wave_detection.tif": "./stats",
     # coreg step
-    "coreg_DEM.tif": "./coregistration/",
+    "coreg_SEC.tif": "./coregistration/",
     "reproj_REF.tif": "./coregistration/",
     "reproj_DEM.tif": "./coregistration/",
     "reproj_coreg_REF.tif": "./coregistration/",
-    "reproj_coreg_DEM.tif": "./coregistration/",
+    "reproj_coreg_SEC.tif": "./coregistration/",
     "nuth_kaab_tmp_dir": "./coregistration/nuth_kaab_tmp_dir",
     # snapshots
     "snapshots_dir": "./snapshots",
@@ -51,8 +51,6 @@ default_OTD = {
     "final_dem_diff_pdf.csv": "./snapshots/",
     "final_dem_diff_cdf.png": "./snapshots/",
     "final_dem_diff_cdf.csv": "./snapshots/",
-    # histograms
-    "_histograms_dir": "./histograms",
     # stats
     "_stats_dir": "./stats",
     "sec_support.tif": "./stats",
@@ -60,9 +58,11 @@ default_OTD = {
     "ref_support-sec_support.tif": "./stats",
     "DSM_support_classified.png": "./stats",
     "ref_support_classified.png": "./stats",
+    "dem_for_stats.tif": "./stats",
     # doc
     "sphinx_built_doc": "./doc/published_report",
     "sphinx_src_doc": "./doc/src",
+    "logs.log": ".",
 }
 
 supported_OTD = {"default_OTD": default_OTD}

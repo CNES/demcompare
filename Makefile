@@ -39,6 +39,8 @@ lint: install  ## run lint tools (depends install)
 	@${VENV}/bin/flake8 demcompare tests
 	@echo "Demcompare linting pylint check"
 	@set -o pipefail; ${VENV}/bin/pylint demcompare tests --rcfile=.pylintrc --output-format=parseable | tee pylint-report.txt # pipefail to propagate pylint exit code in bash
+	@echo "Demcompare linting mypy check"
+	@${VENV}/bin/mypy demcompare tests
 
 format: install  ## run black and isort formatting (depends install)
 	@${VENV}/bin/isort demcompare tests

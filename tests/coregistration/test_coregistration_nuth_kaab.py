@@ -36,7 +36,7 @@ import scipy
 
 # Demcompare imports
 from demcompare import coregistration, dem_tools
-from demcompare.initialization import read_config_file
+from demcompare.helpers_init import read_config_file
 
 # Tests helpers
 from tests.helpers import demcompare_test_data_path

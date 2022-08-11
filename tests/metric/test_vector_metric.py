@@ -82,7 +82,7 @@ def test_ratio_above_threshold():
     # Compute metric from metric class
     output = metric_obj.compute_metric(data)
 
-    np.testing.assert_allclose(gt_output, output, rtol=1e-02)
+    np.testing.assert_allclose(gt_output, output, rtol=1e-02)  # type:ignore
 
 
 @pytest.mark.unit_tests

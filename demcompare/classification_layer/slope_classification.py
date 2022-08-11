@@ -23,7 +23,7 @@ Mainly contains the SlopeClassification class.
 """
 import collections
 import logging
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
 import xarray as xr
@@ -31,7 +31,7 @@ import xarray as xr
 # DEMcompare imports
 from demcompare.dem_tools import create_dem
 
-from ..initialization import ConfigType
+from ..helpers_init import ConfigType
 from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
@@ -56,24 +56,26 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
         """
         Init function
 
-                :param name: classification layer name
-                :type name: str
-                :param classification_layer_kind: classification layer kind
-                :type classification_layer_kind: str
-                :param dem: dem
-                :type dem:    xr.DataSet containing :
+        :param name: classification layer name
+        :type name: str
+        :param classification_layer_kind: classification layer kind
+        :type classification_layer_kind: str
+        :param dem: dem
+        :type dem:    xr.DataSet containing :
 
-                        - image : 2D (row, col) xr.DataArray float32
-                        - georef_transform: 1D (trans_len) xr.DataArray
-                :param cfg: layer's configuration
-                :type cfg: ConfigType
-                :return: None
+            - image : 2D (row, col) xr.DataArray float32
+            - georef_transform: 1D (trans_len) xr.DataArray
+            - classification_layer_masks : 3D (row, col, indicator)
+             xr.DataArray
+        :param cfg: layer's configuration
+        :type cfg: ConfigType
+        :return: None
         """
         # Call generic init before supercharging
         super().__init__(name, classification_layer_kind, dem, cfg)
 
         # Ranges
-        self.ranges = self.cfg["ranges"]
+        self.ranges: List = self.cfg["ranges"]
 
         # Create labelled map to classification_layer from
         self._create_labelled_map()
@@ -81,7 +83,7 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
         # Create class masks
         self._create_class_masks()
 
-        logging.info("ClassificationLayer created as: {}".format(self))
+        logging.debug("ClassificationLayer created as: {}".format(self))
 
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
@@ -112,7 +114,9 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
         """
 
         # transform 'ranges' to 'classes'
-        self.classes = self._generate_classes(self.ranges)
+        self.classes: collections.OrderedDict = self._generate_classes(
+            self.ranges
+        )
 
         # create slope maps of ref and sec
         self._create_slope_map_datasets(self.dem)
@@ -126,21 +130,24 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
         :return: None
         """
         # Classify slope
-        indicators = list(self.dem.classification_layers.indicator.data)
-        for idx, map_indicator in enumerate(indicators):
-            if map_indicator == "slope":
-                slope_img = self.dem.classification_layers.data[:, :, idx]
+        dict_slope = {"ref_slope": "ref", "sec_slope": "sec"}
+
+        for slope_name, support in dict_slope.items():
+            if slope_name in dem:
+                slope_img = self.dem[slope_name].data[:, :]
                 slope_dataset = create_dem(
                     slope_img,
                     transform=dem.georef_transform.data,
                     img_crs=dem.crs,
-                    no_data=self.nodata,
+                    nodata=self.nodata,
                 )
                 # Create the layer map for each slope
-                self._classify_slope_by_ranges(slope_dataset)
+                self._classify_slope_by_ranges(slope_dataset, support)
 
     @staticmethod
     def _generate_classes(ranges) -> collections.OrderedDict:
@@ -163,7 +170,9 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
 
         return classes
 
-    def _classify_slope_by_ranges(self, slope_dataset: xr.Dataset):
+    def _classify_slope_by_ranges(
+        self, slope_dataset: xr.Dataset, support: str = "ref"
+    ):
         """
         Create the map for each slope using the input ranges
         (value interval is transformed into 1 value (interval minimum value))
@@ -173,6 +182,10 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                 xr.DataArray
+        :param support: support dem, ref or sec
+        :type support: str
         :return: None
         """
         # Use radiometric ranges to classify the slope dataset
@@ -198,9 +211,8 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
                     )
                 ] = self.ranges[idx]
         # Store map_image
-        self.map_image.append(map_img)
+        self.map_image[support] = map_img
         # If save_results, create map_dataset and save
         if self.save_results:
             if self.save_results:
-                indicator = len(self.map_image) - 1
-                self.save_map_img(map_img, indicator)
+                self.save_map_img(map_img, support)

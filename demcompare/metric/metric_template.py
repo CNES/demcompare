@@ -23,7 +23,7 @@ Mainly contains the MetricTemplate class.
 """
 # Standard imports
 from abc import ABCMeta, abstractmethod
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Tuple, Union
 
 # Third party imports
 import numpy as np
@@ -56,11 +56,7 @@ class MetricTemplate(
     @abstractmethod
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[
-        Tuple[List[Union[float, int]], List[Union[float, int]]],
-        np.ndarray,
-        float,
-    ]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
         """
         Metric computation method
         """
