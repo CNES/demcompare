@@ -191,6 +191,7 @@ def main(cfg_path: str):
         mesh.pcd.deserialize(cfg["input_path"])
         logger.debug("Input data read as a point cloud format.")
 
+
     # Init state machine model
     mesh_3d_machine = Mesh3DMachine(mesh_data=mesh)
 

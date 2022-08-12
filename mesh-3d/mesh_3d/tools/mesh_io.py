@@ -30,6 +30,7 @@ import pandas as pd
 
 from ..tools import point_cloud_io as pcd_io
 from ..tools.handlers import Mesh
+import plyfile
 
 
 def write_triangle_mesh_o3d(filepath: str, mesh: Union[dict, Mesh], compressed: bool = True):
@@ -46,7 +47,32 @@ def write_triangle_mesh_o3d(filepath: str, mesh: Union[dict, Mesh], compressed: 
         o3d.io.write_triangle_mesh(filepath, mesh.o3d_mesh, compressed=compressed)
     else:
         raise NotImplementedError
-    
+
+def serialize_ply_texture(filepath: str, mesh: Mesh):
+
+    # Vertices
+    vertices = mesh.pcd.df[["x", "y", "z"]].to_numpy()
+    vertex = np.array(list(zip(*vertices.T)),
+                      dtype=[('x', 'f8'), ('y', 'f8'), ('z', 'f8')])
+
+    # Faces + Texture
+    triangles = mesh.df[["p1", "p2", "p3"]].to_numpy()
+    ply_faces = np.empty(len(triangles), dtype=[('vertex_indices', 'i4', (3,)),
+                                                ('texcoord', 'f8', (6,))])  # 3 pairs of image coordinates
+    ply_faces['vertex_indices'] = triangles.astype('i4')
+
+    triangles_uvs = mesh.df[["uv1_row", "uv1_col", "uv2_row", "uv2_col", "uv3_row", "uv3_col"]].to_numpy()
+    ply_faces['texcoord'] = triangles_uvs.astype('f8')
+
+    # Define elements
+    el_vertex = plyfile.PlyElement.describe(vertex, 'vertex', val_types={'x': 'f8', 'y': 'f8', 'z': 'f8'})
+    el_vertex_indices = plyfile.PlyElement.describe(ply_faces, 'face', val_types={'vertex_indices': 'i4',
+                                                                                  'texcoord': 'f8'})
+
+    comments = [f'TextureFile {os.path.basename(mesh.path_img)}']
+
+    # Write ply file
+    plyfile.PlyData([el_vertex, el_vertex_indices], byte_order='>', comments=comments).write(filepath)
 
 # -------------------------------------------------------------------------------------------------------- #
 # Mesh object ===> any mesh format
@@ -65,7 +91,10 @@ def mesh2ply(filepath: str, mesh: Mesh, compressed: bool = True):
 
     # Write mesh in PLY file
     filepath_mesh = filepath[:-4] + "_mesh.ply"
-    write_triangle_mesh_o3d(filepath_mesh, mesh, compressed=compressed)
+    if mesh.has_texture:
+        serialize_ply_texture(filepath_mesh, mesh)
+    else:
+        write_triangle_mesh_o3d(filepath_mesh, mesh, compressed=compressed)
 
 # -------------------------------------------------------------------------------------------------------- #
 # dict of pandas DataFrame point cloud and numpy array mesh (vertex indexes of triangles) ===> any mesh format

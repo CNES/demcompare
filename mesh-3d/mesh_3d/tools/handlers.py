@@ -135,6 +135,9 @@ class Mesh(object):
 
         self.o3d_mesh = o3d_mesh
 
+        # image texture
+        self.path_img = None
+
     def set_df_from_vertices(self, vertices) -> None:
         self.df = pd.DataFrame(data=vertices, columns=["p1", "p2", "p3"])
 
@@ -148,7 +151,6 @@ class Mesh(object):
             vertices=o3d.utility.Vector3dVector(self.pcd.df[["x", "y", "z"]].to_numpy()),
             triangles=o3d.utility.Vector3iVector(self.df[["p1", "p2", "p3"]].to_numpy())
         )
-
         # Add attributes if available
         if self.pcd.has_colors:
             self.o3d_mesh.vertex_colors = o3d.utility.Vector3dVector(self.pcd.df[["red", "green", "blue"]].to_numpy())
@@ -174,9 +176,12 @@ class Mesh(object):
         # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
         #  point order might be different
 
+    def set_texture_parameters(self, path_img) -> None:
+        self.path_img = path_img
+
     @property
     def has_texture(self) -> bool:
-        raise NotImplementedError
+        return self.path_img is not None
 
     @property
     def has_normals(self) -> bool:

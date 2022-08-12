@@ -280,7 +280,7 @@ class Mesh3DMachine(Machine):
         else:
             # Apply the texturing method chosen by the user
             self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.mesh_data, **step["params"])
+                self.mesh_data, cfg["output_dir"], **step["params"])
 
     def check_transitions(self, cfg: dict) -> None:
         """

@@ -2,6 +2,7 @@ from .core.filter import radius_filtering_outliers_o3, statistical_filtering_out
 from .core.denoise_pcd import bilateral_filtering
 from .core.mesh import delaunay_2d_reconstruction, poisson_reconstruction, ball_pivoting_reconstruction
 from .core.simplify_mesh import simplify_quadric_decimation
+from .core.texture import texturing
 
 
 TRANSITIONS_METHODS = {
@@ -21,7 +22,9 @@ TRANSITIONS_METHODS = {
         "garland-heckbert": simplify_quadric_decimation
     },
     "denoise_mesh": {},
-    "texture": {}
+    "texture": {
+        "texturing": texturing
+    }
 }
 
 PCD_FILE_EXTENSIONS = ["ply", "las", "laz"]
