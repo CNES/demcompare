@@ -22,15 +22,17 @@
 Simplifying methods for the mesh to decrease the number of faces
 """
 
-import open3d as o3d
-import pandas as pd
+from typing import Union
 
-from ..tools.point_cloud_io import df2o3d
-from ..tools.handlers import Mesh, PointCloud
+import open3d as o3d
+import numpy as np
+
+from ..tools.handlers import Mesh
 
 
 def simplify_quadric_decimation(mesh: Mesh,
-                                target_number_of_triangles: int,
+                                reduction_ratio_of_triangles: float = 0.1,
+                                target_number_of_triangles: Union[int, None] = None,
                                 maximum_error: float = float("inf"),
                                 boundary_weight: float = 1.) -> Mesh:
     """
@@ -40,8 +42,12 @@ def simplify_quadric_decimation(mesh: Mesh,
     ----------
     mesh: Mesh
         Mesh object
-    target_number_of_triangles: int
-        The number of triangles that the simplified mesh should have. It is not guaranteed that this number will be reached.
+    reduction_ratio_of_triangles: float (default=0.9)
+        Reduction ratio of triangles (for instance, 0.9 to keep 90% of the triangles)
+    target_number_of_triangles: int or None (default=None)
+        The number of triangles that the simplified mesh should have. It is not guaranteed that this number will be
+        reached. If both reduction_ratio_of_triangles and target_number_of_triangles are specified, the latter will
+        be used.
     maximum_error: float (default=inf)
         The maximum error where a vertex is allowed to be merged
     boundary_weight: float (default=1.0)
@@ -57,6 +63,23 @@ def simplify_quadric_decimation(mesh: Mesh,
     if mesh.o3d_mesh is None:
         mesh.set_o3d_mesh_from_df()
 
+    # Check and set parameters
+    if target_number_of_triangles is not None:
+        target_number_of_triangles = int(target_number_of_triangles)
+
+    elif reduction_ratio_of_triangles is not None:
+        if reduction_ratio_of_triangles > 1. or reduction_ratio_of_triangles < 0.:
+            raise ValueError(f"'reduction_ratio_of_triangles' should be contained in [0, 1]. Here found: "
+                             f"{reduction_ratio_of_triangles}.")
+
+        target_number_of_triangles = int(np.asarray(mesh.o3d_mesh.triangles).shape[0] * reduction_ratio_of_triangles)
+
+    else:
+        raise ValueError(f"Either 'reduction_ratio_of_triangles' or 'target_number_of_triangles' should "
+                         f"be specified. Here found:\n"
+                         f"- 'reduction_ratio_of_triangles' = {reduction_ratio_of_triangles}\n"
+                         f"- 'target_number_of_triangles' = {target_number_of_triangles}")
+
     # Simplify
     out_mesh_o3d = mesh.o3d_mesh.simplify_quadric_decimation(
         target_number_of_triangles=int(target_number_of_triangles),
@@ -70,7 +93,8 @@ def simplify_quadric_decimation(mesh: Mesh,
     return out_mesh
 
 
-def simplify_vertex_clustering(mesh: Mesh, voxel_size: float,
+def simplify_vertex_clustering(mesh: Mesh,
+                               dividing_size: float = 16.,
                                contraction: o3d.geometry.SimplificationContraction = o3d.geometry.SimplificationContraction.Average) -> Mesh:
     """
     Function to simplify mesh using vertex clustering.
@@ -79,8 +103,8 @@ def simplify_vertex_clustering(mesh: Mesh, voxel_size: float,
     ----------
     mesh: Mesh
         Mesh object
-    voxel_size: float
-        The size of the voxel within vertices are pooled.
+    dividing_size: float
+        A new voxel size is computed as max(max_bound - min_bound) / dividing size
     contraction: open3d.geometry.SimplificationContraction (default=<SimplificationContraction.Average – 0>)
         Method to aggregate vertex information. Average computes a simple average, Quadric minimizes the distance
         to the adjacent planes.
@@ -96,6 +120,9 @@ def simplify_vertex_clustering(mesh: Mesh, voxel_size: float,
         mesh.set_o3d_mesh_from_df()
 
     # Simplify
+    if dividing_size == 0.:
+        raise ValueError(f"Dividing size needs to be > 0.")
+    voxel_size = max(mesh.o3d_mesh.get_max_bound() - mesh.o3d_mesh.get_min_bound()) / dividing_size
     out_mesh_o3d = mesh.o3d_mesh.simplify_vertex_clustering(voxel_size=float(voxel_size),
                                                             contraction=contraction)
 

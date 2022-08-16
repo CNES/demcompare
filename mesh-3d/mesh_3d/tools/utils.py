@@ -20,6 +20,8 @@
 
 """Global utils"""
 
+import subprocess
+
 
 def timer_display(elapsed_time):
     """

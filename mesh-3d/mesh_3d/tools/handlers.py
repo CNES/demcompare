@@ -51,6 +51,15 @@ class PointCloud(object):
         self.df = df
         self.o3d_pcd = o3d_pcd
 
+    def set_o3d_pcd_from_df(self):
+        """Set open3d PointCloud from pandas.DataFrame"""
+        self.o3d_pcd = o3d.geometry.PointCloud(points=o3d.utility.Vector3dVector(self.df[["x", "y", "z"]].to_numpy()))
+
+        if self.has_colors:
+            self.set_o3d_colors()
+        if self.has_normals:
+            self.set_o3d_normals()
+
     def set_df_from_vertices(self, vertices: np.ndarray) -> None:
         """Set point coordinates in the pandas DataFrame"""
         self.df = pd.DataFrame(data=np.asarray(vertices, dtype=np.float64), columns=["x", "y", "z"])
@@ -77,6 +86,39 @@ class PointCloud(object):
             raise ValueError(f"Normals should have three columns (x, y, z). Found ({normals.shape[1]}).")
 
         self.df[NORMALS] = normals
+
+    def set_o3d_colors(self) -> None:
+        """Set color attribute of open3D PointCloud"""
+
+        # Check o3d point cloud is initialized
+        if self.o3d_pcd is None:
+            raise ValueError("Open3D Point Cloud is empty.")
+
+        # add colors if applicable (only RGB)
+        # init to zero
+        colors_arr = np.zeros_like(self.df[["x", "y", "z"]].to_numpy(), dtype=np.float64)
+        # retrieve information from the dataframe
+        for k, c in enumerate(["red", "green", "blue"]):
+            if c in self.df:
+                colors_arr[:, k] = self.df[c].to_numpy()
+            else:
+                raise ValueError(f"Open3D only deals with RGB colors. Here '{c}' is missing.")
+        # normalize colours in [0, 1]
+        colors_arr = np.divide(colors_arr - colors_arr.min(),
+                               colors_arr.max() - colors_arr.min(),
+                               out=np.zeros_like(colors_arr),
+                               where=(colors_arr.max() - colors_arr.min()) != 0.)
+        # add to opend3d point cloud
+        self.o3d_pcd.colors = o3d.utility.Vector3dVector(colors_arr)
+
+    def set_o3d_normals(self) -> None:
+        """Set normal attribute of open3D PointCloud"""
+
+        # Check o3d point cloud is initialized
+        if self.o3d_pcd is None:
+            raise ValueError("Open3D Point Cloud is empty.")
+
+        self.o3d_pcd.normals = o3d.utility.Vector3dVector(self.df[NORMALS].to_numpy())
 
     def get_colors(self) -> pd.DataFrame:
         """Get color data"""
@@ -151,9 +193,9 @@ class Mesh(object):
 
         # Add attributes if available
         if self.pcd.has_colors:
-            self.o3d_mesh.vertex_colors = o3d.utility.Vector3dVector(self.pcd.df[["red", "green", "blue"]].to_numpy())
+            self.set_o3d_vertex_colors()
         if self.pcd.has_normals:
-            self.o3d_mesh.vertex_normals = o3d.utility.Vector3dVector(self.pcd.df[NORMALS].to_numpy())
+            self.set_o3d_vertex_normals()
         # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
         #  point order might be different
 
@@ -173,6 +215,39 @@ class Mesh(object):
             self.pcd.set_df_normals(np.asarray(self.o3d_mesh.vertex_normals))
         # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
         #  point order might be different
+
+    def set_o3d_vertex_colors(self) -> None:
+        """Set color attribute of open3D TriangleMesh"""
+
+        # Check o3d mesh is initialized
+        if self.o3d_mesh is None:
+            raise ValueError("Could not set df from open3d mesh because it is empty.")
+
+        # add colors if applicable (only RGB)
+        # init to zero
+        colors_arr = np.zeros_like(self.pcd.df[["x", "y", "z"]].to_numpy(), dtype=np.float64)
+        # retrieve information from the dataframe
+        for k, c in enumerate(["red", "green", "blue"]):
+            if c in self.df:
+                colors_arr[:, k] = self.pcd.df[c].to_numpy()
+            else:
+                raise ValueError(f"Open3D only deals with RGB colors. Here '{c}' is missing.")
+        # normalize colours in [0, 1]
+        colors_arr = np.divide(colors_arr - colors_arr.min(),
+                               colors_arr.max() - colors_arr.min(),
+                               out=np.zeros_like(colors_arr),
+                               where=(colors_arr.max() - colors_arr.min()) != 0.)
+        # add to opend3d mesh
+        self.o3d_mesh.vertex_colors = o3d.utility.Vector3dVector(colors_arr)
+
+    def set_o3d_vertex_normals(self) -> None:
+        """Set normal attribute of open3D TriangleMesh"""
+
+        # Check o3d mesh is initialized
+        if self.o3d_mesh is None:
+            raise ValueError("Could not set df from open3d mesh because it is empty.")
+
+        self.o3d_mesh.vertex_normals = o3d.utility.Vector3dVector(self.pcd.df[NORMALS].to_numpy())
 
     @property
     def has_texture(self) -> bool:
