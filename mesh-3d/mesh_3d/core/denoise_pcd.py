@@ -75,7 +75,8 @@ def compute_pcd_normals_o3d(pcd: PointCloud,
         raise NotImplementedError
 
     # Assign it to the df
-    pcd.df = pd.concat([pcd.df, pd.DataFrame(data=np.asarray(o3d_pcd.normals), columns=["n_x", "n_y", "n_z"])])
+    normals = np.asarray(o3d_pcd.normals)
+    pcd.df = pcd.df.assign(n_x=normals[:, 0], n_y=normals[:, 1], n_z=normals[:, 2])
 
     return pcd
 
