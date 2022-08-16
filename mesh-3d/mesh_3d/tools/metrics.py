@@ -24,7 +24,6 @@ Evaluation metrics
 
 import numpy as np
 import open3d as o3d
-from tqdm import tqdm
 
 from ..core.denoise_pcd import compute_pcd_normals
 from ..tools.handlers import PointCloud

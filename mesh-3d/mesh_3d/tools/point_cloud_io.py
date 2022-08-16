@@ -23,6 +23,7 @@ Tools to manipulate point clouds
 """
 
 from typing import Union
+
 import laspy
 import plyfile
 import pandas as pd
@@ -56,18 +57,17 @@ def apply_scale_offset(arr, scale, offset, is_inverse=False, clip_min=None, clip
 
 def o3d2df(o3d_pcd: o3d.geometry.PointCloud) -> pd.DataFrame:
     """Open3D Point Cloud to pandas DataFrame"""
+    from ..tools.handlers import PointCloud
 
-    # Point coordinates
-    if not o3d_pcd.has_points():
+    if not o3d_pcd.is_empty():
         raise ValueError("Open3D Point Cloud does not contain any point.")
     else:
-        df_pcd = pd.DataFrame(data=np.asarray(o3d_pcd.points), columns=["x", "y", "z"])
+        pcd = PointCloud(o3d_pcd=o3d_pcd)
 
-    # Colors if applicable (only RGB)
-    if o3d_pcd.has_colors():
-        df_pcd = df_pcd.assign(data=np.asarray(o3d_pcd.colors), columns=["red", "green", "blue"])
+    # Set df from open3d data
+    pcd.set_df_from_o3d_pcd()
 
-    return df_pcd
+    return pcd.df
 
 
 def las2df(filepath: str) -> pd.DataFrame:
@@ -157,29 +157,12 @@ def df2las(filepath: str, df: pd.DataFrame, metadata: Union[laspy.LasHeader, Non
 
 def df2o3d(df_pcd: pd.DataFrame) -> o3d.geometry.PointCloud:
     """pandas.DataFrame to Open3D Point Cloud"""
+    from ..tools.handlers import PointCloud
 
-    # init o3d point cloud
-    o3d_pcd = o3d.geometry.PointCloud()
+    pcd = PointCloud(df_pcd)
+    pcd.set_o3d_pcd_from_df()
 
-    # add 3d coordinates
-    o3d_pcd.points = o3d.utility.Vector3dVector(df_pcd[["x", "y", "z"]].to_numpy())
-
-    # add colors if applicable (only RGB)
-    # init to zero
-    colors_arr = np.zeros_like(df_pcd[["x", "y", "z"]].to_numpy(), dtype=np.float64)
-    # retrieve information from the dataframe
-    for k, c in enumerate(["red", "green", "blue"]):
-        if c in df_pcd:
-            colors_arr[:, k] = df_pcd[c].to_numpy()
-    # normalize colours in [0, 1]
-    colors_arr = np.divide(colors_arr - colors_arr.min(),
-                           colors_arr.max() - colors_arr.min(),
-                           out=np.zeros_like(colors_arr),
-                           where=(colors_arr.max() - colors_arr.min()) != 0.)
-    # add to opend3d point cloud
-    o3d_pcd.colors = o3d.utility.Vector3dVector(colors_arr)
-
-    return o3d_pcd
+    return pcd.o3d_pcd
 
 
 def df2csv(filepath: str, df: pd.DataFrame, **kwargs):
@@ -248,3 +231,13 @@ def change_frame(df, in_epsg, out_epsg) -> pd.DataFrame:
     proj_transformer = pyproj.Transformer.from_crs(in_epsg, out_epsg, always_xy=True)
     df["x"], df["y"], df["z"] = proj_transformer.transform(df["x"].to_numpy(), df["y"].to_numpy(), df["z"].to_numpy())
     return df
+
+
+def conversion_utm_to_geo(coords: Union[list, tuple, np.ndarray], utm_code: int):
+    """
+    Conversion points from epsg 32631 to epsg 4326
+    """
+    transformer = pyproj.Transformer.from_crs(f"epsg:{utm_code}", "epsg:4326", always_xy=True)
+    out = transformer.transform(coords[:, 0], coords[:, 1], coords[:, 2])
+
+    return np.dstack(out)[0]

@@ -60,6 +60,21 @@ class PointCloud(object):
         if self.has_normals:
             self.set_o3d_normals()
 
+    def set_df_from_o3d_pcd(self):
+        """Set pandas.DataFrame from open3D PointCloud"""
+        if self.o3d_pcd is None:
+            raise ValueError("Could not set df from open3d pcd because it is empty.")
+
+        # Set point cloud data
+        self.set_df_from_vertices(np.asarray(self.o3d_pcd.vertices))
+        # Add attributes if available
+        if self.o3d_pcd.has_colors():
+            self.set_df_colors(colors=np.asarray(self.o3d_pcd.colors), color_names=["red", "green", "blue"])
+        if self.o3d_pcd.has_normals():
+            self.set_df_normals(np.asarray(self.o3d_pcd.normals))
+        # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
+        #  point order might be different
+
     def set_df_from_vertices(self, vertices: np.ndarray) -> None:
         """Set point coordinates in the pandas DataFrame"""
         self.df = pd.DataFrame(data=np.asarray(vertices, dtype=np.float64), columns=["x", "y", "z"])
@@ -233,7 +248,7 @@ class Mesh(object):
         colors_arr = np.zeros_like(self.pcd.df[["x", "y", "z"]].to_numpy(), dtype=np.float64)
         # retrieve information from the dataframe
         for k, c in enumerate(["red", "green", "blue"]):
-            if c in self.df:
+            if c in self.pcd.df:
                 colors_arr[:, k] = self.pcd.df[c].to_numpy()
             else:
                 raise ValueError(f"Open3D only deals with RGB colors. Here '{c}' is missing.")

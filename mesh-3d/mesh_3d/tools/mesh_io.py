@@ -36,20 +36,24 @@ import plyfile
 def write_triangle_mesh_o3d(filepath: str, mesh: Union[dict, Mesh], compressed: bool = True):
     """Write triangle mesh to disk with open3d"""
 
-    # # Write mesh
-    # if "o3d_mesh" in dict_pcd_mesh:
-    #     o3d.io.write_triangle_mesh(filepath, dict_pcd_mesh["o3d_mesh"], compressed=compressed)
-    # else:
-    if isinstance(mesh, dict):
-        o3d.io.write_triangle_mesh(filepath, dict2o3d(mesh), compressed=compressed)
-    elif isinstance(mesh, Mesh):
+    if isinstance(mesh, Mesh):
         mesh.set_o3d_mesh_from_df()
         o3d.io.write_triangle_mesh(filepath, mesh.o3d_mesh, compressed=compressed)
     else:
         raise NotImplementedError
 
-def serialize_ply_texture(filepath: str, mesh: Mesh):
 
+def serialize_ply_texture(filepath: str, mesh: Mesh) -> None:
+    """
+    Serialize a textured mesh as a PLY file
+
+    Parameters
+    ----------
+    filepath: str
+        Filepath to the texture image
+    mesh: Mesh
+        Mesh object
+    """
     # Vertices
     vertices = mesh.pcd.df[["x", "y", "z"]].to_numpy()
     vertex = np.array(list(zip(*vertices.T)),
@@ -78,6 +82,7 @@ def serialize_ply_texture(filepath: str, mesh: Mesh):
 # Mesh object ===> any mesh format
 # -------------------------------------------------------------------------------------------------------- #
 
+
 def mesh2ply(filepath: str, mesh: Mesh, compressed: bool = True):
     """Mesh object to PLY mesh"""
 
@@ -96,89 +101,10 @@ def mesh2ply(filepath: str, mesh: Mesh, compressed: bool = True):
     else:
         write_triangle_mesh_o3d(filepath_mesh, mesh, compressed=compressed)
 
-# -------------------------------------------------------------------------------------------------------- #
-# dict of pandas DataFrame point cloud and numpy array mesh (vertex indexes of triangles) ===> any mesh format
-# -------------------------------------------------------------------------------------------------------- #
-
-
-def dict2o3d(dict_pcd_mesh: dict) -> o3d.geometry.TriangleMesh:
-    """dict of pandas DataFrame point cloud and numpy array mesh to open3d Triangle Mesh"""
-
-    # init Triangle Mesh
-    mesh = o3d.geometry.TriangleMesh()
-
-    # add vertices
-    mesh.vertices = o3d.utility.Vector3dVector(dict_pcd_mesh["pcd"][["x", "y", "z"]].to_numpy())
-
-    # add colors (if applicable)
-    # TODO: implement
-    # is_color = [False] * 4
-    # colors = ["red", "green", "blue", "nir"]
-    # for k, c in enumerate(colors):
-    #     if c in dict_pcd_mesh["pcd"]:
-    #         is_color[k] = True
-
-    # colors need to be in [0, 1] and is 3-channel
-
-    # add normals
-    # TODO: implement
-
-    # add point indexes forming the triangular faces
-    mesh.triangles = o3d.utility.Vector3iVector(dict_pcd_mesh["mesh"].astype(np.int64))
-
-    return mesh
-
-
-def dict2ply(filepath: str, dict_pcd_mesh: dict, compressed: bool = True):
-    """dict of pandas DataFrame point cloud and numpy array mesh to PLY mesh"""
-
-    # Check consistency
-    if filepath.split(".")[-1] != "ply":
-        raise ValueError(f"Filepath extension should be '.ply', but found: '{filepath.split('.')[-1]}'.")
-
-    # # Write point cloud apart in a LAS file
-    # filepath_pcd = filepath[:-4] + "_pcd.las"
-    # pcd_io.df2las(filepath_pcd, dict_pcd_mesh["pcd"])
-
-    # Write mesh in PLY file
-    filepath_mesh = filepath[:-4] + "_mesh.ply"
-    write_triangle_mesh_o3d(filepath_mesh, dict_pcd_mesh, compressed=compressed)
-
-
-def dict2obj(filepath: str, dict_pcd_mesh: dict, compressed: bool = True):
-    """dict of pandas DataFrame point cloud and numpy array mesh to OBJ mesh"""
-
-    # TODO: Regularize the point cloud which is not desirable
-
-    # Check consistency
-    if filepath.split(".")[-1] != "obj":
-        raise ValueError(f"Filepath extension should be '.obj', but found: '{filepath.split('.')[-1]}'.")
-
-    # Write mesh
-    write_triangle_mesh_o3d(filepath, dict_pcd_mesh, compressed=compressed)
-
 
 # -------------------------------------------------------------------------------------------------------- #
 # any mesh format ===> dict of pandas DataFrame point cloud and numpy array mesh (vertex indexes of triangles)
 # -------------------------------------------------------------------------------------------------------- #
-
-def ply2dict(filepath: str) -> dict:
-    """PLY mesh to dict"""
-
-    # Check consistency
-    if filepath.split(".")[-1] != "ply":
-        raise ValueError(f"Filepath extension should be '.ply', but found: '{filepath.split('.')[-1]}'.")
-
-    # Read point cloud
-    pcd = o3d.io.read_point_cloud(filepath)
-
-    # Read mesh
-    mesh = o3d.io.read_triangle_mesh(filepath)
-
-    # Convert to df for pcd and numpy array for mesh
-    out = {"pcd": pcd_io.o3d2df(pcd), "mesh": np.asarray(mesh.triangles)}
-
-    return out
 
 
 def ply2mesh(filepath: str) -> (pd.DataFrame, pd.DataFrame):
@@ -188,20 +114,18 @@ def ply2mesh(filepath: str) -> (pd.DataFrame, pd.DataFrame):
     if filepath.split(".")[-1] != "ply":
         raise ValueError(f"Filepath extension should be '.ply', but found: '{filepath.split('.')[-1]}'.")
 
-    # Read point cloud
-    df_pcd = pcd_io.deserialize_point_cloud(filepath)
+    # Read point cloud and faces
+    mesh = Mesh(o3d_mesh=o3d.io.read_triangle_mesh(filepath))
+    mesh.set_df_from_o3d_mesh()
 
-    # Read faces
-    df_mesh = pd.DataFrame(data=np.asarray(o3d.io.read_triangle_mesh(filepath).triangles), columns=["p1", "p2", "p3"])
-
-    return df_pcd, df_mesh
+    return mesh.pcd.df, mesh.df
 
 
 # -------------------------------------------------------------------------------------------------------- #
 # General functions
 # -------------------------------------------------------------------------------------------------------- #
 
-def deserialize_mesh(filepath: str) -> Mesh:
+def deserialize_mesh(filepath: str) -> (pd.DataFrame, pd.DataFrame):
     """Deserialize a mesh"""
     extension = filepath.split(".")[-1]
 
