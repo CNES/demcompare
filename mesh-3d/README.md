@@ -26,7 +26,8 @@ Mesh 3D short description:
 
 
 * Free software: Apache Software License 2.0
-* Documentation: https://mesh-3d.readthedocs.io.
+
+[//]: # (* Documentation: https://mesh-3d.readthedocs.io.)
 
 
 ## Requirements
@@ -44,6 +45,7 @@ Mesh 3D short description:
     loguru                        # logs handler
     pyproj                        # coordinates conversion
     transitions                   # state machine
+    rasterio                      # georeferenced data handler
 
 ## Features
 
@@ -57,7 +59,7 @@ TODO
 
 ### Installation
 
-Git clone the repository, open a terminal and luanch the following commands:
+Git clone the repository, open a terminal and launch the following commands:
 ```bash
 cd patch/to/dir/mesh_3d
 make install
@@ -65,21 +67,52 @@ make install
 
 ### Execute
 
-Then, configure the pipeline in a JSON file `/path/to/config.json`:
+You can run too functions with the `mesh_3d` cli:
+* `mesh_3d reconstruct` launches the 3D reconstruction pipeline according to the user specifications
+* `mesh_3d evaluate` computes metrics between two point clouds and saves visuals for qualitative analysis
+
+#### Reconstruct
+
+Configure the pipeline in a JSON file `/path/to/config.json`:
 ```json
 {
   "input_path": "/path/to/input/data.ply",
   "output_dir": "/path/to/output_dir",
   "initial_state": "initial_pcd",
+  "tif_img_path": "/path/to/tif_img_texture.tif",
+  "rpc_path": "/path/to/rpc.XML",
+  "utm_code": 32631,
   "state_machine": [
     {
       "action": "filter",
       "method": "radius_o3d",
-      "params": {"radius":  3}
+      "params": {
+        "radius":  3
+      }
+    },
+    {
+      "action": "denoise_pcd",
+      "method": "bilateral_filtering",
+      "params": {
+        "use_open3d":  true
+      }
     },
     {
       "action": "mesh",
-      "method": "delaunay_2d"
+      "method": "delaunay_2d",
+      "params": {}
+    },
+    {
+      "action": "simplify_mesh",
+      "method": "garland-heckbert",
+      "params": {
+        "reduction_ratio_of_triangles": 0.75
+      }
+    },
+    {
+      "action":  "texture",
+      "method": "texturing",
+      "params": {}
     }
   ]
 }
@@ -98,19 +131,51 @@ by default it is the first method that is selected), `params` (dict) which speci
 for each method.
 <img src="fig_state_machine.png">
 
+If a texturing step is specified, then the following parameters become mandatory:
+* `rpc_path`: Path to the RPC xml file
+* `tif_img_path`: Path to the TIF image from which to extract the texture image
+* `utm_code`: The UTM code of the point cloud coordinates expressed as a EPSG code number for transformation purpose
+
 
 Finally, you can launch the following commands to activate the virtual environment and run the pipeline:
 ```bash
 source /venv/bin/activate
-mesh_3d /path/to/config.json
+mesh_3d reconstruct /path/to/config.json
 ```
 
-## Documentation
+#### Evaluate
 
-Go in docs/ directory
+The evaluation function computes a range of metrics between two point clouds and outputs visuals for 
+qualitative analysis.
 
+Configure the pipeline in a JSON file `/path/to/config.json`:
+```json
+{
+  "input_path_1": "/path/to/point_cloud/or/mesh_1.ply",
+  "input_path_2": "/path/to/point_cloud/or/mesh_2.ply",
+  "output_dir": "/path/to/output_dir"
+}
+```
 
-* Documentation: https://mesh-3d.readthedocs.io.
+Where:
+* `input_path_1`: Filepath to the first input. Should either be a point cloud or a mesh.
+* `input_path_2`: Filepath to the second input. Should either be a point cloud or a mesh.
+* `output_dir`: Directory path to the output folder where to save results.
+
+Finally, you can launch the following commands to activate the virtual environment and run the evaluation:
+```bash
+source /venv/bin/activate
+mesh_3d evaluate /path/to/config.json
+```
+
+[//]: # (## Documentation)
+
+[//]: # ()
+[//]: # (Go in docs/ directory)
+
+[//]: # ()
+[//]: # ()
+[//]: # (* Documentation: https://mesh-3d.readthedocs.io.)
 
 
 ## Contribution

@@ -63,21 +63,23 @@ def ball_pivoting_reconstruction(pcd: PointCloud, radii: Union[list, float, None
     # Convert the point cloud with normals to an open3d format
 
     # init o3d point cloud
-    o3d_pcd = df2o3d(pcd.df)
+    if pcd.o3d_pcd is None:
+        pcd.set_o3d_pcd_from_df()
 
-    # add normals
-    if not pcd.has_normals:
-        raise ValueError("Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
-                         "or 'n_z'). Please launch again the normal computation.")
-    else:
-        o3d_pcd.normals = o3d.utility.Vector3dVector(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
+    # # add normals
+    # if not pcd.has_normals:
+    #     raise ValueError("Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
+    #                      "or 'n_z'). Please launch again the normal computation.")
+    # else:
+    #     pcd.o3d_pcd.normals = o3d.utility.Vector3dVector(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
 
     # Mesh point cloud
-    o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(o3d_pcd, o3d.utility.DoubleVector(radii))
+    o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd.o3d_pcd,
+                                                                               o3d.utility.DoubleVector(radii))
 
     # Init Mesh object
-    mesh = Mesh(pcd=pcd.df, o3d_pcd=o3d_pcd, o3d_mesh=o3d_mesh)
-    mesh.set_df_from_vertices(np.asarray(o3d_mesh.triangles))
+    mesh = Mesh(pcd=pcd.df, o3d_pcd=pcd.o3d_pcd, o3d_mesh=o3d_mesh)
+    mesh.set_df_from_o3d_mesh()
 
     return mesh
 
@@ -127,12 +129,12 @@ def poisson_reconstruction(pcd: PointCloud,
     # init o3d point cloud
     o3d_pcd = df2o3d(pcd.df)
 
-    # add normals
-    if not pcd.has_normals:
-        raise ValueError("Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
-                         "or 'n_z'). Please launch again the normal computation.")
-    else:
-        o3d_pcd.normals = o3d.utility.Vector3dVector(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
+    # # add normals
+    # if not pcd.has_normals:
+    #     raise ValueError("Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
+    #                      "or 'n_z'). Please launch again the normal computation.")
+    # else:
+    #     o3d_pcd.normals = o3d.utility.Vector3dVector(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
 
     # Mesh point cloud
     o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(o3d_pcd,
@@ -142,9 +144,14 @@ def poisson_reconstruction(pcd: PointCloud,
                                                                          linear_fit,
                                                                          n_threads)
 
+    # # Init Mesh object
+    # mesh = Mesh(pcd=pcd.df, o3d_pcd=o3d.geometry.PointCloud(points=o3d_mesh[0].vertices), o3d_mesh=o3d_mesh[0])
+    # mesh.set_df_from_vertices(np.asarray(o3d_mesh[0].triangles))
+
     # Init Mesh object
+    # TODO: Check consistency between pcd.df list of points and o3d list of points
     mesh = Mesh(pcd=pcd.df, o3d_pcd=o3d.geometry.PointCloud(points=o3d_mesh[0].vertices), o3d_mesh=o3d_mesh[0])
-    mesh.set_df_from_vertices(np.asarray(o3d_mesh[0].triangles))
+    mesh.set_df_from_o3d_mesh()
 
     return mesh
 

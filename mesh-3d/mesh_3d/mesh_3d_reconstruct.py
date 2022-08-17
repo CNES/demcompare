@@ -24,7 +24,6 @@ DOC: describe the module aim !
 """
 
 import os
-from typing import Dict
 import json
 import logging
 
@@ -32,8 +31,8 @@ from loguru import logger
 
 from . import param
 from .state_machine import Mesh3DMachine
-from .tools.point_cloud_io import deserialize_point_cloud, serialize_point_cloud
-from .tools.mesh_io import deserialize_mesh, serialize_mesh
+# from .tools.point_cloud_io import deserialize_point_cloud, serialize_point_cloud
+# from .tools.mesh_io import deserialize_mesh, serialize_mesh
 from .tools.handlers import PointCloud, Mesh
 
 
@@ -98,6 +97,20 @@ def check_config(cfg_path: str) -> dict:
                 raise ValueError(f"Element #{k} of state machine configuration: action '{el['action']}' unknown. "
                                  f"It should be in {list(param.TRANSITIONS_METHODS.keys())}.")
 
+            # Texture
+            # Check that the parameters for rpc, image texture and utm code are given
+            if el["action"] == "texture":
+                if not cfg["tif_img_path"]:
+                    raise ValueError("If a texturing step is asked, there should be a general configuration parameter "
+                                     "'tif_img_path' giving the path to the TIF image texture to process.")
+                if not cfg["rpc_path"]:
+                    raise ValueError("If a texturing step is asked, there should be a general configuration parameter "
+                                     "'rpc_path' giving the path to the RPC data of the image texture.")
+                if not cfg["utm_code"]:
+                    raise ValueError("If a texturing step is asked, there should be a general configuration parameter "
+                                     "'utm_code' giving the UTM code of the input point cloud or mesh for "
+                                     "coordinate transforming step.")
+
             # Method check
             if "method" in el:
                 # Method specified
@@ -148,7 +161,7 @@ def run(mesh_3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
     return mesh_3d_machine.mesh_data
 
 
-def main(cfg_path: str):
+def main(cfg_path: str) -> None:
     """
     Main function to apply mesh 3d pipeline
 
@@ -191,7 +204,6 @@ def main(cfg_path: str):
         mesh.pcd.deserialize(cfg["input_path"])
         logger.debug("Input data read as a point cloud format.")
 
-
     # Init state machine model
     mesh_3d_machine = Mesh3DMachine(mesh_data=mesh)
 
@@ -211,12 +223,12 @@ def main(cfg_path: str):
         out_mesh.pcd.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension=extension)
         logger.info(f"Point cloud serialized as a '{extension}' file")
 
-    # Save the point cloud information in a csv file
-    out_filename = "processed_point_cloud.csv"
-    out_mesh.pcd.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension="csv")
-    logger.info(f"Point cloud serialized as a 'csv' file")
+    # # Save the point cloud information in a csv file
+    # out_filename = "processed_point_cloud.csv"
+    # out_mesh.pcd.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension="csv")
+    # logger.info(f"Point cloud serialized as a 'csv' file")
 
-    # Save the mesh information in a csv file
-    out_filename = "processed_mesh.csv"
-    out_mesh.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension="csv")
-    logger.info(f"Mesh serialized as a 'csv' file")
+    # # Save the mesh information in a csv file
+    # out_filename = "processed_mesh.csv"
+    # out_mesh.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension="csv")
+    # logger.info(f"Mesh serialized as a 'csv' file")
