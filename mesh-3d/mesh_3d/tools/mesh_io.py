@@ -55,17 +55,17 @@ def serialize_ply_texture(filepath: str, mesh: Mesh) -> None:
         Mesh object
     """
     # Vertices
-    vertices = mesh.pcd.df[["x", "y", "z"]].to_numpy()
+    vertices = mesh.pcd.get_vertices().to_numpy()
     vertex = np.array(list(zip(*vertices.T)),
                       dtype=[('x', 'f8'), ('y', 'f8'), ('z', 'f8')])
 
     # Faces + Texture
-    triangles = mesh.df[["p1", "p2", "p3"]].to_numpy()
+    triangles = mesh.get_triangles().to_numpy()
     ply_faces = np.empty(len(triangles), dtype=[('vertex_indices', 'i4', (3,)),
                                                 ('texcoord', 'f8', (6,))])  # 3 pairs of image coordinates
     ply_faces['vertex_indices'] = triangles.astype('i4')
 
-    triangles_uvs = mesh.df[["uv1_row", "uv1_col", "uv2_row", "uv2_col", "uv3_row", "uv3_col"]].to_numpy()
+    triangles_uvs = mesh.get_triangle_uvs().to_numpy()
     ply_faces['texcoord'] = triangles_uvs.astype('f8')
 
     # Define elements
@@ -73,7 +73,8 @@ def serialize_ply_texture(filepath: str, mesh: Mesh) -> None:
     el_vertex_indices = plyfile.PlyElement.describe(ply_faces, 'face', val_types={'vertex_indices': 'i4',
                                                                                   'texcoord': 'f8'})
 
-    comments = [f'TextureFile {os.path.basename(mesh.path_img)}']
+    # Mesh and texture image are assumed to be in the same repository
+    comments = [f'TextureFile {os.path.basename(mesh.image_texture_path)}']
 
     # Write ply file
     plyfile.PlyData([el_vertex, el_vertex_indices], byte_order='>', comments=comments).write(filepath)

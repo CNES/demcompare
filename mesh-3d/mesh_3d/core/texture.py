@@ -23,7 +23,6 @@ Texturing methods to project radiometric information over surfaces to provide a 
 """
 
 import os
-from os.path import split
 from typing import Union
 
 import numpy as np
@@ -31,8 +30,6 @@ import pandas as pd
 from PIL import Image
 import rasterio
 from rasterio.windows import Window
-from tqdm import tqdm
-from loguru import logger
 
 from ..tools.handlers import Mesh
 from ..tools.rpc import PleiadesRPC, apply_rpc_list
@@ -54,6 +51,8 @@ def preprocess_image_texture(img_path: str, bbox: Union[tuple, list, np.ndarray]
         Bounding box extent for cropping
     output_dir: str
         Output directory path
+    tile_size: (2, ) tuple or list or np.ndarray
+        Tile size for the processing applied by tile for memory purpose
     """
 
     # Define path of the output image
@@ -185,7 +184,7 @@ def generate_uvs(img_pts, triangles, bbox, image_texture_size):
     return np.asarray(uvs, dtype=np.float64)
 
 
-def texturing(mesh: Mesh, dir_out: str, rpc_path: str, img_path: str, utm_code: int) -> Mesh:
+def texturing(mesh: Mesh, cfg: dict) -> Mesh:
     """
     Function that creates the texture of a mesh.
 
@@ -193,20 +192,27 @@ def texturing(mesh: Mesh, dir_out: str, rpc_path: str, img_path: str, utm_code: 
     ----------
     mesh: Mesh
         Mesh object
-    dir_out: Str
-        Output directory to write the new texture image.
-    rpc_path: Str
-        Path to the xml rpc file.
-    img_path: Str
-        Path to the TIF image.
-    utm_code: int
-        UTM code of the point cloud
+    cfg: dict:
+        Configuration dictionary. The algorithm retrieves the following information:
+        * output_dir: Str
+            Output directory to write the new texture image.
+        * rpc_path: Str
+            Path to the xml rpc file.
+        * tif_img_path: Str
+            Path to the TIF image.
+        * utm_code: int
+            UTM code of the point cloud
 
     Returns
     -------
     mesh: Mesh
         Mesh object with texture parameters
     """
+    # Decode config
+    output_dir = cfg["output_dir"]
+    rpc_path = cfg["rpc_path"]
+    tif_img_path = cfg["tif_img_path"]
+    utm_code = cfg["utm_code"]
 
     # Compute RPC for inverse location
     rpc = PleiadesRPC(rpc_type="INVERSE", path_rpc=rpc_path)
@@ -227,14 +233,13 @@ def texturing(mesh: Mesh, dir_out: str, rpc_path: str, img_path: str, utm_code: 
             np.floor(np.min(img_pts[:, 1])),
             np.ceil(np.max(img_pts[:, 0])),
             np.ceil(np.max(img_pts[:, 1]))]
-    image_texture_path, image_texture_size = preprocess_image_texture(img_path, bbox, dir_out)
+    image_texture_path, image_texture_size = preprocess_image_texture(tif_img_path, bbox, output_dir)
 
     # Compute UVs
     triangles_uvs = generate_uvs(img_pts, triangles, bbox, image_texture_size)
 
     # Add parameters to serialize the texture
-    for i, name in enumerate(["uv1_row", "uv1_col", "uv2_row", "uv2_col", "uv3_row", "uv3_col"]):
-        mesh.df[name] = triangles_uvs[:, i]
-    mesh.set_texture_parameters(image_texture_path)
+    mesh.set_df_uvs(triangles_uvs)
+    mesh.set_image_texture_path(image_texture_path)
 
     return mesh

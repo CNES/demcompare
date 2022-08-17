@@ -31,7 +31,7 @@ from ..tools.handlers import Mesh
 
 
 def simplify_quadric_decimation(mesh: Mesh,
-                                reduction_ratio_of_triangles: float = 0.1,
+                                reduction_ratio_of_triangles: float = 0.9,
                                 target_number_of_triangles: Union[int, None] = None,
                                 maximum_error: float = float("inf"),
                                 boundary_weight: float = 1.) -> Mesh:
