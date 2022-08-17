@@ -23,7 +23,6 @@ Console script for mesh_3d.
 """
 
 import argparse
-from . import mesh_3d
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -34,16 +33,41 @@ def get_parser() -> argparse.ArgumentParser:
     -------
     parser
     """
+
+    # Main parser
     parser = argparse.ArgumentParser(description="3D textured reconstruction from remote sensing point cloud")
-    parser.add_argument(
+    # parser.add_argument(
+    #     "config",
+    #     help="Path to a json file containing the input files paths and algorithm parameters",
+    # )
+
+    # Create subcommand parser
+    subparsers = parser.add_subparsers(dest="command")
+
+    # Reconstruction parser
+    reconstruction_parser = subparsers.add_parser(
+        "reconstruct",
+        help="3D Reconstruction processing",
+    )
+    reconstruction_parser.add_argument(
         "config",
         help="Path to a json file containing the input files paths and algorithm parameters",
     )
-    # parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
+
+    # Evaluation parser
+    evaluation_parser = subparsers.add_parser(
+        "evaluate",
+        help="Evaluate mesh or point cloud",
+    )
+    evaluation_parser.add_argument(
+        "config",
+        help="Path to a json file containing the input mesh or point cloud paths to compare and the metrics to compute",
+    )
+
     return parser
 
 
-def main():
+def main() -> None:
     """Console script for mesh_3d."""
 
     # get parser
@@ -51,11 +75,18 @@ def main():
     args = parser.parse_args()
 
     # run mesh 3d pipeline
-    mesh_3d.main(args.config)
+    if args.command == "reconstruct":
+        # Reconstruction pipeline
+        from . import mesh_3d_reconstruct
+        mesh_3d_reconstruct.main(args.config)
 
-    # # DEBUG
-    # cfg_path = "/home/chthen/Documents/CNES_RT_Surfaces_3D/code/configs/baseline_pipeline_config.json"
-    # mesh_3d.main(cfg_path)
+    elif args.command == "evaluate":
+        # Evaluation pipeline
+        from . import mesh_3d_evaluate
+        mesh_3d_evaluate.main(args.config)
+
+    else:
+        raise NotImplementedError(f"Command '{args.command}' is unknown.")
 
 
 if __name__ == "__main__":

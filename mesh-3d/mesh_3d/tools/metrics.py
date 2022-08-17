@@ -22,6 +22,8 @@
 Evaluation metrics
 """
 
+import os
+
 import numpy as np
 import open3d as o3d
 
@@ -119,6 +121,16 @@ class PointCloudMetrics(object):
         self.pcd_ref = pcd_ref
 
         self.modes = ["p2p", "p2s"]
+
+        self.metrics = {
+            "MSE": self.mean_squared_distance,
+            "RMSE": self.root_mean_squared_distance,
+            "MEAN": self.mean_distance,
+            "MEDIAN": self.median_distance,
+            "HAUSDORFF_ASYM": self.hausdorff_asym_distance,
+            "HAUSDORFF_SYM": self.hausdorff_sym_distance,
+            "CHAMFER": self.chamfer_distance
+        }
 
         # Compute nearest neighbours for all the points with open3d
         # check if open3d pcd are initialized
@@ -248,3 +260,52 @@ class PointCloudMetrics(object):
             return chamfer_distance(self.dist_p2s_in_ref, self.dist_p2s_ref_in)
         else:
             raise ValueError(f"Mode should be in '{self.modes}'. Here found '{mode}'.")
+
+    def _serialize_ply_distances(self, filepath: str, pcd: PointCloud, distances: np.ndarray) -> None:
+        """
+        Serialize a textured mesh as a PLY file
+
+        Parameters
+        ----------
+        filepath: str
+            Filepath to the texture image
+
+        """
+        import plyfile
+
+        # Vertices
+        vertices = pcd.get_vertices().to_numpy()
+        vertex = np.array(list(zip(*vertices.T)),
+                          dtype=[('x', 'f8'), ('y', 'f8'), ('z', 'f8')])
+
+        # Distance
+        # Custom scalar field
+        scalar_field = np.array(distances, dtype=[('d', 'f8')])
+
+        # Define elements
+        el_vertex = plyfile.PlyElement.describe(vertex, 'vertex', val_types={'x': 'f8', 'y': 'f8', 'z': 'f8'})
+        el_distance = plyfile.PlyElement.describe(scalar_field, 'distance', val_types={'d': 'f8'})
+
+        # Write ply file
+        plyfile.PlyData([el_vertex, el_distance], byte_order='>').write(filepath)
+
+    def visualize_distances(self, output_dir) -> None:
+        """
+        Save distances as a scalar field to be visualised on a viewer
+
+        Parameters
+        ----------
+        output_dir: str
+            Path to the output directory
+        """
+        filename = os.path.join(output_dir, "p2p_distances_1vs2.ply")
+        self._serialize_ply_distances(filename, self.pcd_in, self.dist_p2p_in_ref)
+
+        filename = os.path.join(output_dir, "p2p_distances_2vs1.ply")
+        self._serialize_ply_distances(filename, self.pcd_ref, self.dist_p2p_ref_in)
+
+        filename = os.path.join(output_dir, "p2s_distances_1vs2.ply")
+        self._serialize_ply_distances(filename, self.pcd_in, self.dist_p2s_in_ref)
+
+        filename = os.path.join(output_dir, "p2s_distances_2vs1.ply")
+        self._serialize_ply_distances(filename, self.pcd_ref, self.dist_p2s_ref_in)
