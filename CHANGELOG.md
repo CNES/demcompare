@@ -7,6 +7,7 @@ A new section Unreleased is opened then for next dev phase.
 ## Unreleased
 
 ### Added
+- Add notebooks for demcompare users 
 
 ### Changed
 - Refactoring image and dem tools with demcompare dataset. [#76]

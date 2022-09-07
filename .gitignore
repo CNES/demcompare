@@ -30,13 +30,6 @@ coverage.xml
 
 # pylint report
 pylint-report.txt
-pytest-report.xml
-
-# Demcompare debug file logging
-debug.log
-
-
-pytest-report.xml
 
 # Demcompare debug file logging
 debug.log
@@ -44,5 +37,7 @@ debug.log
 # Documentation build and API
 docs/build/
 docs/source/api_reference/
-docs/source/api_reference/
 docs/source/apidoc/
+
+# notebook
+ notebooks/.ipynb_checkpoints/

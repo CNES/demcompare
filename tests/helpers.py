@@ -74,6 +74,25 @@ def demcompare_path(directory_name: str) -> str:
     return os.path.join(test_data_folder, directory_name)
 
 
+def notebooks_demcompare_path(notebook_name: str) -> str:
+    """
+    Return full absolute path to demcompare's desired directory
+
+    :param notebook_name: name of notebook to be located
+     inside demcompare/notebooks
+    :returns: full absolute path to notebooks directory.
+    """
+    # TODO: find why the path is unset from the second test
+    # Verify that the current path is well set
+    os.chdir(os.path.dirname(__file__))
+    dir_path = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
+    # Get absolute path from this file in
+    # root_src_demcompare/demcompare/ + notebook_name
+    notebooks_folder = os.path.join(dir_path, "notebooks")
+
+    return os.path.join(notebooks_folder, notebook_name)
+
+
 def read_csv_file(csv_file: str) -> List[np.ndarray]:
     """
     Read a csv file and save its number values to float

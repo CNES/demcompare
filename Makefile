@@ -23,7 +23,7 @@ venv: ## create virtualenv in "venv" dir if not exists
 	@touch ${VENV}/bin/activate
 
 install: venv  ## install environment for development target (depends venv)
-	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install -e .[dev,doc]
+	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install -e .[dev,doc,notebook]
 	@test -f .git/hooks/pre-commit || ${VENV}/bin/pre-commit install -t pre-commit
 	@test -f .git/hooks/pre-push || ${VENV}/bin/pre-commit install -t pre-push
 	@chmod +x ${VENV}/bin/register-python-argcomplete
@@ -58,12 +58,23 @@ doc: install ## build sphinx documentation
 	@${VENV}/bin/sphinx-build -M clean docs/source/ docs/build
 	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build
 
+notebook: install ## install Jupyter notebook kernel with venv and demcompare install
+	@echo "Install Jupyter Kernel in virtualenv dir"
+	@${VENV}/bin/python -m ipykernel install --sys-prefix --name=demcompare-${DEMCOMPARE_VERSION_MIN} --display-name=demcompare-${DEMCOMPARE_VERSION_MIN}
+	@echo "Use jupyter kernelspec list to know where is the kernel"
+	@echo " --> After demcompare virtualenv activation, please use following command to launch local jupyter notebook to open demcompare Notebooks:"
+	@echo "jupyter notebook"
+
 docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"
 	@docker pull hadolint/hadolint
 	@docker run --rm -i hadolint/hadolint < Dockerfile
 	@echo "Build Docker image Demcompare ${DEMCOMPARE_VERSION_MIN}"
 	@docker build -t cnes/demcompare:${DEMCOMPARE_VERSION_MIN} -t cnes/demcompare:latest .
+
+test-notebook: install ## run notebook tests only
+	@echo "Please source ${VENV}/bin/activate before launching tests\n"
+	@${VENV}/bin/pytest -m "notebook_tests" -o log_cli=true -o log_cli_level=${LOGLEVEL}
 
 clean: ## clean: remove venv and all generated files
 	@rm -f .git/hooks/pre-commit
