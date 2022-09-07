@@ -34,5 +34,5 @@ repos:
     stages: [commit]
     entry: make docs
     language: system
-    files: ^(docs/.*|mesh_3d/.*)$
+    files: ^(docs/.*|mesh-3d/.*)$
     pass_filenames: False

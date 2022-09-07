@@ -163,7 +163,7 @@ def apply_rpc_list(rpc: RPC, input_coords: Union[tuple, list, np.ndarray]) -> np
     Returns
     -------
     res: (N, 3) or (N, 2) tuple or list or np.ndarray
-        Coordinates transformed by direct or inverse location
+        Coordinates transformed by direct (lon, lat, alt) or inverse (col, row) location
     """
     # normalize input
     norm_input = (np.array(input_coords) - np.array(rpc.ref_offset)) / np.array(rpc.ref_scale)
