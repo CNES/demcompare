@@ -7,6 +7,14 @@ A new section Unreleased is opened then for next dev phase.
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## 0.4.0 Bugs
+
+### Added
 - add gitlab template release [#83]
 
 ### Changed
