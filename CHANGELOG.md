@@ -12,6 +12,18 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Fixed
 
+## 0.4.0 Bugs
+
+### Added
+- add gitlab template release [#83]
+
+### Changed
+
+### Fixed
+- linting errors [#95, #100]
+- flake8-copyright linting bug : desactivation [#102]
+- align rmse rounding with all stats [#103]
+
 ## 0.3.0 Clean bugs, tests and documentation Release (April 2022)
 
 ### Added
