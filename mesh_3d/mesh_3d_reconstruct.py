@@ -23,17 +23,18 @@ Main module.
 DOC: describe the module aim !
 """
 
-import os
 import json
 import logging
+import os
 
 from loguru import logger
 
 from . import param
 from .state_machine import Mesh3DMachine
+
 # from .tools.point_cloud_io import deserialize_point_cloud, serialize_point_cloud
 # from .tools.mesh_io import deserialize_mesh, serialize_mesh
-from .tools.handlers import PointCloud, Mesh
+from .tools.handlers import Mesh, PointCloud
 
 
 def check_config(cfg_path: str) -> dict:
@@ -53,11 +54,15 @@ def check_config(cfg_path: str) -> dict:
 
     # Check the path validity
     if not isinstance(cfg_path, str):
-        raise TypeError(f"Configuration path is invalid. It should be a string but got '{type(cfg_path)}'.")
+        raise TypeError(
+            f"Configuration path is invalid. It should be a string but got '{type(cfg_path)}'."
+        )
 
     if os.path.basename(cfg_path).split(".")[-1] != "json":
-        raise ValueError(f"Configuration path should be a JSON file with extension '.json'. "
-                         f"Found '{os.path.basename(cfg_path).split('.')[-1]}'.")
+        raise ValueError(
+            f"Configuration path should be a JSON file with extension '.json'. "
+            f"Found '{os.path.basename(cfg_path).split('.')[-1]}'."
+        )
 
     # Read JSON file
     with open(cfg_path, "r") as f:
@@ -65,59 +70,85 @@ def check_config(cfg_path: str) -> dict:
 
     # Check the validity of the content
     if "input_path" not in cfg:
-        raise ValueError(f"Configuration dictionary is missing the 'input_path' field.")
+        raise ValueError(
+            f"Configuration dictionary is missing the 'input_path' field."
+        )
     else:
         if not isinstance(cfg["input_path"], str):
-            raise TypeError(f"'input_path' is invalid. It should be a string but got '{type(cfg['input_path'])}'.")
-        if os.path.basename(cfg["input_path"]).split(".")[-1] not in (param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS):
-            raise ValueError(f"'input_path' extension is invalid. "
-                             f"It should be in {param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS}.")
+            raise TypeError(
+                f"'input_path' is invalid. It should be a string but got '{type(cfg['input_path'])}'."
+            )
+        if os.path.basename(cfg["input_path"]).split(".")[-1] not in (
+            param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS
+        ):
+            raise ValueError(
+                f"'input_path' extension is invalid. "
+                f"It should be in {param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS}."
+            )
 
     for key in ["output_dir", "state_machine"]:
         if key not in cfg:
-            raise ValueError(f"Configuration dictionary should contains a '{key}' key.")
+            raise ValueError(
+                f"Configuration dictionary should contains a '{key}' key."
+            )
 
     if not isinstance(cfg["state_machine"], list):
-        raise TypeError(f"State machine key in configuration should be a list of dict, each dict having two keys: "
-                        f"'action' and 'method'. Found '{type(cfg['state_machine'])}'.")
+        raise TypeError(
+            f"State machine key in configuration should be a list of dict, each dict having two keys: "
+            f"'action' and 'method'. Found '{type(cfg['state_machine'])}'."
+        )
 
     if "initial_state" not in cfg:
         cfg["initial_state"] = param.INITIAL_STATES[0]
     else:
         if cfg["initial_state"] not in param.INITIAL_STATES:
-            raise ValueError(f"Initial state is invalid. It should be in {param.INITIAL_STATES}.")
+            raise ValueError(
+                f"Initial state is invalid. It should be in {param.INITIAL_STATES}."
+            )
 
     if cfg["state_machine"]:
         for k, el in enumerate(cfg["state_machine"]):
             # Action check
             if "action" not in el:
-                raise ValueError(f"'action' key is missing in the {k}th element of the state machine list.")
+                raise ValueError(
+                    f"'action' key is missing in the {k}th element of the state machine list."
+                )
 
             if el["action"] not in param.TRANSITIONS_METHODS:
-                raise ValueError(f"Element #{k} of state machine configuration: action '{el['action']}' unknown. "
-                                 f"It should be in {list(param.TRANSITIONS_METHODS.keys())}.")
+                raise ValueError(
+                    f"Element #{k} of state machine configuration: action '{el['action']}' unknown. "
+                    f"It should be in {list(param.TRANSITIONS_METHODS.keys())}."
+                )
 
             # Texture
             # Check that the parameters for rpc, image texture and utm code are given
             if el["action"] == "texture":
                 if not cfg["tif_img_path"]:
-                    raise ValueError("If a texturing step is asked, there should be a general configuration parameter "
-                                     "'tif_img_path' giving the path to the TIF image texture to process.")
+                    raise ValueError(
+                        "If a texturing step is asked, there should be a general configuration parameter "
+                        "'tif_img_path' giving the path to the TIF image texture to process."
+                    )
                 if not cfg["rpc_path"]:
-                    raise ValueError("If a texturing step is asked, there should be a general configuration parameter "
-                                     "'rpc_path' giving the path to the RPC data of the image texture.")
+                    raise ValueError(
+                        "If a texturing step is asked, there should be a general configuration parameter "
+                        "'rpc_path' giving the path to the RPC data of the image texture."
+                    )
                 if not cfg["utm_code"]:
-                    raise ValueError("If a texturing step is asked, there should be a general configuration parameter "
-                                     "'utm_code' giving the UTM code of the input point cloud or mesh for "
-                                     "coordinate transforming step.")
+                    raise ValueError(
+                        "If a texturing step is asked, there should be a general configuration parameter "
+                        "'utm_code' giving the UTM code of the input point cloud or mesh for "
+                        "coordinate transforming step."
+                    )
 
             # Method check
             if "method" in el:
                 # Method specified
                 # Check if valid
                 if el["method"] not in param.TRANSITIONS_METHODS[el["action"]]:
-                    raise ValueError(f"Element #{k} of state machine configuration: method '{el['method']}' unknown. "
-                                     f"It should be in {param.TRANSITIONS_METHODS[el['action']]}.")
+                    raise ValueError(
+                        f"Element #{k} of state machine configuration: method '{el['method']}' unknown. "
+                        f"It should be in {param.TRANSITIONS_METHODS[el['action']]}."
+                    )
 
             else:
                 # Method not specified, then select the one by default (the first one in the list)
@@ -155,7 +186,9 @@ def run(mesh_3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
 
         # Browse user defined steps and execute them
         for k, step in enumerate(cfg["state_machine"]):
-            logger.info(f"Step #{k + 1}: {step['action']} with {step['method']} method")
+            logger.info(
+                f"Step #{k + 1}: {step['action']} with {step['method']} method"
+            )
             mesh_3d_machine.run(step, cfg)
 
     return mesh_3d_machine.mesh_data
@@ -171,7 +204,7 @@ def main(cfg_path: str) -> None:
         Path to the JSON configuration file
     """
     # To avoid having a logger INFO for each state machine step
-    logging.getLogger('transitions').setLevel(logging.WARNING)
+    logging.getLogger("transitions").setLevel(logging.WARNING)
 
     # Check the validity of the config path
     cfg = check_config(cfg_path)
@@ -181,7 +214,10 @@ def main(cfg_path: str) -> None:
     logger.info("Configuration file checked.")
 
     # Read input data
-    if os.path.basename(cfg["input_path"]).split(".")[-1] in param.MESH_FILE_EXTENSIONS:
+    if (
+        os.path.basename(cfg["input_path"]).split(".")[-1]
+        in param.MESH_FILE_EXTENSIONS
+    ):
 
         try:
             # Try reading input data as a mesh if the extension is valid
@@ -214,13 +250,19 @@ def main(cfg_path: str) -> None:
     if out_mesh.df is not None:
         extension = "ply"
         out_filename = "processed_mesh." + extension
-        out_mesh.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension=extension)
+        out_mesh.serialize(
+            filepath=os.path.join(cfg["output_dir"], out_filename),
+            extension=extension,
+        )
         logger.info(f"Mesh serialized as a '{extension}' file")
 
     else:
         extension = "las"
         out_filename = "processed_point_cloud." + extension
-        out_mesh.pcd.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension=extension)
+        out_mesh.pcd.serialize(
+            filepath=os.path.join(cfg["output_dir"], out_filename),
+            extension=extension,
+        )
         logger.info(f"Point cloud serialized as a '{extension}' file")
 
     # # Save the point cloud information in a csv file

@@ -1,56 +1,64 @@
 .. highlight:: shell
 
 ============
-Installation
+Install
 ============
 
 
-Stable release
---------------
+Quick installation via CMake
+-----------------------------
 
-If deployed in Pypi, to install Mesh 3D, run this command in your terminal:
+Git clone the repository, open a terminal and launch the following commands:
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ pip install mesh_3d
+    # Go to the desired folder
+    cd /path/to/desired/folder
 
-This is the preferred method to install Mesh 3D, as it will always install the most recent stable release.
+    # Clone repository
+    # Make sure to check the right way to do it, whether you are internal or external to CNES
+    # Internal: https://confluence.cnes.fr/pages/viewpage.action?pageId=26166114
+    # External: https://confluence.cnes.fr/pages/viewpage.action?pageId=26159013
+    git clone git@gitlab.cnes.fr:cars/etudes/rt_mesh_3d.git .
 
-Consider using a virtualenv to separate and test the installation.
+    # Install
+    make install
 
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide
-you through the process.
+    # Test if it works
+    mesh_3d -h
 
-.. _pip: https://pip.pypa.io
-.. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
-
-
-From sources
-------------
-
-The sources for Mesh 3D can be downloaded from the `Github repo`_.
-
-You can either clone the public repository:
-
-.. code-block:: console
-
-    # To update with real URL
-    $ git clone git://github.com/CNES/mesh_3d
-
-Or download the `tarball`_:
-
-.. code-block:: console
-
-    # To update with real URL
-    $ curl -OJL https://github.com/CNES/mesh_3d/tarball/master
-
-Once you have a copy of the source, you can install it in a virtualenv with:
-
-.. code-block:: console
-
-    $ make install
-    $ source venv/bin/activate
+It will install the virtual environment and all necessary to run the code.
 
 
-.. _Github repo: https://github.com/CNES/mesh_3d
-.. _tarball: https://github.com/CNES/mesh_3d/tarball/master
+Quick manual installation
+-------------------------
+
+Create a Python virtual environment, git clone the repository and install the lib in dev mode (so to be able to modify
+it dynamically).
+
+.. code-block:: bash
+
+    # Go to the desired folder where to save your virtual environment
+    cd /path/to/desired/folder
+
+    # Create your virtual environment and name it by replacing "NAME_OF_VIRTUALENV" with whatever you like
+    python -m venv NAME_OF_VENV
+
+    # Activate your venv (on UNIX)
+    # A flag "<NAME_OF_VENV>" should appear before your command line from now on
+    source /path/to/desired/folder/NAME_OF_VENV/bin/activate
+
+    # Update pip and setuptools package
+    python -m pip --upgrade pip setuptools
+
+    # Clone library repository
+    # Make sure to check the right way to do it, whether you are internal or external to CNES
+    # Internal: https://confluence.cnes.fr/pages/viewpage.action?pageId=26166114
+    # External: https://confluence.cnes.fr/pages/viewpage.action?pageId=26159013
+    git clone git@gitlab.cnes.fr:cars/etudes/rt_mesh_3d.git .
+
+    # Install the mesh_3d lib in dev mode with the dev and doc tools
+    python -m pip install -e .[dev,docs]
+
+    # Test if it works
+    mesh_3d -h

@@ -30,14 +30,21 @@ from .tools.handlers import Mesh
 
 
 class Mesh3DMachine(Machine):
-
-    def __init__(self, mesh_data: Mesh, initial_state: str = "initial_pcd") -> None:
+    def __init__(
+        self, mesh_data: Mesh, initial_state: str = "initial_pcd"
+    ) -> None:
         # Init arguments
         self.mesh_data = mesh_data
         self.initial_state = initial_state
 
         # Available states
-        self.states_ = ["initial_pcd", "filtered_pcd", "denoised_pcd", "meshed_pcd", "textured_pcd"]
+        self.states_ = [
+            "initial_pcd",
+            "filtered_pcd",
+            "denoised_pcd",
+            "meshed_pcd",
+            "textured_pcd",
+        ]
 
         # Available transitions
         self.transitions_ = [
@@ -46,74 +53,71 @@ class Mesh3DMachine(Machine):
                 "trigger": "filter",
                 "source": "initial_pcd",
                 "dest": "filtered_pcd",
-                "after": "filter_run"
+                "after": "filter_run",
             },
             {
                 "trigger": "denoise_pcd",
                 "source": "initial_pcd",
                 "dest": "denoised_pcd",
-                "after": "denoise_pcd_run"
+                "after": "denoise_pcd_run",
             },
             {
                 "trigger": "mesh",
                 "source": "initial_pcd",
                 "dest": "meshed_pcd",
-                "after": "mesh_run"
+                "after": "mesh_run",
             },
-
             # From the 'filtered_pcd' state
             {
                 "trigger": "filter",
                 "source": "filtered_pcd",
                 "dest": "filtered_pcd",
-                "after": "filter_run"
+                "after": "filter_run",
             },
             {
                 "trigger": "denoise_pcd",
                 "source": "filtered_pcd",
                 "dest": "denoised_pcd",
-                "after": "denoise_pcd_run"
+                "after": "denoise_pcd_run",
             },
             {
                 "trigger": "mesh",
                 "source": "filtered_pcd",
                 "dest": "meshed_pcd",
-                "after": "mesh_run"
+                "after": "mesh_run",
             },
-
             # From the 'denoised_pcd' state
             {
                 "trigger": "denoise_pcd",
                 "source": "denoised_pcd",
                 "dest": "denoised_pcd",
-                "after": "denoise_pcd_run"
+                "after": "denoise_pcd_run",
             },
             {
                 "trigger": "mesh",
                 "source": "denoised_pcd",
                 "dest": "meshed_pcd",
-                "after": "mesh_run"
+                "after": "mesh_run",
             },
-
             # From the 'meshed_pcd' state
             {
                 "trigger": "simplify_mesh",
                 "source": "meshed_pcd",
                 "dest": "meshed_pcd",
-                "after": "simplify_mesh_run"
+                "after": "simplify_mesh_run",
             },
             {
                 "trigger": "denoise_mesh",
                 "source": "meshed_pcd",
                 "dest": "meshed_pcd",
-                "after": "denoise_mesh_run"
+                "after": "denoise_mesh_run",
             },
             {
                 "trigger": "texture",
                 "source": "meshed_pcd",
                 "dest": "textured_pcd",
-                "after": "texture_run"
-            }
+                "after": "texture_run",
+            },
         ]
 
         # Initialize a machine model
@@ -141,10 +145,14 @@ class Mesh3DMachine(Machine):
             self.trigger(step["action"], step, cfg)
 
         except (MachineError, KeyError, AttributeError):
-            logger.error(f"A problem occurs during Mesh 3D running {step['action']} step. Be sure of your sequencing.")
+            logger.error(
+                f"A problem occurs during Mesh 3D running {step['action']} step. Be sure of your sequencing."
+            )
             raise
 
-    def filter_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+    def filter_run(
+        self, step: dict, cfg: dict, check_mode: bool = False
+    ) -> None:
         """
         Filter the point cloud from outliers
 
@@ -164,10 +172,13 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the filtering method chosen by the user
-            self.mesh_data.pcd = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.mesh_data.pcd, **step["params"])
+            self.mesh_data.pcd = param.TRANSITIONS_METHODS[step["action"]][
+                step["method"]
+            ](self.mesh_data.pcd, **step["params"])
 
-    def denoise_pcd_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+    def denoise_pcd_run(
+        self, step: dict, cfg: dict, check_mode: bool = False
+    ) -> None:
         """
         Denoise the point cloud
 
@@ -187,8 +198,9 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the denoising method chosen by the user
-            self.mesh_data.pcd = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.mesh_data.pcd, **step["params"])
+            self.mesh_data.pcd = param.TRANSITIONS_METHODS[step["action"]][
+                step["method"]
+            ](self.mesh_data.pcd, **step["params"])
 
     def mesh_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
         """
@@ -210,10 +222,13 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the meshing method chosen by the user
-            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.mesh_data.pcd, **step["params"])
+            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][
+                step["method"]
+            ](self.mesh_data.pcd, **step["params"])
 
-    def simplify_mesh_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+    def simplify_mesh_run(
+        self, step: dict, cfg: dict, check_mode: bool = False
+    ) -> None:
         """
         Simplify the mesh to reduce the number of faces
 
@@ -233,10 +248,13 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the meshing method chosen by the user
-            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.mesh_data, **step["params"])
+            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][
+                step["method"]
+            ](self.mesh_data, **step["params"])
 
-    def denoise_mesh_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+    def denoise_mesh_run(
+        self, step: dict, cfg: dict, check_mode: bool = False
+    ) -> None:
         """
         Denoise the mesh
 
@@ -256,10 +274,13 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the meshing method chosen by the user
-            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.mesh_data, **step["params"])
+            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][
+                step["method"]
+            ](self.mesh_data, **step["params"])
 
-    def texture_run(self, step: dict, cfg: dict, check_mode: bool = False) -> None:
+    def texture_run(
+        self, step: dict, cfg: dict, check_mode: bool = False
+    ) -> None:
         """
         Texture the mesh
 
@@ -279,8 +300,9 @@ class Mesh3DMachine(Machine):
 
         else:
             # Apply the texturing method chosen by the user
-            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][step["method"]](
-                self.mesh_data, cfg, **step["params"])
+            self.mesh_data = param.TRANSITIONS_METHODS[step["action"]][
+                step["method"]
+            ](self.mesh_data, cfg, **step["params"])
 
     def check_transitions(self, cfg: dict) -> None:
         """
@@ -298,17 +320,23 @@ class Mesh3DMachine(Machine):
         try:
             # Check if the sequencing asked by the user is valid
             for k, step in enumerate(cfg["state_machine"]):
-                self.trigger(step['action'], step, cfg, check_mode=True)
+                self.trigger(step["action"], step, cfg, check_mode=True)
 
         except (MachineError, KeyError, AttributeError):
-            logger.error(f"A problem occurs during Mesh 3D transition check. Be sure of your sequencing.")
+            logger.error(
+                f"A problem occurs during Mesh 3D transition check. Be sure of your sequencing."
+            )
             raise
 
         # Add transition to reset
-        self.add_transition(trigger="reset", source=self.state, dest=f"{self.initial_state}")
+        self.add_transition(
+            trigger="reset", source=self.state, dest=f"{self.initial_state}"
+        )
 
         # Reset at initial step
         self.trigger("reset", cfg)
 
         # Remove transition for resetting
-        self.remove_transition(trigger="reset", source=self.state, dest=f"{self.initial_state}")
+        self.remove_transition(
+            trigger="reset", source=self.state, dest=f"{self.initial_state}"
+        )

@@ -61,7 +61,7 @@ TODO
 
 Git clone the repository, open a terminal and launch the following commands:
 ```bash
-cd patch/to/dir/mesh_3d
+cd path/to/dir/mesh_3d
 make install
 ```
 
@@ -168,14 +168,14 @@ source /venv/bin/activate
 mesh_3d evaluate /path/to/config.json
 ```
 
-[//]: # (## Documentation)
+## Documentation
 
-[//]: # ()
-[//]: # (Go in docs/ directory)
 
-[//]: # ()
-[//]: # ()
-[//]: # (* Documentation: https://mesh-3d.readthedocs.io.)
+Go in docs/ directory
+
+
+
+* Documentation: https://mesh-3d.readthedocs.io.
 
 
 ## Contribution

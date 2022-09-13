@@ -22,8 +22,8 @@
 Main module for evaluation.
 """
 
-import os
 import json
+import os
 
 import pandas
 import pandas as pd
@@ -48,7 +48,10 @@ def read_input_path(input_path: str) -> Mesh:
     mesh: Mesh
         Mesh object
     """
-    if os.path.basename(input_path).split(".")[-1] in param.MESH_FILE_EXTENSIONS:
+    if (
+        os.path.basename(input_path).split(".")[-1]
+        in param.MESH_FILE_EXTENSIONS
+    ):
 
         try:
             # Try reading input data as a mesh if the extension is valid
@@ -91,11 +94,15 @@ def check_config(cfg_path: str) -> dict:
 
     # Check the path validity
     if not isinstance(cfg_path, str):
-        raise TypeError(f"Configuration path is invalid. It should be a string but got '{type(cfg_path)}'.")
+        raise TypeError(
+            f"Configuration path is invalid. It should be a string but got '{type(cfg_path)}'."
+        )
 
     if os.path.basename(cfg_path).split(".")[-1] != "json":
-        raise ValueError(f"Configuration path should be a JSON file with extension '.json'. "
-                         f"Found '{os.path.basename(cfg_path).split('.')[-1]}'.")
+        raise ValueError(
+            f"Configuration path should be a JSON file with extension '.json'. "
+            f"Found '{os.path.basename(cfg_path).split('.')[-1]}'."
+        )
 
     # Read JSON file
     with open(cfg_path, "r") as f:
@@ -105,19 +112,28 @@ def check_config(cfg_path: str) -> dict:
     for input_path in ["input_path_1", "input_path_2"]:
 
         if input_path not in cfg:
-            raise ValueError(f"Configuration dictionary is missing the '{input_path}' field.")
+            raise ValueError(
+                f"Configuration dictionary is missing the '{input_path}' field."
+            )
 
         else:
             if not isinstance(cfg[input_path], str):
-                raise TypeError(f"'{input_path}' is invalid. It should be a string but got '{type(cfg[input_path])}'.")
+                raise TypeError(
+                    f"'{input_path}' is invalid. It should be a string but got '{type(cfg[input_path])}'."
+                )
 
-            if os.path.basename(cfg[input_path]).split(".")[-1] not in (param.PCD_FILE_EXTENSIONS +
-                                                                        param.MESH_FILE_EXTENSIONS):
-                raise ValueError(f"'{input_path}' extension is invalid. "
-                                 f"It should be in {param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS}.")
+            if os.path.basename(cfg[input_path]).split(".")[-1] not in (
+                param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS
+            ):
+                raise ValueError(
+                    f"'{input_path}' extension is invalid. "
+                    f"It should be in {param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS}."
+                )
 
     if "output_dir" not in cfg:
-        raise ValueError(f"Configuration dictionary should contains a 'output_dir' key.")
+        raise ValueError(
+            f"Configuration dictionary should contains a 'output_dir' key."
+        )
 
     return cfg
 
@@ -158,7 +174,9 @@ def run(cfg: dict, mesh_data_1: Mesh, mesh_data_2: Mesh) -> pandas.DataFrame:
 
     # Serialize visu
     metrics.visualize_distances(cfg["output_dir"])
-    logger.info(f"Point cloud distances were written to disk in '{cfg['output_dir']}'.")
+    logger.info(
+        f"Point cloud distances were written to disk in '{cfg['output_dir']}'."
+    )
 
     return df_metrics
 

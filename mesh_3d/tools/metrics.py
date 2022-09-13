@@ -32,7 +32,7 @@ from ..tools.handlers import PointCloud
 
 
 def mean_squared_distance(dist: np.array) -> float:
-    return np.mean(dist ** 2).item()
+    return np.mean(dist**2).item()
 
 
 def root_mean_squared_distance(dist: np.array) -> float:
@@ -56,10 +56,15 @@ def hausdorff_sym_distance(dist_1: np.array, dist_2: np.array) -> float:
 
 
 def chamfer_distance(dist_1: np.array, dist_2: np.array) -> float:
-    return np.mean(np.power(dist_1, 2)).item() + np.mean(np.power(dist_2, 2)).item()
+    return (
+        np.mean(np.power(dist_1, 2)).item()
+        + np.mean(np.power(dist_2, 2)).item()
+    )
 
 
-def point_to_plane_distance(pcd_in, pcd_ref, knn=30, workers=1, use_open3d=True, **kwargs) -> np.ndarray:
+def point_to_plane_distance(
+    pcd_in, pcd_ref, knn=30, workers=1, use_open3d=True, **kwargs
+) -> np.ndarray:
     """
     The point-to-plane distance first computes the normal of the surface at every point in the reference point
     cloud as an indication of the local surface. The displacement of every corresponding point in the noisy
@@ -72,15 +77,23 @@ def point_to_plane_distance(pcd_in, pcd_ref, knn=30, workers=1, use_open3d=True,
 
     # Compute normals on the reference point cloud
     if not pcd_ref.has_normals:
-        pcd_ref = compute_pcd_normals(pcd_ref, neighbour_search_method="knn", knn=knn, workers=workers,
-                                      use_open3d=use_open3d, **kwargs)
+        pcd_ref = compute_pcd_normals(
+            pcd_ref,
+            neighbour_search_method="knn",
+            knn=knn,
+            workers=workers,
+            use_open3d=use_open3d,
+            **kwargs,
+        )
 
     # Get indexes of the NN in the input point cloud from the reference point cloud
     pcd_in_indexes = []
     pcd_in_tree = o3d.geometry.KDTreeFlann(pcd_in.o3d_pcd)
 
     for i in range(pcd_ref.df.shape[0]):
-        [_, idx, _] = pcd_in_tree.search_knn_vector_3d(pcd_ref.o3d_pcd.points[i], 1)
+        [_, idx, _] = pcd_in_tree.search_knn_vector_3d(
+            pcd_ref.o3d_pcd.points[i], 1
+        )
         pcd_in_indexes.append(idx)
 
     pcd_in_indexes = np.asarray(pcd_in_indexes)[:, 0]
@@ -100,7 +113,10 @@ def point_to_plane_distance(pcd_in, pcd_ref, knn=30, workers=1, use_open3d=True,
     #
     # vect_AP = ( (vect_AM ∙ u) / ||u||² ) ∙ u = dist * u / ||u||
 
-    vect_AM = pcd_in.df.loc[pcd_in_indexes, ["x", "y", "z"]].to_numpy() - pcd_ref.df.loc[:, ["x", "y", "z"]].to_numpy()
+    vect_AM = (
+        pcd_in.df.loc[pcd_in_indexes, ["x", "y", "z"]].to_numpy()
+        - pcd_ref.df.loc[:, ["x", "y", "z"]].to_numpy()
+    )
     # u is the normal vector that was computed before
     u = pcd_ref.df.loc[:, ["n_x", "n_y", "n_z"]].to_numpy()
 
@@ -116,6 +132,7 @@ class PointCloudMetrics(object):
     Nearest neighbours are computed during the initialisation step in order to share this information between
     different metrics and avoid a costly recomputing step.
     """
+
     def __init__(self, pcd_in: PointCloud, pcd_ref: PointCloud, **kwargs):
         self.pcd_in = pcd_in
         self.pcd_ref = pcd_ref
@@ -129,7 +146,7 @@ class PointCloudMetrics(object):
             "MEDIAN": self.median_distance,
             "HAUSDORFF_ASYM": self.hausdorff_asym_distance,
             "HAUSDORFF_SYM": self.hausdorff_sym_distance,
-            "CHAMFER": self.chamfer_distance
+            "CHAMFER": self.chamfer_distance,
         }
 
         # Compute nearest neighbours for all the points with open3d
@@ -140,14 +157,26 @@ class PointCloudMetrics(object):
             self.pcd_ref.set_o3d_pcd_from_df()
 
         # Compute distance per point from nearest neighbours in -> ref
-        self.dist_p2p_in_ref = np.asarray(self.pcd_in.o3d_pcd.compute_point_cloud_distance(self.pcd_ref.o3d_pcd))
+        self.dist_p2p_in_ref = np.asarray(
+            self.pcd_in.o3d_pcd.compute_point_cloud_distance(
+                self.pcd_ref.o3d_pcd
+            )
+        )
         # Compute distance per point from nearest neighbours ref -> in
-        self.dist_p2p_ref_in = np.asarray(self.pcd_ref.o3d_pcd.compute_point_cloud_distance(self.pcd_in.o3d_pcd))
+        self.dist_p2p_ref_in = np.asarray(
+            self.pcd_ref.o3d_pcd.compute_point_cloud_distance(
+                self.pcd_in.o3d_pcd
+            )
+        )
         # Init distance point to plane
         # in -> ref
-        self.dist_p2s_in_ref = point_to_plane_distance(self.pcd_ref, self.pcd_in, **kwargs)
+        self.dist_p2s_in_ref = point_to_plane_distance(
+            self.pcd_ref, self.pcd_in, **kwargs
+        )
         # ref -> in
-        self.dist_p2s_ref_in = point_to_plane_distance(self.pcd_in, self.pcd_ref, **kwargs)
+        self.dist_p2s_ref_in = point_to_plane_distance(
+            self.pcd_in, self.pcd_ref, **kwargs
+        )
 
     def mean_squared_distance(self, mode) -> tuple:
         """
@@ -159,11 +188,17 @@ class PointCloudMetrics(object):
             Mode of computation. Either 'p2p' (point to point) or 'p2s' (point to surface):
         """
         if mode == "p2p":
-            return mean_squared_distance(self.dist_p2p_in_ref), mean_squared_distance(self.dist_p2p_ref_in)
+            return mean_squared_distance(
+                self.dist_p2p_in_ref
+            ), mean_squared_distance(self.dist_p2p_ref_in)
         elif mode == "p2s":
-            return mean_squared_distance(self.dist_p2s_in_ref), mean_squared_distance(self.dist_p2s_ref_in)
+            return mean_squared_distance(
+                self.dist_p2s_in_ref
+            ), mean_squared_distance(self.dist_p2s_ref_in)
         else:
-            raise ValueError(f"Mode should be in '{self.modes}'. Here found '{mode}'.")
+            raise ValueError(
+                f"Mode should be in '{self.modes}'. Here found '{mode}'."
+            )
 
     def root_mean_squared_distance(self, mode) -> tuple:
         """
@@ -175,11 +210,17 @@ class PointCloudMetrics(object):
             Mode of computation. Either 'p2p' (point to point) or 'p2s' (point to surface):
         """
         if mode == "p2p":
-            return root_mean_squared_distance(self.dist_p2p_in_ref), root_mean_squared_distance(self.dist_p2p_ref_in)
+            return root_mean_squared_distance(
+                self.dist_p2p_in_ref
+            ), root_mean_squared_distance(self.dist_p2p_ref_in)
         elif mode == "p2s":
-            return root_mean_squared_distance(self.dist_p2s_in_ref), root_mean_squared_distance(self.dist_p2s_ref_in)
+            return root_mean_squared_distance(
+                self.dist_p2s_in_ref
+            ), root_mean_squared_distance(self.dist_p2s_ref_in)
         else:
-            raise ValueError(f"Mode should be in '{self.modes}'. Here found '{mode}'.")
+            raise ValueError(
+                f"Mode should be in '{self.modes}'. Here found '{mode}'."
+            )
 
     def mean_distance(self, mode) -> tuple:
         """
@@ -191,11 +232,17 @@ class PointCloudMetrics(object):
             Mode of computation. Either 'p2p' (point to point) or 'p2s' (point to surface):
         """
         if mode == "p2p":
-            return mean_distance(self.dist_p2p_in_ref), mean_distance(self.dist_p2p_ref_in)
+            return mean_distance(self.dist_p2p_in_ref), mean_distance(
+                self.dist_p2p_ref_in
+            )
         elif mode == "p2s":
-            return mean_distance(self.dist_p2s_in_ref), mean_distance(self.dist_p2s_ref_in)
+            return mean_distance(self.dist_p2s_in_ref), mean_distance(
+                self.dist_p2s_ref_in
+            )
         else:
-            raise ValueError(f"Mode should be in '{self.modes}'. Here found '{mode}'.")
+            raise ValueError(
+                f"Mode should be in '{self.modes}'. Here found '{mode}'."
+            )
 
     def median_distance(self, mode) -> tuple:
         """
@@ -207,11 +254,17 @@ class PointCloudMetrics(object):
             Mode of computation. Either 'p2p' (point to point) or 'p2s' (point to surface):
         """
         if mode == "p2p":
-            return median_distance(self.dist_p2p_in_ref), median_distance(self.dist_p2p_ref_in)
+            return median_distance(self.dist_p2p_in_ref), median_distance(
+                self.dist_p2p_ref_in
+            )
         elif mode == "p2s":
-            return median_distance(self.dist_p2s_in_ref), median_distance(self.dist_p2s_ref_in)
+            return median_distance(self.dist_p2s_in_ref), median_distance(
+                self.dist_p2s_ref_in
+            )
         else:
-            raise ValueError(f"Mode should be in '{self.modes}'. Here found '{mode}'.")
+            raise ValueError(
+                f"Mode should be in '{self.modes}'. Here found '{mode}'."
+            )
 
     def hausdorff_asym_distance(self, mode) -> tuple:
         """
@@ -223,11 +276,17 @@ class PointCloudMetrics(object):
             Mode of computation. Either 'p2p' (point to point) or 'p2s' (point to surface):
         """
         if mode == "p2p":
-            return hausdorff_asym_distance(self.dist_p2p_in_ref), hausdorff_asym_distance(self.dist_p2p_ref_in)
+            return hausdorff_asym_distance(
+                self.dist_p2p_in_ref
+            ), hausdorff_asym_distance(self.dist_p2p_ref_in)
         elif mode == "p2s":
-            return hausdorff_asym_distance(self.dist_p2s_in_ref), hausdorff_asym_distance(self.dist_p2s_ref_in)
+            return hausdorff_asym_distance(
+                self.dist_p2s_in_ref
+            ), hausdorff_asym_distance(self.dist_p2s_ref_in)
         else:
-            raise ValueError(f"Mode should be in '{self.modes}'. Here found '{mode}'.")
+            raise ValueError(
+                f"Mode should be in '{self.modes}'. Here found '{mode}'."
+            )
 
     def hausdorff_sym_distance(self, mode) -> float:
         """
@@ -239,11 +298,17 @@ class PointCloudMetrics(object):
             Mode of computation. Either 'p2p' (point to point) or 'p2s' (point to surface):
         """
         if mode == "p2p":
-            return hausdorff_sym_distance(self.dist_p2p_in_ref, self.dist_p2p_ref_in)
+            return hausdorff_sym_distance(
+                self.dist_p2p_in_ref, self.dist_p2p_ref_in
+            )
         elif mode == "p2s":
-            return hausdorff_sym_distance(self.dist_p2s_in_ref, self.dist_p2s_ref_in)
+            return hausdorff_sym_distance(
+                self.dist_p2s_in_ref, self.dist_p2s_ref_in
+            )
         else:
-            raise ValueError(f"Mode should be in '{self.modes}'. Here found '{mode}'.")
+            raise ValueError(
+                f"Mode should be in '{self.modes}'. Here found '{mode}'."
+            )
 
     def chamfer_distance(self, mode) -> float:
         """
@@ -259,9 +324,13 @@ class PointCloudMetrics(object):
         elif mode == "p2s":
             return chamfer_distance(self.dist_p2s_in_ref, self.dist_p2s_ref_in)
         else:
-            raise ValueError(f"Mode should be in '{self.modes}'. Here found '{mode}'.")
+            raise ValueError(
+                f"Mode should be in '{self.modes}'. Here found '{mode}'."
+            )
 
-    def _serialize_ply_distances(self, filepath: str, pcd: PointCloud, distances: np.ndarray) -> None:
+    def _serialize_ply_distances(
+        self, filepath: str, pcd: PointCloud, distances: np.ndarray
+    ) -> None:
         """
         Serialize a textured mesh as a PLY file
 
@@ -275,19 +344,27 @@ class PointCloudMetrics(object):
 
         # Vertices
         vertices = pcd.get_vertices().to_numpy()
-        vertex = np.array(list(zip(*vertices.T)),
-                          dtype=[('x', 'f8'), ('y', 'f8'), ('z', 'f8')])
+        vertex = np.array(
+            list(zip(*vertices.T)),
+            dtype=[("x", "f8"), ("y", "f8"), ("z", "f8")],
+        )
 
         # Distance
         # Custom scalar field
-        scalar_field = np.array(distances, dtype=[('d', 'f8')])
+        scalar_field = np.array(distances, dtype=[("d", "f8")])
 
         # Define elements
-        el_vertex = plyfile.PlyElement.describe(vertex, 'vertex', val_types={'x': 'f8', 'y': 'f8', 'z': 'f8'})
-        el_distance = plyfile.PlyElement.describe(scalar_field, 'distance', val_types={'d': 'f8'})
+        el_vertex = plyfile.PlyElement.describe(
+            vertex, "vertex", val_types={"x": "f8", "y": "f8", "z": "f8"}
+        )
+        el_distance = plyfile.PlyElement.describe(
+            scalar_field, "distance", val_types={"d": "f8"}
+        )
 
         # Write ply file
-        plyfile.PlyData([el_vertex, el_distance], byte_order='>').write(filepath)
+        plyfile.PlyData([el_vertex, el_distance], byte_order=">").write(
+            filepath
+        )
 
     def visualize_distances(self, output_dir) -> None:
         """
@@ -299,13 +376,21 @@ class PointCloudMetrics(object):
             Path to the output directory
         """
         filename = os.path.join(output_dir, "p2p_distances_1vs2.ply")
-        self._serialize_ply_distances(filename, self.pcd_in, self.dist_p2p_in_ref)
+        self._serialize_ply_distances(
+            filename, self.pcd_in, self.dist_p2p_in_ref
+        )
 
         filename = os.path.join(output_dir, "p2p_distances_2vs1.ply")
-        self._serialize_ply_distances(filename, self.pcd_ref, self.dist_p2p_ref_in)
+        self._serialize_ply_distances(
+            filename, self.pcd_ref, self.dist_p2p_ref_in
+        )
 
         filename = os.path.join(output_dir, "p2s_distances_1vs2.ply")
-        self._serialize_ply_distances(filename, self.pcd_in, self.dist_p2s_in_ref)
+        self._serialize_ply_distances(
+            filename, self.pcd_in, self.dist_p2s_in_ref
+        )
 
         filename = os.path.join(output_dir, "p2s_distances_2vs1.ply")
-        self._serialize_ply_distances(filename, self.pcd_ref, self.dist_p2s_ref_in)
+        self._serialize_ply_distances(
+            filename, self.pcd_ref, self.dist_p2s_ref_in
+        )

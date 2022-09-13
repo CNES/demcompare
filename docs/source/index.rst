@@ -1,21 +1,27 @@
 Welcome to Mesh 3D's documentation!
 =============================================================================
 
+This library was created by Lisa Vo Thanh (Magellium) and Chloé Thenoz (Magellium) during a CNES Study project
+for surface reconstruction from a photogrammetric point cloud.
+
 .. toctree::
    :maxdepth: 2
+   :caption: User Guide
 
    installation
-   usage
-   developer_guide
+   command_line_user_guide
+   core/index.rst
+   tools/index.rst
 
 .. toctree::
   :maxdepth: 2
-  :caption: APIDoc
+  :caption: API Reference
 
   apidoc/modules
 
-Indices and tables
-==================
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+
+.. Indices and tables
+    ==================
+    * :ref:`genindex`
+    * :ref:`modindex`
+    * :ref:`search`

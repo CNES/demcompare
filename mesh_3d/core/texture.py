@@ -27,19 +27,23 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-from PIL import Image
 import rasterio
+from PIL import Image
 from rasterio.windows import Window
 
 from ..tools.handlers import Mesh
-from ..tools.rpc import PleiadesRPC, apply_rpc_list
 from ..tools.point_cloud_io import change_frame
+from ..tools.rpc import PleiadesRPC, apply_rpc_list
 
 Image.MAX_IMAGE_PIXELS = 1000000000
 
 
-def preprocess_image_texture(img_path: str, bbox: Union[tuple, list, np.ndarray], output_dir: str,
-                             tile_size: Union[tuple, list, np.ndarray] = (1000, 1000)):
+def preprocess_image_texture(
+    img_path: str,
+    bbox: Union[tuple, list, np.ndarray],
+    output_dir: str,
+    tile_size: Union[tuple, list, np.ndarray] = (1000, 1000),
+):
     """
     Function that transforms a 16-bit tif image into an 8-bit jpg cropped to a bbox extent
 
@@ -56,10 +60,14 @@ def preprocess_image_texture(img_path: str, bbox: Union[tuple, list, np.ndarray]
     """
 
     # Define path of the output image
-    output_8bit_path = os.path.join(output_dir, "8bit_" + os.path.basename(img_path).split('.')[0] + '.jpg')
+    output_8bit_path = os.path.join(
+        output_dir, "8bit_" + os.path.basename(img_path).split(".")[0] + ".jpg"
+    )
 
     # Define normalization function to be applied by tile (for memory consumption reasons, tiling is imperative)
-    def tile_norm(arr: np.ndarray, q_percent: Union[tuple, list, np.ndarray], **kwargs):
+    def tile_norm(
+        arr: np.ndarray, q_percent: Union[tuple, list, np.ndarray], **kwargs
+    ):
         """Normalize an image to a 8-bit image by recomputing the color dynamic
 
         Parameters
@@ -72,44 +80,70 @@ def preprocess_image_texture(img_path: str, bbox: Union[tuple, list, np.ndarray]
         arr = np.clip(arr, a_min=q_percent[0], a_max=q_percent[1])
 
         # Normalize
-        a = 255. / (q_percent[1] - q_percent[0])
-        b = - a * q_percent[0]
+        a = 255.0 / (q_percent[1] - q_percent[0])
+        b = -a * q_percent[0]
 
         arr = a * arr + b * np.ones_like(arr)
         return arr
 
     # Define raster tiling process
-    def process_raster_by_tile(rio_infile, rio_outfile, fn_process_tile, tile_size=(1000, 1000), **kwargs):
+    def process_raster_by_tile(
+        rio_infile,
+        rio_outfile,
+        fn_process_tile,
+        tile_size=(1000, 1000),
+        **kwargs
+    ):
         """
         Function that executes a user defined function using a tiling process.
         """
 
-        tile_size = np.clip(tile_size, a_min=[1, 1], a_max=[rio_infile.height, rio_infile.width])
+        tile_size = np.clip(
+            tile_size, a_min=[1, 1], a_max=[rio_infile.height, rio_infile.width]
+        )
 
         # Compute the number of tiles
-        num_tiles_xy = np.asarray([np.ceil(rio_infile.width / tile_size[1]),
-                                   np.ceil(rio_infile.height / tile_size[0])], dtype=np.int64)
+        num_tiles_xy = np.asarray(
+            [
+                np.ceil(rio_infile.width / tile_size[1]),
+                np.ceil(rio_infile.height / tile_size[0]),
+            ],
+            dtype=np.int64,
+        )
 
         kwargs["num_tiles_xy"] = num_tiles_xy
 
         for j in range(num_tiles_xy[0]):
             for i in range(num_tiles_xy[1]):
-                tmp_tile_size = [min(tile_size[0], rio_infile.height - i * tile_size[0]),
-                                 min(tile_size[1], rio_infile.width - j * tile_size[1])]
+                tmp_tile_size = [
+                    min(tile_size[0], rio_infile.height - i * tile_size[0]),
+                    min(tile_size[1], rio_infile.width - j * tile_size[1]),
+                ]
 
-                arr = rio_infile.read(1, window=Window(int(j * tile_size[1]),
-                                                       int(i * tile_size[0]),
-                                                       int(tmp_tile_size[1]),
-                                                       int(tmp_tile_size[0])))
+                arr = rio_infile.read(
+                    1,
+                    window=Window(
+                        int(j * tile_size[1]),
+                        int(i * tile_size[0]),
+                        int(tmp_tile_size[1]),
+                        int(tmp_tile_size[0]),
+                    ),
+                )
 
                 kwargs["i"] = i
                 kwargs["j"] = j
                 kwargs["tmp_tile_size"] = tmp_tile_size
                 arr = fn_process_tile(arr, **kwargs)
-                rio_outfile.write(arr,
-                                  indexes=1,
-                                  window=Window(int(j * tile_size[1]), int(i * tile_size[0]),
-                                                int(tmp_tile_size[1]), int(tmp_tile_size[0])))
+                rio_outfile.write(
+                    arr,
+                    indexes=1,
+                    window=Window(
+                        int(j * tile_size[1]),
+                        int(i * tile_size[0]),
+                        int(tmp_tile_size[1]),
+                        int(tmp_tile_size[0]),
+                    ),
+                )
 
     # Open TIF image file
     with rasterio.open(img_path) as infile:
@@ -117,20 +151,22 @@ def preprocess_image_texture(img_path: str, bbox: Union[tuple, list, np.ndarray]
 
         # Create output jpg image
         with rasterio.open(
-                output_8bit_path,
-                mode='w',
-                driver='JPEG',
-                height=infile.height,
-                width=infile.width,
-                count=infile.count,
-                dtype=rasterio.uint8,
-                crs=infile.crs,
-                transform=infile.transform
+            output_8bit_path,
+            mode="w",
+            driver="JPEG",
+            height=infile.height,
+            width=infile.width,
+            count=infile.count,
+            dtype=rasterio.uint8,
+            crs=infile.crs,
+            transform=infile.transform,
         ) as dst:
             # Clip between 2% and 98%
             q_percent = np.percentile(raster, [2, 98])
             # Apply normalization to the image by tile
-            process_raster_by_tile(infile, dst, tile_norm, q_percent=q_percent, tile_size=tile_size)
+            process_raster_by_tile(
+                infile, dst, tile_norm, q_percent=q_percent, tile_size=tile_size
+            )
 
     # Crop image
     # Open it with PIL
@@ -138,7 +174,10 @@ def preprocess_image_texture(img_path: str, bbox: Union[tuple, list, np.ndarray]
     # Crop with the bbox information
     im_crop = image.crop(bbox)
     # Save the cropped image to disk
-    output_8bit_crop_path = os.path.join(output_dir, "8bit_crop_" + os.path.basename(img_path).split('.')[0] + '.jpg')
+    output_8bit_crop_path = os.path.join(
+        output_dir,
+        "8bit_crop_" + os.path.basename(img_path).split(".")[0] + ".jpg",
+    )
     im_crop.save(output_8bit_crop_path, quality=100)
 
     return output_8bit_crop_path, np.size(im_crop)
@@ -174,12 +213,19 @@ def generate_uvs(img_pts, triangles, bbox, image_texture_size):
     uvs = []
     # Y-axis is inverted
     for i in range(triangles.shape[0]):
-        uvs.append([(img_pts[triangles[i, 0], 0] - bbox[0]) / image_texture_size[0],
-                    -(img_pts[triangles[i, 0], 1] - bbox[1]) / image_texture_size[1],
-                    (img_pts[triangles[i, 1], 0] - bbox[0]) / image_texture_size[0],
-                    -(img_pts[triangles[i, 1], 1] - bbox[1]) / image_texture_size[1],
-                    (img_pts[triangles[i, 2], 0] - bbox[0]) / image_texture_size[0],
-                    -(img_pts[triangles[i, 2], 1] - bbox[1]) / image_texture_size[1]])
+        uvs.append(
+            [
+                (img_pts[triangles[i, 0], 0] - bbox[0]) / image_texture_size[0],
+                -(img_pts[triangles[i, 0], 1] - bbox[1])
+                / image_texture_size[1],
+                (img_pts[triangles[i, 1], 0] - bbox[0]) / image_texture_size[0],
+                -(img_pts[triangles[i, 1], 1] - bbox[1])
+                / image_texture_size[1],
+                (img_pts[triangles[i, 2], 0] - bbox[0]) / image_texture_size[0],
+                -(img_pts[triangles[i, 2], 1] - bbox[1])
+                / image_texture_size[1],
+            ]
+        )
 
     return np.asarray(uvs, dtype=np.float64)
 
@@ -222,18 +268,24 @@ def texturing(mesh: Mesh, cfg: dict) -> Mesh:
     vertices = mesh.pcd.df[["x", "y", "z"]].to_numpy()
 
     # Convert vertices from UTM to geo (lon lat)
-    vertices_lon_lat = change_frame(pd.DataFrame(vertices, columns=["x", "y", "z"]), utm_code, 4326).to_numpy()
+    vertices_lon_lat = change_frame(
+        pd.DataFrame(vertices, columns=["x", "y", "z"]), utm_code, 4326
+    ).to_numpy()
 
     # Apply inverse location to get the equivalent image point coordinates
     img_pts = apply_rpc_list(rpc, vertices_lon_lat)
 
     # Process image to crop the TIF file to the extent of the mesh
     # Get the image bounding box rounding up to the nearest integer (to avoid resampling)
-    bbox = [np.floor(np.min(img_pts[:, 0])),
-            np.floor(np.min(img_pts[:, 1])),
-            np.ceil(np.max(img_pts[:, 0])),
-            np.ceil(np.max(img_pts[:, 1]))]
-    image_texture_path, image_texture_size = preprocess_image_texture(tif_img_path, bbox, output_dir)
+    bbox = [
+        np.floor(np.min(img_pts[:, 0])),
+        np.floor(np.min(img_pts[:, 1])),
+        np.ceil(np.max(img_pts[:, 0])),
+        np.ceil(np.max(img_pts[:, 1])),
+    ]
+    image_texture_path, image_texture_size = preprocess_image_texture(
+        tif_img_path, bbox, output_dir
+    )
 
     # Compute UVs
     triangles_uvs = generate_uvs(img_pts, triangles, bbox, image_texture_size)

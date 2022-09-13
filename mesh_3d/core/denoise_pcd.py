@@ -24,24 +24,27 @@ Denoising methods aiming at smoothing surfaces without losing genuine high-frequ
 
 import os
 import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import multiprocessing as mp
 from typing import Callable
 
-import pandas as pd
 import numpy as np
-from scipy.spatial import KDTree
 import open3d as o3d
+import pandas as pd
+from scipy.spatial import KDTree
 from tqdm import tqdm
 
 from ..tools import point_cloud_io
 from ..tools.handlers import PointCloud
 
 
-def compute_pcd_normals_o3d(pcd: PointCloud,
-                            neighbour_search_method: str = "ball",
-                            knn: int = 100,
-                            radius: float = 5.) -> PointCloud:
+def compute_pcd_normals_o3d(
+    pcd: PointCloud,
+    neighbour_search_method: str = "ball",
+    knn: int = 100,
+    radius: float = 5.0,
+) -> PointCloud:
     """
     Compute point cloud normals with open3d library
 
@@ -58,30 +61,42 @@ def compute_pcd_normals_o3d(pcd: PointCloud,
     """
 
     if neighbour_search_method not in ["knn", "ball"]:
-        raise ValueError(f"Neighbour search method should either be 'knn' or 'ball'. Here found "
-                         f"'{neighbour_search_method}'.")
+        raise ValueError(
+            f"Neighbour search method should either be 'knn' or 'ball'. Here found "
+            f"'{neighbour_search_method}'."
+        )
 
     # Init
     o3d_pcd = o3d.geometry.PointCloud()
-    o3d_pcd.points = o3d.utility.Vector3dVector(pcd.df[["x", "y", "z"]].to_numpy())
+    o3d_pcd.points = o3d.utility.Vector3dVector(
+        pcd.df[["x", "y", "z"]].to_numpy()
+    )
 
     # Compute normals
     if neighbour_search_method == "knn":
-        o3d_pcd.estimate_normals(o3d.geometry.KDTreeSearchParamKNN(knn), )
+        o3d_pcd.estimate_normals(
+            o3d.geometry.KDTreeSearchParamKNN(knn),
+        )
     elif neighbour_search_method == "ball":
         # Compute normals
-        o3d_pcd.estimate_normals(o3d.geometry.KDTreeSearchParamRadius(radius), )
+        o3d_pcd.estimate_normals(
+            o3d.geometry.KDTreeSearchParamRadius(radius),
+        )
     else:
         raise NotImplementedError
 
     # Assign it to the df
     normals = np.asarray(o3d_pcd.normals)
-    pcd.df = pcd.df.assign(n_x=normals[:, 0], n_y=normals[:, 1], n_z=normals[:, 2])
+    pcd.df = pcd.df.assign(
+        n_x=normals[:, 0], n_y=normals[:, 1], n_z=normals[:, 2]
+    )
 
     return pcd
 
 
-def compute_point_normal(point_coordinates: np.array, weights: float = None) -> np.array:
+def compute_point_normal(
+    point_coordinates: np.array, weights: float = None
+) -> np.array:
     """
     Compute unitary normal with the PCA approach from a point and its neighbours
     The normal to a point on the surface of an object is approximated to the normal to the tangent plane
@@ -106,14 +121,18 @@ def compute_point_normal(point_coordinates: np.array, weights: float = None) -> 
     print(f"Number of points: {point_coordinates.shape[0]}")
 
     if point_coordinates.shape[0] <= 1:
-        raise ValueError(f"The cluster of points from which to compute the local normal is empty or with just "
-                         f"one point. Increase the ball radius.")
+        raise ValueError(
+            f"The cluster of points from which to compute the local normal is empty or with just "
+            f"one point. Increase the ball radius."
+        )
 
     # Compute the centroid of the nearest neighbours
     centroid = np.mean(point_coordinates, axis=0)
 
     # Compute the covariance matrix
-    cov_mat = np.cov(point_coordinates - centroid, rowvar=False, aweights=weights)
+    cov_mat = np.cov(
+        point_coordinates - centroid, rowvar=False, aweights=weights
+    )
 
     # Find eigen values and vectors
     # use the Singular Value Decomposition A = U * S * V^T
@@ -129,23 +148,25 @@ def compute_point_normal(point_coordinates: np.array, weights: float = None) -> 
 
 def weight_exp(distance: np.ndarray, mean_distance: np.ndarray) -> np.array:
     """Decreasing exponential function for weighting"""
-    return np.exp(- distance ** 2 / mean_distance ** 2)
+    return np.exp(-(distance**2) / mean_distance**2)
 
 
 # en entrée une liste (une valeur par voisin) et un chiffre, sortie liste
 def weight_exp_2(d, sigma):
-    out = [ np.exp(- val ** 2 / 2 * (sigma ** 2)) for val in d]
+    out = [np.exp(-(val**2) / 2 * (sigma**2)) for val in d]
     return out
 
 
-def compute_pcd_normals(pcd: PointCloud,
-                        neighbour_search_method: str = "ball",
-                        knn: int = 30,
-                        radius: float = 5.,
-                        weights_distance: bool = False,
-                        weights_color: bool = False,
-                        workers: int = 1,
-                        use_open3d: bool = False) -> PointCloud:
+def compute_pcd_normals(
+    pcd: PointCloud,
+    neighbour_search_method: str = "ball",
+    knn: int = 30,
+    radius: float = 5.0,
+    weights_distance: bool = False,
+    weights_color: bool = False,
+    workers: int = 1,
+    use_open3d: bool = False,
+) -> PointCloud:
     """
     Compute the normal for each point of the cloud
 
@@ -175,11 +196,15 @@ def compute_pcd_normals(pcd: PointCloud,
     """
 
     if neighbour_search_method not in ["knn", "ball"]:
-        raise ValueError(f"Neighbour search method should either be 'knn' or 'ball'. Here found "
-                         f"'{neighbour_search_method}'.")
+        raise ValueError(
+            f"Neighbour search method should either be 'knn' or 'ball'. Here found "
+            f"'{neighbour_search_method}'."
+        )
 
     if use_open3d:
-        pcd = compute_pcd_normals_o3d(pcd, neighbour_search_method, knn=knn, radius=radius)
+        pcd = compute_pcd_normals_o3d(
+            pcd, neighbour_search_method, knn=knn, radius=radius
+        )
 
     else:
         # Init
@@ -189,10 +214,14 @@ def compute_pcd_normals(pcd: PointCloud,
 
         if neighbour_search_method == "knn":
             # Query the tree by knn for each point cloud data
-            _, ind = tree.query(pcd.df[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
+            _, ind = tree.query(
+                pcd.df[["x", "y", "z"]].to_numpy(), k=knn, workers=workers
+            )
         elif neighbour_search_method == "ball":
-            raise NotImplementedError("Due to memory consumption, scipy ball query is unusable: "
-                                      "https://github.com/scipy/scipy/issues/12956.")
+            raise NotImplementedError(
+                "Due to memory consumption, scipy ball query is unusable: "
+                "https://github.com/scipy/scipy/issues/12956."
+            )
             # # Query the tree by radius for each point cloud data
             # ind = tree.query_ball_point(pcd.df[["x", "y", "z"]].to_numpy(), r=radius, workers=workers,
             #                             return_sorted=False, return_length=False)
@@ -217,8 +246,11 @@ def compute_pcd_normals(pcd: PointCloud,
                 distance = color_data[row, :] - color_data[0, :]
                 mean_distance = np.mean(distance)
 
-                weights = weight_exp(distance, mean_distance) if weights is None \
+                weights = (
+                    weight_exp(distance, mean_distance)
+                    if weights is None
                     else weights * weight_exp(distance, mean_distance)
+                )
 
             # Compute the normal
             results[k, :] = compute_point_normal(tree.data[row, :], weights)
@@ -226,24 +258,28 @@ def compute_pcd_normals(pcd: PointCloud,
         # results = np.asarray(results)
 
         # Add normals information to the dataframe
-        pcd.df = pcd.df.assign(n_x=results[:, 0], n_y=results[:, 1], n_z=results[:, 2])
+        pcd.df = pcd.df.assign(
+            n_x=results[:, 0], n_y=results[:, 1], n_z=results[:, 2]
+        )
 
     return pcd
 
 
-def bilateral_filtering(pcd: PointCloud,
-                        neighbour_search_method: str = "ball",
-                        knn: int = 30,
-                        radius: float = 5.,
-                        sigma_d: float = 0.5,
-                        sigma_n: float = 0.5,
-                        neighbour_search_method_normals: str = "ball",
-                        knn_normals: int = 50,
-                        radius_normals: float = 5.,
-                        weights_distance: bool = False,
-                        weights_color: bool = False,
-                        workers: int = 1,
-                        use_open3d: bool = False):
+def bilateral_filtering(
+    pcd: PointCloud,
+    neighbour_search_method: str = "ball",
+    knn: int = 30,
+    radius: float = 5.0,
+    sigma_d: float = 0.5,
+    sigma_n: float = 0.5,
+    neighbour_search_method_normals: str = "ball",
+    knn_normals: int = 50,
+    radius_normals: float = 5.0,
+    weights_distance: bool = False,
+    weights_color: bool = False,
+    workers: int = 1,
+    use_open3d: bool = False,
+):
     """
     Bilateral denoising
 
@@ -283,9 +319,16 @@ def bilateral_filtering(pcd: PointCloud,
     """
 
     # Compute normals
-    pcd = compute_pcd_normals(pcd, neighbour_search_method_normals, knn=knn_normals, radius=radius_normals,
-                              weights_distance=weights_distance, weights_color=weights_color, workers=workers,
-                              use_open3d=use_open3d)
+    pcd = compute_pcd_normals(
+        pcd,
+        neighbour_search_method_normals,
+        knn=knn_normals,
+        radius=radius_normals,
+        weights_distance=weights_distance,
+        weights_color=weights_color,
+        workers=workers,
+        use_open3d=use_open3d,
+    )
 
     # Build the KDTree for the normals
     normal_cloud = KDTree(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
@@ -298,10 +341,14 @@ def bilateral_filtering(pcd: PointCloud,
     # Request the indexes of the neighbours according to the spatial coordinates
     if neighbour_search_method == "knn":
         # Query the tree by knn for each point cloud data
-        _, ind = cloud_tree.query(pcd.df[["x", "y", "z"]].to_numpy(), k=knn, workers=workers)
+        _, ind = cloud_tree.query(
+            pcd.df[["x", "y", "z"]].to_numpy(), k=knn, workers=workers
+        )
     elif neighbour_search_method == "ball":
-        raise NotImplementedError("Due to memory consumption, scipy ball query is unusable: "
-                                  "https://github.com/scipy/scipy/issues/12956.")
+        raise NotImplementedError(
+            "Due to memory consumption, scipy ball query is unusable: "
+            "https://github.com/scipy/scipy/issues/12956."
+        )
         # # Query the tree by radius for each point cloud data
         # ind = cloud_tree.query_ball_point(pcd.df[["x", "y", "z"]].to_numpy(), r=radius, workers=workers,
         #                                   return_sorted=False, return_length=False)
@@ -327,7 +374,9 @@ def bilateral_filtering(pcd: PointCloud,
         sum_w = sum(w)
 
         # Change points' position along its normal as: p_new = p + w * n
-        p_new = cloud_tree.data[k, :] + (delta_p / sum_w) * normal_cloud.data[k, :]
+        p_new = (
+            cloud_tree.data[k, :] + (delta_p / sum_w) * normal_cloud.data[k, :]
+        )
         pcd.df.loc[k, "x":"z"] = p_new
 
     return pcd
@@ -402,149 +451,147 @@ def bilateral_filtering(pcd: PointCloud,
 #         # ~ for neigh_idx in neighbors_list:
 #
 #     return df
-            
 
-    
-    
+
 # ~ def bilateral_denoising(
-    # ~ df_cloud: pandas.DataFrame,
-    # ~ iteration: int = 10,
-    # ~ k: int = 10,
-    # ~ sigma_c: float = 40.0,
-    # ~ sigma_d: float = 2.0,
-    # ~ sigma_ps: float = 0.5,
+# ~ df_cloud: pandas.DataFrame,
+# ~ iteration: int = 10,
+# ~ k: int = 10,
+# ~ sigma_c: float = 40.0,
+# ~ sigma_d: float = 2.0,
+# ~ sigma_ps: float = 0.5,
 # ~ ) -> pandas.DataFrame:
-    # ~ """
-    # ~ todo
-    # ~ """
-    # ~ bilateral_logger = logging
-    # ~ start_bilat = time.time()
-    # ~ print("bilateral_denoising start")
-    # ~ # projection.points_cloud_conversion_dataframe(df_cloud,epsg_in,epsg_out)
+# ~ """
+# ~ todo
+# ~ """
+# ~ bilateral_logger = logging
+# ~ start_bilat = time.time()
+# ~ print("bilateral_denoising start")
+# ~ # projection.points_cloud_conversion_dataframe(df_cloud,epsg_in,epsg_out)
 
-    # ~ if len(df_cloud) == 0:
-        # ~ print("len(df_cloud)==0")
-        # ~ print("bilateral_denoising finish")
-        # ~ return df_cloud
+# ~ if len(df_cloud) == 0:
+# ~ print("len(df_cloud)==0")
+# ~ print("bilateral_denoising finish")
+# ~ return df_cloud
 
-    # ~ clr_indexes = [
-        # ~ idx for idx in df_cloud.columns.values.tolist() if idx.startswith("clr")
-    # ~ ]
+# ~ clr_indexes = [
+# ~ idx for idx in df_cloud.columns.values.tolist() if idx.startswith("clr")
+# ~ ]
 
-    # ~ df_xyz = df_cloud[["x", "y", "z"]]
-    # ~ df_colors = df_cloud[clr_indexes]
+# ~ df_xyz = df_cloud[["x", "y", "z"]]
+# ~ df_colors = df_cloud[clr_indexes]
 
-    # ~ # calcul du tree
-    # ~ start_tree = time.time()
-    # ~ print("bilat: start cKDtree")
-    # ~ tree = cKDTree(df_xyz.values)
-    # ~ stop_tree = time.time()
-    # ~ print(
-        # ~ "bilat: stop cKDtree, duration {}s".format(stop_tree - start_tree)
-    # ~ )
+# ~ # calcul du tree
+# ~ start_tree = time.time()
+# ~ print("bilat: start cKDtree")
+# ~ tree = cKDTree(df_xyz.values)
+# ~ stop_tree = time.time()
+# ~ print(
+# ~ "bilat: stop cKDtree, duration {}s".format(stop_tree - start_tree)
+# ~ )
 
-    # ~ # calcul des normales
-    # ~ start_normal = time.time()
-    # ~ print("bilat: start compute normal")
-    # ~ np_normals = normal_selective(
-        # ~ df_xyz, df_colors, sigma_d=sigma_d, sigma_c=sigma_c, k=k, tree=tree
-    # ~ )
-    # ~ stop_normal = time.time()
-    # ~ print(
-        # ~ "bilat: stop compute normal, duration {}s".format(
-            # ~ stop_normal - start_normal
-        # ~ )
-    # ~ )
+# ~ # calcul des normales
+# ~ start_normal = time.time()
+# ~ print("bilat: start compute normal")
+# ~ np_normals = normal_selective(
+# ~ df_xyz, df_colors, sigma_d=sigma_d, sigma_c=sigma_c, k=k, tree=tree
+# ~ )
+# ~ stop_normal = time.time()
+# ~ print(
+# ~ "bilat: stop compute normal, duration {}s".format(
+# ~ stop_normal - start_normal
+# ~ )
+# ~ )
 
-    # ~ nb_group = 20000
-    # ~ start_filter = time.time()
-    # ~ print("bilat: start for loop")
-    # ~ for _ in range(iteration):
-        # ~ start_iter = time.time()
-        # ~ print(
-            # ~ "bilat: start iteration,nb-group {}".format(nb_group)
-        # ~ )
+# ~ nb_group = 20000
+# ~ start_filter = time.time()
+# ~ print("bilat: start for loop")
+# ~ for _ in range(iteration):
+# ~ start_iter = time.time()
+# ~ print(
+# ~ "bilat: start iteration,nb-group {}".format(nb_group)
+# ~ )
 
-        # ~ tmp_z = df_xyz.copy()
-        # ~ tmp_normal = np_normals.copy()
-        # ~ for i in range(nb_group, len(df_cloud) + nb_group, nb_group):
-            # ~ ind = tree.data[i - nb_group : i]
-            # ~ _, nn_ind = tree.query(ind, k=(k ** 2))
+# ~ tmp_z = df_xyz.copy()
+# ~ tmp_normal = np_normals.copy()
+# ~ for i in range(nb_group, len(df_cloud) + nb_group, nb_group):
+# ~ ind = tree.data[i - nb_group : i]
+# ~ _, nn_ind = tree.query(ind, k=(k ** 2))
 
-            # ~ neighbours_xyz = df_xyz.values[nn_ind]
-            # ~ neighbours_colors = df_colors.values[nn_ind]
-            # ~ neighbours_normals = np_normals[nn_ind]
+# ~ neighbours_xyz = df_xyz.values[nn_ind]
+# ~ neighbours_colors = df_colors.values[nn_ind]
+# ~ neighbours_normals = np_normals[nn_ind]
 
-            # ~ points_xyz = neighbours_xyz[:, 0, :].copy()
-            # ~ points_colors = neighbours_colors[:, 0, :].copy()
+# ~ points_xyz = neighbours_xyz[:, 0, :].copy()
+# ~ points_colors = neighbours_colors[:, 0, :].copy()
 
-            # ~ delta_xyz = neighbours_xyz - points_xyz[..., None, :]
-            # ~ delta_colors = neighbours_colors - points_colors[..., None, :]
+# ~ delta_xyz = neighbours_xyz - points_xyz[..., None, :]
+# ~ delta_colors = neighbours_colors - points_colors[..., None, :]
 
-            # ~ # calcul des poids
-            # ~ w_d = np.exp(-(delta_xyz ** 2).sum(axis=-1) / (2 * sigma_d ** 2))
-            # ~ w_c = np.exp(-(delta_colors ** 2).sum(axis=-1) / (2 * sigma_c ** 2))
-            # ~ w_total = w_c * w_d
+# ~ # calcul des poids
+# ~ w_d = np.exp(-(delta_xyz ** 2).sum(axis=-1) / (2 * sigma_d ** 2))
+# ~ w_c = np.exp(-(delta_colors ** 2).sum(axis=-1) / (2 * sigma_c ** 2))
+# ~ w_total = w_c * w_d
 
-            # ~ # filtrage des normales
-            # ~ points_normals = neighbours_normals.copy()
-            # ~ points_normals = (points_normals * w_total[..., None]).sum(axis=-2)
-            # ~ points_normals /= w_total[..., None].sum(axis=-2)
+# ~ # filtrage des normales
+# ~ points_normals = neighbours_normals.copy()
+# ~ points_normals = (points_normals * w_total[..., None]).sum(axis=-2)
+# ~ points_normals /= w_total[..., None].sum(axis=-2)
 
-            # ~ # Normalisation
-            # ~ points_normals /= np.sqrt((points_normals ** 2).sum(axis=1))[
-                # ~ :, None
-            # ~ ]
+# ~ # Normalisation
+# ~ points_normals /= np.sqrt((points_normals ** 2).sum(axis=1))[
+# ~ :, None
+# ~ ]
 
-            # ~ # calcul des distances par rapport à la normal
-            # ~ mean_pos = (delta_xyz * w_total[..., None]).sum(axis=-2)
-            # ~ mean_pos /= w_total[..., None].sum(axis=-2)
+# ~ # calcul des distances par rapport à la normal
+# ~ mean_pos = (delta_xyz * w_total[..., None]).sum(axis=-2)
+# ~ mean_pos /= w_total[..., None].sum(axis=-2)
 
-            # ~ distance_ortho = (
-                # ~ (delta_xyz - mean_pos[:, None, :]) * points_normals[:, None, :]
-            # ~ ).sum(axis=-1)
-            # ~ w_o = np.exp(-np.abs(distance_ortho) ** 2 / (sigma_ps ** 2))
-            # ~ w_total *= w_o
+# ~ distance_ortho = (
+# ~ (delta_xyz - mean_pos[:, None, :]) * points_normals[:, None, :]
+# ~ ).sum(axis=-1)
+# ~ w_o = np.exp(-np.abs(distance_ortho) ** 2 / (sigma_ps ** 2))
+# ~ w_total *= w_o
 
-            # ~ # calcul du barycentre
-            # ~ new_mean_pos = (neighbours_xyz * w_total[..., None]).sum(axis=-2)
-            # ~ new_mean_pos /= w_total[..., None].sum(axis=-2)
+# ~ # calcul du barycentre
+# ~ new_mean_pos = (neighbours_xyz * w_total[..., None]).sum(axis=-2)
+# ~ new_mean_pos /= w_total[..., None].sum(axis=-2)
 
-            # ~ # calcul de la nouvelle position
-            # ~ new_pos_z = (
-                # ~ points_xyz
-                # ~ - (((points_xyz - new_mean_pos) * points_normals).sum(axis=1))[
-                    # ~ :, None
-                # ~ ]
-                # ~ * points_normals
-            # ~ )
+# ~ # calcul de la nouvelle position
+# ~ new_pos_z = (
+# ~ points_xyz
+# ~ - (((points_xyz - new_mean_pos) * points_normals).sum(axis=1))[
+# ~ :, None
+# ~ ]
+# ~ * points_normals
+# ~ )
 
-            # ~ tmp_z.iloc[i - nb_group : i, :] = new_pos_z
-            # ~ tmp_normal[i - nb_group : i] = points_normals
+# ~ tmp_z.iloc[i - nb_group : i, :] = new_pos_z
+# ~ tmp_normal[i - nb_group : i] = points_normals
 
-            # ~ # break
-        # ~ df_xyz = tmp_z[["x", "y", "z"]]
-        # ~ np_normals = tmp_normal
+# ~ # break
+# ~ df_xyz = tmp_z[["x", "y", "z"]]
+# ~ np_normals = tmp_normal
 
-        # ~ stop_iter = time.time()
-        # ~ print(
-            # ~ "bilat: stop iteration,duration {}".format(stop_iter - start_iter)
-        # ~ )
-    # ~ stop_filter = time.time()
-    # ~ print(
-        # ~ "bilat: stop for loop, duration {}s".format(stop_filter - start_filter)
-    # ~ )
+# ~ stop_iter = time.time()
+# ~ print(
+# ~ "bilat: stop iteration,duration {}".format(stop_iter - start_iter)
+# ~ )
+# ~ stop_filter = time.time()
+# ~ print(
+# ~ "bilat: stop for loop, duration {}s".format(stop_filter - start_filter)
+# ~ )
 
-    # ~ df_cloud.loc[:, ["x", "y", "z"]] = df_xyz.values
-    # ~ print("bilateral_denoising finish")
+# ~ df_cloud.loc[:, ["x", "y", "z"]] = df_xyz.values
+# ~ print("bilateral_denoising finish")
 
-    # ~ stop_bilat = time.time()
-    # ~ print(
-        # ~ "bilateral_denoising stop, duration {}s nb-points {}".format(
-            # ~ stop_bilat - start_bilat, len(df_cloud)
-        # ~ )
-    # ~ )
-    # ~ return df_cloud
+# ~ stop_bilat = time.time()
+# ~ print(
+# ~ "bilateral_denoising stop, duration {}s nb-points {}".format(
+# ~ stop_bilat - start_bilat, len(df_cloud)
+# ~ )
+# ~ )
+# ~ return df_cloud
 
 #
 # def normal_selective(

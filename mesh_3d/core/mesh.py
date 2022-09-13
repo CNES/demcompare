@@ -24,17 +24,19 @@ Meshing methods to create a surface from the point cloud.
 
 from typing import Union
 
-import pandas as pd
-import open3d as o3d
-import numpy as np
-from scipy.spatial import Delaunay
 import matplotlib.tri as mtri
+import numpy as np
+import open3d as o3d
+import pandas as pd
+from scipy.spatial import Delaunay
 
-from ..tools.point_cloud_io import df2o3d
 from ..tools.handlers import Mesh, PointCloud
+from ..tools.point_cloud_io import df2o3d
 
 
-def ball_pivoting_reconstruction(pcd: PointCloud, radii: Union[list, float, None] = 0.6) -> Mesh:
+def ball_pivoting_reconstruction(
+    pcd: PointCloud, radii: Union[list, float, None] = 0.6
+) -> Mesh:
     """
     Bernardini, Fausto et al. “The ball-pivoting algorithm for surface reconstruction.” IEEE Transactions on
     Visualization and Computer Graphics 5 (1999): 349-359.
@@ -74,8 +76,9 @@ def ball_pivoting_reconstruction(pcd: PointCloud, radii: Union[list, float, None
     #     pcd.o3d_pcd.normals = o3d.utility.Vector3dVector(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
 
     # Mesh point cloud
-    o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd.o3d_pcd,
-                                                                               o3d.utility.DoubleVector(radii))
+    o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
+        pcd.o3d_pcd, o3d.utility.DoubleVector(radii)
+    )
 
     # Init Mesh object
     mesh = Mesh(pcd=pcd.df, o3d_pcd=pcd.o3d_pcd, o3d_mesh=o3d_mesh)
@@ -84,12 +87,14 @@ def ball_pivoting_reconstruction(pcd: PointCloud, radii: Union[list, float, None
     return mesh
 
 
-def poisson_reconstruction(pcd: PointCloud,
-                           depth: int = 8,
-                           width: int = 0,
-                           scale: float = 1.1,
-                           linear_fit: bool = False,
-                           n_threads: int = -1) -> Mesh:
+def poisson_reconstruction(
+    pcd: PointCloud,
+    depth: int = 8,
+    width: int = 0,
+    scale: float = 1.1,
+    linear_fit: bool = False,
+    n_threads: int = -1,
+) -> Mesh:
     """
     Kazhdan, Michael M. et al. “Poisson surface reconstruction.” SGP '06 (2006).
 
@@ -137,12 +142,9 @@ def poisson_reconstruction(pcd: PointCloud,
     #     o3d_pcd.normals = o3d.utility.Vector3dVector(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
 
     # Mesh point cloud
-    o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(o3d_pcd,
-                                                                         depth,
-                                                                         width,
-                                                                         scale,
-                                                                         linear_fit,
-                                                                         n_threads)
+    o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+        o3d_pcd, depth, width, scale, linear_fit, n_threads
+    )
 
     # # Init Mesh object
     # mesh = Mesh(pcd=pcd.df, o3d_pcd=o3d.geometry.PointCloud(points=o3d_mesh[0].vertices), o3d_mesh=o3d_mesh[0])
@@ -150,13 +152,19 @@ def poisson_reconstruction(pcd: PointCloud,
 
     # Init Mesh object
     # TODO: Check consistency between pcd.df list of points and o3d list of points
-    mesh = Mesh(pcd=pcd.df, o3d_pcd=o3d.geometry.PointCloud(points=o3d_mesh[0].vertices), o3d_mesh=o3d_mesh[0])
+    mesh = Mesh(
+        pcd=pcd.df,
+        o3d_pcd=o3d.geometry.PointCloud(points=o3d_mesh[0].vertices),
+        o3d_mesh=o3d_mesh[0],
+    )
     mesh.set_df_from_o3d_mesh()
 
     return mesh
 
 
-def delaunay_2d_reconstruction(pcd: PointCloud, method: str = "matplotlib") -> Mesh:
+def delaunay_2d_reconstruction(
+    pcd: PointCloud, method: str = "matplotlib"
+) -> Mesh:
     """
     2.5D Delaunay triangulation: Delaunay triangulation on the planimetric points and add afterwards the z coordinates.
 
@@ -188,5 +196,7 @@ def delaunay_2d_reconstruction(pcd: PointCloud, method: str = "matplotlib") -> M
         return mesh
 
     else:
-        raise NotImplementedError(f"Unknown library for Delaunay triangulation: '{method}'. Should either be 'scipy' "
-                                  f"or 'matplotlib'.")
+        raise NotImplementedError(
+            f"Unknown library for Delaunay triangulation: '{method}'. Should either be 'scipy' "
+            f"or 'matplotlib'."
+        )

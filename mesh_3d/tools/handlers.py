@@ -25,11 +25,9 @@ Define classes for handling common objects
 from typing import Union
 
 import numpy as np
-
-import pandas as pd
 import open3d as o3d
+import pandas as pd
 from loguru import logger
-
 
 COLORS = ["red", "green", "blue", "nir"]
 NORMALS = ["n_x", "n_y", "n_z"]
@@ -38,17 +36,26 @@ UVS = ["uv1_row", "uv1_col", "uv2_row", "uv2_col", "uv3_row", "uv3_col"]
 
 class PointCloud(object):
     """Point cloud data"""
-    def __init__(self,
-                 df: Union[None, pd.DataFrame] = None,
-                 o3d_pcd: Union[None, o3d.geometry.PointCloud] = None) -> None:
+
+    def __init__(
+        self,
+        df: Union[None, pd.DataFrame] = None,
+        o3d_pcd: Union[None, o3d.geometry.PointCloud] = None,
+    ) -> None:
 
         if (not isinstance(df, pd.DataFrame)) and (df is not None):
-            raise TypeError(f"Input point cloud data 'df' should either be None or a pd.DataFrame. Here found "
-                            f"'{type(df)}'.")
+            raise TypeError(
+                f"Input point cloud data 'df' should either be None or a pd.DataFrame. Here found "
+                f"'{type(df)}'."
+            )
 
-        if (not isinstance(o3d_pcd, o3d.geometry.PointCloud)) and (o3d_pcd is not None):
-            raise TypeError(f"Input open3d point cloud data 'o3d_pcd' should either be None or a "
-                            f"o3d.geometry.PointCloud. Here found '{type(o3d_pcd)}'.")
+        if (not isinstance(o3d_pcd, o3d.geometry.PointCloud)) and (
+            o3d_pcd is not None
+        ):
+            raise TypeError(
+                f"Input open3d point cloud data 'o3d_pcd' should either be None or a "
+                f"o3d.geometry.PointCloud. Here found '{type(o3d_pcd)}'."
+            )
 
         self.df = df
         self.o3d_pcd = o3d_pcd
@@ -56,13 +63,18 @@ class PointCloud(object):
     def set_df_from_o3d_pcd(self):
         """Set pandas.DataFrame from open3D PointCloud"""
         if self.o3d_pcd is None:
-            raise ValueError("Could not set df from open3d pcd because it is empty.")
+            raise ValueError(
+                "Could not set df from open3d pcd because it is empty."
+            )
 
         # Set point cloud data
         self.set_df_from_vertices(np.asarray(self.o3d_pcd.vertices))
         # Add attributes if available
         if self.o3d_pcd.has_colors():
-            self.set_df_colors(colors=np.asarray(self.o3d_pcd.colors), color_names=["red", "green", "blue"])
+            self.set_df_colors(
+                colors=np.asarray(self.o3d_pcd.colors),
+                color_names=["red", "green", "blue"],
+            )
         if self.o3d_pcd.has_normals():
             self.set_df_normals(np.asarray(self.o3d_pcd.normals))
         # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
@@ -70,7 +82,9 @@ class PointCloud(object):
 
     def set_df_from_vertices(self, vertices: np.ndarray) -> None:
         """Set point coordinates in the pandas DataFrame"""
-        self.df = pd.DataFrame(data=np.asarray(vertices, dtype=np.float64), columns=["x", "y", "z"])
+        self.df = pd.DataFrame(
+            data=np.asarray(vertices, dtype=np.float64), columns=["x", "y", "z"]
+        )
 
     def set_df_colors(self, colors: np.ndarray, color_names: list) -> None:
         """Set color attributes per point in the pandas DataFrame"""
@@ -78,11 +92,15 @@ class PointCloud(object):
 
         for c in color_names:
             if c not in COLORS:
-                raise ValueError(f"{c} is not a possible color. Should be in {COLORS}.")
+                raise ValueError(
+                    f"{c} is not a possible color. Should be in {COLORS}."
+                )
 
         if colors.shape[1] != len(color_names):
-            raise ValueError(f"The number of columns ({colors.shape[1]}) is not equal to the number "
-                             f"of column names ({len(color_names)}).")
+            raise ValueError(
+                f"The number of columns ({colors.shape[1]}) is not equal to the number "
+                f"of column names ({len(color_names)})."
+            )
 
         self.df[color_names] = colors
 
@@ -91,13 +109,19 @@ class PointCloud(object):
         normals = np.asarray(normals)
 
         if normals.shape[1] != 3:
-            raise ValueError(f"Normals should have three columns (x, y, z). Found ({normals.shape[1]}).")
+            raise ValueError(
+                f"Normals should have three columns (x, y, z). Found ({normals.shape[1]})."
+            )
 
         self.df[NORMALS] = normals
 
     def set_o3d_pcd_from_df(self):
         """Set open3d PointCloud from pandas.DataFrame"""
-        self.o3d_pcd = o3d.geometry.PointCloud(points=o3d.utility.Vector3dVector(self.df[["x", "y", "z"]].to_numpy()))
+        self.o3d_pcd = o3d.geometry.PointCloud(
+            points=o3d.utility.Vector3dVector(
+                self.df[["x", "y", "z"]].to_numpy()
+            )
+        )
 
         if self.has_colors:
             self.set_o3d_colors()
@@ -113,18 +137,24 @@ class PointCloud(object):
 
         # add colors if applicable (only RGB)
         # init to zero
-        colors_arr = np.zeros_like(self.df[["x", "y", "z"]].to_numpy(), dtype=np.float64)
+        colors_arr = np.zeros_like(
+            self.df[["x", "y", "z"]].to_numpy(), dtype=np.float64
+        )
         # retrieve information from the dataframe
         for k, c in enumerate(["red", "green", "blue"]):
             if c in self.df:
                 colors_arr[:, k] = self.df[c].to_numpy()
             else:
-                raise ValueError(f"Open3D only deals with RGB colors. Here '{c}' is missing.")
+                raise ValueError(
+                    f"Open3D only deals with RGB colors. Here '{c}' is missing."
+                )
         # normalize colours in [0, 1]
-        colors_arr = np.divide(colors_arr - colors_arr.min(),
-                               colors_arr.max() - colors_arr.min(),
-                               out=np.zeros_like(colors_arr),
-                               where=(colors_arr.max() - colors_arr.min()) != 0.)
+        colors_arr = np.divide(
+            colors_arr - colors_arr.min(),
+            colors_arr.max() - colors_arr.min(),
+            out=np.zeros_like(colors_arr),
+            where=(colors_arr.max() - colors_arr.min()) != 0.0,
+        )
         # add to opend3d point cloud
         self.o3d_pcd.colors = o3d.utility.Vector3dVector(colors_arr)
 
@@ -135,7 +165,9 @@ class PointCloud(object):
         if self.o3d_pcd is None:
             raise ValueError("Open3D Point Cloud is empty.")
 
-        self.o3d_pcd.normals = o3d.utility.Vector3dVector(self.df[NORMALS].to_numpy())
+        self.o3d_pcd.normals = o3d.utility.Vector3dVector(
+            self.df[NORMALS].to_numpy()
+        )
 
     def get_vertices(self) -> pd.DataFrame:
         """Get vertex data"""
@@ -177,21 +209,26 @@ class PointCloud(object):
     def serialize(self, filepath: str, **kwargs) -> None:
         """Serialize point cloud"""
         from .point_cloud_io import serialize_point_cloud
+
         serialize_point_cloud(filepath, self.df, **kwargs)
 
     def deserialize(self, filepath: str) -> None:
         """Deserialize point cloud"""
         from .point_cloud_io import deserialize_point_cloud
+
         self.df = deserialize_point_cloud(filepath)
 
 
 class Mesh(object):
     """Mesh data"""
-    def __init__(self,
-                 pcd: Union[None, pd.DataFrame] = None,
-                 mesh: Union[None, pd.DataFrame] = None,
-                 o3d_pcd: Union[None, o3d.geometry.PointCloud] = None,
-                 o3d_mesh: Union[None, o3d.geometry.TriangleMesh] = None):
+
+    def __init__(
+        self,
+        pcd: Union[None, pd.DataFrame] = None,
+        mesh: Union[None, pd.DataFrame] = None,
+        o3d_pcd: Union[None, o3d.geometry.PointCloud] = None,
+        o3d_mesh: Union[None, o3d.geometry.TriangleMesh] = None,
+    ):
 
         self.pcd = PointCloud(df=pcd, o3d_pcd=o3d_pcd)
         self.df = mesh
@@ -203,7 +240,9 @@ class Mesh(object):
 
     def set_df_from_o3d_mesh(self) -> None:
         if self.o3d_mesh is None:
-            raise ValueError("Could not set df from open3d mesh because it is empty.")
+            raise ValueError(
+                "Could not set df from open3d mesh because it is empty."
+            )
 
         # Set face indexes
         self.set_df_from_vertices(np.asarray(self.o3d_mesh.triangles))
@@ -215,14 +254,21 @@ class Mesh(object):
         # Mesh
         if self.o3d_mesh.has_textures():
             if self.image_texture_path is None:
-                logger.warning(f"No image texture path is given to the Mesh object. Texture will remain incomplete.")
+                logger.warning(
+                    f"No image texture path is given to the Mesh object. Texture will remain incomplete."
+                )
 
         if self.o3d_mesh.has_triangle_uvs():
-            self.set_df_uvs(uvs=np.asarray(self.o3d_mesh.triangle_uvs).reshape((-1, 6)))
+            self.set_df_uvs(
+                uvs=np.asarray(self.o3d_mesh.triangle_uvs).reshape((-1, 6))
+            )
 
         # Point Cloud
         if self.o3d_mesh.has_vertex_colors():
-            self.pcd.set_df_colors(colors=np.asarray(self.o3d_mesh.vertex_colors), color_names=["red", "green", "blue"])
+            self.pcd.set_df_colors(
+                colors=np.asarray(self.o3d_mesh.vertex_colors),
+                color_names=["red", "green", "blue"],
+            )
         if self.o3d_mesh.has_vertex_normals():
             self.pcd.set_df_normals(np.asarray(self.o3d_mesh.vertex_normals))
         # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
@@ -247,24 +293,36 @@ class Mesh(object):
 
         # Check characteristics
         if uvs.shape[0] != self.df.shape[0]:
-            raise ValueError(f"Inconsistent number of triangles between triangle vertex indexes ({self.df.shape[0]} "
-                             f"triangles) and uvs ({uvs.shape[0]} data).")
+            raise ValueError(
+                f"Inconsistent number of triangles between triangle vertex indexes ({self.df.shape[0]} "
+                f"triangles) and uvs ({uvs.shape[0]} data)."
+            )
         if uvs.shape[1] != 6:
-            raise ValueError(f"UVs should be a numpy ndarray or a list of list with exactly 6 columns (3 vertices "
-                             f"associated to a pair of image texture coordinates (row, col). "
-                             f"Here found {uvs.shape[1]}.")
+            raise ValueError(
+                f"UVs should be a numpy ndarray or a list of list with exactly 6 columns (3 vertices "
+                f"associated to a pair of image texture coordinates (row, col). "
+                f"Here found {uvs.shape[1]}."
+            )
 
         self.df[UVS] = uvs
 
     def set_o3d_mesh_from_df(self) -> None:
         if self.df is None:
-            raise ValueError("Could not set open3d mesh from df mesh because it is empty.")
+            raise ValueError(
+                "Could not set open3d mesh from df mesh because it is empty."
+            )
         if self.pcd.df is None:
-            raise ValueError("Could not set open3d mesh from df pcd because it is empty.")
+            raise ValueError(
+                "Could not set open3d mesh from df pcd because it is empty."
+            )
 
         self.o3d_mesh = o3d.geometry.TriangleMesh(
-            vertices=o3d.utility.Vector3dVector(self.pcd.df[["x", "y", "z"]].to_numpy()),
-            triangles=o3d.utility.Vector3iVector(self.df[["p1", "p2", "p3"]].to_numpy())
+            vertices=o3d.utility.Vector3dVector(
+                self.pcd.df[["x", "y", "z"]].to_numpy()
+            ),
+            triangles=o3d.utility.Vector3iVector(
+                self.df[["p1", "p2", "p3"]].to_numpy()
+            ),
         )
         # Add attributes if available
         # Mesh
@@ -284,22 +342,30 @@ class Mesh(object):
 
         # Check o3d mesh is initialized
         if self.o3d_mesh is None:
-            raise ValueError("Could not set df from open3d mesh because it is empty.")
+            raise ValueError(
+                "Could not set df from open3d mesh because it is empty."
+            )
 
         # add colors if applicable (only RGB)
         # init to zero
-        colors_arr = np.zeros_like(self.pcd.df[["x", "y", "z"]].to_numpy(), dtype=np.float64)
+        colors_arr = np.zeros_like(
+            self.pcd.df[["x", "y", "z"]].to_numpy(), dtype=np.float64
+        )
         # retrieve information from the dataframe
         for k, c in enumerate(["red", "green", "blue"]):
             if c in self.pcd.df:
                 colors_arr[:, k] = self.pcd.df[c].to_numpy()
             else:
-                raise ValueError(f"Open3D only deals with RGB colors. Here '{c}' is missing.")
+                raise ValueError(
+                    f"Open3D only deals with RGB colors. Here '{c}' is missing."
+                )
         # normalize colours in [0, 1]
-        colors_arr = np.divide(colors_arr - colors_arr.min(),
-                               colors_arr.max() - colors_arr.min(),
-                               out=np.zeros_like(colors_arr),
-                               where=(colors_arr.max() - colors_arr.min()) != 0.)
+        colors_arr = np.divide(
+            colors_arr - colors_arr.min(),
+            colors_arr.max() - colors_arr.min(),
+            out=np.zeros_like(colors_arr),
+            where=(colors_arr.max() - colors_arr.min()) != 0.0,
+        )
         # add to opend3d mesh
         self.o3d_mesh.vertex_colors = o3d.utility.Vector3dVector(colors_arr)
 
@@ -308,19 +374,27 @@ class Mesh(object):
 
         # Check o3d mesh is initialized
         if self.o3d_mesh is None:
-            raise ValueError("Could not set df from open3d mesh because it is empty.")
+            raise ValueError(
+                "Could not set df from open3d mesh because it is empty."
+            )
 
-        self.o3d_mesh.vertex_normals = o3d.utility.Vector3dVector(self.pcd.df[NORMALS].to_numpy())
+        self.o3d_mesh.vertex_normals = o3d.utility.Vector3dVector(
+            self.pcd.df[NORMALS].to_numpy()
+        )
 
     def set_o3d_image_texture_and_uvs(self) -> None:
         """Set image texture path and uvs of open3D TriangleMesh"""
 
         # Check o3d mesh is initialized
         if self.o3d_mesh is None:
-            raise ValueError("Could not set df from open3d mesh because it is empty.")
+            raise ValueError(
+                "Could not set df from open3d mesh because it is empty."
+            )
 
         if not self.has_texture:
-            raise ValueError(f"Mesh object has no texture (either the image texture path or the uvs are missing.")
+            raise ValueError(
+                f"Mesh object has no texture (either the image texture path or the uvs are missing."
+            )
 
         # UVs in open3d are expressed as a (3 * num_triangles, 2)
         # Reshape data before feeding open3d TriangleMesh
@@ -351,16 +425,38 @@ class Mesh(object):
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
         else:
-            return (self.image_texture_path is not None) \
-                   and all([el in self.df.head() for el in ["uv1_row", "uv1_col", "uv2_row",
-                                                            "uv2_col", "uv3_row", "uv3_col"]])
+            return (self.image_texture_path is not None) and all(
+                [
+                    el in self.df.head()
+                    for el in [
+                        "uv1_row",
+                        "uv1_col",
+                        "uv2_row",
+                        "uv2_col",
+                        "uv3_row",
+                        "uv3_col",
+                    ]
+                ]
+            )
+
     @property
     def has_triangle_uvs(self) -> bool:
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
         else:
-            return all([el in self.df.head() for el in ["uv1_row", "uv1_col", "uv2_row",
-                                                            "uv2_col", "uv3_row", "uv3_col"]])
+            return all(
+                [
+                    el in self.df.head()
+                    for el in [
+                        "uv1_row",
+                        "uv1_col",
+                        "uv2_row",
+                        "uv2_col",
+                        "uv3_row",
+                        "uv3_col",
+                    ]
+                ]
+            )
 
     @property
     def has_normals(self) -> bool:
@@ -379,9 +475,11 @@ class Mesh(object):
     def serialize(self, filepath: str, **kwargs) -> None:
         """Serialize mesh"""
         from .mesh_io import serialize_mesh
+
         serialize_mesh(filepath, self, **kwargs)
 
     def deserialize(self, filepath: str) -> None:
         """Deserialize mesh"""
         from .mesh_io import deserialize_mesh
+
         self.pcd.df, self.df = deserialize_mesh(filepath)

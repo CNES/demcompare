@@ -28,17 +28,18 @@ from typing import Union
 import numpy as np
 from PIL import Image
 
-
 Image.MAX_IMAGE_PIXELS = 1000000000
 
 
 class RPC:
-    """ Rational Polynomial Coefficients """
+    """Rational Polynomial Coefficients"""
 
-    def __init__(self,
-                 polynomials: Union[list, tuple, np.ndarray],
-                 degrees: Union[list, tuple, np.ndarray],
-                 rpc_type: str):
+    def __init__(
+        self,
+        polynomials: Union[list, tuple, np.ndarray],
+        degrees: Union[list, tuple, np.ndarray],
+        rpc_type: str,
+    ):
 
         if len(polynomials) != 4:
             raise ValueError("Output dimensions should be 4 (P1, Q1, P2, Q2)")
@@ -46,10 +47,13 @@ class RPC:
         for i in range(len(polynomials)):
             if len(degrees) != len(polynomials[i]):
                 raise ValueError(
-                    "Number of monomes in the degrees array shall equal number of coefficients in the polynomial array.")
+                    "Number of monomes in the degrees array shall equal number of coefficients in the polynomial array."
+                )
 
         if rpc_type not in ["DIRECT", "INVERSE"]:
-            raise ValueError(f"RPC type should either be 'DIRECT' or 'INVERSE'.")
+            raise ValueError(
+                f"RPC type should either be 'DIRECT' or 'INVERSE'."
+            )
 
         self.polynomials = polynomials
         self.degrees = degrees
@@ -59,10 +63,14 @@ class RPC:
         self.out_offset = []
         self.out_scale = []
 
-    def set_normalisation_coefs(self, coefs: Union[list, tuple, np.ndarray]) -> None:
+    def set_normalisation_coefs(
+        self, coefs: Union[list, tuple, np.ndarray]
+    ) -> None:
         """Set normalisation coefficients for RPC"""
         if len(coefs) != 10:
-            raise ValueError("Normalisation and denormalisation coefficients shall be of size 10")
+            raise ValueError(
+                "Normalisation and denormalisation coefficients shall be of size 10"
+            )
 
         if self.rpc_type == "INVERSE":
             self.ref_offset = [coefs[1], coefs[3], coefs[5]]
@@ -76,12 +84,35 @@ class RPC:
 class PleiadesRPC(RPC):
     """RPC for Pleiades"""
 
-    def __init__(self, rpc_type: str, polynomials: Union[list, tuple, np.ndarray] = None, path_rpc: str = None):
+    def __init__(
+        self,
+        rpc_type: str,
+        polynomials: Union[list, tuple, np.ndarray] = None,
+        path_rpc: str = None,
+    ):
 
-        self.degrees = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1], [0, 1, 1], [2, 0, 0],
-                        [0, 2, 0], [0, 0, 2],
-                        [1, 1, 1], [3, 0, 0], [1, 2, 0], [1, 0, 2], [2, 1, 0], [0, 3, 0], [0, 1, 2], [2, 0, 1],
-                        [0, 2, 1], [0, 0, 3]]
+        self.degrees = [
+            [0, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 1, 0],
+            [1, 0, 1],
+            [0, 1, 1],
+            [2, 0, 0],
+            [0, 2, 0],
+            [0, 0, 2],
+            [1, 1, 1],
+            [3, 0, 0],
+            [1, 2, 0],
+            [1, 0, 2],
+            [2, 1, 0],
+            [0, 3, 0],
+            [0, 1, 2],
+            [2, 0, 1],
+            [0, 2, 1],
+            [0, 0, 3],
+        ]
 
         if path_rpc is not None:
             if rpc_type == "INVERSE":
@@ -90,7 +121,9 @@ class PleiadesRPC(RPC):
                 raise NotImplementedError
 
         elif polynomials is None:
-            raise ValueError("Either a valid RPC path or polynomials should be given in input.")
+            raise ValueError(
+                "Either a valid RPC path or polynomials should be given in input."
+            )
 
         else:
             super().__init__(polynomials, self.degrees, rpc_type)
@@ -103,14 +136,14 @@ class PleiadesRPC(RPC):
         root = tree.getroot()
 
         coefs = []
-        for coef_inv in root.iter('Inverse_Model'):
+        for coef_inv in root.iter("Inverse_Model"):
             for coef in coef_inv:
                 coefs.append(float(coef.text))
 
         # coefs normalisation and denormalisation:
         # [long_scale, long_offset, lat_scale, lat_offset, alt_scale, alt_offset, samp_scale,
         # samp_offset, line_scale, line_offset]
-        for coef_other in root.iter('RFM_Validity'):
+        for coef_other in root.iter("RFM_Validity"):
             for coef in coef_other:
                 if coef.tag == "LONG_SCALE":
                     long_scale = float(coef.text)
@@ -135,10 +168,23 @@ class PleiadesRPC(RPC):
 
         # Change image convention from (1, 1) to (0.5, 0.5)
         return (
-            coefs[0:20], coefs[20:40], coefs[40:60], coefs[60:80],
-            [long_scale, long_offset, lat_scale, lat_offset,
-             alt_scale, alt_offset, samp_scale, samp_offset - 0.5,
-             line_scale, line_offset - 0.5])
+            coefs[0:20],
+            coefs[20:40],
+            coefs[40:60],
+            coefs[60:80],
+            [
+                long_scale,
+                long_offset,
+                lat_scale,
+                lat_offset,
+                alt_scale,
+                alt_offset,
+                samp_scale,
+                samp_offset - 0.5,
+                line_scale,
+                line_offset - 0.5,
+            ],
+        )
 
     def set_inverse_rpc(self, path_rpc: str) -> None:
         """Set RPC for inverse location from a XML RPC file"""
@@ -149,7 +195,9 @@ class PleiadesRPC(RPC):
         self.set_normalisation_coefs(coefs)
 
 
-def apply_rpc_list(rpc: RPC, input_coords: Union[tuple, list, np.ndarray]) -> np.ndarray:
+def apply_rpc_list(
+    rpc: RPC, input_coords: Union[tuple, list, np.ndarray]
+) -> np.ndarray:
     """
     Function that computes inverse locations using rpc
 
@@ -166,7 +214,9 @@ def apply_rpc_list(rpc: RPC, input_coords: Union[tuple, list, np.ndarray]) -> np
         Coordinates transformed by direct (lon, lat, alt) or inverse (col, row) location
     """
     # normalize input
-    norm_input = (np.array(input_coords) - np.array(rpc.ref_offset)) / np.array(rpc.ref_scale)
+    norm_input = (np.array(input_coords) - np.array(rpc.ref_offset)) / np.array(
+        rpc.ref_scale
+    )
 
     result = []
     for i in range(len(rpc.polynomials)):

@@ -35,7 +35,9 @@ def get_parser() -> argparse.ArgumentParser:
     """
 
     # Main parser
-    parser = argparse.ArgumentParser(description="3D textured reconstruction from remote sensing point cloud")
+    parser = argparse.ArgumentParser(
+        description="3D textured reconstruction from remote sensing point cloud"
+    )
     # parser.add_argument(
     #     "config",
     #     help="Path to a json file containing the input files paths and algorithm parameters",
@@ -78,11 +80,13 @@ def main() -> None:
     if args.command == "reconstruct":
         # Reconstruction pipeline
         from . import mesh_3d_reconstruct
+
         mesh_3d_reconstruct.main(args.config)
 
     elif args.command == "evaluate":
         # Evaluation pipeline
         from . import mesh_3d_evaluate
+
         mesh_3d_evaluate.main(args.config)
 
     else:

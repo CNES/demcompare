@@ -25,11 +25,11 @@ Tools to manipulate point clouds
 from typing import Union
 
 import laspy
-import plyfile
-import pandas as pd
 import numpy as np
-import pyproj
 import open3d as o3d
+import pandas as pd
+import plyfile
+import pyproj
 
 # LAS tools
 
@@ -42,7 +42,9 @@ def get_scale(arr_max, arr_min, number_values):
     return (arr_max - arr_min) / number_values
 
 
-def apply_scale_offset(arr, scale, offset, is_inverse=False, clip_min=None, clip_max=None):
+def apply_scale_offset(
+    arr, scale, offset, is_inverse=False, clip_min=None, clip_max=None
+):
     if not is_inverse:
         # X ==> x
         return np.clip(arr * scale + offset, a_min=clip_min, a_max=clip_max)
@@ -54,6 +56,7 @@ def apply_scale_offset(arr, scale, offset, is_inverse=False, clip_min=None, clip
 # -------------------------------------------------------------------------------------------------------- #
 # any point cloud format ===> pandas DataFrame
 # -------------------------------------------------------------------------------------------------------- #
+
 
 def o3d2df(o3d_pcd: o3d.geometry.PointCloud) -> pd.DataFrame:
     """Open3D Point Cloud to pandas DataFrame"""
@@ -112,12 +115,19 @@ def csv2df(filepath: str) -> pd.DataFrame:
 # pandas DataFrame ===> any point cloud format
 # -------------------------------------------------------------------------------------------------------- #
 
-def df2las(filepath: str, df: pd.DataFrame, metadata: Union[laspy.LasHeader, None] = None):
+
+def df2las(
+    filepath: str,
+    df: pd.DataFrame,
+    metadata: Union[laspy.LasHeader, None] = None,
+):
     """
     This method serializes a pandas DataFrame in .las
     """
     if filepath.split(".")[-1] not in ["las", "laz"]:
-        raise ValueError("Filepath extension is invalid. It should either be 'las' or 'laz'.")
+        raise ValueError(
+            "Filepath extension is invalid. It should either be 'las' or 'laz'."
+        )
 
     # Fill header
     header = laspy.LasHeader(point_format=8, version="1.4")
@@ -127,25 +137,37 @@ def df2las(filepath: str, df: pd.DataFrame, metadata: Union[laspy.LasHeader, Non
 
     # Compute normalization parameters specific to the LAS format (data is saved as an int32)
     # 32 bits signed ==> 2**31 values (last bit for sign + or -)
-    number_values = 2 ** 32
+    number_values = 2**32
 
     # x_max = s * X_max + o <==> x_max = 2 ** 31 * s + o
     # x_min = s * X_min + o <==> x_min = - 2 ** 31 * s + o
 
-    header.scales = [get_scale(df[coord].max(), df[coord].min(), number_values) for coord in ["x", "y", "z"]]
-    header.offsets = [get_offset(df[coord].max(), df[coord].min()) for coord in ["x", "y", "z"]]
+    header.scales = [
+        get_scale(df[coord].max(), df[coord].min(), number_values)
+        for coord in ["x", "y", "z"]
+    ]
+    header.offsets = [
+        get_offset(df[coord].max(), df[coord].min())
+        for coord in ["x", "y", "z"]
+    ]
 
     # Fill data points
     las = laspy.LasData(header)
 
     # coords scaled in int32
-    [las.X, las.Y, las.Z] = [(apply_scale_offset(df[coord],
-                                                 header.scales[k],
-                                                 header.offsets[k],
-                                                 is_inverse=True,
-                                                 clip_min=- 2 ** 31,
-                                                 clip_max=2 ** 31)).astype(np.int32)
-                             for k, coord in enumerate(["x", "y", "z"])]
+    [las.X, las.Y, las.Z] = [
+        (
+            apply_scale_offset(
+                df[coord],
+                header.scales[k],
+                header.offsets[k],
+                is_inverse=True,
+                clip_min=-(2**31),
+                clip_max=2**31,
+            )
+        ).astype(np.int32)
+        for k, coord in enumerate(["x", "y", "z"])
+    ]
 
     for c in ["red", "green", "blue", "nir", "classification"]:
         if c in df:
@@ -178,6 +200,7 @@ def df2csv(filepath: str, df: pd.DataFrame, **kwargs):
 # General functions
 # -------------------------------------------------------------------------------------------------------- #
 
+
 def deserialize_point_cloud(filepath: str) -> pd.DataFrame:
     """Convert a point cloud to a pandas dataframe"""
     extension = filepath.split(".")[-1]
@@ -200,15 +223,19 @@ def deserialize_point_cloud(filepath: str) -> pd.DataFrame:
     return df
 
 
-def serialize_point_cloud(filepath: str,
-                          df: pd.DataFrame,
-                          metadata: Union[laspy.LasHeader, None] = None,
-                          extension: str = "las"):
+def serialize_point_cloud(
+    filepath: str,
+    df: pd.DataFrame,
+    metadata: Union[laspy.LasHeader, None] = None,
+    extension: str = "las",
+):
     """Serialize a point cloud to disk in the format asked by the user"""
 
     if filepath.split(".")[-1] != extension:
-        raise ValueError(f"Filepath extension ('{filepath.split('.')[-1]}') is inconsistent with the extension "
-                         f"asked ('{extension}').")
+        raise ValueError(
+            f"Filepath extension ('{filepath.split('.')[-1]}') is inconsistent with the extension "
+            f"asked ('{extension}')."
+        )
 
     if extension == "las" or extension == "laz":
         df2las(filepath, df, metadata=metadata)
@@ -228,16 +255,24 @@ def serialize_point_cloud(filepath: str,
 
 def change_frame(df, in_epsg, out_epsg) -> pd.DataFrame:
     """Change frame in which the points are expressed"""
-    proj_transformer = pyproj.Transformer.from_crs(in_epsg, out_epsg, always_xy=True)
-    df["x"], df["y"], df["z"] = proj_transformer.transform(df["x"].to_numpy(), df["y"].to_numpy(), df["z"].to_numpy())
+    proj_transformer = pyproj.Transformer.from_crs(
+        in_epsg, out_epsg, always_xy=True
+    )
+    df["x"], df["y"], df["z"] = proj_transformer.transform(
+        df["x"].to_numpy(), df["y"].to_numpy(), df["z"].to_numpy()
+    )
     return df
 
 
-def conversion_utm_to_geo(coords: Union[list, tuple, np.ndarray], utm_code: int):
+def conversion_utm_to_geo(
+    coords: Union[list, tuple, np.ndarray], utm_code: int
+):
     """
     Conversion points from epsg 32631 to epsg 4326
     """
-    transformer = pyproj.Transformer.from_crs(f"epsg:{utm_code}", "epsg:4326", always_xy=True)
+    transformer = pyproj.Transformer.from_crs(
+        f"epsg:{utm_code}", "epsg:4326", always_xy=True
+    )
     out = transformer.transform(coords[:, 0], coords[:, 1], coords[:, 2])
 
     return np.dstack(out)[0]
