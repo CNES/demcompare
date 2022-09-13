@@ -61,3 +61,34 @@ def test_reprojection_and_coregistration():
         )
 
     assert out.returncode == 0
+
+
+@pytest.mark.unit_tests
+@pytest.mark.notebook_test
+def test_statistics():
+    """
+    Test that the reprojection_and_coregistration
+    notebook runs without errors
+
+    """
+    statistics_path = notebooks_demcompare_path("statistics.ipynb")
+
+    with tempfile.TemporaryDirectory() as directory:
+        subprocess.run(
+            [
+                f"jupyter nbconvert --to script \
+                    {statistics_path} --output-dir {directory}"
+            ],
+            shell=True,
+            check=False,
+        )
+        out = subprocess.run(
+            [f"ipython {directory}/statistics.py"],
+            shell=True,
+            check=False,
+            cwd="../notebooks",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+    assert out.returncode == 0

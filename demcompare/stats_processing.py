@@ -315,8 +315,15 @@ class StatsProcessing:
         return self.stats_dataset
 
     @staticmethod
-    def show_available_metrics():
-        print(Metric.available_metrics)
+    def show_all_available_metrics() -> str:
+        """
+        Return a string showing all available values
+        :return: output_metrics
+        :rtype: str
+        """
+        available_metrics = list(Metric.available_metrics.keys())
+        output_metrics = f"{available_metrics}"
+        return output_metrics
 
-    def show_available_classification_layers(self):
-        print(self.classification_layers_names)
+    def show_available_classification_layers(self) -> list:
+        return self.classification_layers_names
