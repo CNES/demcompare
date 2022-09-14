@@ -1,100 +1,194 @@
-# R&T Reconstruction de surface 3D, texturée et sémantisée
+<div align="center">
+  <a href="https://gitlab.cnes.fr/cars/mesh_3d"><img src="docs/source/images/picto_transparent.png" alt="CARS" title="CARS"  width="20%"></a>
 
-## Données
+<h4>Mesh 3D</h4>
 
-### Simu3D
-Les données utilisées sont tirées du modèle 3D texturé de Nanterre (`/work/OT/siqi/simu3D/data/mesh/Nanterre15cm_ECEF/`). 
-Ces dernières sont injectées dans la [chaîne complète de Simu3D](https://gitlab.cnes.fr/ctsiqi/Simulation_3D_complete).
+[![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 
-La configuration utilisée est la suivante:
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](CONTRIBUTING.md)
 
+<p>
+  <a href="#overview">Overview</a> •
+  <a href="#requirements">Requirements</a> •
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#documentation">Documentation</a> •
+  <a href="#contribution">Contribution</a> •
+  <a href="#references">References</a>
+</p>
+</div>
+
+## Overview
+
+Mesh 3D short description:
+
+"3D Surface reconstruction with texture and classification from remote sensing photogrammetric point cloud"
+
+
+* Free software: Apache Software License 2.0
+
+[//]: # (* Documentation: https://mesh-3d.readthedocs.io.)
+
+
+## Requirements
+
+    importlib           ; python_version>"3.8"
+    argparse                      # Python Argument Parser
+    argcomplete                   # Autocompletion Argparse
+    numpy                         # array manipulation
+    laspy                         # las file manipulation
+    open3d                        # 3D library open source
+    pandas                        # data with many attributes manipulation
+    scipy                         # scientific library
+    plyfile                       # ply file manipulation
+    matplotlib                    # visualisation and meshing
+    loguru                        # logs handler
+    pyproj                        # coordinates conversion
+    transitions                   # state machine
+    rasterio                      # georeferenced data handler
+
+## Features
+
+TODO
+
+- Feature 1
+- Feature 2
+- ...
+
+## Quick Start
+
+### Installation
+
+Git clone the repository, open a terminal and launch the following commands:
+```bash
+cd path/to/dir/mesh_3d
+make install
+```
+
+### Execute
+
+You can run too functions with the `mesh_3d` cli:
+* `mesh_3d reconstruct` launches the 3D reconstruction pipeline according to the user specifications
+* `mesh_3d evaluate` computes metrics between two point clouds and saves visuals for qualitative analysis
+
+#### Reconstruct
+
+Configure the pipeline in a JSON file `/path/to/config.json`:
 ```json
 {
-  "steps": {
-    "enable_ibg": true,
-    "enable_csi": true,
-    "enable_mnsref": true,
-    "enable_rpc": true,
-    "enable_cars": false,
-    "enable_demcompare": false
-  },
-  "config_ibg": {
-    "mesh": "/work/OT/siqi/simu3D/data/mesh/Nanterre15cm_ECEF/Nanterre.obj",
-    "models": {
-      "PDV1": {
-        "bloc": "/work/OT/siqi/simu3D/data/modeles_geo/NANTERRE/PHR/BLOC_STEREO/",
-        "id_scene": "P1AP--2013072139324950CP",
-        "step": 0.25
-      },
-      "PDV2": {
-        "bloc": "/work/OT/siqi/simu3D/data/modeles_geo/NANTERRE/PHR/BLOC_STEREO/",
-        "id_scene": "P1AP--2013072139303958CP",
-        "step": 0.25
+  "input_path": "/path/to/input/data.ply",
+  "output_dir": "/path/to/output_dir",
+  "initial_state": "initial_pcd",
+  "tif_img_path": "/path/to/tif_img_texture.tif",
+  "rpc_path": "/path/to/rpc.XML",
+  "utm_code": 32631,
+  "state_machine": [
+    {
+      "action": "filter",
+      "method": "radius_o3d",
+      "params": {
+        "radius":  3
       }
     },
-    "parameters": {"clean_tmp": false, "tile_size": 200, "generate_ibg": true},
-    "pbs": {
-      "nb_procs": "8",
-      "memory": "80gb",
-      "nb_nodes": "8",
-      "walltime": "04:59:00"
-    }
-  },
-  "config_mnsref": {
-    "crs": "EPSG:32631",
-    "parameters": {"tile_size": 100},
-    "pbs": {
-      "nb_procs": "12",
-      "memory": "120gb",
-      "nb_nodes": "12",
-      "walltime": "04:59:00"
-    }
-  },
-
-  "config_csi": {
-    "PF": {
-      "PF_REECH": {
-        "path": "/work/scratch/thenozc/rtsurface3d/20220309_formation_simu3d/configs/conf_CSI_template_reech4_quantif.cmdfile"
+    {
+      "action": "denoise_pcd",
+      "method": "bilateral_filtering",
+      "params": {
+        "use_open3d":  true
       }
     },
-    "band_order": {"B0": 1, "B1": 2, "B2": 3},
-    "lance_simili_path": "/softs/projets/outils_qi/simu3Dcomplete/lance_simili.sh"
-  },
-  "simulation_name": "Nanterre15cm",
-  "resolution_pdv": 0.5,
-  "out_dir": "/work/scratch/thenozc/rtsurface3d/20220309_formation_simu3d/test/nanterre_2"
+    {
+      "action": "mesh",
+      "method": "delaunay_2d",
+      "params": {}
+    },
+    {
+      "action": "simplify_mesh",
+      "method": "garland-heckbert",
+      "params": {
+        "reduction_ratio_of_triangles": 0.75
+      }
+    },
+    {
+      "action":  "texture",
+      "method": "texturing",
+      "params": {}
+    }
+  ]
 }
 ```
 
-Simu3D permet d'obtenir les images en géométrie capteur ainsi que les RPC qui peuvent ensuite être fournis à CARS pour la stéréorestitution.
-Toutefois, la texture du modèle 3D de Nanterre ne contient que les bandes RGB. Les images produites
-par Simu3D sont alors à 50cm en RGB. Il manque la bande NIR pour être au plus près de données Pléiades.
+Where:
+* `input_path`: Filepath to the input. Should either be a point cloud or a mesh.
+* `output_dir`: Directory path to the output folder where to save results.
+* `initial_state` (optional, default=`"initial_pcd"`): Initial state in the state machine. If you input a point cloud, 
+it should be `"initial_pcd"`. If you input a mesh, it could either be `"initial_pcd"` (you can compute new 
+values over the points) or `"meshed_pcd"` (if for instance you only want to texture an already existing mesh).
+* `state_machine`: List of steps to process the input according to a predefined state machine (see below). 
+Each step has three possible keys:`action` (str) which corresponds to the trigger name, `method` (str) which 
+specifies the method to use to do that step (possible methods are available in the `/mesh_3d/param.py` file,
+by default it is the first method that is selected), `params` (dict) which specifies in a dictionary the parameters 
+for each method.
+<img src="fig_state_machine.png">
 
-Une étape de passage en nuances de gris est nécessaire pour fournir en entrée de CARS une paire d'images de type "panchromatique".
-La combinaison linéaire suivante est utilisée (c'est celle utilisée par `scikit-image`):
-
-    Grayscale = 0.2125 * R + 0.7154 * G + 0.0721 * B
-
-CARS (version `0.4.0`) est lancé sur ces données (`prepare` et `compute_dsm` en mode `mp`). Les scripts
-du répertoire [cars-pctolas](https://gitlab.cnes.fr/cars/tools/cars-pctolas) sont ensuite utilisés pour obtenir un seul nuage de points au format `las`.
-
-La dernière transformation consiste à passer les points du nuage du repère cartésien au repère projeté UTM adéquate.
+If a texturing step is specified, then the following parameters become mandatory:
+* `rpc_path`: Path to the RPC xml file
+* `tif_img_path`: Path to the TIF image from which to extract the texture image
+* `utm_code`: The UTM code of the point cloud coordinates expressed as a EPSG code number for transformation purpose
 
 
-### PHR
-Des données PHR sont utilisées en guise de comparaison.
-Ces dernières sont situées ici: `/work/OT/siaa/3D/Development/rt_mesh_3d/data/Nanterre/PHR`
+Finally, you can launch the following commands to activate the virtual environment and run the pipeline:
+```bash
+source /venv/bin/activate
+mesh_3d reconstruct /path/to/config.json
+```
 
-## Connexion au dépôt Gitlab CNES depuis l'extérieur
+#### Evaluate
 
-Voir la [Documentation Gitlab CNES](https://confluence.cnes.fr/pages/viewpage.action?pageId=26159013) sur 
-Confluence pour plus d'information.
+The evaluation function computes a range of metrics between two point clouds and outputs visuals for 
+qualitative analysis.
 
-Toute connexion doit commencer par:
+Configure the pipeline in a JSON file `/path/to/config.json`:
+```json
+{
+  "input_path_1": "/path/to/point_cloud/or/mesh_1.ply",
+  "input_path_2": "/path/to/point_cloud/or/mesh_2.ply",
+  "output_dir": "/path/to/output_dir"
+}
+```
 
-    ssh-agent /bin/bash
-    ssh-add ~/.ssh/gitlab-ssh-cnes-fr
+Where:
+* `input_path_1`: Filepath to the first input. Should either be a point cloud or a mesh.
+* `input_path_2`: Filepath to the second input. Should either be a point cloud or a mesh.
+* `output_dir`: Directory path to the output folder where to save results.
 
-Pour clôner un répertoire, il faut utiliser la commande suivante:
+Finally, you can launch the following commands to activate the virtual environment and run the evaluation:
+```bash
+source /venv/bin/activate
+mesh_3d evaluate /path/to/config.json
+```
 
-    git clone gu=<user.name>@git@gitlab-ssh.cnes.fr:<groug-name>/<project-slug>.git
+## Documentation
+
+
+Go in docs/ directory
+
+
+
+* Documentation: https://mesh-3d.readthedocs.io.
+
+
+## Contribution
+
+See [Contribution](CONTRIBUTING.md) manual
+
+
+* Free software: Apache Software License 2.0
+
+
+## References
+
+This package was created with cars-cookiecutter project template.
+
+Inspired by [main cookiecutter template](https://github.com/audreyfeldroy/cookiecutter-pypackage) and 
+[AI4GEO cookiecutter template](https://gitlab.cnes.fr/ai4geo/lot2/cookiecutter-python)
