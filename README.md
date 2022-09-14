@@ -87,20 +87,28 @@ Configure the pipeline in a JSON file `/path/to/config.json`:
       "action": "filter",
       "method": "radius_o3d",
       "params": {
-        "radius":  3
+        "radius":  2,
+        "nb_points": 12
       }
     },
     {
       "action": "denoise_pcd",
-      "method": "bilateral_filtering",
+      "method": "bilateral",
       "params": {
+        "knn": 20,
+        "knn_normals": 20,
+        "weights_distance": true,
+        "weights_color": true,
+        "workers": 6,
         "use_open3d":  true
       }
     },
     {
       "action": "mesh",
       "method": "delaunay_2d",
-      "params": {}
+      "params": {
+        "method": "matplotlib"
+      }
     },
     {
       "action": "simplify_mesh",
