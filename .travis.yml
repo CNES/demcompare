@@ -19,7 +19,7 @@ script: tox
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
-  user: mesh-3d
+  user: mesh_3d
   password:
     secure: PLEASE_REPLACE_ME
   on:

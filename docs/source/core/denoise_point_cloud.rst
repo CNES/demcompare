@@ -10,8 +10,11 @@ Points are moved accordingly in order to fit a surface model.
 Bilateral filtering
 ===================
 
+    | *Action* : "denoise_pcd"
+    | *Method* : "bilateral"
+
 Bilateral filtering is the most common way of achieving point cloud denoising.
-Points are moved along their local normal (which represent the local surface direction) which is computed with the information available
+Points are moved along their local normal (which represents the local surface direction) which is computed with the information available
 (color, neighbours, etc.). The distance along the normal is computed as the mean distance to its N nearest neighbours
 and its normal orientation according to the one of its neighbours.
 

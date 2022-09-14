@@ -24,6 +24,10 @@ Git clone the repository, open a terminal and launch the following commands:
     # Install
     make install
 
+    # Activate your venv (on UNIX)
+    # A flag "(NAME_OF_VENV)" should appear before your command line from now on
+    source /path/to/desired/folder/NAME_OF_VENV/bin/activate
+
     # Test if it works
     mesh_3d -h
 
@@ -45,7 +49,7 @@ it dynamically).
     python -m venv NAME_OF_VENV
 
     # Activate your venv (on UNIX)
-    # A flag "<NAME_OF_VENV>" should appear before your command line from now on
+    # A flag "(NAME_OF_VENV)" should appear before your command line from now on
     source /path/to/desired/folder/NAME_OF_VENV/bin/activate
 
     # Update pip and setuptools package

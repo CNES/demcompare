@@ -241,7 +241,7 @@ def main(cfg_path: str) -> None:
         logger.debug("Input data read as a point cloud format.")
 
     # Init state machine model
-    mesh_3d_machine = Mesh3DMachine(mesh_data=mesh)
+    mesh_3d_machine = Mesh3DMachine(mesh_data=mesh, initial_state=cfg["initial_state"])
 
     # Run the pipeline according to the user configuration
     out_mesh = run(mesh_3d_machine, cfg)

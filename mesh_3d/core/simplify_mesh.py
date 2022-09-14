@@ -61,6 +61,10 @@ def simplify_quadric_decimation(
         Simplified mesh object
     """
 
+    # Check that mesh has triangle faces
+    if not mesh.has_triangles:
+        raise ValueError("Mesh has no triangle faces. Please apply a mesh reconstruction algorithm before.")
+
     # Create an open3d mesh if not present
     if mesh.o3d_mesh is None:
         mesh.set_o3d_mesh_from_df()
@@ -70,6 +74,7 @@ def simplify_quadric_decimation(
         target_number_of_triangles = int(target_number_of_triangles)
 
     elif reduction_ratio_of_triangles is not None:
+        reduction_ratio_of_triangles = float(reduction_ratio_of_triangles)
         if (
             reduction_ratio_of_triangles > 1.0
             or reduction_ratio_of_triangles < 0.0
@@ -130,17 +135,21 @@ def simplify_vertex_clustering(
         Simplified mesh object
     """
 
+    # Check that mesh has triangle faces
+    if not mesh.has_triangles:
+        raise ValueError("Mesh has no triangle faces. Please apply a mesh reconstruction algorithm before.")
+
     # Create an open3d mesh if not present
     if mesh.o3d_mesh is None:
         mesh.set_o3d_mesh_from_df()
 
     # Simplify
+    dividing_size = float(dividing_size)
     if dividing_size == 0.0:
         raise ValueError(f"Dividing size needs to be > 0.")
-    voxel_size = (
-        max(mesh.o3d_mesh.get_max_bound() - mesh.o3d_mesh.get_min_bound())
-        / dividing_size
-    )
+
+    voxel_size = max(mesh.o3d_mesh.get_max_bound() - mesh.o3d_mesh.get_min_bound()).item() / dividing_size
+
     out_mesh_o3d = mesh.o3d_mesh.simplify_vertex_clustering(
         voxel_size=float(voxel_size), contraction=contraction
     )

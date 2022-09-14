@@ -421,6 +421,13 @@ class Mesh(object):
             return self.image_texture_path
 
     @property
+    def has_triangles(self) -> bool:
+        if self.df is None:
+            raise ValueError("Mesh (pandas DataFrame) is not assigned.")
+        else:
+            return all([n in self.df.head() for n in ["p1", "p2", "p3"]]) and not self.df.empty
+
+    @property
     def has_texture(self) -> bool:
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
@@ -437,7 +444,7 @@ class Mesh(object):
                         "uv3_col",
                     ]
                 ]
-            )
+            ) and not self.df.empty
 
     @property
     def has_triangle_uvs(self) -> bool:
@@ -456,21 +463,21 @@ class Mesh(object):
                         "uv3_col",
                     ]
                 ]
-            )
+            ) and not self.df.empty
 
     @property
     def has_normals(self) -> bool:
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
         else:
-            return all([n in self.df.head() for n in NORMALS])
+            return all([n in self.df.head() for n in NORMALS]) and not self.df.empty
 
     @property
     def has_classes(self) -> bool:
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
         else:
-            return "classification" in self.df.head()
+            return "classification" in self.df.head() and not self.df.empty
 
     def serialize(self, filepath: str, **kwargs) -> None:
         """Serialize mesh"""

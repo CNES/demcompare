@@ -19,7 +19,7 @@ However, these objects are limited (8 bits RGB colours, etc.)
 
 .. warning::
 
-    No consistency check is done between the pandas DataFrame and and open3D point cloud object.
+    No consistency check is done between the pandas DataFrame and open3D point cloud object.
     It means that at any time one can be updated but not the other.
 
 

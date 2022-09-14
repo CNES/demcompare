@@ -4,6 +4,10 @@
 Texture
 =======
 
+    | *Action* : "texture"
+    | *Method* : "texturing"
+
+
 Texturing consists in associating each simplex of the surface to a part of an image.
 
 To apply a georeferenced texture to our mesh, we use inverse RPC to get the image coordinates of each point of

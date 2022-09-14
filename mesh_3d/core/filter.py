@@ -61,12 +61,11 @@ def statistical_filtering_outliers_o3d(pcd: PointCloud, nb_neighbors: int, std_f
         Filtered point cloud data
     """
 
-    o3d_pcd = o3d.geometry.PointCloud()
-    o3d_pcd.points = o3d.utility.Vector3dVector(
-        pcd.df[["x", "y", "z"]].to_numpy()
-    )
+    # Check if open3d point cloud is initialized
+    if pcd.o3d_pcd is None:
+        pcd.set_o3d_pcd_from_df()
 
-    new_o3d_pcd, ind_valid_pts = o3d_pcd.remove_statistical_outlier(
+    pcd.o3d_pcd, ind_valid_pts = pcd.o3d_pcd.remove_statistical_outlier(
         nb_neighbors, std_ratio=std_factor
     )
 
@@ -79,9 +78,6 @@ def statistical_filtering_outliers_o3d(pcd: PointCloud, nb_neighbors: int, std_f
             "Point cloud output by the outlier filtering step is empty."
         )
         raise
-
-    # Update open3d pcd
-    pcd.set_o3d_pcd_from_df()
 
     return pcd
 
@@ -107,13 +103,12 @@ def radius_filtering_outliers_o3(pcd: PointCloud, radius: float, nb_points: int)
         Filtered point cloud data
     """
 
-    # Init opend3d point cloud
+    # Check if open3d point cloud is initialized
     if pcd.o3d_pcd is None:
         pcd.set_o3d_pcd_from_df()
 
     # Apply radius filtering
-    new_o3d_pcd, ind_valid_pts = pcd.o3d_pcd.remove_radius_outlier(nb_points, radius)
-    pcd.o3d_pcd.points = new_o3d_pcd
+    pcd.o3d_pcd, ind_valid_pts = pcd.o3d_pcd.remove_radius_outlier(nb_points, radius)
 
     # Get the point cloud filtered of the outlier points
     pcd.df = pcd.df.loc[ind_valid_pts]
@@ -124,9 +119,6 @@ def radius_filtering_outliers_o3(pcd: PointCloud, radius: float, nb_points: int)
             "Point cloud output by the outlier filtering step is empty."
         )
         raise
-
-    # Update open3d pcd
-    pcd.set_o3d_pcd_from_df()
 
     return pcd
 
