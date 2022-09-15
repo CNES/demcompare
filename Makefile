@@ -54,6 +54,7 @@ install: venv git  ## install the package in dev mode in virtualenv
 	@test -f ${VENV}/bin/mesh3d || ${VENV}/bin/python -m pip install -e .[dev,docs]
 	@test -f .git/hooks/pre-commit || echo "Install pre-commit"
 	@test -f .git/hooks/pre-commit || ${VENV}/bin/pre-commit install -t pre-commit
+	@test -f .git/hooks/pre-push || ${VENV}/bin/pre-commit install -t pre-push
 	@chmod +x ${VENV}/bin/register-python-argcomplete
 	@echo "mesh3d ${VERSION} installed in dev mode in virtualenv ${VENV} with documentation"
 	@echo " mesh3d venv usage : source ${VENV}/bin/activate; mesh3d -h"

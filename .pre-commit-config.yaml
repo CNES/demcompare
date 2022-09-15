@@ -31,7 +31,7 @@ repos:
 
   - id: doc-build
     name: Build Documentation
-    stages: [commit]
+    stages: [push]
     entry: make docs
     language: system
     files: ^(docs/.*|mesh3d/.*)$
