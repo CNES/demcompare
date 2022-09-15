@@ -25,7 +25,7 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 # General information about the project.
-project = "Mesh 3D"
+project = "mesh3d"
 copyright = "2022, Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium)"
 author = "Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium)"
 
@@ -33,10 +33,10 @@ author = "Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium)"
 from pkg_resources import get_distribution
 
 try:
-    version = get_distribution("mesh_3d").version
+    version = get_distribution("mesh3d").version
     release = version
 except Exception as error:
-    print("WARNING: cannot find mesh_3d version")
+    print("WARNING: cannot find mesh3d version")
     version = "Unknown"
     release = version
 
@@ -129,7 +129,7 @@ numfig = True
 latex_documents = [
     (
         master_doc,
-        "mesh_3d.tex",
+        "mesh3d.tex",
         "Mesh 3D documentation",
         "TODO",
         "manual",

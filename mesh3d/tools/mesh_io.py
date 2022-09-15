@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
 #
-# This file is part of mesh_3d
+# This file is part of mesh3d
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

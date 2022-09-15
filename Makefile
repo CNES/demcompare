@@ -50,13 +50,13 @@ venv: ## create virtualenv in "venv" dir if not exists
 
 .PHONY: install
 install: venv git  ## install the package in dev mode in virtualenv
-	@test -f ${VENV}/bin/mesh_3d || echo "Install mesh_3d package from local directory"
-	@test -f ${VENV}/bin/mesh_3d || ${VENV}/bin/python -m pip install -e .[dev,docs]
+	@test -f ${VENV}/bin/mesh3d || echo "Install mesh3d package from local directory"
+	@test -f ${VENV}/bin/mesh3d || ${VENV}/bin/python -m pip install -e .[dev,docs]
 	@test -f .git/hooks/pre-commit || echo "Install pre-commit"
 	@test -f .git/hooks/pre-commit || ${VENV}/bin/pre-commit install -t pre-commit
 	@chmod +x ${VENV}/bin/register-python-argcomplete
-	@echo "mesh_3d ${VERSION} installed in dev mode in virtualenv ${VENV} with documentation"
-	@echo " mesh_3d venv usage : source ${VENV}/bin/activate; mesh_3d -h"
+	@echo "mesh3d ${VERSION} installed in dev mode in virtualenv ${VENV} with documentation"
+	@echo " mesh3d venv usage : source ${VENV}/bin/activate; mesh3d -h"
 
 ## Test section
 	
@@ -70,7 +70,7 @@ test-all: install ## run tests on every Python version with tox
 	
 .PHONY: coverage
 coverage: install ## check code coverage quickly with the default Python
-	@${VENV}/bin/coverage run --source mesh_3d -m pytest
+	@${VENV}/bin/coverage run --source mesh3d -m pytest
 	@${VENV}/bin/coverage report -m
 	@${VENV}/bin/coverage html
 	$(BROWSER) htmlcov/index.html
@@ -85,12 +85,12 @@ format: install format/isort format/black  ## run black and isort formatting (de
 .PHONY: format/isort
 format/isort: install  ## run isort formatting (depends install)
 	@echo "+ $@"
-	@${VENV}/bin/isort mesh_3d tests
+	@${VENV}/bin/isort mesh3d tests
 
 .PHONY: format/black
 format/black: install  ## run black formatting (depends install)
 	@echo "+ $@"
-	@${VENV}/bin/black mesh_3d tests
+	@${VENV}/bin/black mesh3d tests
 
 ### Check code quality and linting : isort, black, flake8, pylint
 
@@ -100,29 +100,29 @@ lint: install lint/isort lint/black lint/flake8 lint/pylint ## check code qualit
 .PHONY: lint/isort
 lint/isort: ## check imports style with isort
 	@echo "+ $@"
-	@${VENV}/bin/isort --check mesh_3d tests
+	@${VENV}/bin/isort --check mesh3d tests
 	
 .PHONY: lint/black
 lint/black: ## check global style with black
 	@echo "+ $@"
-	@${VENV}/bin/black --check mesh_3d tests
+	@${VENV}/bin/black --check mesh3d tests
 
 .PHONY: lint/flake8
 lint/flake8: ## check linting with flake8
 	@echo "+ $@"
-	@${VENV}/bin/flake8 mesh_3d tests
+	@${VENV}/bin/flake8 mesh3d tests
 
 .PHONY: lint/pylint
 lint/pylint: ## check linting with pylint
 	@echo "+ $@"
-	@set -o pipefail; ${VENV}/bin/pylint mesh_3d tests --rcfile=.pylintrc --output-format=parseable | tee pylint-report.txt # pipefail to propagate pylint exit code in bash
+	@set -o pipefail; ${VENV}/bin/pylint mesh3d tests --rcfile=.pylintrc --output-format=parseable | tee pylint-report.txt # pipefail to propagate pylint exit code in bash
 	
 ## Documentation section
 
 .PHONY: docs
 docs: install ## generate Sphinx HTML documentation, including API docs
 	@${VENV}/bin/sphinx-build -M clean docs/source/ docs/build
-	@${VENV}/bin/sphinx-apidoc -o docs/source/apidoc/ mesh_3d
+	@${VENV}/bin/sphinx-apidoc -o docs/source/apidoc/ mesh3d
 	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build
 	$(BROWSER) docs/build/html/index.html
 
@@ -130,7 +130,7 @@ docs: install ## generate Sphinx HTML documentation, including API docs
 
 notebook: install ## Install Jupyter notebook kernel with venv
 	@echo "\nInstall Jupyter Kernel and launch Jupyter notebooks environment"
-	@${VENV}/bin/python -m ipykernel install --sys-prefix --name=mesh_3d$(VENV) --display-name=mesh_3d$(VERSION)
+	@${VENV}/bin/python -m ipykernel install --sys-prefix --name=mesh3d$(VENV) --display-name=mesh3d$(VERSION)
 	@echo "\n --> After virtualenv activation, please use following command to launch local jupyter notebook to open Notebooks:"
 	@echo "jupyter notebook"
 
@@ -140,8 +140,8 @@ docker: git ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"
 	@docker pull hadolint/hadolint
 	@docker run --rm -i hadolint/hadolint < Dockerfile
-	@echo "Build Docker image mesh_3d ${VERSION_MIN}"
-	@docker build -t chloe thenoz (magellium), lisa vo thanh (magellium)/mesh_3d:${VERSION_MIN} -t chloe thenoz (magellium), lisa vo thanh (magellium)/mesh_3d:latest .
+	@echo "Build Docker image mesh3d ${VERSION_MIN}"
+	@docker build -t chloe thenoz (magellium), lisa vo thanh (magellium)/mesh3d:${VERSION_MIN} -t chloe thenoz (magellium), lisa vo thanh (magellium)/mesh3d:latest .
 
 ## Release section
 	
@@ -205,6 +205,6 @@ clean-docs:
 .PHONY: clean-docker
 clean-docker:
 		@echo "+ $@"
-		@echo "Clean Docker image mesh_3d ${VERSION_MIN}"
-		@docker image rm chloe thenoz (magellium), lisa vo thanh (magellium)/mesh_3d:${VERSION_MIN}
-		@docker image rm chloe thenoz (magellium), lisa vo thanh (magellium)/mesh_3d:latest
+		@echo "Clean Docker image mesh3d ${VERSION_MIN}"
+		@docker image rm chloe thenoz (magellium), lisa vo thanh (magellium)/mesh3d:${VERSION_MIN}
+		@docker image rm chloe thenoz (magellium), lisa vo thanh (magellium)/mesh3d:latest

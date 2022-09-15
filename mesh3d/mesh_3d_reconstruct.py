@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
 #
-# This file is part of mesh_3d
+# This file is part of mesh3d
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -157,13 +157,13 @@ def check_config(cfg_path: str) -> dict:
     return cfg
 
 
-def run(mesh_3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
+def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
     """
     Run the state machine
 
     Parameters
     ----------
-    mesh_3d_machine: Mesh3DMachine
+    mesh3d_machine: Mesh3DMachine
         Mesh 3D state machine model
     cfg: dict
         Configuration dictionary
@@ -179,19 +179,19 @@ def run(mesh_3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
         logger.warning("State machine is empty. Returning the initial data.")
 
     else:
-        logger.debug(f"Initial state: {mesh_3d_machine.initial_state}")
+        logger.debug(f"Initial state: {mesh3d_machine.initial_state}")
 
         # Check transitions' validity
-        mesh_3d_machine.check_transitions(cfg)
+        mesh3d_machine.check_transitions(cfg)
 
         # Browse user defined steps and execute them
         for k, step in enumerate(cfg["state_machine"]):
             logger.info(
                 f"Step #{k + 1}: {step['action']} with {step['method']} method"
             )
-            mesh_3d_machine.run(step, cfg)
+            mesh3d_machine.run(step, cfg)
 
-    return mesh_3d_machine.mesh_data
+    return mesh3d_machine.mesh_data
 
 
 def main(cfg_path: str) -> None:
@@ -241,10 +241,10 @@ def main(cfg_path: str) -> None:
         logger.debug("Input data read as a point cloud format.")
 
     # Init state machine model
-    mesh_3d_machine = Mesh3DMachine(mesh_data=mesh, initial_state=cfg["initial_state"])
+    mesh3d_machine = Mesh3DMachine(mesh_data=mesh, initial_state=cfg["initial_state"])
 
     # Run the pipeline according to the user configuration
-    out_mesh = run(mesh_3d_machine, cfg)
+    out_mesh = run(mesh3d_machine, cfg)
 
     # Serialize data
     if out_mesh.df is not None:

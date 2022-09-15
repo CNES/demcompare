@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
-SPHINXPROJ    = mesh_3d
+SPHINXPROJ    = mesh3d
 SOURCEDIR     = source
 BUILDDIR      = build
 

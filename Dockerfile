@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 LABEL maintainer="Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium)"
 
-## mesh_3d installation Dockerfile example
+## mesh3d installation Dockerfile example
 ## Hack it !
 
 # Avoid apt install interactive questions.
@@ -17,17 +17,17 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-#  Install mesh_3d
-# WORKDIR /mesh_3d
-# COPY . /mesh_3d
+#  Install mesh3d
+# WORKDIR /mesh3d
+# COPY . /mesh3d
 
-# RUN python3 -m pip install -e /mesh_3d/.
+# RUN python3 -m pip install -e /mesh3d/.
 
 ## Version will be automatic with git versioning and tags
-#RUN python3 -m pip --no-cache-dir install /mesh_3d/. \
+#RUN python3 -m pip --no-cache-dir install /mesh3d/. \
 #  # # Auto args completion
-#  && register-python-argcomplete mesh_3d >> ~/.bashrc
+#  && register-python-argcomplete mesh3d >> ~/.bashrc
 #
 ## launch demcompare
-#ENTRYPOINT ["mesh_3d"]
+#ENTRYPOINT ["mesh3d"]
 #CMD ["-h"]
