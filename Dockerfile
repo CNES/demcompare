@@ -1,5 +1,5 @@
 FROM ubuntu:20.04
-LABEL maintainer="Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium)"
+LABEL maintainer="CNES"
 
 ## mesh3d installation Dockerfile example
 ## Hack it !

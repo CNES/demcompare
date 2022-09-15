@@ -141,7 +141,7 @@ docker: git ## Build docker image (and check Dockerfile)
 	@docker pull hadolint/hadolint
 	@docker run --rm -i hadolint/hadolint < Dockerfile
 	@echo "Build Docker image mesh3d ${VERSION_MIN}"
-	@docker build -t chloe thenoz (magellium), lisa vo thanh (magellium)/mesh3d:${VERSION_MIN} -t chloe thenoz (magellium), lisa vo thanh (magellium)/mesh3d:latest .
+	@docker build -t cnes/mesh3d:${VERSION_MIN} -t cnes/mesh3d:latest .
 
 ## Release section
 	
@@ -206,5 +206,5 @@ clean-docs:
 clean-docker:
 		@echo "+ $@"
 		@echo "Clean Docker image mesh3d ${VERSION_MIN}"
-		@docker image rm chloe thenoz (magellium), lisa vo thanh (magellium)/mesh3d:${VERSION_MIN}
-		@docker image rm chloe thenoz (magellium), lisa vo thanh (magellium)/mesh3d:latest
+		@docker image rm chloe cnes/mesh3d:${VERSION_MIN}
+		@docker image rm cnes/mesh3d:latest

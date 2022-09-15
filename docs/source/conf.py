@@ -26,7 +26,7 @@ sys.setrecursionlimit(1500)
 
 # General information about the project.
 project = "mesh3d"
-copyright = "2022, Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium)"
+copyright = "2022, CNES"
 author = "Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium)"
 
 # The full version, including alpha/beta/rc tags

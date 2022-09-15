@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
+# Copyright (C) 2022 CNES.
 #
 # This file is part of mesh3d
 #
@@ -30,5 +30,5 @@ try:
 except Exception:  # pylint: disable=broad-except
     __version__ = "unknown"
 
-__author__ = "Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium)"
-__email__ = "chloe.thenoz@magellium.fr, lisa.vothanh@magellium.fr"
+__author__ = "CNES"
+__email__ = "cars@cnes.fr"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
+# Copyright (C) 2022 CNES.
 #
 # This file is part of mesh3d
 #
@@ -44,5 +44,5 @@ def test_content(response):  # pylint: disable=redefined-outer-name
 
 def test_mesh3d():
     """Sample pytest mesh3d module test function"""
-    assert mesh3d.__author__ == "Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium)"
-    assert mesh3d.__email__ == "chloe.thenoz@magellium.fr, lisa.vothanh@magellium.fr"
+    assert mesh3d.__author__ == "CNES"
+    assert mesh3d.__email__ == "cars@cnes.fr"

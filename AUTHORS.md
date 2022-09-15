@@ -2,9 +2,10 @@
 
 ## Development Lead
 
-
-* Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium) <chloe.thenoz@magellium.fr, lisa.vothanh@magellium.fr>
-* To update with main developers
+* Chloe Thenoz (Magellium) <chloe.thenoz@magellium.fr>
+* Lisa Vo Thanh (Magellium) < lisa.vothanh@magellium.fr>
+* Emmanuel Dubois (CNES) < emmanuel.dubois@cnes.fr>
+* David Youssefi (CNES) < david.youssefi@cnes.fr>
 
 ## Contributors
 
