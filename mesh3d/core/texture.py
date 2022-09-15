@@ -17,7 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
 Texturing methods to project radiometric information over surfaces to provide a realistic rendering.
 """

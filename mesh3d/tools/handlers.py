@@ -17,7 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
 Define classes for handling common objects
 """
@@ -425,52 +424,65 @@ class Mesh(object):
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
         else:
-            return all([n in self.df.head() for n in ["p1", "p2", "p3"]]) and not self.df.empty
+            return (
+                all([n in self.df.head() for n in ["p1", "p2", "p3"]])
+                and not self.df.empty
+            )
 
     @property
     def has_texture(self) -> bool:
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
         else:
-            return (self.image_texture_path is not None) and all(
-                [
-                    el in self.df.head()
-                    for el in [
-                        "uv1_row",
-                        "uv1_col",
-                        "uv2_row",
-                        "uv2_col",
-                        "uv3_row",
-                        "uv3_col",
+            return (
+                (self.image_texture_path is not None)
+                and all(
+                    [
+                        el in self.df.head()
+                        for el in [
+                            "uv1_row",
+                            "uv1_col",
+                            "uv2_row",
+                            "uv2_col",
+                            "uv3_row",
+                            "uv3_col",
+                        ]
                     ]
-                ]
-            ) and not self.df.empty
+                )
+                and not self.df.empty
+            )
 
     @property
     def has_triangle_uvs(self) -> bool:
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
         else:
-            return all(
-                [
-                    el in self.df.head()
-                    for el in [
-                        "uv1_row",
-                        "uv1_col",
-                        "uv2_row",
-                        "uv2_col",
-                        "uv3_row",
-                        "uv3_col",
+            return (
+                all(
+                    [
+                        el in self.df.head()
+                        for el in [
+                            "uv1_row",
+                            "uv1_col",
+                            "uv2_row",
+                            "uv2_col",
+                            "uv3_row",
+                            "uv3_col",
+                        ]
                     ]
-                ]
-            ) and not self.df.empty
+                )
+                and not self.df.empty
+            )
 
     @property
     def has_normals(self) -> bool:
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
         else:
-            return all([n in self.df.head() for n in NORMALS]) and not self.df.empty
+            return (
+                all([n in self.df.head() for n in NORMALS])
+                and not self.df.empty
+            )
 
     @property
     def has_classes(self) -> bool:

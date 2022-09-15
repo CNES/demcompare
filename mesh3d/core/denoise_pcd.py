@@ -17,7 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
 Denoising methods aiming at smoothing surfaces without losing genuine high-frequency information.
 """
@@ -222,7 +221,9 @@ def compute_pcd_normals(
             color_data = pcd.get_colors()
 
         # Loop on each point of the data to compute its normal
-        for k, row in tqdm(enumerate(ind), desc="Normal computation by PCA per point"):
+        for k, row in tqdm(
+            enumerate(ind), desc="Normal computation by PCA per point"
+        ):
 
             if weights_distance:
                 # Weighting of the variance according to the distance to the neighbours

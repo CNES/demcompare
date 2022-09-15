@@ -17,10 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
-Main module.
-DOC: describe the module aim !
+Main Reconstruct module of mesh3d tool.
 """
 
 import json
@@ -31,9 +29,6 @@ from loguru import logger
 
 from . import param
 from .state_machine import Mesh3DMachine
-
-# from .tools.point_cloud_io import deserialize_point_cloud, serialize_point_cloud
-# from .tools.mesh_io import deserialize_mesh, serialize_mesh
 from .tools.handlers import Mesh, PointCloud
 
 
@@ -241,7 +236,9 @@ def main(cfg_path: str) -> None:
         logger.debug("Input data read as a point cloud format.")
 
     # Init state machine model
-    mesh3d_machine = Mesh3DMachine(mesh_data=mesh, initial_state=cfg["initial_state"])
+    mesh3d_machine = Mesh3DMachine(
+        mesh_data=mesh, initial_state=cfg["initial_state"]
+    )
 
     # Run the pipeline according to the user configuration
     out_mesh = run(mesh3d_machine, cfg)

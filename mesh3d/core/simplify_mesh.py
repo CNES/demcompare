@@ -17,7 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
 Simplifying methods for the mesh to decrease the number of faces
 """
@@ -63,7 +62,9 @@ def simplify_quadric_decimation(
 
     # Check that mesh has triangle faces
     if not mesh.has_triangles:
-        raise ValueError("Mesh has no triangle faces. Please apply a mesh reconstruction algorithm before.")
+        raise ValueError(
+            "Mesh has no triangle faces. Please apply a mesh reconstruction algorithm before."
+        )
 
     # Create an open3d mesh if not present
     if mesh.o3d_mesh is None:
@@ -137,7 +138,9 @@ def simplify_vertex_clustering(
 
     # Check that mesh has triangle faces
     if not mesh.has_triangles:
-        raise ValueError("Mesh has no triangle faces. Please apply a mesh reconstruction algorithm before.")
+        raise ValueError(
+            "Mesh has no triangle faces. Please apply a mesh reconstruction algorithm before."
+        )
 
     # Create an open3d mesh if not present
     if mesh.o3d_mesh is None:
@@ -148,7 +151,12 @@ def simplify_vertex_clustering(
     if dividing_size == 0.0:
         raise ValueError(f"Dividing size needs to be > 0.")
 
-    voxel_size = max(mesh.o3d_mesh.get_max_bound() - mesh.o3d_mesh.get_min_bound()).item() / dividing_size
+    voxel_size = (
+        max(
+            mesh.o3d_mesh.get_max_bound() - mesh.o3d_mesh.get_min_bound()
+        ).item()
+        / dividing_size
+    )
 
     out_mesh_o3d = mesh.o3d_mesh.simplify_vertex_clustering(
         voxel_size=float(voxel_size), contraction=contraction

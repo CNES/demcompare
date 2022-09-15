@@ -17,10 +17,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
 Tools to manipulate meshes
 """
+
 import os.path
 from typing import Union
 
