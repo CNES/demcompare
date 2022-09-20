@@ -37,16 +37,11 @@ from demcompare.classification_layer.classification_layer import (
 from demcompare.dem_tools import create_dem
 
 
-@pytest.mark.unit_tests
-def test_classify_slope_by_ranges():
+@pytest.fixture(name="initialize_slope_layer")
+def fixture_initialize_slope_layer():
     """
-    Test the crop_dem_with_offset function
-    - Creates a slope dem
-    - Manually classifies the slope dem with the input ranges
-    - Tests that the classified slope by the function
-      classify_slope_by_ranges is the same as ground truth
+    Fixture to initialize a slope layer
     """
-
     # Generate dsm with the following data and
     # "gironde_test_data" DSM's georef and resolution
     data = np.array([[1, 0, 1], [1, 0, 1], [-1, 0, 1]], dtype=np.float32)
@@ -70,6 +65,19 @@ def test_classify_slope_by_ranges():
         dem=dem_dataset,
         cfg=clayer,
     )
+    return slope_classif_layer_, dem_dataset
+
+
+@pytest.mark.unit_tests
+def test_classify_slope_by_ranges(initialize_slope_layer):
+    """
+    Test the classify_slope_by_ranges function
+    - Creates a slope dem
+    - Manually classifies the slope dem with the input ranges
+    - Tests that the classified slope by the function
+      classify_slope_by_ranges is the same as ground truth
+    """
+    slope_classif_layer_, dem_dataset = initialize_slope_layer
     # Initialize slope array
     slope_image = np.array([[1, 0.0, 6], [8, 12, 20], [26, 50, 60]])
     # Initialize slope dem
@@ -96,37 +104,15 @@ def test_classify_slope_by_ranges():
 
 
 @pytest.mark.unit_tests
-def test_create_class_masks():
+def test_create_class_masks(initialize_slope_layer):
     """
     Test the _create_class_masks function
     - Creates a slope dem
     - Manually classifies the slope dem with the input ranges
     - Tests that the computed sets_masks_dict is equal to ground truth
     """
+    slope_classif_layer_, _ = initialize_slope_layer
 
-    # Generate dsm with the following data and
-    # "gironde_test_data" DSM's georef and resolution
-    data = np.array([[1, 0, 1], [1, 0, 1], [-1, 0, 1]], dtype=np.float32)
-    dem_dataset = dem_tools.create_dem(data=data)
-    # Compute dem's slope
-    dem_dataset = dem_tools.compute_dem_slope(dem_dataset)
-    # Classification layer configuration
-    layer_name = "Slope0"
-    clayer = {
-        "type": "slope",
-        "ranges": [0, 5, 10, 25, 45],
-        "save_results": False,
-        "output_dir": "",
-        "metrics": ["mean"],
-    }
-
-    # Initialize slope classification layer object
-    slope_classif_layer_ = ClassificationLayer(
-        name=layer_name,
-        classification_layer_kind=str(clayer["type"]),
-        dem=dem_dataset,
-        cfg=clayer,
-    )
     # Initialize slope array
     # slope_image = np.array([[1, 0.0, 6], [8, 12, 20], [26, 50, 60]])
     # Initialize ground truth classified slope by ranges [0, 5, 10, 25, 45]

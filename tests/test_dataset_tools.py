@@ -191,6 +191,25 @@ def test_get_geoid_offset():
     # Test that the output_arr_offset is the same as ground_truth
     np.testing.assert_allclose(gt_arr_offset, output_arr_offset, rtol=1e-04)
 
+
+def test_get_geoid_offset_error():
+    """
+    Test the _get_geoid_offset function
+    Loads the DEMS present in "strm_test_data" test root data
+    directory and projects it on the geoid to test
+    the obtained dataset's geoid offset values.
+    """
+    # Get "strm_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("strm_test_data")
+    # Load "strm_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    # Geoid path
+    geoid_path = demcompare_path("geoid/egm96_15.gtx")
+
+    # Define data
+    data = np.ones((2, 2))
+
     # Define transformation that will compute the data coordinates
     # outside of the geoid scope --------------------
     trans = np.array(

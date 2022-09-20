@@ -49,6 +49,40 @@ _DEFAULT_TEST_METRICS = [
 ]
 
 
+@pytest.fixture(name="initialize_slope_layer")
+def fixture_initialize_slope_layer():
+    """
+    Fixture to initialize the slope clasification object
+    """
+    # Classification layer configuration
+    layer_name = "Slope0"
+    clayer = {
+        "type": "slope",
+        "ranges": [0, 5, 10, 25, 45],
+        "save_results": False,
+        "output_dir": "",
+        "metrics": _DEFAULT_TEST_METRICS,
+    }
+
+    data = np.array(
+        [[0, 1, 1], [0, -9999, 1], [-9999, 1, 1], [-9999, 1, 1]],
+        dtype=np.float32,
+    )
+    dem_dataset = dem_tools.create_dem(
+        data=data,
+    )
+    # Compute dem's slope
+    dem_dataset = dem_tools.compute_dem_slope(dem_dataset)
+    # Initialize slope classification layer object
+    slope_classif_layer_ = ClassificationLayer(
+        name=layer_name,
+        classification_layer_kind=str(clayer["type"]),
+        dem=dem_dataset,
+        cfg=clayer,
+    )
+    return slope_classif_layer_
+
+
 @pytest.mark.unit_tests
 def test_get_outliers_free_mask():
     """
@@ -122,43 +156,23 @@ def test_get_outliers_free_mask():
 
 
 @pytest.mark.unit_tests
-def test_get_non_mask():
+def test_get_nonan_mask_custom_nodata(initialize_slope_layer):
     """
-    Test the _get_outliers_free_mask function
+    Test the _get_nonan_mask function with
+    custom nodata value
     Manually computes an input array and filters it,
     and tests that the resulting
-    arrays form the _get_outliers_free_mask are the
+    arrays form the _get_nonan_mask are the
     same.
     """
-    # Classification layer configuration
-    layer_name = "Slope0"
-    clayer = {
-        "type": "slope",
-        "ranges": [0, 5, 10, 25, 45],
-        "save_results": False,
-        "output_dir": "",
-        "metrics": _DEFAULT_TEST_METRICS,
-    }
+    slope_classif_layer_ = initialize_slope_layer
 
+    # Test with custom nodata value -------------------------------
+    # Compute no nan mask
     data = np.array(
         [[0, 1, 1], [0, -9999, 1], [-9999, 1, 1], [-9999, 1, 1]],
         dtype=np.float32,
     )
-    dem_dataset = dem_tools.create_dem(
-        data=data,
-    )
-    # Compute dem's slope
-    dem_dataset = dem_tools.compute_dem_slope(dem_dataset)
-    # Initialize slope classification layer object
-    slope_classif_layer_ = ClassificationLayer(
-        name=layer_name,
-        classification_layer_kind=str(clayer["type"]),
-        dem=dem_dataset,
-        cfg=clayer,
-    )
-
-    # Test with custom nodata value -------------------------------
-    # Compute no nan mask
     output_nonan_mask = slope_classif_layer_._get_nonan_mask(data, -9999)
     # Ground truth no nan mask
     gt_nonan_mask = np.array(
@@ -172,6 +186,19 @@ def test_get_non_mask():
     )
     # Test that the computed no nan mask is equal to ground truth
     np.testing.assert_allclose(gt_nonan_mask, output_nonan_mask, rtol=1e-02)
+
+
+@pytest.mark.unit_tests
+def test_get_nonan_mask_defaut_nodata(initialize_slope_layer):
+    """
+    Test the _get_nonan_mask function with
+    defaut nodata value
+    Manually computes an input array and filters it,
+    and tests that the resulting
+    arrays form the _get_nonan_mask are the
+    same.
+    """
+    slope_classif_layer_ = initialize_slope_layer
 
     # Test with default nodata value -------------------------------
     data = np.array(
@@ -204,8 +231,7 @@ def test_create_mode_masks():
       are equal to ground truth
     """
 
-    # Generate dsm with the following data and
-    # "gironde_test_data" DSM's georef and resolution
+    # Generate dsm with the following data
     data = np.array([[1, 0, 1], [1, -9999, 1], [-1, 0, 1]], dtype=np.float32)
     data_dataset = dem_tools.create_dem(data=data, nodata=-9999)
     # Compute slope and add it as a classification_layer

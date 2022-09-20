@@ -21,12 +21,6 @@
 """
 This module contains functions to test all the methods in
 dem_tools module.
-TODO:
-- add test_save_dem
-- add test_copy_dem
-- check wrong opening of DEM test_load_wrong_dem.
-- check reproject_dems with CRS ref and sec inversed.
-- check CRS in compute_dems_diff ?
 """
 # pylint:disable = too-many-lines
 # pylint:disable = duplicate-code
@@ -50,6 +44,50 @@ from .helpers import demcompare_path, demcompare_test_data_path
 
 # Force protected access to test protected functions
 # pylint:disable=protected-access
+
+
+@pytest.fixture(name="load_gironde_dem")
+def fixture_load_gironde_dem():
+    """
+    Fixture to initialize the gironde dem for tests
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config
+    # from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    # Load original dems
+    ref_orig = dem_tools.load_dem(cfg["input_ref"]["path"])
+    sec_orig = dem_tools.load_dem(cfg["input_sec"]["path"])
+
+    return sec_orig, ref_orig
+
+
+@pytest.fixture(name="initialize_dems_to_fuse")
+def fixture_initialize_dems_to_fuse():
+    """
+    Fixture to initialize two dems to be fused
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Initialize sec and ref, necessary for StatsProcessing creation
+    sec = dem_tools.load_dem(
+        cfg["input_sec"]["path"],
+        classification_layers=(cfg["input_sec"]["classification_layers"]),
+    )
+    ref = dem_tools.load_dem(cfg["input_ref"]["path"])
+    sec, ref, _ = dem_tools.reproject_dems(sec, ref)
+
+    # Compute slope and add it as a classification_layer
+    ref = dem_tools.compute_dem_slope(ref)
+    sec = dem_tools.compute_dem_slope(sec)
+    return ref, sec
 
 
 @pytest.mark.unit_tests
@@ -98,25 +136,15 @@ def test_load_dem():
 
 
 @pytest.mark.unit_tests
-def test_translate_dem():
+def test_translate_dem_pos_x_neg_y(load_gironde_dem):
     """
-    Test the translate_dem function
+    Test the translate_dem function with positive x
+    and negative y offsets.
     Loads the DEMS present in "gironde_test_data" test root
     data directory and makes the DEM translation for
     different pixel values and tests the resulting
     transform.
     """
-    # Test with "gironde_test_data" test root input DEMs
-    # and sampling value ref
-    # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("gironde_test_data")
-    # Load "gironde_test_data" demcompare config
-    # from input/test_config.json
-    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-    cfg = read_config_file(test_cfg_path)
-    # Load dem
-    dem = dem_tools.load_dem(cfg["input_sec"]["path"])
-
     # When translate_dem, the values at position 0 and 3 of the
     # transform are modified
     # by the offset coordinates x and y
@@ -124,6 +152,7 @@ def test_translate_dem():
     # trans[0] = 600255
     # trans[3] = 5099745
 
+    dem, _ = load_gironde_dem
     # Negative y and positive x -----------------------------
     y_off_pix = -5
     x_off_pix = 4
@@ -145,6 +174,18 @@ def test_translate_dem():
         rtol=1e-02,
     )
 
+
+@pytest.mark.unit_tests
+def test_translate_dem_neg_x_neg_y(load_gironde_dem):
+    """
+    Test the translate_dem function with negative x
+    and negative y offsets.
+    Loads the DEMS present in "gironde_test_data" test root
+    data directory and makes the DEM translation for
+    different pixel values and tests the resulting
+    transform.
+    """
+    dem, _ = load_gironde_dem
     # Negative y and negative x --------------------------
     y_off_pix = -5
     x_off_pix = -4
@@ -166,12 +207,24 @@ def test_translate_dem():
         rtol=1e-02,
     )
 
+
+@pytest.mark.unit_tests
+def test_translate_dem_neg_x_pos_y(load_gironde_dem):
+    """
+    Test the translate_dem function with negative x
+    and positive y offsets.
+    Loads the DEMS present in "gironde_test_data" test root
+    data directory and makes the DEM translation for
+    different pixel values and tests the resulting
+    transform.
+    """
+    dem, _ = load_gironde_dem
     # Positive y and negative x ----------------------------
     y_off_pix = 5
     x_off_pix = -4
     # Define ground truth values
     gt_offset_coord_x = 598255
-    gt_offset_coord_y = 5102245
+    gt_offset_coord_y = 5097245
 
     transformed_dem = dem_tools.translate_dem(dem, x_off_pix, y_off_pix)
     # Verify that the transform of the transformed
@@ -179,20 +232,32 @@ def test_translate_dem():
     np.testing.assert_allclose(
         gt_offset_coord_x,
         transformed_dem["georef_transform"].data[0],
-        rtol=1e-02,
+        atol=1e-05,
     )
     np.testing.assert_allclose(
         gt_offset_coord_y,
         transformed_dem["georef_transform"].data[3],
-        rtol=1e-02,
+        atol=1e-02,
     )
 
+
+@pytest.mark.unit_tests
+def test_translate_dem_pos_x_pos_y(load_gironde_dem):
+    """
+    Test the translate_dem function with positive x
+    and positive y offsets.
+    Loads the DEMS present in "gironde_test_data" test root
+    data directory and makes the DEM translation for
+    different pixel values and tests the resulting
+    transform.
+    """
+    dem, _ = load_gironde_dem
     # Positive y and positive x ----------------------------
     y_off_pix = 5
-    x_off_pix = -4
+    x_off_pix = 4
     # Define ground truth values
-    gt_offset_coord_x = 596255
-    gt_offset_coord_y = 5099745
+    gt_offset_coord_x = 602255
+    gt_offset_coord_y = 5097245
 
     transformed_dem = dem_tools.translate_dem(dem, x_off_pix, y_off_pix)
     # Verify that the transform of the transformed
@@ -200,14 +265,25 @@ def test_translate_dem():
     np.testing.assert_allclose(
         gt_offset_coord_x,
         transformed_dem["georef_transform"].data[0],
-        rtol=1e-02,
+        atol=1e-02,
     )
     np.testing.assert_allclose(
         gt_offset_coord_y,
         transformed_dem["georef_transform"].data[3],
-        rtol=1e-02,
+        atol=1e-05,
     )
 
+
+@pytest.mark.unit_tests
+def test_translate_dem_no_offset(load_gironde_dem):
+    """
+    Test the translate_dem function without input offset.
+    Loads the DEMS present in "gironde_test_data" test root
+    data directory and makes the DEM translation for
+    different pixel values and tests the resulting
+    transform.
+    """
+    dem, _ = load_gironde_dem
     # No offset ------------------------------------
     y_off_pix = 0
     x_off_pix = 0
@@ -221,35 +297,26 @@ def test_translate_dem():
     np.testing.assert_allclose(
         gt_offset_coord_x,
         transformed_dem["georef_transform"].data[0],
-        rtol=1e-02,
+        atol=1e-02,
     )
     np.testing.assert_allclose(
         gt_offset_coord_y,
         transformed_dem["georef_transform"].data[3],
-        rtol=1e-02,
+        atol=1e-02,
     )
 
 
 @pytest.mark.unit_tests
-def test_reproject_dems():
+def test_reproject_dems_sampling_sec(load_gironde_dem):
     """
-    Test the reproject_dems function
+    Test the reproject_dems function with sampling source dem
     Loads the DEMS present in "gironde_test_data" test root
     data directory and reprojects them to test the
     obtained reprojected DEMs.
 
     """
-    # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("gironde_test_data")
-    # Load "gironde_test_data" demcompare config
-    # from input/test_config.json
-    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-    cfg = read_config_file(test_cfg_path)
-    # Load original dems
-    ref_orig = dem_tools.load_dem(cfg["input_ref"]["path"])
-    sec_orig = dem_tools.load_dem(cfg["input_sec"]["path"])
-
-    # Reproject dems with sampling value dem  -------------------------------
+    sec_orig, ref_orig = load_gironde_dem
+    # Reproject dems with sampling source sec  -------------------------------
     (reproj_sec, reproj_ref, adapting_factor,) = dem_tools.reproject_dems(
         sec_orig,
         ref_orig,
@@ -302,13 +369,24 @@ def test_reproject_dems():
     np.testing.assert_allclose(adapting_factor, gt_adapting_factor, rtol=1e-02)
     # Test dems transform
     np.testing.assert_allclose(
-        reproj_sec.georef_transform, gt_output_trans, rtol=1e-02
+        reproj_sec.georef_transform, gt_output_trans, atol=1e-02
     )
     np.testing.assert_allclose(
-        reproj_ref.georef_transform, gt_output_trans, rtol=1e-02
+        reproj_ref.georef_transform, gt_output_trans, atol=1e-02
     )
 
-    # Reproject dems with sampling value ref --------------------------------
+
+@pytest.mark.unit_tests
+def test_reproject_dems_sampling_ref(load_gironde_dem):
+    """
+    Test the reproject_dems function with sampling_source ref
+    Loads the DEMS present in "gironde_test_data" test root
+    data directory and reprojects them to test the
+    obtained reprojected DEMs.
+
+    """
+    sec_orig, ref_orig = load_gironde_dem
+    # Reproject dems with sampling source ref --------------------------------
 
     (reproj_sec, reproj_ref, adapting_factor,) = dem_tools.reproject_dems(
         sec_orig,
@@ -366,7 +444,20 @@ def test_reproject_dems():
         reproj_ref.georef_transform, gt_output_trans, rtol=1e-02
     )
 
-    # Reproject dems with sampling value dem and initial disparity -------------
+
+@pytest.mark.unit_tests
+def test_reproject_dems_sampling_sec_initial_disparity(load_gironde_dem):
+    """
+    Test the reproject_dems function with sampling_source sec
+    and initial disparity
+    Loads the DEMS present in "gironde_test_data" test root
+    data directory and reprojects them to test the
+    obtained reprojected DEMs.
+
+    """
+    sec_orig, ref_orig = load_gironde_dem
+
+    # Reproject dems with sampling value sec and initial disparity -------------
 
     (reproj_sec, reproj_ref, adapting_factor,) = dem_tools.reproject_dems(
         sec_orig,
@@ -418,7 +509,6 @@ def test_reproject_dems():
     np.testing.assert_allclose(
         reproj_ref.attrs["bounds"], gt_intersection_roi, rtol=1e-03
     )
-    np.testing.assert_allclose(adapting_factor, gt_adapting_factor, rtol=1e-02)
     # Test adapting_factor
     np.testing.assert_allclose(adapting_factor, gt_adapting_factor, rtol=1e-02)
     # Test dems transform
@@ -593,11 +683,11 @@ def test_create_dem():
 
 
 @pytest.mark.unit_tests
-def test_create_dem_with_classification_layers():
+def test_create_dem_with_classification_layers_dictionary():
     """
     Test the _create_dem function with input classification layers
     Creates a dem with random input data and input classification layers
-    as xr.DataArray and as a dictionary.
+    as a dictionary.
     """
 
     # Define data
@@ -634,6 +724,25 @@ def test_create_dem_with_classification_layers():
     np.testing.assert_array_equal(
         dataset_dem.classification_layer_masks.indicator.data, classif_name
     )
+
+
+@pytest.mark.unit_tests
+def test_create_dem_with_classification_layers_dataarray():
+    """
+    Test the _create_dem function with input classification layers
+    Creates a dem with random input data and input classification layers
+    as xr.DataArray
+    """
+
+    # Define data
+    data = np.ones((1000, 1000))
+
+    # Test with input classification layer as xr.DataArray ---------------
+    # Initialize the data of the classification layers
+    classif_data = np.full((data.shape[0], data.shape[1], 2), np.nan)
+    classif_data[:, :, 0] = np.ones((data.shape[0], data.shape[1]))
+    classif_data[:, :, 1] = np.ones((data.shape[0], data.shape[1])) * 2
+    classif_name = ["test_first_classif", "test_second_classif"]
 
     # Test with input classification layer as a dictionary ---------------
 
@@ -745,34 +854,14 @@ def test_compute_dem_slope():
     )
 
 
-def test_verify_fusion_layers():
+def test_verify_fusion_layers_sec(initialize_dems_to_fuse):
     """
-    Test the verify_fusion_layers function
+    Test the verify_fusion_layers function with a sec fusion
     - Loads the data present in the test root data directory
     - Manually computes different classification layers configuration
       that include fusion layers
-    - Tests that the verify_fusion_layers raises an error when
-      the layers needed to be fusioned are not present on the input dem
-      and the input cfg
     """
-    # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("gironde_test_data")
-
-    # Load "gironde_test_data" demcompare config from input/test_config.json
-    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-    cfg = read_config_file(test_cfg_path)
-
-    # Initialize sec and ref, necessary for StatsProcessing creation
-    sec = dem_tools.load_dem(
-        cfg["input_sec"]["path"],
-        classification_layers=(cfg["input_sec"]["classification_layers"]),
-    )
-    ref = dem_tools.load_dem(cfg["input_ref"]["path"])
-    sec, ref, _ = dem_tools.reproject_dems(sec, ref)
-
-    # Compute slope and add it as a classification_layer
-    ref = dem_tools.compute_dem_slope(ref)
-    sec = dem_tools.compute_dem_slope(sec)
+    ref, sec = initialize_dems_to_fuse
 
     # Test with sec fusion ---------------------------------
     # Initialize stats input configuration
@@ -796,6 +885,18 @@ def test_verify_fusion_layers():
 
     dem_tools.verify_fusion_layers(sec, input_classif_cfg, "sec")
     dem_tools.verify_fusion_layers(ref, input_classif_cfg, "ref")
+
+
+def test_verify_fusion_layers_error_ref(initialize_dems_to_fuse):
+    """
+    Test the verify_fusion_layers function with a ref fusion
+    - Loads the data present in the test root data directory
+    - Manually computes different classification layers configuration
+      that include fusion layers
+    - Tests that the verify_fusion_layers raises an error when
+      the layers needed to be fusioned are not present on the input dem
+    """
+    ref, sec = initialize_dems_to_fuse
 
     # Test with ref fusion ---------------------------------
     # It should not work as no ref Status exists
@@ -822,6 +923,18 @@ def test_verify_fusion_layers():
     # Test that an error is raised
     with pytest.raises(ValueError):
         dem_tools.verify_fusion_layers(ref, input_classif_cfg, "ref")
+
+
+def test_verify_fusion_layers_cfg_error(initialize_dems_to_fuse):
+    """
+    Test the verify_fusion_layers function with an error
+    - Loads the data present in the test root data directory
+    - Manually computes different classification layers configuration
+      that include fusion layers
+    - Tests that the verify_fusion_layers raises an error when
+      the layers needed to be fusioned are not present on the input cfg
+    """
+    ref, _ = initialize_dems_to_fuse
 
     # Test without defining the Status layer
     # on the input cfg ---------------------------------

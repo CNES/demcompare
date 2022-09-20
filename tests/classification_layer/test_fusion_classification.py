@@ -42,14 +42,10 @@ from demcompare.classification_layer.fusion_classification import (
 )
 
 
-@pytest.mark.unit_tests
-def test_create_mode_masks():
+@pytest.fixture(name="initialize_fusion_layer")
+def fixture_initialize_fusion_layer():
     """
-    Test the _create_mode_masks function
-    - Creates a map image for both sec and ref supports
-    - Manually computes the standard, intersection and exclusion masks
-    - Tests that the computed masks from _create_mode_masks
-      are equal to ground truth
+    Fixture to initialize the fusion layer
     """
     data = np.array(
         [[0, 1, 1], [0, -9999, 1], [-9999, 1, 1], [-9999, 1, 1]],
@@ -156,7 +152,17 @@ def test_create_mode_masks():
         name="Fusion0",
         metrics=["mean"],
     )
+    return fusion_layer_
 
+
+@pytest.mark.unit_tests
+def test_create_merged_classes(initialize_fusion_layer):
+    """
+    Test the _create_merged_classes function
+    - Tests that the computed classes from _create_merged_classes
+      are equal to ground truth
+    """
+    fusion_layer_ = initialize_fusion_layer
     # Test the _create_merged_classes function ------------------
     # All possible classes combination
     # Slope0 layer ranges are [0, 5, 10], so its classes are
@@ -174,10 +180,17 @@ def test_create_mode_masks():
             ("seg_classif_deep_land_&_Slope0_[10%;inf[", 6),
         ]
     )
-
     # Test that the fusion layer's classes as the same as gt
     assert fusion_layer_.classes == gt_merged_classes
 
+
+@pytest.mark.unit_tests
+def test_merge_classes_and_create_sets_masks(initialize_fusion_layer):
+    """
+    Test the _merge_classes_and_create_sets_masks function
+    - Creates a map image for both sec and ref supports
+    - Manually computes the standard, intersection and exclusion masks
+    """
     # Test the _merge_classes_and_create_sets_masks function -------------
     # Slope0's map_image["Slope0"] is :
     #   array([[ 0,  0,  5],
@@ -189,6 +202,7 @@ def test_create_mode_masks():
     #          [ 1,  1,  0],
     #          [-9999,  1,  1],
     #          [-9999,  1,  0]])
+    fusion_layer_ = initialize_fusion_layer
 
     # Create ground truth sets masks dict for the input classified slope
     # fusion layer's class 1
@@ -233,6 +247,34 @@ def test_create_mode_masks():
         fusion_layer_.classes_masks["sec"],
         rtol=1e-02,
     )
+
+
+@pytest.mark.unit_tests
+def test_create_labelled_map(initialize_fusion_layer):
+    """
+    Test the _create_labelled_map function
+    - Creates a map image for both sec and ref supports
+    - Tests that the computed map from _create_labelled_map
+      is equal to ground truth
+    """
+    fusion_layer_ = initialize_fusion_layer
+    # Slope0's map_image["Slope0"] is :
+    #   array([[ 0,  0,  5],
+    #          [ 5,  10,  10],
+    #          [ 0, -9999, -9999],
+    #          [ 0,  10,  5]])
+    # seg_classif's map_image["Status"] is :
+    #   array([[ 0,  1,  1],
+    #          [ 1,  1,  0],
+    #          [-9999,  1,  1],
+    #          [-9999,  1,  0]])
+    # The merged classes are
+    # ("seg_classif_sea_&_Slope0_[0%;5%[", 1),
+    # ("seg_classif_sea_&_Slope0_[5%;10%[", 2),
+    # ("seg_classif_sea_&_Slope0_[10%;inf[", 3),
+    # ("seg_classif_deep_land_&_Slope0_[0%;5%[", 4),
+    # ("seg_classif_deep_land_&_Slope0_[5%;10%[", 5),
+    # ("seg_classif_deep_land_&_Slope0_[10%;inf[", 6),
 
     # test the _create_labelled_map function -------------
     # fusion layer's classified map image

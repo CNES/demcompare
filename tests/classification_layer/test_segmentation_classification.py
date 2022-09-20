@@ -35,16 +35,10 @@ from demcompare.classification_layer.classification_layer import (
 )
 
 
-@pytest.mark.unit_tests
-def test_create_classification_layer_class_masks():
+@pytest.fixture(name="initialize_segmentation_classification")
+def fixture_initialize_segmentation_classification():
     """
-    Test the _create_classification_layer_class_masks function
-    Manually computes an input dem and with two input
-    classification layers,
-    and then creates the first classification layer object
-    and verifies the computed map_image (function _create_labelled_map)
-    and then verifies the computed sets_masks_dict
-    (function _create_class_masks)
+    Fixture to initialize a segmentation classification
     """
     # Classification layer configuration
     layer_name = "test_first_classif"
@@ -103,6 +97,20 @@ def test_create_classification_layer_class_masks():
         cfg=clayer,
     )
 
+    return classif_layer_, classif_data
+
+
+@pytest.mark.unit_tests
+def test_create_labelled_map(initialize_segmentation_classification):
+    """
+    Test the test_create_labelled_map function
+    Manually computes an input dem with two input
+    classification layers,
+    then creates the classification layer object
+    and verifies the computed map_image (function _create_labelled_map)
+    """
+
+    classif_layer_, classif_data = initialize_segmentation_classification
     # test_create_labelled_map -------------------------------
     # Test that the test_first_classif's map image has been correctly loaded
     # on the dataset
@@ -110,6 +118,19 @@ def test_create_classification_layer_class_masks():
     np.testing.assert_allclose(
         gt_map_image, classif_layer_.map_image["ref"], rtol=1e-02
     )
+
+
+@pytest.mark.unit_tests
+def _test_create_class_masks(initialize_segmentation_classification):
+    """
+    Test the _create_classification_layer_class_masks function
+    Manually computes an input dem and with two input
+    classification layers,
+    then creates the first classification layer object
+    and verifies the computed sets_masks_dict
+    (function _create_class_masks)
+    """
+    classif_layer_, _ = initialize_segmentation_classification
 
     # test _create_class_masks -------------------------------
 

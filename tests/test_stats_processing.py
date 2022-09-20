@@ -47,6 +47,120 @@ from demcompare.metric import Metric
 from .helpers import demcompare_test_data_path
 
 
+@pytest.fixture(name="initialize_stats_processing")
+def fixture_initialize_stats_processing():
+    """
+    Fixture to initialize the stats_processing object for tests
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
+
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Initialize sec and ref, necessary for StatsProcessing creation
+    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
+    ref = dem_tools.load_dem(
+        cfg["input_ref"]["path"],
+        classification_layers=(cfg["input_ref"]["classification_layers"]),
+    )
+    sec, ref, _ = dem_tools.reproject_dems(sec, ref, sampling_source="ref")
+
+    # Compute slope and add it as a classification_layer
+    ref = dem_tools.compute_dem_slope(ref)
+    sec = dem_tools.compute_dem_slope(sec)
+    # Compute altitude diff for stats computation
+    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
+    # Initialize stats input configuration
+    input_stats_cfg = {
+        "remove_outliers": "False",
+        "save_results": "False",
+        "classification_layers": {
+            "Status": {
+                "type": "segmentation",
+                "classes": {
+                    "valid": [0],
+                    "KO": [1],
+                    "Land": [2],
+                    "NoData": [3],
+                    "Outside_detector": [4],
+                },
+            },
+            "Slope0": {
+                "type": "slope",
+                "ranges": [0, 10, 25, 50, 90],
+            },
+        },
+    }
+    # Create StatsProcessing object
+    stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
+
+    return stats_processing
+
+
+@pytest.fixture(name="initialize_stats_processing_with_metrics")
+def fixture_initialize_stats_processing_with_metrics():
+    """
+    Fixture to initialize the stats_processing object
+    with an input cfg containing the desired metrics for tests
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
+
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Initialize sec and ref
+    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
+    ref = dem_tools.load_dem(
+        cfg["input_ref"]["path"],
+        classification_layers=(cfg["input_ref"]["classification_layers"]),
+    )
+    sec, ref, _ = dem_tools.reproject_dems(sec, ref, sampling_source="ref")
+
+    # Compute slope and add it as a classification_layer
+    ref = dem_tools.compute_dem_slope(ref)
+    sec = dem_tools.compute_dem_slope(sec)
+    # Compute altitude diff for stats computation
+    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
+    # Initialize stats input configuration
+    input_stats_cfg = {
+        "remove_outliers": "False",
+        "save_results": "False",
+        "classification_layers": {
+            "Status": {
+                "type": "segmentation",
+                "classes": {
+                    "valid": [0],
+                    "KO": [1],
+                    "Land": [2],
+                    "NoData": [3],
+                    "Outside_detector": [4],
+                },
+                "metrics": [
+                    {
+                        "ratio_above_threshold": {
+                            "elevation_threshold": [1, 2, 3]
+                        }
+                    }
+                ],
+            },
+            "Slope0": {
+                "type": "slope",
+                "ranges": [0, 10, 25, 50, 90],
+                "metrics": ["nmad"],
+            },
+        },
+        "metrics": ["std"],
+    }
+    # Create StatsProcessing object
+    stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
+
+    return stats_processing
+
+
 @pytest.mark.unit_tests
 def test_create_classif_layers():
     """
@@ -249,56 +363,15 @@ def test_create_classif_layers_without_input_classif():
 
 
 @pytest.mark.unit_tests
-def test_compute_stats():
+def test_compute_stats_segmentation_layer(initialize_stats_processing):
     """
     Tests the compute_stats. Manually computes
     the stats for the classification_layer_masks for a given class
     and mode and tests that the compute_stats function obtains
-    the same values.
+    the same values on the segmentation layer.
     """
-    # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
-
-    # Load "gironde_test_data" demcompare config from input/test_config.json
-    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-    cfg = read_config_file(test_cfg_path)
-
-    # Initialize sec and ref, necessary for StatsProcessing creation
-    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
-    ref = dem_tools.load_dem(
-        cfg["input_ref"]["path"],
-        classification_layers=(cfg["input_ref"]["classification_layers"]),
-    )
-    sec, ref, _ = dem_tools.reproject_dems(sec, ref, sampling_source="ref")
-
-    # Compute slope and add it as a classification_layer
-    ref = dem_tools.compute_dem_slope(ref)
-    sec = dem_tools.compute_dem_slope(sec)
-    # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
-    # Initialize stats input configuration
-    input_stats_cfg = {
-        "remove_outliers": "False",
-        "save_results": "False",
-        "classification_layers": {
-            "Status": {
-                "type": "segmentation",
-                "classes": {
-                    "valid": [0],
-                    "KO": [1],
-                    "Land": [2],
-                    "NoData": [3],
-                    "Outside_detector": [4],
-                },
-            },
-            "Slope0": {
-                "type": "slope",
-                "ranges": [0, 10, 25, 50, 90],
-            },
-        },
-    }
-    # Create StatsProcessing object
-    stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
+    # Initialize stats processing object
+    stats_processing = initialize_stats_processing
 
     # ----------------------------------------------------------
     # TEST status layer class 1
@@ -387,11 +460,28 @@ def test_compute_stats():
         output_ratio,
         rtol=1e-02,
     )
+
+
+@pytest.mark.unit_tests
+def test_compute_stats_global_layer(initialize_stats_processing):
+    """
+    Tests the compute_stats. Manually computes
+    the stats for the classification_layer_masks for a given class
+    and mode and tests that the compute_stats function obtains
+    the same values on the global layer.
+    """
+    # Initialize stats processing object
+    stats_processing = initialize_stats_processing
+
     # ----------------------------------------------------------
     # Test global layer class 0
     classif_class = 0
     dataset_idx = stats_processing.classification_layers_names.index("global")
+    # Manually compute mean and sum stats
 
+    # Initialize metric objects
+    metric_mean = Metric("mean")
+    metric_sum = Metric("sum")
     # Manually compute mean and sum stats
     # Get alti map
     classif_map = stats_processing.dem["image"].data
@@ -436,6 +526,12 @@ def test_compute_stats():
     )
 
     # Do the same test with the ratio_above_threshold 2D metric
+    # Initialize metric objects
+    elevation_thrlds = [-3, 2, 90]
+    metric_ratio = Metric(
+        "ratio_above_threshold",
+        params={"elevation_threshold": elevation_thrlds},
+    )
     # Compute gt metrics
     gt_ratio = metric_ratio.compute_metric(
         classif_map[np.where(nodata_nan_mask)]
@@ -460,6 +556,19 @@ def test_compute_stats():
         output_ratio,
         rtol=1e-02,
     )
+
+
+@pytest.mark.unit_tests
+def test_compute_stats_slope_layer(initialize_stats_processing):
+    """
+    Tests the compute_stats. Manually computes
+    the stats for the classification_layer_masks for a given class
+    and mode and tests that the compute_stats function obtains
+    the same values on the slope layer.
+    """
+    # Initialize stats processing object
+    stats_processing = initialize_stats_processing
+
     # Test slope layer class 0
     # ----------------------------------------------------------
     classif_class = 0
@@ -484,6 +593,9 @@ def test_compute_stats():
         idxes_map_class_0_dataset_0
     ]
 
+    # Initialize metric objects
+    metric_mean = Metric("mean")
+    metric_sum = Metric("sum")
     # Compute gt metrics
     gt_mean = metric_mean.compute_metric(classif_map)
     gt_sum = metric_sum.compute_metric(classif_map)
@@ -516,6 +628,12 @@ def test_compute_stats():
         rtol=1e-02,
     )
     # Do the same test with the ratio_above_threshold 2D metric
+    # Initialize metric objects
+    elevation_thrlds = [-3, 2, 90]
+    metric_ratio = Metric(
+        "ratio_above_threshold",
+        params={"elevation_threshold": elevation_thrlds},
+    )
     # Compute gt metrics
     gt_ratio = metric_ratio.compute_metric(classif_map)
     # Compute stats with stats processing
@@ -541,7 +659,9 @@ def test_compute_stats():
 
 
 @pytest.mark.unit_tests
-def test_compute_stats_slope_classif_intersection_mode():
+def test_compute_stats_slope_classif_intersection_mode(
+    initialize_stats_processing,
+):
     """
     Tests the compute_stats. Manually computes
     the stats for the slope function for a given class
@@ -549,49 +669,8 @@ def test_compute_stats_slope_classif_intersection_mode():
     compute_stats function obtains
     the same values.
     """
-    # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
-
-    # Load "gironde_test_data" demcompare config from input/test_config.json
-    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-    cfg = read_config_file(test_cfg_path)
-
-    # Initialize sec and ref, necessary for StatsProcessing creation
-    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
-    ref = dem_tools.load_dem(
-        cfg["input_ref"]["path"],
-        classification_layers=(cfg["input_ref"]["classification_layers"]),
-    )
-    sec, ref, _ = dem_tools.reproject_dems(sec, ref)
-
-    # Compute slope and add it as a classification_layer
-    ref = dem_tools.compute_dem_slope(ref)
-    sec = dem_tools.compute_dem_slope(sec)
-    # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
-    # Initialize stats input configuration
-    input_stats_cfg = {
-        "remove_outliers": "False",
-        "save_results": "False",
-        "classification_layers": {
-            "Status": {
-                "type": "segmentation",
-                "classes": {
-                    "valid": [0],
-                    "KO": [1],
-                    "Land": [2],
-                    "NoData": [3],
-                    "Outside_detector": [4],
-                },
-            },
-            "Slope0": {
-                "type": "slope",
-                "ranges": [0, 10, 25, 50, 90],
-            },
-        },
-    }
-    # Create StatsProcessing object
-    stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
+    # Initialize stats processing object
+    stats_processing = initialize_stats_processing
 
     # Test slope layer class 0
     # ----------------------------------------------------------
@@ -687,7 +766,9 @@ def test_compute_stats_slope_classif_intersection_mode():
 
 
 @pytest.mark.unit_tests
-def test_compute_stats_slope_classif_exclusion_mode():
+def test_compute_stats_slope_classif_exclusion_mode(
+    initialize_stats_processing,
+):
     """
     Tests the compute_stats. Manually computes
     the stats for the slope function for a given class
@@ -695,49 +776,8 @@ def test_compute_stats_slope_classif_exclusion_mode():
     compute_stats function obtains
     the same values.
     """
-    # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
-
-    # Load "gironde_test_data" demcompare config from input/test_config.json
-    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-    cfg = read_config_file(test_cfg_path)
-
-    # Initialize sec and ref
-    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
-    ref = dem_tools.load_dem(
-        cfg["input_ref"]["path"],
-        classification_layers=(cfg["input_ref"]["classification_layers"]),
-    )
-    sec, ref, _ = dem_tools.reproject_dems(sec, ref)
-
-    # Compute slope and add it as a classification_layer
-    ref = dem_tools.compute_dem_slope(ref)
-    sec = dem_tools.compute_dem_slope(sec)
-    # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
-    # Initialize stats input configuration
-    input_stats_cfg = {
-        "remove_outliers": "False",
-        "save_results": "False",
-        "classification_layers": {
-            "Status": {
-                "type": "segmentation",
-                "classes": {
-                    "valid": [0],
-                    "KO": [1],
-                    "Land": [2],
-                    "NoData": [3],
-                    "Outside_detector": [4],
-                },
-            },
-            "Slope0": {
-                "type": "slope",
-                "ranges": [0, 10, 25, 50, 90],
-            },
-        },
-    }
-    # Create StatsProcessing object
-    stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
+    # Initialize stats processing object
+    stats_processing = initialize_stats_processing
 
     # Test slope layer class 0
     # ----------------------------------------------------------
@@ -841,65 +881,17 @@ def test_compute_stats_slope_classif_exclusion_mode():
 
 
 @pytest.mark.unit_tests
-def test_compute_stats_from_cfg():
+def test_compute_stats_from_cfg_status(
+    initialize_stats_processing_with_metrics,
+):
     """
     Tests the compute_stats. Manually computes
     the stats for the classification_layer_masks for a given class
     and mode and tests that the compute_stats function obtains
     the same values.
     """
-    # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
-
-    # Load "gironde_test_data" demcompare config from input/test_config.json
-    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-    cfg = read_config_file(test_cfg_path)
-
-    # Initialize sec and ref
-    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
-    ref = dem_tools.load_dem(
-        cfg["input_ref"]["path"],
-        classification_layers=(cfg["input_ref"]["classification_layers"]),
-    )
-    sec, ref, _ = dem_tools.reproject_dems(sec, ref, sampling_source="ref")
-
-    # Compute slope and add it as a classification_layer
-    ref = dem_tools.compute_dem_slope(ref)
-    sec = dem_tools.compute_dem_slope(sec)
-    # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
-    # Initialize stats input configuration
-    input_stats_cfg = {
-        "remove_outliers": "False",
-        "save_results": "False",
-        "classification_layers": {
-            "Status": {
-                "type": "segmentation",
-                "classes": {
-                    "valid": [0],
-                    "KO": [1],
-                    "Land": [2],
-                    "NoData": [3],
-                    "Outside_detector": [4],
-                },
-                "metrics": [
-                    {
-                        "ratio_above_threshold": {
-                            "elevation_threshold": [1, 2, 3]
-                        }
-                    }
-                ],
-            },
-            "Slope0": {
-                "type": "slope",
-                "ranges": [0, 10, 25, 50, 90],
-                "metrics": ["nmad"],
-            },
-        },
-        "metrics": ["std"],
-    }
-    # Create StatsProcessing object
-    stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
+    # Initialize stats processing object with metrics on the cfg
+    stats_processing = initialize_stats_processing_with_metrics
 
     # Compute stats for all classif layers and its metrics
     stats_dataset = stats_processing.compute_stats()
@@ -970,6 +962,21 @@ def test_compute_stats_from_cfg():
             mode="standard",
             metric="nmad",
         )
+
+
+@pytest.mark.unit_tests
+def test_compute_stats_from_cfg_slope(initialize_stats_processing_with_metrics):
+    """
+    Tests the compute_stats. Manually computes
+    the stats for the classification_layer_masks for a given class
+    and mode and tests that the compute_stats function obtains
+    the same values.
+    """
+    # Initialize stats processing object with metrics on the cfg
+    stats_processing = initialize_stats_processing_with_metrics
+
+    # Compute stats for all classif layers and its metrics
+    stats_dataset = stats_processing.compute_stats()
     # ----------------------------------------------------------
     # TEST Slope layer class 1
     classif_class = 1

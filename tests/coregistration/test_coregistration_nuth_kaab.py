@@ -42,8 +42,34 @@ from demcompare.helpers_init import read_config_file
 from tests.helpers import demcompare_test_data_path
 
 
+@pytest.fixture(name="initialize_dem_and_coreg")
+def fixture_initialize_dem_and_coreg():
+    """
+    Fixture to initialize the input dem and the
+    coregistration object
+    """
+
+    # Define cfg
+    cfg = {
+        "method_name": "nuth_kaab_internal",
+        "number_of_iterations": 6,
+        "estimated_initial_shift_x": 0,
+        "estimated_initial_shift_y": 0,
+    }
+
+    # Initialize coregistration object
+    coregistration_ = coregistration.Coregistration(cfg)
+
+    # Define input_dem array
+    input_dem = np.array(
+        ([1, 1, 1], [-1, 2, 1], [4, -3, 2], [2, 1, 1], [1, 1, 2]),
+        dtype=np.float64,
+    )
+    return coregistration_, input_dem
+
+
 @pytest.mark.unit_tests
-def test_coregister_dems_algorithm():
+def test_coregister_dems_algorithm_gironde_sampling_sec():
     """
     Test the _coregister_dems_algorithm function of
     the Nuth et Kaab class.
@@ -53,8 +79,6 @@ def test_coregister_dems_algorithm():
     The following configurations are tested:
     - "gironde_test_data" test root input DEMs,
      sampling value sec
-    - "gironde_test_data" test root input DEMs,
-     sampling value ref
     """
     # Test with "gironde_test_data" test root
     # input DEMs and sampling value sec -----------------------------
@@ -102,6 +126,20 @@ def test_coregister_dems_algorithm():
     np.testing.assert_allclose(x_offset, transform.x_offset, rtol=1e-02)
     np.testing.assert_allclose(y_offset, transform.y_offset, rtol=1e-02)
     np.testing.assert_allclose(z_offset, transform.z_offset, rtol=1e-02)
+
+
+@pytest.mark.unit_tests
+def test_coregister_dems_algorithm_gironde_sampling_ref():
+    """
+    Test the _coregister_dems_algorithm function of
+    the Nuth et Kaab class.
+    Loads the data present in the "gironde_test_data" root data
+    directory and test that the output Transform is
+    correct.
+    The following configurations are tested:
+    - "gironde_test_data" test root input DEMs,
+     sampling value ref
+    """
 
     # Test with "gironde_test_data" test root
     # input DEMs and sampling value ref -----------------------------
@@ -498,31 +536,16 @@ def test_interpolate_dem_on_grid():
 
 
 @pytest.mark.unit_tests
-def test_crop_dem_with_offset():
+def test_crop_dem_with_offset_pos_x_pos_y(initialize_dem_and_coreg):
     """
-    Test the crop_dem_with_offset function
+    Test the crop_dem_with_offset function with
+    positive x and positive y offsets.
     Manually computes an input array and crops it
-    with different offsets, and tests that the resulting
-    arrays form the crop_dem_with_offset are the
+    with offset, and tests that the resulting
+    array form the crop_dem_with_offset is the
     same.
     """
-
-    # Define cfg
-    cfg = {
-        "method_name": "nuth_kaab_internal",
-        "number_of_iterations": 6,
-        "estimated_initial_shift_x": 0,
-        "estimated_initial_shift_y": 0,
-    }
-
-    # Initialize coregistration object
-    coregistration_ = coregistration.Coregistration(cfg)
-
-    # Define input_dem array
-    input_dem = np.array(
-        ([1, 1, 1], [-1, 2, 1], [4, -3, 2], [2, 1, 1], [1, 1, 2]),
-        dtype=np.float64,
-    )
+    coregistration_, input_dem = initialize_dem_and_coreg
 
     # Test with positive x_offset and positive y_offset
     x_offset = 2.3
@@ -536,6 +559,19 @@ def test_crop_dem_with_offset():
     ]
     np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
 
+
+@pytest.mark.unit_tests
+def test_crop_dem_with_offset_pos_x_neg_y(initialize_dem_and_coreg):
+    """
+    Test the crop_dem_with_offset function with
+    positive x and negative y offsets.
+    Manually computes an input array and crops it
+    with offset, and tests that the resulting
+    array form the crop_dem_with_offset is the
+    same.
+    """
+    coregistration_, input_dem = initialize_dem_and_coreg
+
     # Test with positive x_offset and negative y_offset
     x_offset = 2.3
     y_offset = -4.7
@@ -548,6 +584,19 @@ def test_crop_dem_with_offset():
     ]
     np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
 
+
+@pytest.mark.unit_tests
+def test_crop_dem_with_offset_neg_x_pos_y(initialize_dem_and_coreg):
+    """
+    Test the crop_dem_with_offset function with
+    negative x and positive y offsets.
+    Manually computes an input array and crops it
+    with offset, and tests that the resulting
+    array form the crop_dem_with_offset is the
+    same.
+    """
+    coregistration_, input_dem = initialize_dem_and_coreg
+
     # Test with negative x_offset and positive y_offset
     x_offset = -2.3
     y_offset = 4.7
@@ -559,6 +608,19 @@ def test_crop_dem_with_offset():
         int(np.floor(-x_offset)) : input_dem.shape[1],
     ]
     np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
+
+
+@pytest.mark.unit_tests
+def test_crop_dem_with_offset_neg_x_neg_y(initialize_dem_and_coreg):
+    """
+    Test the crop_dem_with_offset function with
+    negative x and negative y offsets.
+    Manually computes an input array and crops it
+    with offset, and tests that the resulting
+    array form the crop_dem_with_offset is the
+    same.
+    """
+    coregistration_, input_dem = initialize_dem_and_coreg
 
     # Test with negative x_offset and negative y_offset
     x_offset = -2.3
