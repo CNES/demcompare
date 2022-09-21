@@ -45,15 +45,15 @@ def test_apply():
     """
     Test the apply_transform function
     Creates a DEM xr.Dataset with the georefence
-    from the "strm_test_data" test root data directory
+    from the "srtm_test_data" test root data directory
     and creates a Transform object. Applies the transform to
     the created DEM to test that the transformation has been
     correctly applied.
 
     """
-    # Get "strm_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data")
-    # Load "strm_test_data" demcompare config from input/test_config.json
+    # Get "srtm_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("srtm_test_data")
+    # Load "srtm_test_data" demcompare config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
     # Load dem
@@ -64,7 +64,7 @@ def test_apply():
         [[1, 1, 1], [1, 1, 1], [-1, -32768, 1], [1, 2, -32768], [1, 1, -32768]],
         dtype=np.float32,
     )
-    # Create dataset from "strm_test_data" DSM and specific nodata value
+    # Create dataset from "srtm_test_data" DSM and specific nodata value
     dataset = dem_tools.create_dem(
         data=data,
         transform=from_dataset.georef_transform.data,
@@ -133,5 +133,53 @@ def test_adapt_transform_offset():
     np.testing.assert_allclose(
         transform.y_offset,
         gt_y_off,
+        rtol=1e-02,
+    )
+
+
+def test_apply_original_dem():
+    """
+    Test that the dem given to
+    the transformation.apply does not have its
+    georeference_transform modified,
+    only the returned dem does.
+    """
+
+    # Get "srtm_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("srtm_test_data")
+    # Load "srtm_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    # Load dem
+    from_dataset = dem_tools.load_dem(cfg["input_sec"]["path"])
+
+    # Define data
+    data = np.array(
+        [[1, 1, 1], [1, 1, 1], [-1, -32768, 1], [1, 2, -32768], [1, 1, -32768]],
+        dtype=np.float32,
+    )
+    # Create dataset from "srtm_test_data" DSM and specific nodata value
+    dataset = dem_tools.create_dem(
+        data=data,
+        transform=from_dataset.georef_transform.data,
+        img_crs=from_dataset.crs,
+        nodata=-32768,
+    )
+    # Define pixel offsets
+    x_offset = -1.43664
+    y_offset = 0.41903
+    z_offset = 0.0
+
+    # Create transform object
+    transform = transformation.Transformation(
+        x_offset=x_offset, y_offset=-y_offset, z_offset=z_offset
+    )
+    # Apply transform to original dataset
+    _ = transform.apply_transform(dataset)
+    # Test that the output_dataset_transformed
+    # has the same offsets as the ground truth
+    np.testing.assert_allclose(
+        from_dataset.georef_transform.data,
+        dataset.georef_transform,
         rtol=1e-02,
     )

@@ -162,16 +162,16 @@ def test_convert_pix_to_coord_pos_x_neg_y(initialize_transformation):
 def test_compute_gdal_translate_bounds():
     """
     Test the compute_offset_bounds function
-    Loads the DEMS present in "strm_test_data" and "gironde_test_data"
+    Loads the DEMS present in "srtm_test_data" and "gironde_test_data"
     test root data directory and computes the coordinate offset
     bounds for a given pixellic offset to test the resulting
     bounds.
     """
 
-    # Test with "strm_test_data" input dem
+    # Test with "srtm_test_data" input dem
     # Get "gironde_test_data" test
     # root data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data")
+    test_data_path = demcompare_test_data_path("srtm_test_data")
     # Load "gironde_test_data" demcompare
     # config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")

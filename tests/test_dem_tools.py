@@ -26,6 +26,7 @@ dem_tools module.
 # pylint:disable = duplicate-code
 # Standard imports
 import os
+from tempfile import TemporaryDirectory
 from typing import Dict
 
 # Third party imports
@@ -37,10 +38,15 @@ import xarray as xr
 # Demcompare imports
 from demcompare import dataset_tools, dem_tools
 from demcompare.dem_tools import DEFAULT_NODATA
-from demcompare.helpers_init import read_config_file
+from demcompare.helpers_init import (
+    compute_initialization,
+    mkdir_p,
+    read_config_file,
+    save_config_file,
+)
 
 # Tests helpers
-from .helpers import demcompare_path, demcompare_test_data_path
+from .helpers import demcompare_path, demcompare_test_data_path, temporary_dir
 
 # Force protected access to test protected functions
 # pylint:disable=protected-access
@@ -94,13 +100,13 @@ def fixture_initialize_dems_to_fuse():
 def test_load_dem():
     """
     Test the load_dem function
-    Loads the data present in "strm_test_data" test root
+    Loads the data present in "srtm_test_data" test root
     data directory and tests the loaded DEM Dataset.
 
     """
-    # Get "strm_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data")
-    # Load "strm_test_data" demcompare config from input/test_config.json
+    # Get "srtm_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("srtm_test_data")
+    # Load "srtm_test_data" demcompare config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
     # Load dem
@@ -810,7 +816,7 @@ def test_compute_dem_slope():
 
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data")
-    # Load "strm_test_data" demcompare config from input/test_config.json
+    # Load "srtm_test_data" demcompare config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
     # Load dem
@@ -951,3 +957,239 @@ def test_verify_fusion_layers_cfg_error(initialize_dems_to_fuse):
     # Test that an error is raised
     with pytest.raises(ValueError):
         dem_tools.verify_fusion_layers(ref, input_classif_cfg, "ref")
+
+
+def test_load_and_reproject_different_z_units():
+    """
+    Test that two dems loaded with different
+    alti units (ie. one in cm and another in m)
+    are correctly loaded and reprojected.
+    """
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config
+    # from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Create DEM with cm zunit
+    cfg["input_sec"]["path"] = os.path.join(test_data_path, "input/dem_cm.tif")
+    cfg["input_sec"]["zunit"] = "cm"
+
+    # Load original dems
+    ref_orig = dem_tools.load_dem(cfg["input_ref"]["path"])
+    sec_orig = dem_tools.load_dem(cfg["input_sec"]["path"])
+
+    reproj_sec, reproj_ref, adapting_factor = dem_tools.reproject_dems(
+        sec_orig, ref_orig
+    )
+
+    # Define ground truth values
+    gt_intersection_roi = (600255.0, 4990745.0, 689753.076, 5090117.757)
+    # Since sampling value is "sec",
+    # output resolutions is "sec"'s resolution
+    gt_output_yres = -500.00
+    gt_output_xres = 500.00
+    gt_output_shape = (199, 179)
+    gt_adapting_factor = (1.0, 1.0)
+    gt_output_trans = np.array(
+        [
+            6.002550e05,
+            5.000000e02,
+            0.000000e00,
+            5.090245e06,
+            0.000000e00,
+            -5.000000e02,
+        ]
+    )
+
+    # Test that both the output dems have the same gt values
+    # Tests dems shape
+    np.testing.assert_array_equal(
+        reproj_sec["image"].shape, reproj_ref["image"].shape
+    )
+    np.testing.assert_allclose(
+        reproj_sec["image"].shape, gt_output_shape, rtol=1e-03
+    )
+    np.testing.assert_allclose(
+        reproj_ref["image"].shape, gt_output_shape, rtol=1e-03
+    )
+    # Tests dems resolution
+    np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=1e-02)
+    np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=1e-02)
+    np.testing.assert_allclose(reproj_sec.xres, gt_output_xres, rtol=1e-02)
+    np.testing.assert_allclose(reproj_ref.xres, gt_output_xres, rtol=1e-02)
+    # Tests dems bounds
+    np.testing.assert_allclose(
+        reproj_sec.attrs["bounds"], gt_intersection_roi, rtol=1e-03
+    )
+    np.testing.assert_allclose(
+        reproj_ref.attrs["bounds"], gt_intersection_roi, rtol=1e-03
+    )
+    # Test adapting_factor
+    np.testing.assert_allclose(adapting_factor, gt_adapting_factor, rtol=1e-02)
+    # Test dems transform
+    np.testing.assert_allclose(
+        reproj_sec.georef_transform, gt_output_trans, atol=1e-02
+    )
+    np.testing.assert_allclose(
+        reproj_ref.georef_transform, gt_output_trans, atol=1e-02
+    )
+
+
+@pytest.mark.skip(reason="Not yet developped option in _init_")
+def test_classification_layer_mask_with_wrong_size():
+    """
+    Test that demcompare's load_dems function raises an error
+    when the input classification layer mask
+    of the dem has a different size than its support dem
+    """
+
+    # Get "srtm_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("srtm_test_data")
+    # Load "srtm_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+
+    cfg = read_config_file(test_cfg_path)
+
+    # Get different size classification layer
+    classif_layer_path = os.path.join(
+        test_data_path,
+        "input/Small_FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF",
+    )
+
+    # Set output_dir correctly
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+        mkdir_p(tmp_dir)
+        # blablablabla
+        cfg["input_sec"]["classification_layers"] = classif_layer_path
+
+        # Set a new test_config tmp file path
+        tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
+
+        # Save the new configuration inside the tmp dir
+        save_config_file(tmp_cfg_file, cfg)
+
+        # ici c'est un fail qui doit apparaitre
+        cfg = compute_initialization(tmp_cfg_file)
+
+
+def test_reproject_dems_without_intersection():
+    """
+    Test that demcompare's reproject_dems function
+    raises an error when the input dems
+    do not have a common intersection.
+    """
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config
+    # from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    cfg["input_sec"]["path"] = os.path.join(
+        test_data_path, "input/reduced_Gironde.tif"
+    )
+
+    # get data srtm
+    test_data_srtm_path = demcompare_test_data_path("srtm_test_data")
+    cfg["input_ref"]["path"] = os.path.join(
+        test_data_srtm_path, "input/srtm_ref.tif"
+    )
+
+    # Load original dems
+    ref_orig = dem_tools.load_dem(cfg["input_ref"]["path"])
+    sec_orig = dem_tools.load_dem(cfg["input_sec"]["path"])
+
+    with pytest.raises(NameError) as error_info:
+        _, _, _ = dem_tools.reproject_dems(sec_orig, ref_orig)
+        assert error_info.value == "ERROR: ROIs do not intersect"
+
+
+def test_translate_dem_original_dem():
+    """
+    Test that the dem given to the
+    translate function does not have its
+    georeference_transform modified,
+    only the returned dem does.
+    """
+
+    # Get "srtm_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("srtm_test_data")
+    # Load "srtm_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    # Load dem
+    from_dataset = dem_tools.load_dem(cfg["input_sec"]["path"])
+
+    # Define data
+    data = np.array(
+        [[1, 1, 1], [1, 1, 1], [-1, -32768, 1], [1, 2, -32768], [1, 1, -32768]],
+        dtype=np.float32,
+    )
+    # Create dataset from "srtm_test_data" DSM and specific nodata value
+    dem = dem_tools.create_dem(
+        data=data,
+        transform=from_dataset.georef_transform.data,
+        img_crs=from_dataset.crs,
+        nodata=-32768,
+    )
+    # Define pixel offsets
+    y_off_pix = -5
+    x_off_pix = 4
+
+    # Translate DEM
+    _ = dem_tools.translate_dem(dem, x_off_pix, y_off_pix)
+
+    # Test that the input dem in translate_dem
+    # doesn't have its georeference_transform modified
+    np.testing.assert_allclose(
+        from_dataset.georef_transform.data,
+        dem.georef_transform,
+        rtol=1e-02,
+    )
+
+
+def test_wrong_classification_map():
+    """
+    Test that the load_dem function
+    raises an error when given a
+    classification layer map path
+    that has different dimensions
+    than its support.
+    """
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config
+    # from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Get different size classification layer
+    classif_layer_path = os.path.join(
+        test_data_path,
+        "input/Small_FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF",
+    )
+    cfg["input_sec"]["classification_layers"] = classif_layer_path
+
+    # Initialize stats input configuration
+    input_classif_cfg = {
+        "Status": {
+            "type": "segmentation",
+            "classes": {
+                "valid": [0],
+                "KO": [1],
+                "Land": [2],
+                "NoData": [3],
+                "Outside_detector": [4],
+            },
+        }
+    }
+
+    # Test that an error is raised
+    with pytest.raises(KeyError):
+        _ = dem_tools.load_dem(
+            cfg["input_ref"]["path"], classification_layers=input_classif_cfg
+        )

@@ -26,6 +26,7 @@ methods in the Nuth et Kaab coregistration method.
 """
 # pylint:disable=protected-access
 # pylint:disable=duplicate-code
+# pylint:disable=too-many-lines
 # Standard imports
 import os
 
@@ -33,6 +34,7 @@ import os
 import numpy as np
 import pytest
 import scipy
+from json_checker import DictCheckerError
 
 # Demcompare imports
 from demcompare import coregistration, dem_tools
@@ -633,3 +635,87 @@ def test_crop_dem_with_offset_neg_x_neg_y(initialize_dem_and_coreg):
         int(np.floor(-x_offset)) : input_dem.shape[1],
     ]
     np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
+
+
+@pytest.mark.unit_tests
+def test_limit_iteration_number():
+    """
+    Test that the user can not specify
+    an iteration number higher than 15.
+    """
+
+    # Define cfg with too many iterations
+    cfg = {
+        "method_name": "nuth_kaab_internal",
+        "number_of_iterations": 16,
+        "estimated_initial_shift_x": 0,
+        "estimated_initial_shift_y": 0,
+    }
+
+    # Initialize coregistration object
+    # and verify DictCheckerError is raised
+    with pytest.raises(DictCheckerError):
+        _ = coregistration.Coregistration(cfg)
+
+
+@pytest.mark.unit_tests
+def test_limit_0_iteration_number():
+    """
+    Test that the user can not specify
+    0 as an iteration value.
+    """
+
+    # Define cfg with 0 iteration
+    cfg = {
+        "method_name": "nuth_kaab_internal",
+        "number_of_iterations": 0,
+        "estimated_initial_shift_x": 0,
+        "estimated_initial_shift_y": 0,
+    }
+
+    # Initialize coregistration object
+    # and verify DictCheckerError is raised
+    with pytest.raises(DictCheckerError):
+        _ = coregistration.Coregistration(cfg)
+
+
+@pytest.mark.unit_tests
+def test_type_iteration_number():
+    """
+    Test that the user can not specify
+    an iteration which is not an int.
+    """
+
+    # Define cfg with an str as iteration
+    cfg = {
+        "method_name": "nuth_kaab_internal",
+        "number_of_iterations": "test",
+        "estimated_initial_shift_x": 0,
+        "estimated_initial_shift_y": 0,
+    }
+
+    # Initialize coregistration object
+    # and verify DictCheckerError is raised
+    with pytest.raises(DictCheckerError):
+        _ = coregistration.Coregistration(cfg)
+
+
+@pytest.mark.unit_tests
+def test_limit_negative_iteration_number():
+    """
+    Test that the user can not specify
+    a negative iteration.
+    """
+
+    # Define cfg with negative iterations
+    cfg = {
+        "method_name": "nuth_kaab_internal",
+        "number_of_iterations": -5,
+        "estimated_initial_shift_x": 0,
+        "estimated_initial_shift_y": 0,
+    }
+
+    # Initialize coregistration object
+    # and verify DictCheckerError is raised
+    with pytest.raises(DictCheckerError):
+        _ = coregistration.Coregistration(cfg)

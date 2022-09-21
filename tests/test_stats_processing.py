@@ -24,10 +24,13 @@
 This module contains functions to test the
 methods in the StatsProcessing class.
 """
+import glob
+
 # pylint:disable = duplicate-code
 # pylint:disable = too-many-lines
 # Standard imports
 import os
+from tempfile import TemporaryDirectory
 
 # Third party imports
 import numpy as np
@@ -40,11 +43,11 @@ from demcompare.classification_layer import (
     ClassificationLayer,
     FusionClassificationLayer,
 )
-from demcompare.helpers_init import read_config_file
+from demcompare.helpers_init import mkdir_p, read_config_file, save_config_file
 from demcompare.metric import Metric
 
 # Tests helpers
-from .helpers import demcompare_test_data_path
+from .helpers import demcompare_test_data_path, temporary_dir
 
 
 @pytest.fixture(name="initialize_stats_processing")
@@ -1042,4 +1045,185 @@ def test_compute_stats_from_cfg_slope(initialize_stats_processing_with_metrics):
             classif_class=classif_class,
             mode="standard",
             metric="ratio_above_threshold",
+        )
+
+
+@pytest.mark.unit_tests
+def test_statistics_save_results():
+    """
+    Test that demcompare's execution with
+    the statistics save_results parameter
+    set to True correctly saves to disk all
+    classification layer's maps, csv and json files.
+    Test that demcompare's execution with
+    the statistics save_results parameter
+    set to False does not save to disk
+    the classification layer's maps, csv or json files.
+    """
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    # clean useless coregistration step
+    cfg.pop("coregistration")
+
+    gt_truth_list_for_fusion_global_status = [
+        "ref_rectified_support_map.tif",
+        "stats_results.csv",
+        "stats_results.json",
+    ]
+
+    gt_truth_list_for_slope = [
+        "ref_rectified_support_map.tif",
+        "sec_rectified_support_map.tif",
+        "stats_results.csv",
+        "stats_results.json",
+        "stats_results_exclusion.csv",
+        "stats_results_exclusion.json",
+        "stats_results_intersection.csv",
+        "stats_results_intersection.json",
+    ]
+
+    # Initialize sec and ref
+    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
+    ref = dem_tools.load_dem(
+        cfg["input_ref"]["path"],
+        classification_layers=(cfg["input_ref"]["classification_layers"]),
+    )
+    sec, ref, _ = dem_tools.reproject_dems(sec, ref)
+
+    # Compute slope and add it as a classification_layer
+    ref = dem_tools.compute_dem_slope(ref)
+    sec = dem_tools.compute_dem_slope(sec)
+    # Compute altitude diff for stats computation
+    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
+
+    # Test with statistics save_results parameter set to True
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+
+        mkdir_p(tmp_dir)
+        # Modify test's output dir in configuration to tmp test dir
+        cfg["output_dir"] = tmp_dir
+
+        # Set a new test_config tmp file path
+        tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
+
+        # Save the new configuration inside the tmp dir
+        save_config_file(tmp_cfg_file, cfg)
+
+        # Run demcompare with "strm_test_data"
+        # Put output_dir in coregistration dict config
+        demcompare.run(tmp_cfg_file)
+        tmp_cfg = read_config_file(tmp_cfg_file)
+
+        # Create StatsProcessing object
+        stats_processing = demcompare.StatsProcessing(tmp_cfg, stats_dem)
+        _ = stats_processing.compute_stats()
+
+        assert os.path.isfile(tmp_dir + "/stats/dem_for_stats.tif") is True
+
+        assert os.path.exists(tmp_dir + "/stats/Fusion0/") is True
+        list_basename = [
+            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Fusion0/*")
+        ]
+        assert (
+            all(
+                file in list_basename
+                for file in gt_truth_list_for_fusion_global_status
+            )
+            is True
+        )
+
+        assert os.path.exists(tmp_dir + "/stats/global/") is True
+        list_basename = [
+            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/global/*")
+        ]
+        assert (
+            all(
+                file in list_basename
+                for file in gt_truth_list_for_fusion_global_status
+            )
+            is True
+        )
+
+        assert os.path.exists(tmp_dir + "/stats/Slope0/") is True
+        list_basename = [
+            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Slope0/*")
+        ]
+        assert (
+            all(file in list_basename for file in gt_truth_list_for_slope)
+            is True
+        )
+
+        assert os.path.exists(tmp_dir + "/stats/Status/") is True
+        list_basename = [
+            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Status/*")
+        ]
+        assert (
+            all(
+                file in list_basename
+                for file in gt_truth_list_for_fusion_global_status
+            )
+            is True
+        )
+
+    # Test with statistics save_results parameter set to False
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+        cfg["statistics"]["save_results"] = "False"
+
+        mkdir_p(tmp_dir)
+        # Modify test's output dir in configuration to tmp test dir
+        cfg["output_dir"] = tmp_dir
+
+        # Create StatsProcessing object
+        stats_processing = demcompare.StatsProcessing(cfg, stats_dem)
+        _ = stats_processing.compute_stats()
+
+        assert os.path.isfile(tmp_dir + "/stats/dem_for_stats.tif") is False
+
+        assert os.path.exists(tmp_dir + "/stats/Fusion0/") is False
+        list_basename = [
+            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Fusion0/*")
+        ]
+        assert (
+            all(
+                file in list_basename
+                for file in gt_truth_list_for_fusion_global_status
+            )
+            is False
+        )
+
+        assert os.path.exists(tmp_dir + "/stats/global/") is False
+        list_basename = [
+            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/global/*")
+        ]
+        assert (
+            all(
+                file in list_basename
+                for file in gt_truth_list_for_fusion_global_status
+            )
+            is False
+        )
+
+        assert os.path.exists(tmp_dir + "/stats/Slope0/") is False
+        list_basename = [
+            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Slope0/*")
+        ]
+        assert (
+            all(file in list_basename for file in gt_truth_list_for_slope)
+            is False
+        )
+
+        assert os.path.exists(tmp_dir + "/stats/Status/") is False
+        list_basename = [
+            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Status/*")
+        ]
+        assert (
+            all(
+                file in list_basename
+                for file in gt_truth_list_for_fusion_global_status
+            )
+            is False
         )

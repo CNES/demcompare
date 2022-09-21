@@ -26,6 +26,7 @@ methods in the classification layer class.
 """
 
 # Third party imports
+
 import numpy as np
 import pytest
 
@@ -300,3 +301,127 @@ def test_create_mode_masks():
     np.testing.assert_allclose(
         gt_exclusion_mode_mask, mode_masks[2], rtol=1e-02
     )
+
+
+@pytest.mark.skip(reason="Not yet developped statistics verif in init")
+def test_statistics_classification_invalid_input_classes():
+    """
+    Test that demcompare's initialization fails
+    when the configuration file
+    specifies a classification layer
+    with invalid class values.
+    The error should be raised in advance,
+    before the coregistration step if it is present.
+    """
+
+    # Generate dsm with the following data
+    data = np.array([[1, 0, 1], [1, -9999, 1], [-1, 0, 1]], dtype=np.float32)
+    data_dataset = dem_tools.create_dem(data=data, nodata=-9999)
+    # Compute slope and add it as a classification_layer
+    data_dataset = dem_tools.compute_dem_slope(data_dataset)
+    # Classification layer configuration
+    _ = "Status"
+    _ = {
+        "type": "segmentation",
+        "classes": {
+            "valid": [0],
+            "KO": [1],
+            "Land": [2],
+            "NoData": [3],
+            "Outside_detector": [4],
+        },
+        "save_results": False,
+        "output_dir": "",
+        "nodata": -9999,
+        "metrics": _DEFAULT_TEST_METRICS,
+    }
+
+
+@pytest.mark.skip(reason="Not yet developped statistics verif in init")
+def test_statistics_classification_invalid_input_ranges():
+    """
+    Test that demcompare's initialization fails
+    when the configuration file specifies a
+    classification layer with invalid range values.
+    The error should be raised in advance,
+    before the coregistration step if it is present.
+    """
+
+    # Generate dsm with the following data
+    data = np.array([[1, 0, 1], [1, -9999, 1], [-1, 0, 1]], dtype=np.float32)
+    data_dataset = dem_tools.create_dem(data=data, nodata=-9999)
+    # Compute slope and add it as a classification_layer
+    data_dataset = dem_tools.compute_dem_slope(data_dataset)
+    # Classification layer configuration with wrong ranges
+    _ = "Slope0"
+    _ = {
+        "type": "slope",
+        "ranges": [np.nan, "0"],
+        "save_results": False,
+        "output_dir": "",
+        "nodata": -9999,
+        "metrics": _DEFAULT_TEST_METRICS,
+    }
+
+
+@pytest.mark.skip(reason="Not yet developped statistics verif in init")
+def test_demcompare_with_wrong_fusion_cfg():
+    """
+    Test that demcompare's initialization
+    fails when the configuration file
+    specifies a fusion layer with a
+    single layer to be fused.
+    The error should be raised in advance,
+    before the coregistration step if it is present.
+    """
+
+    # Generate dsm with the following data
+    data = np.array([[1, 0, 1], [1, -9999, 1], [-1, 0, 1]], dtype=np.float32)
+    data_dataset = dem_tools.create_dem(data=data, nodata=-9999)
+    # Compute slope and add it as a classification_layer
+    data_dataset = dem_tools.compute_dem_slope(data_dataset)
+    # Classification layer configuration
+    layer_name = "Slope0"
+    clayer = {
+        "type": "slope",
+        "ranges": [0, 5, 10, 25, 45],
+        "save_results": False,
+        "output_dir": "",
+        "nodata": -9999,
+        "metrics": _DEFAULT_TEST_METRICS,
+    }
+
+    # Initialize slope classification layer object
+    _ = ClassificationLayer(
+        name=layer_name,
+        classification_layer_kind=str(clayer["type"]),
+        dem=data_dataset,
+        cfg=clayer,
+    )
+
+    layer_name = "Status"
+    clayer = {
+        "type": "segmentation",
+        "classes": {
+            "valid": [0],
+            "KO": [1],
+            "Land": [2],
+            "NoData": [3],
+            "Outside_detector": [4],
+        },
+        "save_results": False,
+        "output_dir": "",
+        "nodata": -9999,
+        "metrics": _DEFAULT_TEST_METRICS,
+    }
+
+    # Initialize slope classification layer object
+    _ = ClassificationLayer(
+        name=layer_name,
+        classification_layer_kind=str(clayer["type"]),
+        dem=data_dataset,
+        cfg=clayer,
+    )
+
+    _ = "Fusion0"
+    _ = {"type": "fusion", "sec": ["Slope0"]}

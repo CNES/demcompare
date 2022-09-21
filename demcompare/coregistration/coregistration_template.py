@@ -377,7 +377,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         Save the dems obtained from the coregistration to .tif
         and updates its path on the demcompare_results file
 
-            - ./coregistration/reproj_DEM.tif -> reprojected sec
+            - ./coregistration/reproj_SEC.tif -> reprojected sec
             - ./coregistration/reproj_REF.tif -> reprojected ref
             - ./coregistration/reproj_coreg_SEC.tif -> reprojected
                coregistered sec
@@ -389,7 +389,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         # Saves reprojected DEM to file system
         self.reproj_sec = save_dem(
             self.reproj_sec,
-            os.path.join(self.output_dir, get_out_file_path("reproj_DEM.tif")),
+            os.path.join(self.output_dir, get_out_file_path("reproj_SEC.tif")),
         )
         # Saves reprojected REF to file system
         self.reproj_ref = save_dem(

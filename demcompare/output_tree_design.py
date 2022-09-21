@@ -35,7 +35,7 @@ default_OTD = {
     # coreg step
     "coreg_SEC.tif": "./coregistration/",
     "reproj_REF.tif": "./coregistration/",
-    "reproj_DEM.tif": "./coregistration/",
+    "reproj_SEC.tif": "./coregistration/",
     "reproj_coreg_REF.tif": "./coregistration/",
     "reproj_coreg_SEC.tif": "./coregistration/",
     "nuth_kaab_tmp_dir": "./coregistration/nuth_kaab_tmp_dir",

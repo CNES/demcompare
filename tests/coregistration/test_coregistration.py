@@ -24,9 +24,12 @@
 This module contains functions to test all the
 methods in the coregistration step.
 """
+# pylint:disable=too-many-lines
+import glob
 
 # Standard imports
 import os
+from tempfile import TemporaryDirectory
 from typing import Dict
 
 # Third party imports
@@ -34,12 +37,13 @@ import numpy as np
 import pytest
 
 # Demcompare imports
+import demcompare
 from demcompare import coregistration
 from demcompare.dem_tools import SamplingSourceParameter, load_dem
-from demcompare.helpers_init import read_config_file
+from demcompare.helpers_init import mkdir_p, read_config_file, save_config_file
 
 # Tests helpers
-from tests.helpers import demcompare_test_data_path
+from tests.helpers import demcompare_test_data_path, temporary_dir
 
 
 @pytest.mark.unit_tests
@@ -306,7 +310,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     )
 
 
-def test_compute_coregistration_with_strm_sampling_dem_and_initial_disparity():
+def test_compute_coregistration_with_srtm_sampling_dem_and_initial_disparity():
     """
     Test the compute_coregistration function:
     - Loads the data present in the test root data directory
@@ -317,14 +321,14 @@ def test_compute_coregistration_with_strm_sampling_dem_and_initial_disparity():
       on the demcompare_results output dict are corrects
 
     Test configuration:
-    - "strm_test_data" input DEMs
+    - "srtm_test_data" input DEMs
     - sampling value dem
     - coregistration method Nuth et kaab
     - non-zero initial disparity
     """
 
     # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data")
+    test_data_path = demcompare_test_data_path("srtm_test_data")
     # Load "gironde_test_data" demcompare config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
@@ -425,7 +429,7 @@ def test_compute_coregistration_with_strm_sampling_dem_and_initial_disparity():
     )
 
 
-def test_compute_coregistration_with_strm_sampling_ref_and_initial_disparity():
+def test_compute_coregistration_with_srtm_sampling_ref_and_initial_disparity():
     """
     Test the compute_coregistration function:
     - Loads the data present in the test root data directory
@@ -436,14 +440,14 @@ def test_compute_coregistration_with_strm_sampling_ref_and_initial_disparity():
       on the demcompare_results output dict are corrects
 
     Test configuration:
-    - "strm_test_data" input DEMs
+    - "srtm_test_data" input DEMs
     - sampling value ref
     - coregistration method Nuth et kaab
     - non-zero initial disparity
     """
 
     # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data")
+    test_data_path = demcompare_test_data_path("srtm_test_data")
     # Load "gironde_test_data" demcompare config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
@@ -642,7 +646,7 @@ def test_compute_coregistration_gironde_sampling_ref_and_initial_disparity():
     assert gt_sampling_source == coregistration_.sampling_source
 
 
-def test_compute_coregistration_with_default_coregistration_strm_sampling_dem():
+def test_compute_coregistration_with_default_coregistration_srtm_sampling_dem():
     """
     Test the compute_coregistration function:
     - Loads the data present in the test root data directory
@@ -651,14 +655,14 @@ def test_compute_coregistration_with_default_coregistration_strm_sampling_dem():
 
     Test configuration:
     - default coregistration without input configuration
-    - "strm_test_data" input DEMs
+    - "srtm_test_data" input DEMs
     - sampling value dem
     - coregistration method Nuth et kaab
     - non-zero initial disparity
     """
 
     # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data")
+    test_data_path = demcompare_test_data_path("srtm_test_data")
     # Load "gironde_test_data" demcompare config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
@@ -679,3 +683,276 @@ def test_compute_coregistration_with_default_coregistration_strm_sampling_dem():
     # Test that the output offsets and bias are the same as gt
     np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
     np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
+
+
+def test_coregistration_save_internal_dems():
+    """
+    Test that demcompare's execution with the
+    coregistration save_internal_dems parameter
+    set to True correctly saves the dems to disk
+    """
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Manually set the saving of internal dems to True
+    cfg["coregistration"]["save_internal_dems"] = "True"
+    # remove useless statistics part
+    cfg.pop("statistics")
+
+    gt_truth_list_files = [
+        "reproj_coreg_SEC.tif",
+        "reproj_coreg_REF.tif",
+        "reproj_SEC.tif",
+        "reproj_REF.tif",
+    ]
+
+    # Load dems
+    ref = load_dem(cfg["input_ref"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
+
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+
+        mkdir_p(tmp_dir)
+        # Modify test's output dir in configuration to tmp test dir
+        cfg["output_dir"] = tmp_dir
+
+        # Set a new test_config tmp file path
+        tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
+
+        # Save the new configuration inside the tmp dir
+        save_config_file(tmp_cfg_file, cfg)
+
+        # Run demcompare with "srtm_test_data"
+        # Put output_dir in coregistration dict config
+        demcompare.run(tmp_cfg_file)
+        tmp_cfg = read_config_file(tmp_cfg_file)
+        # Create Coregistration object
+        coregistration_ = coregistration.Coregistration(
+            tmp_cfg["coregistration"]
+        )
+
+        # compute coregistration
+        _ = coregistration_.compute_coregistration(sec, ref)
+
+        # test output_dir/coregistration creation
+        assert os.path.exists(tmp_dir + "/coregistration") is True
+
+        # get all files saved en output_dir/coregistration
+        list_test = [
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/coregistration/*")
+        ]
+        # test all files in gt_truth_list_files are in coregistration directory
+        assert all(file in list_test for file in gt_truth_list_files) is True
+
+
+def test_coregistration_save_coreg_method_outputs():
+    """
+    Test that demcompare's execution with the coregistration
+    save_coreg_method_outputs parameter set to True correctly
+    saves to disk the iteration plots of Nuth et kaab.
+    Test that demcompare's execution with the coregistration
+    save_coreg_method_outputs parameter set to False does
+    not save to disk the iteration plots of Nuth et kaab.
+    """
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    # remove useless statistics part
+    cfg.pop("statistics")
+    # Set save_coreg_method_outputs to True
+    cfg["coregistration"]["save_coreg_method_outputs"] = "True"
+
+    gt_truth_list_files = [
+        "ElevationDiff_AfterCoreg.png",
+        "ElevationDiff_BeforeCoreg.png",
+        "nuth_kaab_iter#0.png",
+        "nuth_kaab_iter#1.png",
+        "nuth_kaab_iter#2.png",
+        "nuth_kaab_iter#3.png",
+        "nuth_kaab_iter#4.png",
+        "nuth_kaab_iter#5.png",
+    ]
+
+    # Load dems
+    ref = load_dem(cfg["input_ref"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
+
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+        mkdir_p(tmp_dir)
+        # Modify test's output dir in configuration to tmp test dir
+        cfg["output_dir"] = tmp_dir
+
+        # Set a new test_config tmp file path
+        tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
+
+        # Save the new configuration inside the tmp dir
+        save_config_file(tmp_cfg_file, cfg)
+
+        # Run demcompare with "srtm_test_data"
+        # Put output_dir in coregistration dict config
+        demcompare.run(tmp_cfg_file)
+        tmp_cfg = read_config_file(tmp_cfg_file)
+        # Create Coregistration object
+        coregistration_ = coregistration.Coregistration(
+            tmp_cfg["coregistration"]
+        )
+
+        # compute coregistration
+        _ = coregistration_.compute_coregistration(sec, ref)
+
+        # test output_dir/coregistration/nuth_kaab_tmp_dir/ creation
+        assert (
+            os.path.exists(tmp_dir + "/coregistration/nuth_kaab_tmp_dir/")
+            is True
+        )
+
+        # get all files saved in output_dir/coregistration/nuth_kaab_tmp_dir/
+        list_test = [
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/coregistration/nuth_kaab_tmp_dir/*")
+        ]
+        # test all files in gt_truth_list_files are in coregistration directory
+        assert all(file in list_test for file in gt_truth_list_files) is True
+
+    # Test with save_coreg_method_outputs set to False
+    cfg["coregistration"]["save_coreg_method_outputs"] = "False"
+
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+        mkdir_p(tmp_dir)
+        # Modify test's output dir in configuration to tmp test dir
+        cfg["output_dir"] = tmp_dir
+
+        # Set a new test_config tmp file path
+        tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
+
+        # Save the new configuration inside the tmp dir
+        save_config_file(tmp_cfg_file, cfg)
+
+        # Run demcompare with "srtm_test_data"
+        # Put output_dir in coregistration dict config
+        demcompare.run(tmp_cfg_file)
+        tmp_cfg = read_config_file(tmp_cfg_file)
+        # Create Coregistration object
+        coregistration_ = coregistration.Coregistration(
+            tmp_cfg["coregistration"]
+        )
+
+        # compute coregistration
+        _ = coregistration_.compute_coregistration(sec, ref)
+
+        # test output_dir/coregistration/nuth_kaab_tmp_dir/ creation
+        assert (
+            os.path.exists(tmp_dir + "/coregistration/nuth_kaab_tmp_dir/")
+            is True
+        )
+
+        # get all files saved in output_dir/coregistration/nuth_kaab_tmp_dir/
+        list_test = [
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/coregistration/nuth_kaab_tmp_dir/*")
+        ]
+        # test list_test is empty
+        assert list_test == []
+
+
+def test_coregistration_with_output_dir():
+    """
+    Test that demcompare's execution with
+    the output_dir being specified correctly
+    saves to disk the dem coreg_sec.tif and
+    the output file demcompare_results.json
+    Test that demcompare's execution with
+    the output_dir not being specified and
+    the parameters save_internal_dems and/or
+    save_coreg_method_outputs set to True
+    does rise an error.
+    """
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Load dems
+    ref = load_dem(cfg["input_ref"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
+
+    # Set output_dir correctly
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+        mkdir_p(tmp_dir)
+        # Modify test's output dir in configuration to tmp test dir
+        cfg["output_dir"] = tmp_dir
+
+        # Set a new test_config tmp file path
+        tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
+
+        # Save the new configuration inside the tmp dir
+        save_config_file(tmp_cfg_file, cfg)
+
+        # Run demcompare with "srtm_test_data"
+        # Put output_dir in coregistration dict config
+        demcompare.run(tmp_cfg_file)
+        tmp_cfg = read_config_file(tmp_cfg_file)
+        # Create Coregistration object
+        coregistration_ = coregistration.Coregistration(
+            tmp_cfg["coregistration"]
+        )
+
+        # compute coregistration
+        _ = coregistration_.compute_coregistration(sec, ref)
+
+        # test output_dir/coregistration/coreg_SEC.tif creation
+        assert os.path.isfile(tmp_dir + "/coregistration/coreg_SEC.tif") is True
+        # test output_dir/coregistration/coreg_SEC.tif creation
+        assert os.path.isfile(tmp_dir + "/demcompare_results.json") is True
+
+        # Test with save_coreg_method_outputs set to False
+        cfg.pop("output_dir")
+        # parameters save_internal_dems and save_coreg_method_outputs
+        # set to True
+        cfg["coregistration"]["save_coreg_method_outputs"] = "True"
+        cfg["coregistration"]["save_internal_dems"] = "True"
+
+        # Create coregistration object
+        with pytest.raises(SystemExit):
+            _ = coregistration.Coregistration(cfg["coregistration"])
+
+
+def test_coregistration_with_wrong_initial_disparities():
+    """
+    Test that demcompare's initialization
+    fails when the coregistration specifies
+    an invalid initial disparity value.
+    """
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Load dems
+    ref = load_dem(cfg["input_ref"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
+
+    # Modify cfg's sampling_source (default is "sec")
+    cfg["coregistration"]["sampling_source"] = SamplingSourceParameter.REF.value
+
+    # Modify cfg's estimated_initial_shift
+    cfg["coregistration"]["estimated_initial_shift_x"] = np.nan
+    cfg["coregistration"]["estimated_initial_shift_y"] = np.nan
+
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
+
+    # Compute coregistration
+    with pytest.raises(ValueError):
+        _ = coregistration_.compute_coregistration(sec, ref)

@@ -21,7 +21,7 @@
 
 """
 This module contains functions to test Demcompare end2end with
-the "strm_test_data" test root data
+the "srtm_test_data" test root data
 """
 
 # Standard imports
@@ -48,23 +48,23 @@ from .helpers import (
 
 
 @pytest.mark.end2end_tests
-def test_demcompare_strm_test_data():
+def test_demcompare_srtm_test_data():
     """
-    strm_test_data main end2end test.
+    srtm_test_data main end2end test.
     Test that the outputs given by the Demcompare execution
-    of data/strm_test_data/input/test_config.json
+    of data/srtm_test_data/input/test_config.json
     are the same as the reference ones
-    in data/strm_test_data/ref_output/
+    in data/srtm_test_data/ref_output/
 
     """
-    # Get "strm_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data")
+    # Get "srtm_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("srtm_test_data")
 
-    # Load "strm_test_data" demcompare config from input/test_config.json
+    # Load "srtm_test_data" demcompare config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     test_cfg = read_config_file(test_cfg_path)
 
-    # Get "strm_test_data" demcompare reference output path for
+    # Get "srtm_test_data" demcompare reference output path for
     test_ref_output_path = os.path.join(test_data_path, "ref_output")
 
     # Create temporary directory for test output
@@ -80,7 +80,7 @@ def test_demcompare_strm_test_data():
         # Save the new configuration inside the tmp dir
         save_config_file(tmp_cfg_file, test_cfg)
 
-        # Run demcompare with "strm_test_data"
+        # Run demcompare with "srtm_test_data"
         # configuration (and replace conf file)
         demcompare.run(tmp_cfg_file)
 
@@ -297,24 +297,24 @@ def test_demcompare_strm_test_data():
 
 
 @pytest.mark.end2end_tests
-def test_demcompare_strm_test_data_with_roi():
+def test_demcompare_srtm_test_data_with_roi():
     """
-    strm_test_data_with_roi main end2end test with ROI input.
+    srtm_test_data_with_roi main end2end test with ROI input.
     Test that the outputs given by the Demcompare execution
-    of data/strm_test_data_with_roi/input/test_config.json are the same
-    as the reference ones in data/strm_test_data_with_roi/ref_output/
+    of data/srtm_test_data_with_roi/input/test_config.json are the same
+    as the reference ones in data/srtm_test_data_with_roi/ref_output/
 
     """
-    # Get "strm_test_data_with_roi" test root
+    # Get "srtm_test_data_with_roi" test root
     # data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data_with_roi")
+    test_data_path = demcompare_test_data_path("srtm_test_data_with_roi")
 
-    # Load "strm_test_data_with_roi" demcompare
+    # Load "srtm_test_data_with_roi" demcompare
     # config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     test_cfg = read_config_file(test_cfg_path)
 
-    # Get "strm_test_data_with_roi" demcompare reference output path for
+    # Get "srtm_test_data_with_roi" demcompare reference output path for
     test_ref_output_path = os.path.join(test_data_path, "ref_output")
 
     # Create temporary directory for test output
@@ -330,7 +330,7 @@ def test_demcompare_strm_test_data_with_roi():
         # Save the new configuration inside the tmp dir
         save_config_file(tmp_cfg_file, test_cfg)
 
-        # Run demcompare with "strm_test_data" configuration
+        # Run demcompare with "srtm_test_data" configuration
         # (and replace conf file)
         demcompare.run(tmp_cfg_file)
 

@@ -45,14 +45,14 @@ from .helpers import demcompare_path, demcompare_test_data_path
 def test_reproject_dataset():
     """
     Test the reproject_dataset function
-    Loads the DEMS present in "strm_test_data" and "gironde_test_data"
+    Loads the DEMS present in "srtm_test_data" and "gironde_test_data"
     test root data directory and reprojects one
     onto another to test the obtained
     reprojected DEMs.
     """
     # Generate the "reproject_on_dataset" with the
     # following data, transform and nodata
-    # and "strm_test_data" DSM's georef
+    # and "srtm_test_data" DSM's georef
     data = np.ones((1000, 1000))
     trans = np.array(
         [
@@ -66,9 +66,9 @@ def test_reproject_dataset():
     )
     nodata = -33
 
-    # Get "strm_test_data" test
+    # Get "srtm_test_data" test
     # root data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data")
+    test_data_path = demcompare_test_data_path("srtm_test_data")
     # Load "gironde_test_data" demcompare
     # config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
@@ -132,13 +132,13 @@ def test_reproject_dataset():
 def test_get_geoid_offset():
     """
     Test the _get_geoid_offset function
-    Loads the DEMS present in "strm_test_data" test root data
+    Loads the DEMS present in "srtm_test_data" test root data
     directory and projects it on the geoid to test
     the obtained dataset's geoid offset values.
     """
-    # Get "strm_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data")
-    # Load "strm_test_data" demcompare config from input/test_config.json
+    # Get "srtm_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("srtm_test_data")
+    # Load "srtm_test_data" demcompare config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
     # Geoid path
@@ -159,7 +159,7 @@ def test_get_geoid_offset():
         ]
     )
     nodata = -32768
-    # Create dataset from the strm_test_data
+    # Create dataset from the srtm_test_data
     # DSM with the defined data, bounds,
     # transform and nodata values
     dataset = dem_tools.create_dem(
@@ -195,13 +195,13 @@ def test_get_geoid_offset():
 def test_get_geoid_offset_error():
     """
     Test the _get_geoid_offset function
-    Loads the DEMS present in "strm_test_data" test root data
+    Loads the DEMS present in "srtm_test_data" test root data
     directory and projects it on the geoid to test
     the obtained dataset's geoid offset values.
     """
-    # Get "strm_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("strm_test_data")
-    # Load "strm_test_data" demcompare config from input/test_config.json
+    # Get "srtm_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("srtm_test_data")
+    # Load "srtm_test_data" demcompare config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     cfg = read_config_file(test_cfg_path)
     # Geoid path

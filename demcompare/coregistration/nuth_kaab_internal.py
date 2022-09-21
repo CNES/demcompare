@@ -39,6 +39,7 @@ from typing import Tuple, Union
 import matplotlib.pyplot as pl
 import numpy as np
 import xarray as xr
+from json_checker import And
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import leastsq
 
@@ -123,8 +124,9 @@ class NuthKaabInternal(
             cfg["number_of_iterations"] = self.DEFAULT_ITERATIONS
 
         # Add subclass parameter to the default schema
-        self.schema["number_of_iterations"] = cfg["number_of_iterations"]
-
+        self.schema["number_of_iterations"] = And(
+            int, lambda input: input < 16, lambda input: input > 0
+        )
         return cfg
 
     def _coregister_dems_algorithm(  # pylint:disable=too-many-locals
