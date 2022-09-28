@@ -64,6 +64,8 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/source/apidoc/
+
 
 # PyBuilder
 target/
@@ -104,3 +106,5 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
+
+

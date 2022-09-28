@@ -4,10 +4,10 @@
 Command line
 ============
 
-You can run too functions with the ``mesh_3d`` cli:
+You can run too functions with the ``mesh3d`` cli:
 
-* ``mesh_3d reconstruct`` launches the 3D reconstruction pipeline according to the user specifications
-* ``mesh_3d evaluate`` computes metrics between two point clouds and saves visuals for qualitative analysis
+* ``mesh3d reconstruct`` launches the 3D reconstruction pipeline according to the user specifications
+* ``mesh3d evaluate`` computes metrics between two point clouds and saves visuals for qualitative analysis
 
 Reconstruct
 ===========
@@ -72,7 +72,7 @@ Where:
 * ``input_path``: Filepath to the input. Should either be a point cloud or a mesh.
 * ``output_dir``: Directory path to the output folder where to save results.
 * ``initial_state`` (optional, default= ```initial_pcd```): Initial state in the state machine. If you input a point cloud, it should be ```initial_pcd```. If you input a mesh, it could either be ```initial_pcd``` (you can compute new values over the points) or ```meshed_pcd``` (if for instance you only want to texture an already existing mesh).
-* ``state_machine``: List of steps to process the input according to a predefined state machine (see below). Each step has three possible keys:``action`` (str) which corresponds to the trigger name, ``method`` (str) which specifies the method to use to do that step (possible methods are available in the ``/mesh_3d/param.py`` file, by default it is the first method that is selected), ``params`` (dict) which specifies in a dictionary the parameters for each method.
+* ``state_machine``: List of steps to process the input according to a predefined state machine (see below). Each step has three possible keys:``action`` (str) which corresponds to the trigger name, ``method`` (str) which specifies the method to use to do that step (possible methods are available in the ``/mesh3d/param.py`` file, by default it is the first method that is selected), ``params`` (dict) which specifies in a dictionary the parameters for each method.
 
 .. image:: images/fig_state_machine.png
     :alt: Mesh 3D State Machine
@@ -90,7 +90,7 @@ Finally, you can launch the following commands to activate the virtual environme
 .. code-block:: bash
 
     source /venv/bin/activate
-    mesh_3d reconstruct /path/to/config.json
+    mesh3d reconstruct /path/to/config.json
 
 
 Evaluate
@@ -121,4 +121,4 @@ Finally, you can launch the following commands to activate the virtual environme
 .. code-block:: bash
 
     source /venv/bin/activate
-    mesh_3d evaluate /path/to/config.json
+    mesh3d evaluate /path/to/config.json

@@ -1,10 +1,10 @@
 <div align="center">
-  <a href="https://gitlab.cnes.fr/cars/mesh_3d"><img src="docs/source/images/picto_transparent.png" alt="CARS" title="CARS"  width="20%"></a>
+  <a href="https://gitlab.cnes.fr/cars/mesh3d"><img src="docs/source/images/picto_transparent.png" alt="CARS" title="CARS"  width="20%"></a>
 
 <h4>Mesh 3D</h4>
 
 [![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
-
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0/)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](CONTRIBUTING.md)
 
 <p>
@@ -27,7 +27,7 @@ Mesh 3D short description:
 
 * Free software: Apache Software License 2.0
 
-[//]: # (* Documentation: https://mesh-3d.readthedocs.io.)
+[//]: # (* Documentation: https://mesh3d.readthedocs.io.)
 
 
 ## Requirements
@@ -61,15 +61,15 @@ TODO
 
 Git clone the repository, open a terminal and launch the following commands:
 ```bash
-cd path/to/dir/mesh_3d
+cd path/to/dir/mesh3d
 make install
 ```
 
 ### Execute
 
-You can run too functions with the `mesh_3d` cli:
-* `mesh_3d reconstruct` launches the 3D reconstruction pipeline according to the user specifications
-* `mesh_3d evaluate` computes metrics between two point clouds and saves visuals for qualitative analysis
+You can run two functions with the `mesh3d` cli:
+* `mesh3d reconstruct` launches the 3D reconstruction pipeline according to the user specifications
+* `mesh3d evaluate` computes metrics between two point clouds and saves visuals for qualitative analysis
 
 #### Reconstruct
 
@@ -129,13 +129,13 @@ Configure the pipeline in a JSON file `/path/to/config.json`:
 Where:
 * `input_path`: Filepath to the input. Should either be a point cloud or a mesh.
 * `output_dir`: Directory path to the output folder where to save results.
-* `initial_state` (optional, default=`"initial_pcd"`): Initial state in the state machine. If you input a point cloud, 
-it should be `"initial_pcd"`. If you input a mesh, it could either be `"initial_pcd"` (you can compute new 
+* `initial_state` (optional, default=`"initial_pcd"`): Initial state in the state machine. If you input a point cloud,
+it should be `"initial_pcd"`. If you input a mesh, it could either be `"initial_pcd"` (you can compute new
 values over the points) or `"meshed_pcd"` (if for instance you only want to texture an already existing mesh).
-* `state_machine`: List of steps to process the input according to a predefined state machine (see below). 
-Each step has three possible keys:`action` (str) which corresponds to the trigger name, `method` (str) which 
-specifies the method to use to do that step (possible methods are available in the `/mesh_3d/param.py` file,
-by default it is the first method that is selected), `params` (dict) which specifies in a dictionary the parameters 
+* `state_machine`: List of steps to process the input according to a predefined state machine (see below).
+Each step has three possible keys:`action` (str) which corresponds to the trigger name, `method` (str) which
+specifies the method to use to do that step (possible methods are available in the `/mesh3d/param.py` file,
+by default it is the first method that is selected), `params` (dict) which specifies in a dictionary the parameters
 for each method.
 <img src="fig_state_machine.png">
 
@@ -148,12 +148,12 @@ If a texturing step is specified, then the following parameters become mandatory
 Finally, you can launch the following commands to activate the virtual environment and run the pipeline:
 ```bash
 source /venv/bin/activate
-mesh_3d reconstruct /path/to/config.json
+mesh3d reconstruct /path/to/config.json
 ```
 
 #### Evaluate
 
-The evaluation function computes a range of metrics between two point clouds and outputs visuals for 
+The evaluation function computes a range of metrics between two point clouds and outputs visuals for
 qualitative analysis.
 
 Configure the pipeline in a JSON file `/path/to/config.json`:
@@ -171,19 +171,17 @@ Where:
 * `output_dir`: Directory path to the output folder where to save results.
 
 Finally, you can launch the following commands to activate the virtual environment and run the evaluation:
+
 ```bash
-source /venv/bin/activate
-mesh_3d evaluate /path/to/config.json
+source venv/bin/activate
+mesh3d evaluate /path/to/config.json
 ```
 
 ## Documentation
 
-
 Go in docs/ directory
 
-
-
-* Documentation: https://mesh-3d.readthedocs.io.
+* Documentation: https://mesh3d.readthedocs.io.
 
 
 ## Contribution

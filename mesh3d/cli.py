@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
+# Copyright (C) 2022 CNES.
 #
-# This file is part of mesh_3d
+# This file is part of mesh3d
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
-Console script for mesh_3d.
+Console script for mesh3d.
 """
 
 import argparse
@@ -70,7 +69,7 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    """Console script for mesh_3d."""
+    """Console script for mesh3d."""
 
     # get parser
     parser = get_parser()
@@ -79,15 +78,15 @@ def main() -> None:
     # run mesh 3d pipeline
     if args.command == "reconstruct":
         # Reconstruction pipeline
-        from . import mesh_3d_reconstruct
+        from . import mesh3d_reconstruct
 
-        mesh_3d_reconstruct.main(args.config)
+        mesh3d_reconstruct.main(args.config)
 
     elif args.command == "evaluate":
         # Evaluation pipeline
-        from . import mesh_3d_evaluate
+        from . import mesh3d_evaluate
 
-        mesh_3d_evaluate.main(args.config)
+        mesh3d_evaluate.main(args.config)
 
     else:
         raise NotImplementedError(f"Command '{args.command}' is unknown.")

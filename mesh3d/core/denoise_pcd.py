@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
+# Copyright (C) 2022 CNES.
 #
-# This file is part of mesh_3d
+# This file is part of mesh3d
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
 Denoising methods aiming at smoothing surfaces without losing genuine high-frequency information.
 """
@@ -222,7 +221,9 @@ def compute_pcd_normals(
             color_data = pcd.get_colors()
 
         # Loop on each point of the data to compute its normal
-        for k, row in tqdm(enumerate(ind), desc="Normal computation by PCA per point"):
+        for k, row in tqdm(
+            enumerate(ind), desc="Normal computation by PCA per point"
+        ):
 
             if weights_distance:
                 # Weighting of the variance according to the distance to the neighbours

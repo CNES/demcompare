@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
+# Copyright (C) 2022 CNES.
 #
-# This file is part of mesh_3d
+# This file is part of mesh3d
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
 Meshing methods to create a surface from the point cloud.
 """
@@ -28,19 +27,21 @@ import matplotlib.tri as mtri
 import numpy as np
 import open3d as o3d
 import pandas as pd
-from scipy.spatial import Delaunay
 from loguru import logger
+from scipy.spatial import Delaunay
 
 from ..core.denoise_pcd import compute_pcd_normals_o3d
 from ..tools.handlers import Mesh, PointCloud
 from ..tools.point_cloud_io import df2o3d
 
 
-def ball_pivoting_reconstruction(pcd: PointCloud,
-                                 radii: Union[list, float, None] = 0.6,
-                                 normal_search_method: str = "knn",
-                                 normal_nb_neighbor: int = 30,
-                                 normal_radius: float = 2.) -> Mesh:
+def ball_pivoting_reconstruction(
+    pcd: PointCloud,
+    radii: Union[list, float, None] = 0.6,
+    normal_search_method: str = "knn",
+    normal_nb_neighbor: int = 30,
+    normal_radius: float = 2.0,
+) -> Mesh:
     """
     Bernardini, Fausto et al. “The ball-pivoting algorithm for surface reconstruction.” IEEE Transactions on
     Visualization and Computer Graphics 5 (1999): 349-359.
@@ -80,15 +81,23 @@ def ball_pivoting_reconstruction(pcd: PointCloud,
 
     # add normals
     if not pcd.has_normals:
-        logger.warning("Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
-                       "or 'n_z'). The normal computation will be launched with open3d.")
+        logger.warning(
+            "Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
+            "or 'n_z'). The normal computation will be launched with open3d."
+        )
 
-        pcd = compute_pcd_normals_o3d(pcd, neighbour_search_method=normal_search_method,
-                                      radius=normal_radius, knn=normal_nb_neighbor)
+        pcd = compute_pcd_normals_o3d(
+            pcd,
+            neighbour_search_method=normal_search_method,
+            radius=normal_radius,
+            knn=normal_nb_neighbor,
+        )
         pcd.set_o3d_normals()
 
     else:
-        pcd.o3d_pcd.normals = o3d.utility.Vector3dVector(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
+        pcd.o3d_pcd.normals = o3d.utility.Vector3dVector(
+            pcd.df[["n_x", "n_y", "n_z"]].to_numpy()
+        )
 
     # Mesh point cloud
     o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
@@ -103,15 +112,16 @@ def ball_pivoting_reconstruction(pcd: PointCloud,
 
 
 def poisson_reconstruction(
-        pcd: PointCloud,
-        depth: int = 8,
-        width: int = 0,
-        scale: float = 1.1,
-        linear_fit: bool = False,
-        n_threads: int = -1,
-        normal_search_method: str = "knn",
-        normal_nb_neighbor: int = 30,
-        normal_radius: float = 2.) -> Mesh:
+    pcd: PointCloud,
+    depth: int = 8,
+    width: int = 0,
+    scale: float = 1.1,
+    linear_fit: bool = False,
+    n_threads: int = -1,
+    normal_search_method: str = "knn",
+    normal_nb_neighbor: int = 30,
+    normal_radius: float = 2.0,
+) -> Mesh:
     """
     Kazhdan, Michael M. et al. “Poisson surface reconstruction.” SGP '06 (2006).
 
@@ -160,15 +170,23 @@ def poisson_reconstruction(
 
     # add normals
     if not pcd.has_normals:
-        logger.warning("Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
-                       "or 'n_z'). The normal computation will be launched with open3d.")
+        logger.warning(
+            "Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
+            "or 'n_z'). The normal computation will be launched with open3d."
+        )
 
-        pcd = compute_pcd_normals_o3d(pcd, neighbour_search_method=normal_search_method,
-                                      radius=normal_radius, knn=normal_nb_neighbor)
+        pcd = compute_pcd_normals_o3d(
+            pcd,
+            neighbour_search_method=normal_search_method,
+            radius=normal_radius,
+            knn=normal_nb_neighbor,
+        )
         pcd.set_o3d_normals()
 
     else:
-        pcd.o3d_pcd.normals = o3d.utility.Vector3dVector(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
+        pcd.o3d_pcd.normals = o3d.utility.Vector3dVector(
+            pcd.df[["n_x", "n_y", "n_z"]].to_numpy()
+        )
 
     # Mesh point cloud
     o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(

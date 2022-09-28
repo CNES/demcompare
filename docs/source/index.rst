@@ -4,6 +4,10 @@ Welcome to Mesh 3D's documentation!
 This library was created by Lisa Vo Thanh (Magellium) and Chloé Thenoz (Magellium) during a CNES R&T
 (Research & Technology) project for surface reconstruction from a photogrammetric point cloud.
 
+Copyright: CNES
+
+**Contact:** cars AT cnes.fr
+
 .. toctree::
    :maxdepth: 2
    :caption: User Guide

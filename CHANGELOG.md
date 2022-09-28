@@ -15,5 +15,5 @@ A new section Unreleased is opened then for next dev phase.
 ## 0.1.0 First Official Release (2022-06-27)
 
 ### Added
-- Add mesh_3d features
+- Add mesh3d features
 - Detail the release !!

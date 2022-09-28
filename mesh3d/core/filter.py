@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
+# Copyright (C) 2022 CNES.
 #
-# This file is part of mesh_3d
+# This file is part of mesh3d
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
 Filtering methods aiming at removing outliers or groups of outliers from the point cloud.
 """
@@ -29,13 +28,16 @@ import open3d as o3d
 import pandas as pd
 from loguru import logger
 from scipy.spatial import KDTree
-# cars v3
-# from cars.steps.point_cloud import small_components_filtering, statistical_outliers_filtering
 
 from ..tools.handlers import PointCloud
 
+# cars v3
+# from cars.steps.point_cloud import small_components_filtering, statistical_outliers_filtering
 
-def statistical_filtering_outliers_o3d(pcd: PointCloud, nb_neighbors: int, std_factor: float) -> PointCloud:
+
+def statistical_filtering_outliers_o3d(
+    pcd: PointCloud, nb_neighbors: int, std_factor: float
+) -> PointCloud:
     """
     This method removes points which have mean distances with their k nearest neighbors
     that are greater than a distance threshold (dist_thresh).
@@ -82,7 +84,9 @@ def statistical_filtering_outliers_o3d(pcd: PointCloud, nb_neighbors: int, std_f
     return pcd
 
 
-def radius_filtering_outliers_o3(pcd: PointCloud, radius: float, nb_points: int) -> PointCloud:
+def radius_filtering_outliers_o3(
+    pcd: PointCloud, radius: float, nb_points: int
+) -> PointCloud:
     """
     This method removes points that have few neighbors in a given sphere around them
     For each point, it computes the number of neighbors contained in a sphere of chosen radius,
@@ -108,7 +112,9 @@ def radius_filtering_outliers_o3(pcd: PointCloud, radius: float, nb_points: int)
         pcd.set_o3d_pcd_from_df()
 
     # Apply radius filtering
-    pcd.o3d_pcd, ind_valid_pts = pcd.o3d_pcd.remove_radius_outlier(nb_points, radius)
+    pcd.o3d_pcd, ind_valid_pts = pcd.o3d_pcd.remove_radius_outlier(
+        nb_points, radius
+    )
 
     # Get the point cloud filtered of the outlier points
     pcd.df = pcd.df.loc[ind_valid_pts]
@@ -123,7 +129,9 @@ def radius_filtering_outliers_o3(pcd: PointCloud, radius: float, nb_points: int)
     return pcd
 
 
-def local_density_analysis(pcd: PointCloud, nb_neighbors: int, proba_thresh: Union[None, float] = None) -> PointCloud:
+def local_density_analysis(
+    pcd: PointCloud, nb_neighbors: int, proba_thresh: Union[None, float] = None
+) -> PointCloud:
     """
     Compute the probability of a point to be an outlier based on the local density.
 
@@ -170,7 +178,9 @@ def local_density_analysis(pcd: PointCloud, nb_neighbors: int, proba_thresh: Uni
 
         # compute the local density
         mean_neighbors_distances = np.sum(distances) / nb_neighbors
-        density = (1 / nb_neighbors) * np.sum(np.exp(-distances / mean_neighbors_distances))
+        density = (1 / nb_neighbors) * np.sum(
+            np.exp(-distances / mean_neighbors_distances)
+        )
 
         # define the probability of the point to be an outlier
         proba = 1 - density

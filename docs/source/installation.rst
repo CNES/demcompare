@@ -5,7 +5,7 @@ Install
 ============
 
 
-Quick installation via CMake
+Quick installation via Make
 -----------------------------
 
 Git clone the repository, open a terminal and launch the following commands:
@@ -19,7 +19,7 @@ Git clone the repository, open a terminal and launch the following commands:
     # Make sure to check the right way to do it, whether you are internal or external to CNES
     # Internal: https://confluence.cnes.fr/pages/viewpage.action?pageId=26166114
     # External: https://confluence.cnes.fr/pages/viewpage.action?pageId=26159013
-    git clone git@gitlab.cnes.fr:cars/etudes/rt_mesh_3d.git .
+    git clone git@gitlab.cnes.fr:cars/etudes/rt_mesh3d.git .
 
     # Install
     make install
@@ -29,7 +29,7 @@ Git clone the repository, open a terminal and launch the following commands:
     source /path/to/desired/folder/NAME_OF_VENV/bin/activate
 
     # Test if it works
-    mesh_3d -h
+    mesh3d -h
 
 It will install the virtual environment and all necessary to run the code.
 
@@ -59,10 +59,10 @@ it dynamically).
     # Make sure to check the right way to do it, whether you are internal or external to CNES
     # Internal: https://confluence.cnes.fr/pages/viewpage.action?pageId=26166114
     # External: https://confluence.cnes.fr/pages/viewpage.action?pageId=26159013
-    git clone git@gitlab.cnes.fr:cars/etudes/rt_mesh_3d.git .
+    git clone git@gitlab.cnes.fr:cars/etudes/rt_mesh3d.git .
 
-    # Install the mesh_3d lib in dev mode with the dev and doc tools
+    # Install the mesh3d lib in dev mode with the dev and doc tools
     python -m pip install -e .[dev,docs]
 
     # Test if it works
-    mesh_3d -h
+    mesh3d -h

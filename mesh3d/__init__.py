@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium).
+# Copyright (C) 2022 CNES.
 #
-# This file is part of mesh_3d
+# This file is part of mesh3d
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,3 +17,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+"""
+Top-level package for Mesh 3D.
+"""
+
+from importlib.metadata import version
+
+# version through setuptools_scm when python3 > 3.8
+try:
+    __version__ = version("mesh3d")
+except Exception:  # pylint: disable=broad-except
+    __version__ = "unknown"
+
+__author__ = "CNES"
+__email__ = "cars@cnes.fr"

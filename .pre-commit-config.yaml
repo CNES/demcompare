@@ -1,20 +1,20 @@
 repos:
 - repo: local
   hooks:
-#  - id: isort
-#    name: Isort
-#    stages: [commit]
-#    language: system
-#    entry: isort
-#    types: [python]
-#
-#  - id: black
-#    name: Black
-#    stages: [commit]
-#    language: system
-#    entry: black
-#    types: [python]
-#
+  - id: isort
+    name: Isort
+    stages: [commit]
+    language: system
+    entry: isort
+    types: [python]
+
+  - id: black
+    name: Black
+    stages: [commit]
+    language: system
+    entry: black
+    types: [python]
+
 #  - id: flake8
 #    name: Flake8
 #    stages: [commit]
@@ -31,8 +31,8 @@ repos:
 
   - id: doc-build
     name: Build Documentation
-    stages: [commit]
+    stages: [push]
     entry: make docs
     language: system
-    files: ^(docs/.*|mesh_3d/.*)$
+    files: ^(docs/.*|mesh3d/.*)$
     pass_filenames: False
