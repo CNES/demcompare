@@ -45,7 +45,7 @@ Delaunay Triangulation 2.5D
     | *Method* : "delaunay_2d"
 
 The concept of delaunay triangulation in 2D is to construct triangles so that no point of the cloud is ever
-included in a circumscribed circle. It has some pretty characteristics including the fact of minimising the
+included in a circumscribed circle. It has some convenient characteristics including the fact of minimising the
 number sharp angles in triangles.
 
 The 2.5D version consists in constructing a 2D delaunay triangulation ignoring the Z values, and afterwards adding it.

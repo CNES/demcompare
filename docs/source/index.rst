@@ -13,6 +13,7 @@ Copyright: CNES
    :caption: User Guide
 
    installation
+   prerequisites
    command_line_user_guide
    core/index.rst
    tools/index.rst
