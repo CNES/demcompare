@@ -20,6 +20,8 @@
 """
 Denoising methods aiming at smoothing surfaces without losing genuine high-frequency information.
 """
+import time
+import threading
 
 import numpy as np
 import open3d as o3d
@@ -134,15 +136,17 @@ def compute_point_normal(
     return normal
 
 
-def weight_exp(distance: np.ndarray, mean_distance: np.ndarray) -> np.array:
+def weight_exp(distance: np.ndarray, mean_distance: np.ndarray) -> np.ndarray:
+    if mean_distance == 0.:
+        raise ValueError("Mean distance should be > 0.")
     """Decreasing exponential function for weighting"""
     return np.exp(-(distance**2) / mean_distance**2)
 
 
-# en entrée une liste (une valeur par voisin) et un chiffre, sortie liste
-def weight_exp_2(d, sigma):
-    out = [np.exp(-(val**2) / 2 * (sigma**2)) for val in d]
-    return out
+def weight_exp_2(d: np.ndarray, sigma: np.ndarray) -> np.ndarray:
+    if sigma == 0.:
+        raise ValueError("Sigma should be > 0.")
+    return np.exp(-(np.asarray(d) ** 2) / (2 * (sigma ** 2)))
 
 
 def compute_pcd_normals(
@@ -267,7 +271,8 @@ def bilateral_filtering(
     radius_normals: float = 5.0,
     weights_distance: bool = False,
     weights_color: bool = False,
-    workers: int = 1,
+    num_workers_kdtree: int = 1,
+    num_workers_iterations: int = 1,
     use_open3d: bool = False,
 ):
     """
@@ -297,8 +302,10 @@ def bilateral_filtering(
         Whether to add a weighting to the neighbours on the distance information
     weights_color: bool (default=False)
         Whether to add a weighting to the neighbours on the color information
-    workers: int (default=1)
+    num_workers_kdtree: int (default=1)
         Number of workers to query the KDtree (neighbour search)
+    num_workers_iterations: int (default=1)
+        Number of workers to iterate over the points of the cloud to apply bilateral filtering
     use_open3d: bool (default=False)
         Whether to use open3d normal computation instead. No weighting is applied to neighbours in that case.
 
@@ -316,7 +323,7 @@ def bilateral_filtering(
         radius=radius_normals,
         weights_distance=weights_distance,
         weights_color=weights_color,
-        workers=workers,
+        workers=num_workers_kdtree,
         use_open3d=use_open3d,
     )
 
@@ -332,8 +339,9 @@ def bilateral_filtering(
     if neighbour_search_method == "knn":
         # Query the tree by knn for each point cloud data
         _, ind = cloud_tree.query(
-            pcd.df[["x", "y", "z"]].to_numpy(), k=knn, workers=workers
+            pcd.df[["x", "y", "z"]].to_numpy(), k=knn, workers=num_workers_kdtree
         )
+
     elif neighbour_search_method == "ball":
         raise NotImplementedError(
             "Due to memory consumption, scipy ball query is unusable: "
@@ -345,28 +353,64 @@ def bilateral_filtering(
     else:
         raise NotImplementedError
 
+    # Vectorised calculus
     # Iterate over the points
-    for k, row in tqdm(enumerate(ind), desc="Bilateral filtering per point"):
+    # Multithreading for performance enhancement
+
+    # Number of iterations per chunk
+    iter_per_chunk = ind.shape[0] / num_workers_iterations
+    # After rounding, how many iterations are left (if it is not an integer)
+    delta_iter = ind.shape[0] - np.around(iter_per_chunk) * (num_workers_iterations - 1)
+    # Compute the number of iterations per chunk
+    num_points_per_chunk = [np.around(iter_per_chunk)] * (num_workers_iterations - 1) + [delta_iter]
+    # Get the corresponding point indexes
+    indexes_per_chunk = [0]
+    for k in num_points_per_chunk:
+        indexes_per_chunk += [int(indexes_per_chunk[-1]) + int(k)]
+
+    def apply(idx_start, idx_end, ind, pcd, cloud_tree, normal_cloud, sigma_d, sigma_n):
+        """Compute the weights to apply to the normal vectors"""
+
         # Euclidean distance from the point to its neighbors
         # The bigger it is, the lesser the weighting is
-        distance = cloud_tree.data[row, :] - cloud_tree.data[k, :]
-        d_d = [np.linalg.norm(i) for i in distance]
+        distances = cloud_tree.data[ind[idx_start:idx_end, :], :] - \
+                    np.repeat(cloud_tree.data[idx_start:idx_end, None, :], repeats=knn, axis=1)
+        d_d = np.linalg.norm(distances, axis=-1)
 
         # Cosinus between the normal of the point and the ones of its neighbors
         # The bigger it is, the lesser the weighting is
-        d_n = np.dot(distance, normal_cloud.data[k, :])
+        d_n = np.sum(np.multiply(distances, np.repeat(normal_cloud.data[idx_start:idx_end, None, :], knn, axis=1)),
+                     axis=-1)
+        del distances
 
         # Compute weighting of each neighbor according to
         # - its distance from the point
         # - its normal orientation
         w = np.multiply(weight_exp_2(d_d, sigma_d), weight_exp_2(d_n, sigma_n))
-        delta_p = sum(w * d_n)
-        sum_w = sum(w)
+        delta_p = np.sum(w * d_n, axis=1)
+        sum_w = np.sum(w, axis=1)
+        del w
 
         # Change points' position along its normal as: p_new = p + w * n
-        p_new = (
-            cloud_tree.data[k, :] + (delta_p / sum_w) * normal_cloud.data[k, :]
-        )
-        pcd.df.loc[k, "x":"z"] = p_new
+        pcd.df.loc[idx_start:idx_end - 1, "x":"z"] = cloud_tree.data[idx_start:idx_end, :] + \
+                                                     np.reshape(
+                                                         np.divide(
+                                                             delta_p,
+                                                             sum_w,
+                                                             out=np.zeros_like(delta_p),
+                                                             where=(sum_w == 0.)
+                                                         ), (-1, 1)) * normal_cloud.data[idx_start:idx_end, :]
+
+    # Number of workers for iterations should be adapted according to the point cloud size, the number of knn and
+    # the memory available
+    for k in tqdm(range(num_workers_iterations), desc="Number of iterations for bilateral filtering"):
+        apply(indexes_per_chunk[k],
+              indexes_per_chunk[k + 1],
+              ind,
+              pcd,
+              cloud_tree,
+              normal_cloud,
+              sigma_d,
+              sigma_n)
 
     return pcd

@@ -22,3 +22,5 @@ It is supposed to respect the gradients in the point cloud while denoising flat 
 
 As this approach is simple, it can be adapted to take as many parameters as desired. For example, one could use
 a semantic information to apply different parameters for each class of object.
+
+This implementation was written from scratch according to the following paper: Digne, J., & Franchis, C.D. (2017). The Bilateral Filter for Point Clouds. Image Process. Line, 7, 278-287.
