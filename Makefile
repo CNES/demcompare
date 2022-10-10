@@ -11,6 +11,23 @@ VENV = "venv"
 DEMCOMPARE_VERSION = $(shell python3 setup.py --version)
 DEMCOMPARE_VERSION_MIN = $(shell echo ${DEMCOMPARE_VERSION} | cut -d . -f 1,2,3)
 
+PYTHON_VERSION_MIN = 3.7
+
+PYTHON=$(shell command -v python3)
+
+PYTHON_VERSION_CUR=$(shell $(PYTHON) -c 'import sys; print("%d.%d"% sys.version_info[0:2])')
+PYTHON_VERSION_OK=$(shell $(PYTHON) -c 'import sys; cur_ver = sys.version_info[0:2]; min_ver = tuple(map(int, "$(PYTHON_VERSION_MIN)".split("."))); print(int(cur_ver >= min_ver))')
+
+ifeq (, $(PYTHON))
+    $(error "PYTHON=$(PYTHON) not found in $(PATH)")
+endif
+
+ifeq ($(PYTHON_VERSION_OK), 0)
+    $(error "Requires python version >= $(PYTHON_VERSION_MIN). Current version is $(PYTHON_VERSION_CUR)")
+endif
+
+
+
 .PHONY: help venv install lint format test-ci test doc docker clean
 
 help: ## this help
