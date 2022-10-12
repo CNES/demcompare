@@ -332,7 +332,6 @@ def compute_offset_adapting_factor(
     Compute the factor to adapt the coregistration offsets
     to the dem resolution
 
-    TODO: rename and clarify
     The name is too generic to know the usage quickly. Is the function
     in dem_tools or here ?
 
@@ -359,8 +358,6 @@ def _get_geoid_offset(
     """
     Computes the geoid offset of the input DEM. If no geoid_path is
     given, the default geoid/egm96_15.gtx if used.
-
-    TODO: refacto geoid
 
     :param dataset: xr.DataSet containing :
 
@@ -444,8 +441,6 @@ def _interpolate_geoid(
     If no interpol_method is given, a "linear" interpolation is considered.
     If the input coordinates are outside of the geoid scope,
     an exception is raised.
-
-    TODO: refacto geoid
 
     :param geoid_filename: coord geoid_filename
     :type geoid_filename: str

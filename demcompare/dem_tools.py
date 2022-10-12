@@ -99,7 +99,6 @@ def load_dem(
     """
 
     # Open dem with rasterio
-    # TODO: protect open with use "with" statement to open file
     # but source_rasterio is closed and tests bug
     src_dem = rasterio.open(path)
     source_rasterio = {}
@@ -111,8 +110,6 @@ def load_dem(
     # Get rasterio BoundingBox(left, bottom, right, top)
     bounds_dem = src_dem.bounds
 
-    # TODO: clarify input_roi parameter
-    # TODO: clarify geoid_georef and geoid_path parameters
     if input_roi is not False:
         # Use ROI
         if isinstance(input_roi, dict):

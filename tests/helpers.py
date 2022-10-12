@@ -42,7 +42,6 @@ def demcompare_test_data_path(test_name: str) -> str:
     :param test_name: name of test directory
     :returns: full absolute path to demcompare test data.
     """
-    # TODO: find why the path is unset from the second test
     # Verify that the current path is well set
     os.chdir(os.path.dirname(__file__))
 
@@ -63,7 +62,6 @@ def demcompare_path(directory_name: str) -> str:
      inside demcompare/demcompare
     :returns: full absolute path to demcompare directory.
     """
-    # TODO: find why the path is unset from the second test
     # Verify that the current path is well set
     os.chdir(os.path.dirname(__file__))
     dir_path = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
@@ -82,7 +80,6 @@ def notebooks_demcompare_path(notebook_name: str) -> str:
      inside demcompare/notebooks
     :returns: full absolute path to notebooks directory.
     """
-    # TODO: find why the path is unset from the second test
     # Verify that the current path is well set
     os.chdir(os.path.dirname(__file__))
     dir_path = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))

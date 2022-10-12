@@ -53,7 +53,6 @@ from .stats_processing import StatsProcessing
 # ** VERSION **
 # pylint: disable=import-error,no-name-in-module
 # Depending on python version get importlib standard lib or backported package
-# TODO: remove pythons < 3.8
 if sys.version_info[:2] >= (3, 8):
     # when python3 > 3.8
     from importlib.metadata import PackageNotFoundError  # pragma: no cover

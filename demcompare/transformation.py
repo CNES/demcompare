@@ -38,7 +38,6 @@ class Transformation:
     A transformation defines a way to transform
     the DEMs by offsets and/or rotations.
     For now, only x,y offset translation
-    TODO: upgrade with more complex transformation
     """
 
     def __init__(
@@ -109,7 +108,6 @@ class Transformation:
         """
         Apply Transformation to input dem, currently only
         the offsets are considered
-        # TODO: apply rotation when exists.
 
         :param dem: dem xr.DataSet containing :
 
