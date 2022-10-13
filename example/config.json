@@ -4,8 +4,8 @@
   "rpc_path": "rpc.XML",
   "tif_img_path": "texture_image.tif",
   "image_offset": [
-    15028,
-    17015
+    15029,
+    17016
   ],
   "utm_code": 32631,
   "state_machine": [

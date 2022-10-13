@@ -22,6 +22,7 @@ To launch the 3D reconstruction pipeline, you first need to configure it in a JS
       "initial_state": "initial_pcd",
       "tif_img_path": "/path/to/tif_img_texture.tif",
       "rpc_path": "/path/to/rpc.XML",
+      "image_offset": null,
       "utm_code": 32631,
       "state_machine": [
         {
@@ -85,6 +86,11 @@ If a texturing step is specified, then the following parameters become mandatory
 * ``tif_img_path``: Path to the TIF image from which to extract the texture image
 * ``utm_code``: The UTM code of the point cloud coordinates expressed as a EPSG code number for transformation purpose
 
+Another parameter - optional - when applying a texture is the `image_offset`.
+It is possible to use a cropped version of the image texture as long as the `image_offset` parameter is specified.
+It is a tuple or a list of two elements (col, row) corresponding to the top left corner coordinates of the cropped image texture.
+It will change the normalisation offset of the RPC data to make the texture fit to the point cloud.
+If the image is only cropped on the bottom right side of the image, no offset information is needed.
 
 Finally, you can launch the following commands to activate the virtual environment and run the pipeline:
 

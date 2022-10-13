@@ -143,6 +143,8 @@ def run(cfg: dict, mesh_data_1: Mesh, mesh_data_2: Mesh) -> pandas.DataFrame:
 
     Parameters
     ----------
+    cfg: dict
+        Configuration dictionary
     mesh_data_1: Mesh
     mesh_data_2: Mesh
 

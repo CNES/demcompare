@@ -272,7 +272,9 @@ def texturing(mesh: Mesh, cfg: dict) -> Mesh:
                 f"Here: {image_offset}."
             )
         rpc.out_offset = np.asarray(rpc.out_offset)
-        rpc.out_offset -= np.asarray(image_offset)
+        # RPC starts image pixel indexing at 1 whereas numpy arrays or QGIS start at 0
+        # Thus the line below removes (1, 1) to each dimension to be consistent
+        rpc.out_offset -= np.asarray(image_offset) - np.ones(2)
 
     # Open mesh, get vertices and triangles
     triangles = mesh.df[["p1", "p2", "p3"]].to_numpy()

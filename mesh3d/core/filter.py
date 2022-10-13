@@ -24,8 +24,6 @@ Filtering methods aiming at removing outliers or groups of outliers from the poi
 from typing import Union
 
 import numpy as np
-import open3d as o3d
-import pandas as pd
 from loguru import logger
 from scipy.spatial import KDTree
 
