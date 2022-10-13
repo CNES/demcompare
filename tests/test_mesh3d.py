@@ -17,30 +17,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Global utils"""
+"""Tests for `mesh3d` package."""
 
-import subprocess
+# Third party imports
+import pytest
+
+# mesh3d imports
+import mesh3d
 
 
-def timer_display(elapsed_time):
+@pytest.fixture
+def response():
+    """Sample pytest fixture.
+
+    See more at: http://doc.pytest.org/en/latest/fixture.html
     """
-    Format time in hh:mm:ss
-    """
-    (t_min, t_sec) = divmod(round(elapsed_time, 3), 60)
-    (t_hour, t_min) = divmod(t_min, 60)
-    return "{}:{}:{}".format(
-        str(round(t_hour)).zfill(2),
-        str(round(t_min)).zfill(2),
-        str(round(t_sec)).zfill(2),
-    )
+    # Example to edit
+    return "response"
 
 
-def format_timer_display(elapsed_time):
-    """
-    Display timer as "HH:MM:SS" if the elapsed time is of at least 1s, otherwise print the real time in seconds
-    """
-    return (
-        timer_display(elapsed_time)
-        if (elapsed_time) >= 1.0
-        else "{:.6f} s".format(elapsed_time)
-    )
+def test_content(response):  # pylint: disable=redefined-outer-name
+    """Sample pytest test function with the pytest fixture as an argument."""
+    # Example to edit
+    print(response)
+
+
+def test_mesh3d():
+    """Sample pytest mesh3d module test function"""
+    assert mesh3d.__author__ == "CNES"
+    assert mesh3d.__email__ == "cars@cnes.fr"
+

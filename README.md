@@ -20,9 +20,7 @@
 
 ## Overview
 
-Mesh 3D short description:
-
-"3D Surface reconstruction with texture and classification from remote sensing photogrammetric point cloud"
+Mesh3D is a library allow to do 3D Surface reconstruction with texture and classification from remote sensing photogrammetric point cloud.
 
 
 * Free software: Apache Software License 2.0
@@ -51,9 +49,20 @@ Mesh 3D short description:
 
 TODO
 
-- Feature 1
-- Feature 2
-- ...
+* **General**
+  * Add the possibility to use semantic maps and modify functions to take them into account for processing (for example building roofs could be processed differently from roads).
+  * Recover correlation metrics from previous CARS processing and add it as an input to exploit them in further processings.
+  * Make sure information in the PointCloud pandas DataFrame object are the same as the ones in the Point Cloud open3d object all along the process.
+
+
+* **Filtering of outliers**
+  * Integrate the use of CARS already existing functions (in its latest version)
+
+
+* **Texturing**
+  * Make it satellite agnostic (for now it takes into account Pleiades imagery)
+  * Handle multiple texture images
+  * Handle occlusions
 
 ## Quick Start
 
@@ -76,11 +85,12 @@ You can run two functions with the `mesh3d` cli:
 Configure the pipeline in a JSON file `/path/to/config.json`:
 ```json
 {
-  "input_path": "/path/to/input/data.ply",
+  "input_path": "/path/to/input/data.las",
   "output_dir": "/path/to/output_dir",
   "initial_state": "initial_pcd",
   "tif_img_path": "/path/to/tif_img_texture.tif",
   "rpc_path": "/path/to/rpc.XML",
+  "image_offset": null,
   "utm_code": 32631,
   "state_machine": [
     {
@@ -95,11 +105,15 @@ Configure the pipeline in a JSON file `/path/to/config.json`:
       "action": "denoise_pcd",
       "method": "bilateral",
       "params": {
-        "knn": 20,
-        "knn_normals": 20,
+        "num_iterations": 10,
+        "knn": 10,
+        "knn_normals": 10,
         "weights_distance": true,
         "weights_color": true,
-        "workers": 6,
+        "sigma_d": 1.5,
+        "sigma_n": 1,
+        "num_workers_kdtree": 6,
+        "num_chunks": 2,
         "use_open3d":  true
       }
     },
@@ -141,9 +155,14 @@ for each method.
 
 If a texturing step is specified, then the following parameters become mandatory:
 * `rpc_path`: Path to the RPC xml file
-* `tif_img_path`: Path to the TIF image from which to extract the texture image
-* `utm_code`: The UTM code of the point cloud coordinates expressed as a EPSG code number for transformation purpose
+* `tif_img_path`: Path to the TIF image from which to extract the texture image. For now, it should be the whole satellite image to be consistent with the product's RPC.
+* `utm_code`: The UTM code of the point cloud coordinates expressed as a EPSG code number for transformation purpose. *Warning: the input cloud is assumed to be expressed in a UTM frame.*
 
+Another parameter - optional - when applying a texture is the `image_offset`.
+It is possible to use a cropped version of the image texture as long as the `image_offset` parameter is specified.
+It is a tuple or a list of two elements (col, row) corresponding to the top left corner coordinates of the cropped image texture.
+It will change the normalisation offset of the RPC data to make the texture fit to the point cloud.
+If the image is only cropped on the bottom right side of the image, no offset information is needed.
 
 Finally, you can launch the following commands to activate the virtual environment and run the pipeline:
 ```bash
@@ -177,11 +196,22 @@ source venv/bin/activate
 mesh3d evaluate /path/to/config.json
 ```
 
+## Example
+
+Please find data example to launch the pipeline in [here](example) and guidelines [over here](example/README.md).
+
+
 ## Documentation
 
-Go in docs/ directory
+Run the following commands to build the doc:
+```bash
+source /venv/bin/activate
+make docs
+```
+The Sphinx documentation should pop in a new tab of your browser.
 
-* Documentation: https://mesh3d.readthedocs.io.
+
+[//]: # (Documentation: https://mesh-3d.readthedocs.io)
 
 
 ## Contribution
