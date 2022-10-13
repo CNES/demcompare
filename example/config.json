@@ -1,8 +1,8 @@
 {
-  "input_path": "point_cloud.laz",
-  "output_dir": "output",
-  "rpc_path": "rpc.XML",
-  "tif_img_path": "texture_image.tif",
+  "input_path": "example/point_cloud.laz",
+  "output_dir": "example/output",
+  "rpc_path": "example/rpc.XML",
+  "tif_img_path": "example/texture_image.tif",
   "image_offset": [
     15029,
     17016

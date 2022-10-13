@@ -16,5 +16,5 @@ make install
 source venv/bin/activate
 
 # Launch reconstruction
-mesh_3d reconstruct example/config.json
+mesh3d reconstruct example/config.json
 ```
