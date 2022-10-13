@@ -112,16 +112,15 @@ def ball_pivoting_reconstruction(
 
 
 def poisson_reconstruction(
-    pcd: PointCloud,
-    depth: int = 8,
-    width: int = 0,
-    scale: float = 1.1,
-    linear_fit: bool = False,
-    n_threads: int = -1,
-    normal_search_method: str = "knn",
-    normal_nb_neighbor: int = 30,
-    normal_radius: float = 2.0,
-) -> Mesh:
+        pcd: PointCloud,
+        depth: int = 8,
+        width: float = 0.,
+        scale: float = 1.1,
+        linear_fit: bool = False,
+        n_threads: int = -1,
+        normal_search_method: str = "knn",
+        normal_nb_neighbor: int = 30,
+        normal_radius: float = 2.) -> Mesh:
     """
     Kazhdan, Michael M. et al. “Poisson surface reconstruction.” SGP '06 (2006).
 
@@ -137,22 +136,23 @@ def poisson_reconstruction(
     ----------
     pcd: PointCloud
         Point cloud object
-    depth: int, default=8
+    depth: int (default=8)
         Maximum depth of the tree that will be used for surface reconstruction. Running at depth d corresponds to
         solving on a grid whose resolution is no larger than 2^d x 2^d x 2^d. Note that since the reconstructor
         adapts the octree to the sampling density, the specified reconstruction depth is only an upper bound.
-    width: int, default=0
-        Specifies the target width of the finest level octree cells. This parameter is ignored if depth is specified
-    scale: float, default=1.1
+    width: float (default=0.)
+        Specifies the target width of the finest level octree cells. This parameter is ignored if depth is specified.
+        It is expressed in the point cloud unit (for example in meters for utm data).
+    scale: float (default=1.1)
         Specifies the ratio between the diameter of the cube used for reconstruction and the diameter of the
         samples’ bounding cube.
-    linear_fit: bool, default=False
+    linear_fit: bool (default=False)
         If true, the reconstructor will use linear interpolation to estimate the positions of iso-vertices.
-    n_threads: int, default=-1
+    n_threads: int (default=-1)
         Number of threads used for reconstruction. Set to -1 to automatically determine it.
     normal_search_method: str (default="knn")
         Search method for normal computation
-    normal_nb_neighbor: int (defaul=30)
+    normal_nb_neighbor: int (default=30)
         Number of neighbours used by the KNN algorithm to compute the normals with Open3D.
     normal_radius: float (default=2.)
         Radius of search for neighbours for normal computation.

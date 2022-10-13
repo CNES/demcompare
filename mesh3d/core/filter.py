@@ -71,8 +71,13 @@ def statistical_filtering_outliers_o3d(
         nb_neighbors, std_ratio=std_factor
     )
 
+    # Save the number of points before processing
+    num_points_before = pcd.df.shape[0]
+
     # Get the point cloud filtered of the outlier points
     pcd.df = pcd.df.loc[ind_valid_pts]
+    # Reset indexes
+    pcd.df.reset_index(drop=True, inplace=True)
 
     # Check if output point cloud is empty (and thus cannot suffer other processing)
     if pcd.df.empty:
@@ -80,6 +85,9 @@ def statistical_filtering_outliers_o3d(
             "Point cloud output by the outlier filtering step is empty."
         )
         raise
+
+    logger.info(f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
+                f"outliers and removed.")
 
     return pcd
 
@@ -116,8 +124,13 @@ def radius_filtering_outliers_o3(
         nb_points, radius
     )
 
+    # Save the number of points before processing
+    num_points_before = pcd.df.shape[0]
+
     # Get the point cloud filtered of the outlier points
     pcd.df = pcd.df.loc[ind_valid_pts]
+    # Reset indexes
+    pcd.df.reset_index(drop=True, inplace=True)
 
     # Check if output point cloud is empty (and thus cannot suffer other processing)
     if pcd.df.empty:
@@ -125,6 +138,9 @@ def radius_filtering_outliers_o3(
             "Point cloud output by the outlier filtering step is empty."
         )
         raise
+
+    logger.info(f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
+                f"outliers and removed.")
 
     return pcd
 
@@ -158,6 +174,9 @@ def local_density_analysis(
     # Check that dataframe is initialized
     if pcd.df is None:
         pcd.set_df_from_o3d_pcd()
+
+    # Save the number of points before processing
+    num_points_before = pcd.df.shape[0]
 
     # Get point positions
     cloud_xyz = pcd.df.loc[:, ["x", "y", "z"]].to_numpy()
@@ -197,6 +216,8 @@ def local_density_analysis(
             remove_pts_list.append(idx)
 
     pcd.df = pcd.df.drop(index=pcd.df.index.values[remove_pts_list])
+    # Reset indexes
+    pcd.df.reset_index(drop=True, inplace=True)
 
     # Check if output point cloud is empty (and thus cannot suffer other processing)
     if pcd.df.empty:
@@ -208,6 +229,9 @@ def local_density_analysis(
     # Update open3d pcd
     if pcd.o3d_pcd is not None:
         pcd.set_o3d_pcd_from_df()
+
+    logger.info(f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
+                f"outliers and removed.")
 
     return pcd
 

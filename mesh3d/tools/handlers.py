@@ -184,6 +184,13 @@ class PointCloud(object):
             raise ValueError("Point cloud has no normals.")
         return self.df[NORMALS]
 
+    def set_unitary_normals(self):
+        """Make normals unitary (i.e. with a norm equal to 1.)"""
+        if not self.has_normals:
+            raise ValueError("Point cloud has no normals.")
+        else:
+            self.df[NORMALS] /= np.linalg.norm(self.df[NORMALS].to_numpy(), axis=1, keepdims=True)
+
     @property
     def has_colors(self) -> bool:
         if self.df is None:
@@ -197,6 +204,20 @@ class PointCloud(object):
             raise ValueError("Point cloud (pandas DataFrame) is not assigned.")
         else:
             return all([n in self.df.head() for n in NORMALS])
+
+    @property
+    def are_normals_unitary(self) -> bool:
+        if self.df is None:
+            raise ValueError("Point cloud (pandas DataFrame) is not assigned.")
+        else:
+            return self.has_normals and \
+                   np.all(
+                       np.equal(
+                           # Results are rounded in order to avoid taking into account numerical errors
+                           np.around(np.linalg.norm(self.df[NORMALS].to_numpy(), axis=1), decimals=9),
+                           np.ones(self.df.shape[0], dtype=np.float64)
+                       )
+                   )
 
     @property
     def has_classes(self) -> bool:

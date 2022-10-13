@@ -24,6 +24,7 @@ Main Reconstruct module of mesh3d tool.
 import json
 import logging
 import os
+import shutil
 
 from loguru import logger
 
@@ -134,6 +135,8 @@ def check_config(cfg_path: str) -> dict:
                         "'utm_code' giving the UTM code of the input point cloud or mesh for "
                         "coordinate transforming step."
                     )
+                if "image_offset" not in cfg:
+                    cfg["image_offset"] = None
 
             # Method check
             if "method" in el:
@@ -203,6 +206,10 @@ def main(cfg_path: str) -> None:
 
     # Check the validity of the config path
     cfg = check_config(cfg_path)
+
+    # Copy the configuration file in the output dir
+    os.makedirs(cfg["output_dir"], exist_ok=True)
+    shutil.copy(cfg_path, os.path.join(os.path.join(cfg["output_dir"], os.path.basename(cfg_path))))
 
     # Write logs to disk
     logger.add(sink=os.path.join(cfg["output_dir"], "{time}_logs.txt"))

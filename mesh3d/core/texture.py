@@ -63,11 +63,12 @@ def preprocess_image_texture(
         output_dir, "8bit_" + os.path.basename(img_path).split(".")[0] + ".jpg"
     )
 
-    # Define normalization function to be applied by tile (for memory consumption reasons, tiling is imperative)
+    # Define normalization function to be applied by tile (for memory consumption reasons, tiling is mandatory)
     def tile_norm(
         arr: np.ndarray, q_percent: Union[tuple, list, np.ndarray], **kwargs
     ):
-        """Normalize an image to a 8-bit image by recomputing the color dynamic
+        """
+        Normalize an image to a 8-bit image by recomputing the color dynamic
 
         Parameters
         ----------
@@ -258,9 +259,18 @@ def texturing(mesh: Mesh, cfg: dict) -> Mesh:
     rpc_path = cfg["rpc_path"]
     tif_img_path = cfg["tif_img_path"]
     utm_code = cfg["utm_code"]
+    image_offset = cfg["image_offset"]  # col, row
 
     # Compute RPC for inverse location
     rpc = PleiadesRPC(rpc_type="INVERSE", path_rpc=rpc_path)
+
+    # If image_offset is given apply it to the RPC coefficients
+    if image_offset is not None:
+        if len(image_offset) != 2:
+            raise ValueError(f"If specified, 'image_offset' should be a tuple or list of 2 elements (col, row)."
+                             f"Here: {image_offset}.")
+        rpc.out_offset = np.asarray(rpc.out_offset)
+        rpc.out_offset -= np.asarray(image_offset)
 
     # Open mesh, get vertices and triangles
     triangles = mesh.df[["p1", "p2", "p3"]].to_numpy()
