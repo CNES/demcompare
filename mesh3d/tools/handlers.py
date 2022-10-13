@@ -189,7 +189,9 @@ class PointCloud(object):
         if not self.has_normals:
             raise ValueError("Point cloud has no normals.")
         else:
-            self.df[NORMALS] /= np.linalg.norm(self.df[NORMALS].to_numpy(), axis=1, keepdims=True)
+            self.df[NORMALS] /= np.linalg.norm(
+                self.df[NORMALS].to_numpy(), axis=1, keepdims=True
+            )
 
     @property
     def has_colors(self) -> bool:
@@ -210,14 +212,16 @@ class PointCloud(object):
         if self.df is None:
             raise ValueError("Point cloud (pandas DataFrame) is not assigned.")
         else:
-            return self.has_normals and \
-                   np.all(
-                       np.equal(
-                           # Results are rounded in order to avoid taking into account numerical errors
-                           np.around(np.linalg.norm(self.df[NORMALS].to_numpy(), axis=1), decimals=9),
-                           np.ones(self.df.shape[0], dtype=np.float64)
-                       )
-                   )
+            return self.has_normals and np.all(
+                np.equal(
+                    # Results are rounded in order to avoid taking into account numerical errors
+                    np.around(
+                        np.linalg.norm(self.df[NORMALS].to_numpy(), axis=1),
+                        decimals=9,
+                    ),
+                    np.ones(self.df.shape[0], dtype=np.float64),
+                )
+            )
 
     @property
     def has_classes(self) -> bool:

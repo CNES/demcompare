@@ -86,8 +86,10 @@ def statistical_filtering_outliers_o3d(
         )
         raise
 
-    logger.info(f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
-                f"outliers and removed.")
+    logger.info(
+        f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
+        f"outliers and removed."
+    )
 
     return pcd
 
@@ -139,8 +141,10 @@ def radius_filtering_outliers_o3(
         )
         raise
 
-    logger.info(f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
-                f"outliers and removed.")
+    logger.info(
+        f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
+        f"outliers and removed."
+    )
 
     return pcd
 
@@ -230,8 +234,10 @@ def local_density_analysis(
     if pcd.o3d_pcd is not None:
         pcd.set_o3d_pcd_from_df()
 
-    logger.info(f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
-                f"outliers and removed.")
+    logger.info(
+        f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
+        f"outliers and removed."
+    )
 
     return pcd
 

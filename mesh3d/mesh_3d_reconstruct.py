@@ -30,7 +30,8 @@ from loguru import logger
 
 from . import param
 from .state_machine import Mesh3DMachine
-from .tools.handlers import Mesh, PointCloud
+
+from .tools.handlers import Mesh
 
 
 def check_config(cfg_path: str) -> dict:
@@ -209,7 +210,12 @@ def main(cfg_path: str) -> None:
 
     # Copy the configuration file in the output dir
     os.makedirs(cfg["output_dir"], exist_ok=True)
-    shutil.copy(cfg_path, os.path.join(os.path.join(cfg["output_dir"], os.path.basename(cfg_path))))
+    shutil.copy(
+        cfg_path,
+        os.path.join(
+            os.path.join(cfg["output_dir"], os.path.basename(cfg_path))
+        ),
+    )
 
     # Write logs to disk
     logger.add(sink=os.path.join(cfg["output_dir"], "{time}_logs.txt"))
@@ -268,13 +274,3 @@ def main(cfg_path: str) -> None:
             extension=extension,
         )
         logger.info(f"Point cloud serialized as a '{extension}' file")
-
-    # # Save the point cloud information in a csv file
-    # out_filename = "processed_point_cloud.csv"
-    # out_mesh.pcd.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension="csv")
-    # logger.info(f"Point cloud serialized as a 'csv' file")
-
-    # # Save the mesh information in a csv file
-    # out_filename = "processed_mesh.csv"
-    # out_mesh.serialize(filepath=os.path.join(cfg["output_dir"], out_filename), extension="csv")
-    # logger.info(f"Mesh serialized as a 'csv' file")

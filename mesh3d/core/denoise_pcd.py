@@ -20,8 +20,8 @@
 """
 Denoising methods aiming at smoothing surfaces without losing genuine high-frequency information.
 """
-import time
 import threading
+import time
 
 import numpy as np
 import open3d as o3d
@@ -138,16 +138,16 @@ def compute_point_normal(
 
 def weight_exp(distance: np.ndarray, mean_distance: np.ndarray) -> np.ndarray:
     """Decreasing exponential function for weighting"""
-    if mean_distance == 0.:
+    if mean_distance == 0.0:
         raise ValueError("Mean distance should be > 0.")
     return np.exp(-(distance**2) / mean_distance**2)
 
 
 def weight_gaussian(d: np.ndarray, sigma: np.ndarray) -> np.ndarray:
     """Decreasing function inspired by the gaussian function for weighting"""
-    if sigma == 0.:
+    if sigma == 0.0:
         raise ValueError("Sigma should be > 0.")
-    return np.exp(-(np.asarray(d) ** 2) / (2 * (sigma ** 2)))
+    return np.exp(-(np.asarray(d) ** 2) / (2 * (sigma**2)))
 
 
 def compute_pcd_normals(
@@ -345,7 +345,9 @@ def bilateral_filtering(
     # After rounding, how many iterations are left (if it is not an integer)
     delta_iter = pcd.df.shape[0] - np.around(iter_per_chunk) * (num_chunks - 1)
     # Compute the number of points processed by chunk
-    num_points_per_chunk = [np.around(iter_per_chunk)] * (num_chunks - 1) + [delta_iter]
+    num_points_per_chunk = [np.around(iter_per_chunk)] * (num_chunks - 1) + [
+        delta_iter
+    ]
     # Get the corresponding point indexes
     indexes_per_chunk = [0]
     for k in num_points_per_chunk:
@@ -364,13 +366,17 @@ def bilateral_filtering(
         """
 
         if idx_end <= idx_start:
-            raise ValueError(f"Start index ({idx_start}) should be lower than end index ({idx_end}).")
+            raise ValueError(
+                f"Start index ({idx_start}) should be lower than end index ({idx_end})."
+            )
 
         # Request the indexes of the neighbours according to the spatial coordinates
         if neighbour_search_method == "knn":
             # Query the tree by knn for each point cloud data
             _, ind = cloud_tree.query(
-                pcd.df.loc[idx_start:idx_end - 1, "x":"z"].to_numpy(), k=knn, workers=num_workers_kdtree
+                pcd.df.loc[idx_start : idx_end - 1, "x":"z"].to_numpy(),
+                k=knn,
+                workers=num_workers_kdtree,
             )
 
         elif neighbour_search_method == "ball":
@@ -387,40 +393,63 @@ def bilateral_filtering(
 
         # Euclidean distance from the point to its neighbors
         # The bigger it is, the lesser the weighting is
-        distances = cloud_tree.data[ind, :] - \
-                    np.repeat(cloud_tree.data[idx_start:idx_end, None, :], repeats=knn, axis=1)
+        distances = cloud_tree.data[ind, :] - np.repeat(
+            cloud_tree.data[idx_start:idx_end, None, :], repeats=knn, axis=1
+        )
         d_d = np.linalg.norm(distances, axis=-1)
 
         # Cosinus between the normal of the point and the ones of its neighbors
         # The bigger it is, the lesser the weighting is
-        d_n = np.sum(np.multiply(distances, np.repeat(normal_cloud.data[idx_start:idx_end, None, :], knn, axis=1)),
-                     axis=-1)
+        d_n = np.sum(
+            np.multiply(
+                distances,
+                np.repeat(
+                    normal_cloud.data[idx_start:idx_end, None, :], knn, axis=1
+                ),
+            ),
+            axis=-1,
+        )
         del distances
 
         # Compute weighting of each neighbor according to
         # - its distance from the point
         # - its normal orientation
-        w = np.multiply(weight_gaussian(d_d, sigma_d), weight_gaussian(d_n, sigma_n))
+        w = np.multiply(
+            weight_gaussian(d_d, sigma_d), weight_gaussian(d_n, sigma_n)
+        )
         delta_p = np.sum(w * d_n, axis=1)
         sum_w = np.sum(w, axis=1)
 
         del w
 
         # Compute weights and apply to normal vectors (w * n)
-        coeff = np.where(sum_w == 0., 0., delta_p / sum_w)
-        w_n = np.reshape(coeff, (-1, 1)) * normal_cloud.data[idx_start:idx_end, :]
+        coeff = np.where(sum_w == 0.0, 0.0, delta_p / sum_w)
+        w_n = (
+            np.reshape(coeff, (-1, 1)) * normal_cloud.data[idx_start:idx_end, :]
+        )
 
         # Change points' position along its normal as: p_new = p + w * n
-        pcd.df.loc[idx_start:idx_end - 1, "x":"z"] = cloud_tree.data[idx_start:idx_end, :] + w_n
+        pcd.df.loc[idx_start : idx_end - 1, "x":"z"] = (
+            cloud_tree.data[idx_start:idx_end, :] + w_n
+        )
 
-    for _ in tqdm(range(num_iterations), position=0, leave=False, desc="Iterations"):
+    for _ in tqdm(
+        range(num_iterations), position=0, leave=False, desc="Iterations"
+    ):
         # Compute the KDTree at each iteration
         # Because by changing the point coordinates, you can change the k nearest neighbours
-        cloud_tree = KDTree(pcd.df.loc[:, ["x", "y", "z"]].to_numpy(), copy_data=True)
+        cloud_tree = KDTree(
+            pcd.df.loc[:, ["x", "y", "z"]].to_numpy(), copy_data=True
+        )
 
         # Number of workers for iterations should be adapted according to the point cloud size, the number of knn and
         # the memory available
-        for k in tqdm(range(num_chunks), position=1, leave=False, desc="Chunks per iteration"):
+        for k in tqdm(
+            range(num_chunks),
+            position=1,
+            leave=False,
+            desc="Chunks per iteration",
+        ):
             apply(indexes_per_chunk[k], indexes_per_chunk[k + 1])
 
     return pcd

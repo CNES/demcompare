@@ -92,7 +92,7 @@ def preprocess_image_texture(
         rio_outfile,
         fn_process_tile,
         tile_size=(1000, 1000),
-        **kwargs
+        **kwargs,
     ):
         """
         Function that executes a user defined function using a tiling process.
@@ -267,8 +267,10 @@ def texturing(mesh: Mesh, cfg: dict) -> Mesh:
     # If image_offset is given apply it to the RPC coefficients
     if image_offset is not None:
         if len(image_offset) != 2:
-            raise ValueError(f"If specified, 'image_offset' should be a tuple or list of 2 elements (col, row)."
-                             f"Here: {image_offset}.")
+            raise ValueError(
+                f"If specified, 'image_offset' should be a tuple or list of 2 elements (col, row)."
+                f"Here: {image_offset}."
+            )
         rpc.out_offset = np.asarray(rpc.out_offset)
         rpc.out_offset -= np.asarray(image_offset)
 

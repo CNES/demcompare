@@ -112,15 +112,16 @@ def ball_pivoting_reconstruction(
 
 
 def poisson_reconstruction(
-        pcd: PointCloud,
-        depth: int = 8,
-        width: float = 0.,
-        scale: float = 1.1,
-        linear_fit: bool = False,
-        n_threads: int = -1,
-        normal_search_method: str = "knn",
-        normal_nb_neighbor: int = 30,
-        normal_radius: float = 2.) -> Mesh:
+    pcd: PointCloud,
+    depth: int = 8,
+    width: float = 0.0,
+    scale: float = 1.1,
+    linear_fit: bool = False,
+    n_threads: int = -1,
+    normal_search_method: str = "knn",
+    normal_nb_neighbor: int = 30,
+    normal_radius: float = 2.0,
+) -> Mesh:
     """
     Kazhdan, Michael M. et al. “Poisson surface reconstruction.” SGP '06 (2006).
 
