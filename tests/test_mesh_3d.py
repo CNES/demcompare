@@ -46,3 +46,4 @@ def test_mesh3d():
     """Sample pytest mesh3d module test function"""
     assert mesh3d.__author__ == "CNES"
     assert mesh3d.__email__ == "cars@cnes.fr"
+

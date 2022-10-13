@@ -51,9 +51,15 @@ Mesh 3D short description:
 
 TODO
 
-- Feature 1
-- Feature 2
-- ...
+* **General**
+  * Add the possibility to use semantic maps and modify functions to take them into account for processing (for example building roofs could be processed differently from roads).
+  * Recover correlation metrics from previous CARS processing and add it as an input to exploit them in further processings.
+  * Make sure information in the PointCloud pandas DataFrame object are the same as the ones in the Point Cloud open3d object all along the process.
+* **Filtering of outliers**
+  * Integrate the use of CARS already existing functions (in its latest version)
+* **Texturing**
+  * Allow to add a smaller image than the whole satellite image to be consistent with the RPCs
+  * Make it satellite agnostic (for now it takes into account Pleiades imagery)
 
 ## Quick Start
 
@@ -76,7 +82,7 @@ You can run two functions with the `mesh3d` cli:
 Configure the pipeline in a JSON file `/path/to/config.json`:
 ```json
 {
-  "input_path": "/path/to/input/data.ply",
+  "input_path": "/path/to/input/data.las",
   "output_dir": "/path/to/output_dir",
   "initial_state": "initial_pcd",
   "tif_img_path": "/path/to/tif_img_texture.tif",
@@ -141,8 +147,8 @@ for each method.
 
 If a texturing step is specified, then the following parameters become mandatory:
 * `rpc_path`: Path to the RPC xml file
-* `tif_img_path`: Path to the TIF image from which to extract the texture image
-* `utm_code`: The UTM code of the point cloud coordinates expressed as a EPSG code number for transformation purpose
+* `tif_img_path`: Path to the TIF image from which to extract the texture image. For now, it should be the whole satellite image to be consistent with the product's RPC.
+* `utm_code`: The UTM code of the point cloud coordinates expressed as a EPSG code number for transformation purpose. *Warning: the input cloud is assumed to be expressed in a UTM frame.*
 
 
 Finally, you can launch the following commands to activate the virtual environment and run the pipeline:
@@ -177,11 +183,23 @@ source venv/bin/activate
 mesh3d evaluate /path/to/config.json
 ```
 
+## Example
+
+Please find data example to launch the pipeline in [here](example) and guidelines [over here](example/README.md).
+
+
 ## Documentation
 
-Go in docs/ directory
+Run the following commands to build the doc:
+```bash
+source /venv/bin/activate
+make docs
+```
+The Sphinx documentation should pop in a new tab of your browser.
 
-* Documentation: https://mesh3d.readthedocs.io.
+
+[//]: # ( * Documentation: https://mesh-3d.readthedocs.io.)
+>>>>>>> Updated docs, especially on the bilateral filtering.
 
 
 ## Contribution

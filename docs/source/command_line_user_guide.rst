@@ -40,7 +40,8 @@ To launch the 3D reconstruction pipeline, you first need to configure it in a JS
             "knn_normals": 20,
             "weights_distance": true,
             "weights_color": true,
-            "workers": 6,
+            "num_workers_kdtree": 6,
+            "num_chunks": 4,
             "use_open3d":  true
           }
         },
