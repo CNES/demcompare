@@ -1,0 +1,54 @@
+{
+  "input_path": "point_cloud.laz",
+  "output_dir": "output",
+  "rpc_path": "rpc.XML",
+  "tif_img_path": "texture_image.tif",
+  "image_offset": [
+    15028,
+    17015
+  ],
+  "utm_code": 32631,
+  "state_machine": [
+    {
+      "action": "filter",
+      "method": "radius_o3d",
+      "params": {
+        "radius": 4,
+        "nb_points": 25
+      }
+    },
+    {
+      "action": "denoise_pcd",
+      "method": "bilateral",
+      "params": {
+        "num_iterations": 10,
+        "knn": 10,
+        "knn_normals": 10,
+        "weights_distance": true,
+        "weights_color": true,
+        "sigma_d": 1.5,
+        "sigma_n": 1,
+        "num_workers_kdtree": 6,
+        "num_chunks": 2,
+        "use_open3d": true
+      }
+    },
+    {
+      "action": "mesh",
+      "method": "delaunay_2d",
+      "params": {}
+    },
+    {
+      "action": "simplify_mesh",
+      "method": "garland-heckbert",
+      "params": {
+        "reduction_ratio_of_triangles": 0.75
+      }
+    },
+    {
+      "action": "texture",
+      "method": "texturing",
+      "params": {}
+    }
+  ]
+}
