@@ -1,6 +1,7 @@
 repos:
 - repo: local
   hooks:
+
   - id: isort
     name: Isort
     stages: [commit]

@@ -6,8 +6,8 @@ Filter point cloud
 
 Point cloud filtering consists in removing outliers from the point cloud.
 Outliers are defined as points that are significantly higher or lower from the average surface.
-There are generated during the correlation process on regions with matching problems (shadows, homogenous textures, etc.).
-Outliers ought to be removed from the cloud because they bring false information. However, in satellite images,
+There are generated during the correlation process on regions with matching problems (shadows, homogeneous textures, etc.).
+Outliers ought to be removed from the cloud because they propagate false information. However, in satellite images,
 outliers are often gathered in clusters. Thus, since photogrammetric point clouds are not dense, removing outliers leaves holes in the data.
 How to deal with these clusters is an open question (leave it that way? re-densify the data by interpolation? etc.)
 
@@ -35,7 +35,7 @@ Local density analysis
     | *Action* : "filter"
     | *Method* : "local_density_analysis"
 
-Based on the work of Ning et al., this method aims at computing the probabiity of a point to be an outlier
+Based on the work of Ning et al., this method aims at computing the probability of a point to be an outlier
 considering its local density for a defined number of neighbours.  If its local density is too low, this point is
 considered as an outlier.
 
@@ -53,8 +53,8 @@ Radius filtering
     | *Action* : "filter"
     | *Method* : "radius_o3d"
 
-Radius filtering is the dual method not relying on nearest neighbours but on a ball of specified radius.
-The user defined the number of neighbours that a point should have in a sphere of user-defined radius.
+Radius filtering is the dual method to statistical filtering not relying on nearest neighbours but on a ball of specified radius.
+The user defines the number of neighbours that a point should have in a sphere of user-defined radius.
 Then, each point of the cloud is tested, and if it does not satisfy this requirement, it is classified as outlier.
 
 .. note::
