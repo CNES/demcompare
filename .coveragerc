@@ -1,0 +1,5 @@
+[run]
+source = mesh3d
+omit =
+    # Omit tests
+    /tests/*
