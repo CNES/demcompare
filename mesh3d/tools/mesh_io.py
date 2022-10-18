@@ -92,9 +92,9 @@ def serialize_ply_texture(filepath: str, mesh: Mesh) -> None:
     ).write(filepath)
 
 
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 # Mesh object ===> any mesh format
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 
 
 def mesh2ply(filepath: str, mesh: Mesh, compressed: bool = True):
@@ -103,7 +103,8 @@ def mesh2ply(filepath: str, mesh: Mesh, compressed: bool = True):
     # Check consistency
     if filepath.split(".")[-1] != "ply":
         raise ValueError(
-            f"Filepath extension should be '.ply', but found: '{filepath.split('.')[-1]}'."
+            f"Filepath extension should be '.ply', but found: "
+            f"'{filepath.split('.')[-1]}'."
         )
 
     # # Write point cloud apart in a LAS file
@@ -118,9 +119,10 @@ def mesh2ply(filepath: str, mesh: Mesh, compressed: bool = True):
         write_triangle_mesh_o3d(filepath_mesh, mesh, compressed=compressed)
 
 
-# -------------------------------------------------------------------------------------------------------- #
-# any mesh format ===> dict of pandas DataFrame point cloud and numpy array mesh (vertex indexes of triangles)
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
+# any mesh format ===> dict of pandas DataFrame point cloud and numpy array
+# mesh (vertex indexes of triangles)
+# -------------------------------------------------------------------------- #
 
 
 def ply2mesh(filepath: str) -> (pd.DataFrame, pd.DataFrame):
@@ -129,7 +131,8 @@ def ply2mesh(filepath: str) -> (pd.DataFrame, pd.DataFrame):
     # Check consistency
     if filepath.split(".")[-1] != "ply":
         raise ValueError(
-            f"Filepath extension should be '.ply', but found: '{filepath.split('.')[-1]}'."
+            f"Filepath extension should be '.ply', but found: "
+            f"'{filepath.split('.')[-1]}'."
         )
 
     # Read point cloud and faces
@@ -139,9 +142,9 @@ def ply2mesh(filepath: str) -> (pd.DataFrame, pd.DataFrame):
     return mesh.pcd.df, mesh.df
 
 
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 # General functions
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 
 
 def deserialize_mesh(filepath: str) -> (pd.DataFrame, pd.DataFrame):
@@ -162,7 +165,8 @@ def serialize_mesh(filepath: str, mesh: Mesh, extension: str = "ply") -> None:
 
     if filepath.split(".")[-1] != extension:
         raise ValueError(
-            f"Filepath extension ('{filepath.split('.')[-1]}') is inconsistent with the extension "
+            f"Filepath extension ('{filepath.split('.')[-1]}') is "
+            f"inconsistent with the extension "
             f"asked ('{extension}')."
         )
 

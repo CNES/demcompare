@@ -21,6 +21,7 @@
 Define classes for handling common objects
 """
 
+import os
 from typing import Union
 
 import numpy as np
@@ -33,7 +34,7 @@ NORMALS = ["n_x", "n_y", "n_z"]
 UVS = ["uv1_row", "uv1_col", "uv2_row", "uv2_col", "uv3_row", "uv3_col"]
 
 
-class PointCloud(object):
+class PointCloud:
     """Point cloud data"""
 
     def __init__(
@@ -44,7 +45,8 @@ class PointCloud(object):
 
         if (not isinstance(df, pd.DataFrame)) and (df is not None):
             raise TypeError(
-                f"Input point cloud data 'df' should either be None or a pd.DataFrame. Here found "
+                f"Input point cloud data 'df' should either be None or a "
+                f"pd.DataFrame. Here found "
                 f"'{type(df)}'."
             )
 
@@ -52,8 +54,9 @@ class PointCloud(object):
             o3d_pcd is not None
         ):
             raise TypeError(
-                f"Input open3d point cloud data 'o3d_pcd' should either be None or a "
-                f"o3d.geometry.PointCloud. Here found '{type(o3d_pcd)}'."
+                f"Input open3d point cloud data 'o3d_pcd' should either be "
+                f"None or a o3d.geometry.PointCloud. Here found "
+                f"'{type(o3d_pcd)}'."
             )
 
         self.df = df
@@ -76,7 +79,8 @@ class PointCloud(object):
             )
         if self.o3d_pcd.has_normals():
             self.set_df_normals(np.asarray(self.o3d_pcd.normals))
-        # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
+        # TODO: Open3D has no classification attribute: need to do a research
+        #  in the df pcd to bring them back? the
         #  point order might be different
 
     def set_df_from_vertices(self, vertices: np.ndarray) -> None:
@@ -97,8 +101,8 @@ class PointCloud(object):
 
         if colors.shape[1] != len(color_names):
             raise ValueError(
-                f"The number of columns ({colors.shape[1]}) is not equal to the number "
-                f"of column names ({len(color_names)})."
+                f"The number of columns ({colors.shape[1]}) is not "
+                f"equal to the number of column names ({len(color_names)})."
             )
 
         self.df[color_names] = colors
@@ -109,7 +113,8 @@ class PointCloud(object):
 
         if normals.shape[1] != 3:
             raise ValueError(
-                f"Normals should have three columns (x, y, z). Found ({normals.shape[1]})."
+                f"Normals should have three columns (x, y, z). "
+                f"Found ({normals.shape[1]})."
             )
 
         self.df[NORMALS] = normals
@@ -145,7 +150,8 @@ class PointCloud(object):
                 colors_arr[:, k] = self.df[c].to_numpy()
             else:
                 raise ValueError(
-                    f"Open3D only deals with RGB colors. Here '{c}' is missing."
+                    f"Open3D only deals with RGB colors. Here '{c}' is "
+                    f"missing."
                 )
         # normalize colours in [0, 1]
         colors_arr = np.divide(
@@ -176,59 +182,66 @@ class PointCloud(object):
         """Get color data"""
         if not self.has_colors:
             raise ValueError("Point cloud has no color.")
+
         return self.df[[c for c in COLORS if c in self.df.head()]]
 
     def get_normals(self) -> pd.DataFrame:
         """Get normals"""
         if not self.has_normals:
             raise ValueError("Point cloud has no normals.")
+
         return self.df[NORMALS]
 
     def set_unitary_normals(self):
         """Make normals unitary (i.e. with a norm equal to 1.)"""
         if not self.has_normals:
             raise ValueError("Point cloud has no normals.")
-        else:
-            self.df[NORMALS] /= np.linalg.norm(
-                self.df[NORMALS].to_numpy(), axis=1, keepdims=True
-            )
+
+        self.df[NORMALS] /= np.linalg.norm(
+            self.df[NORMALS].to_numpy(), axis=1, keepdims=True
+        )
 
     @property
     def has_colors(self) -> bool:
+        """Whether colors are specified"""
         if self.df is None:
             raise ValueError("Point cloud (pandas DataFrame) is not assigned.")
-        else:
-            return any([c in self.df.head() for c in COLORS])
+
+        return any(c in self.df.head() for c in COLORS)
 
     @property
     def has_normals(self) -> bool:
+        """Whether point normals are specified"""
         if self.df is None:
             raise ValueError("Point cloud (pandas DataFrame) is not assigned.")
-        else:
-            return all([n in self.df.head() for n in NORMALS])
+
+        return all(n in self.df.head() for n in NORMALS)
 
     @property
     def are_normals_unitary(self) -> bool:
+        """Whether normals are unitary (i.e. of norm equal to 1)"""
         if self.df is None:
             raise ValueError("Point cloud (pandas DataFrame) is not assigned.")
-        else:
-            return self.has_normals and np.all(
-                np.equal(
-                    # Results are rounded in order to avoid taking into account numerical errors
-                    np.around(
-                        np.linalg.norm(self.df[NORMALS].to_numpy(), axis=1),
-                        decimals=9,
-                    ),
-                    np.ones(self.df.shape[0], dtype=np.float64),
-                )
+
+        return self.has_normals and np.all(
+            np.equal(
+                # Results are rounded in order to avoid taking into
+                # account numerical errors
+                np.around(
+                    np.linalg.norm(self.df[NORMALS].to_numpy(), axis=1),
+                    decimals=9,
+                ),
+                np.ones(self.df.shape[0], dtype=np.float64),
             )
+        )
 
     @property
     def has_classes(self) -> bool:
+        """Whether point cloud has classes specified by point"""
         if self.df is None:
             raise ValueError("Point cloud (pandas DataFrame) is not assigned.")
-        else:
-            return "classification" in self.df.head()
+
+        return "classification" in self.df.head()
 
     def serialize(self, filepath: str, **kwargs) -> None:
         """Serialize point cloud"""
@@ -243,7 +256,7 @@ class PointCloud(object):
         self.df = deserialize_point_cloud(filepath)
 
 
-class Mesh(object):
+class Mesh:
     """Mesh data"""
 
     def __init__(
@@ -263,6 +276,7 @@ class Mesh(object):
         self.image_texture_path = None
 
     def set_df_from_o3d_mesh(self) -> None:
+        """Set pd.DataFrame from open3d TriangleMesh data"""
         if self.o3d_mesh is None:
             raise ValueError(
                 "Could not set df from open3d mesh because it is empty."
@@ -279,7 +293,8 @@ class Mesh(object):
         if self.o3d_mesh.has_textures():
             if self.image_texture_path is None:
                 logger.warning(
-                    f"No image texture path is given to the Mesh object. Texture will remain incomplete."
+                    "No image texture path is given to the Mesh object. "
+                    "Texture will remain incomplete."
                 )
 
         if self.o3d_mesh.has_triangle_uvs():
@@ -295,13 +310,16 @@ class Mesh(object):
             )
         if self.o3d_mesh.has_vertex_normals():
             self.pcd.set_df_normals(np.asarray(self.o3d_mesh.vertex_normals))
-        # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
+        # TODO: Open3D has no classification attribute: need to do a research
+        #  in the df pcd to bring them back? the
         #  point order might be different
 
     def set_df_from_vertices(self, vertices) -> None:
+        """Set pd.DataFrame from an array of vertices"""
         self.df = pd.DataFrame(data=vertices, columns=["p1", "p2", "p3"])
 
     def set_image_texture_path(self, image_texture_path) -> None:
+        """Set image texture path"""
         self.image_texture_path = image_texture_path
 
     def set_df_uvs(self, uvs) -> None:
@@ -318,19 +336,22 @@ class Mesh(object):
         # Check characteristics
         if uvs.shape[0] != self.df.shape[0]:
             raise ValueError(
-                f"Inconsistent number of triangles between triangle vertex indexes ({self.df.shape[0]} "
+                f"Inconsistent number of triangles between triangle vertex "
+                f"indexes ({self.df.shape[0]} "
                 f"triangles) and uvs ({uvs.shape[0]} data)."
             )
         if uvs.shape[1] != 6:
             raise ValueError(
-                f"UVs should be a numpy ndarray or a list of list with exactly 6 columns (3 vertices "
-                f"associated to a pair of image texture coordinates (row, col). "
+                f"UVs should be a numpy ndarray or a list of list with "
+                f"exactly 6 columns (3 vertices associated to a pair of "
+                f"image texture coordinates (row, col). "
                 f"Here found {uvs.shape[1]}."
             )
 
         self.df[UVS] = uvs
 
     def set_o3d_mesh_from_df(self) -> None:
+        """Set open3d TriangleMesh from a pd.DataFrame"""
         if self.df is None:
             raise ValueError(
                 "Could not set open3d mesh from df mesh because it is empty."
@@ -358,8 +379,8 @@ class Mesh(object):
         if self.pcd.has_normals:
             self.set_o3d_vertex_normals()
 
-        # TODO: Open3D has no classification attribute: need to do a research in the df pcd to bring them back? the
-        #  point order might be different
+        # TODO: Open3D has no classification attribute: need to do a research
+        #  in the df pcd to bring them back? the point order might be different
 
     def set_o3d_vertex_colors(self) -> None:
         """Set color attribute of open3D TriangleMesh"""
@@ -381,7 +402,8 @@ class Mesh(object):
                 colors_arr[:, k] = self.pcd.df[c].to_numpy()
             else:
                 raise ValueError(
-                    f"Open3D only deals with RGB colors. Here '{c}' is missing."
+                    f"Open3D only deals with RGB colors. Here '{c}' is "
+                    f"missing."
                 )
         # normalize colours in [0, 1]
         colors_arr = np.divide(
@@ -417,7 +439,8 @@ class Mesh(object):
 
         if not self.has_texture:
             raise ValueError(
-                f"Mesh object has no texture (either the image texture path or the uvs are missing."
+                "Mesh object has no texture (either the image texture path "
+                "or the uvs are missing."
             )
 
         # UVs in open3d are expressed as a (3 * num_triangles, 2)
@@ -430,91 +453,92 @@ class Mesh(object):
         self.o3d_mesh.textures = [o3d.io.read_image(self.image_texture_path)]
 
     def get_triangles(self) -> pd.DataFrame:
+        """Get point triangle indexes"""
         return self.df[["p1", "p2", "p3"]]
 
     def get_triangle_uvs(self) -> pd.DataFrame:
+        """Get triangle uvs"""
         if not self.has_triangle_uvs:
             raise ValueError("Mesh has no triangle uvs.")
-        else:
-            return self.df[UVS]
+
+        return self.df[UVS]
 
     def get_image_texture_path(self) -> str:
+        """Get image texture path"""
         if self.image_texture_path is None:
             raise ValueError("Mesh has no image texture path defined.")
-        else:
-            return self.image_texture_path
+
+        return self.image_texture_path
 
     @property
     def has_triangles(self) -> bool:
+        """Whether mesh has triangles specified"""
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
-        else:
-            return (
-                all([n in self.df.head() for n in ["p1", "p2", "p3"]])
-                and not self.df.empty
-            )
+
+        return (
+            all(n in self.df.head() for n in ["p1", "p2", "p3"])
+            and not self.df.empty
+        )
 
     @property
     def has_texture(self) -> bool:
+        """Whether mesh has a texture specified"""
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
-        else:
-            return (
-                (self.image_texture_path is not None)
-                and all(
-                    [
-                        el in self.df.head()
-                        for el in [
-                            "uv1_row",
-                            "uv1_col",
-                            "uv2_row",
-                            "uv2_col",
-                            "uv3_row",
-                            "uv3_col",
-                        ]
-                    ]
-                )
-                and not self.df.empty
+
+        return (
+            (self.image_texture_path is not None)
+            and all(
+                el in self.df.head()
+                for el in [
+                    "uv1_row",
+                    "uv1_col",
+                    "uv2_row",
+                    "uv2_col",
+                    "uv3_row",
+                    "uv3_col",
+                ]
             )
+            and not self.df.empty
+        )
 
     @property
     def has_triangle_uvs(self) -> bool:
+        """Whether mesh has triangle uvs"""
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
-        else:
-            return (
-                all(
-                    [
-                        el in self.df.head()
-                        for el in [
-                            "uv1_row",
-                            "uv1_col",
-                            "uv2_row",
-                            "uv2_col",
-                            "uv3_row",
-                            "uv3_col",
-                        ]
-                    ]
-                )
-                and not self.df.empty
+
+        return (
+            all(
+                el in self.df.head()
+                for el in [
+                    "uv1_row",
+                    "uv1_col",
+                    "uv2_row",
+                    "uv2_col",
+                    "uv3_row",
+                    "uv3_col",
+                ]
             )
+            and not self.df.empty
+        )
 
     @property
     def has_normals(self) -> bool:
+        """Whether mesh has face normals"""
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
-        else:
-            return (
-                all([n in self.df.head() for n in NORMALS])
-                and not self.df.empty
-            )
+
+        return all(n in self.df.head() for n in NORMALS) and not self.df.empty
 
     @property
     def has_classes(self) -> bool:
+        """Whether mesh has a classification by face"""
         if self.df is None:
             raise ValueError("Mesh (pandas DataFrame) is not assigned.")
-        else:
-            return "classification" in self.df.head() and not self.df.empty
+
+        return "classification" in self.df.head() and not self.df.empty
 
     def serialize(self, filepath: str, **kwargs) -> None:
         """Serialize mesh"""
@@ -527,3 +551,37 @@ class Mesh(object):
         from .mesh_io import deserialize_mesh
 
         self.pcd.df, self.df = deserialize_mesh(filepath)
+
+
+def read_input_path(input_path: str) -> Mesh:
+    """
+    Read input path as either a PointCloud or a Mesh object
+
+    Parameters
+    ----------
+    input_path: str
+        Input path to read
+
+    Returns
+    -------
+    mesh: Mesh
+        Mesh object
+    """
+    from ..param import MESH_FILE_EXTENSIONS
+
+    if os.path.basename(input_path).split(".")[-1] in MESH_FILE_EXTENSIONS:
+
+        # Try reading input data as a mesh if the extension is valid
+        mesh = Mesh()
+        mesh.deserialize(input_path)
+        logger.debug("Input data read as a mesh format.")
+
+    else:
+
+        # If the extension is not a mesh extension, read the data as a
+        # point cloud and put it in a dict
+        mesh = Mesh()
+        mesh.pcd.deserialize(input_path)
+        logger.debug("Input data read as a point cloud format.")
+
+    return mesh

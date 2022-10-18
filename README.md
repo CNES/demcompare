@@ -53,6 +53,7 @@ TODO
   * Add the possibility to use semantic maps and modify functions to take them into account for processing (for example building roofs could be processed differently from roads).
   * Recover correlation metrics from previous CARS processing and add it as an input to exploit them in further processings.
   * Make sure information in the PointCloud pandas DataFrame object are the same as the ones in the Point Cloud open3d object all along the process.
+  * To make it more large scale with potentially large point clouds, las files should be read by chunk (cf [LASPY documentation](https://laspy.readthedocs.io/en/latest/basic.html#chunked-writing))
 
 
 * **Filtering of outliers**
@@ -63,6 +64,7 @@ TODO
   * Make it satellite agnostic (for now it takes into account Pleiades imagery)
   * Handle multiple texture images
   * Handle occlusions
+  * Make percentiles (for better texture visualisation) computation large scale (avoid having to load the full raster in memory)
 
 ## Quick Start
 

@@ -26,7 +26,7 @@ from typing import Union
 import matplotlib.tri as mtri
 import open3d as o3d
 from loguru import logger
-from scipy.spatial import Delaunay
+from scipy.spatial.qhull import Delaunay
 
 from ..core.denoise_pcd import compute_pcd_normals_o3d
 from ..tools.handlers import Mesh, PointCloud
@@ -40,17 +40,21 @@ def ball_pivoting_reconstruction(
     normal_radius: float = 2.0,
 ) -> Mesh:
     """
-    Bernardini, Fausto et al. “The ball-pivoting algorithm for surface reconstruction.” IEEE Transactions on
-    Visualization and Computer Graphics 5 (1999): 349-359.
+    Bernardini, Fausto et al. “The ball-pivoting algorithm for surface
+    reconstruction.” IEEE Transactions on Visualization and Computer
+    Graphics 5 (1999): 349-359.
 
-    Function that computes a triangle mesh from a oriented PointCloud. This implements the Ball Pivoting algorithm
-    proposed in F. Bernardini et al., “The ball-pivoting algorithm for surface reconstruction”, 1999.
-    The implementation is also based on the algorithms outlined in Digne, “An Analysis and Implementation of a
-    Parallel Ball Pivoting Algorithm”, 2014. The surface reconstruction is done by rolling a ball with a given
-    radius over the point cloud, whenever the ball touches three points a triangle is created.
+    Function that computes a triangle mesh from a oriented PointCloud.
+    This implements the Ball Pivoting algorithm proposed in F. Bernardini et
+    al., “The ball-pivoting algorithm for surface reconstruction”, 1999.
+    The implementation is also based on the algorithms outlined in Digne,
+    “An Analysis and Implementation of a Parallel Ball Pivoting Algorithm”,
+    2014. The surface reconstruction is done by rolling a ball with a given
+    radius over the point cloud, whenever the ball touches three points
+    a triangle is created.
 
-    Radius is computed to be slightly larger than the average distance between points
-    https://cs184team.github.io/cs184-final/writeup.html
+    Radius is computed to be slightly larger than the average distance between
+    points https://cs184team.github.io/cs184-final/writeup.html
 
     Parameters
     ----------
@@ -61,7 +65,8 @@ def ball_pivoting_reconstruction(
     normal_search_method: str (default="knn")
         Search method for normal computation
     normal_nb_neighbor: int (defaul=30)
-        Number of neighbours used by the KNN algorithm to compute the normals with Open3D.
+        Number of neighbours used by the KNN algorithm to compute the normals
+        with Open3D.
     normal_radius: float (default=2.)
         Radius of search for neighbours for normal computation.
 
@@ -79,8 +84,9 @@ def ball_pivoting_reconstruction(
     # add normals
     if not pcd.has_normals:
         logger.warning(
-            "Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
-            "or 'n_z'). The normal computation will be launched with open3d."
+            "Some normal components are not included in the df point cloud "
+            "(either 'n_x', or 'n_y', or 'n_z'). The normal computation "
+            "will be launched with open3d."
         )
 
         pcd = compute_pcd_normals_o3d(
@@ -122,36 +128,45 @@ def poisson_reconstruction(
     """
     Kazhdan, Michael M. et al. “Poisson surface reconstruction.” SGP '06 (2006).
 
-    Function that computes a triangle mesh from a oriented PointCloud pcd. This implements the Screened Poisson
-    Reconstruction proposed in Kazhdan and Hoppe, “Screened Poisson Surface Reconstruction”, 2013. This function
+    Function that computes a triangle mesh from a oriented PointCloud pcd.
+    This implements the Screened Poisson Reconstruction proposed in Kazhdan
+    and Hoppe, “Screened Poisson Surface Reconstruction”, 2013. This function
     uses the original implementation by Kazhdan.
     See https://github.com/mkazhdan/PoissonRecon
 
-    Warning: Since the Poisson reconstruction is an optimisation process, the triangle vertices are not the initial
-    point cloud points. Thus, "pcd" points will be different from "o3d..." and mesh points.
+    Warning: Since the Poisson reconstruction is an optimisation process,
+    the triangle vertices are not the initial point cloud points. Thus,
+    "pcd" points will be different from "o3d..." and mesh points.
 
     Parameters
     ----------
     pcd: PointCloud
         Point cloud object
     depth: int (default=8)
-        Maximum depth of the tree that will be used for surface reconstruction. Running at depth d corresponds to
-        solving on a grid whose resolution is no larger than 2^d x 2^d x 2^d. Note that since the reconstructor
-        adapts the octree to the sampling density, the specified reconstruction depth is only an upper bound.
+        Maximum depth of the tree that will be used for surface reconstruction.
+        Running at depth d corresponds to
+        solving on a grid whose resolution is no larger than 2^d x 2^d x 2^d.
+        Note that since the reconstructor adapts the octree to the sampling
+        density, the specified reconstruction depth is only an upper bound.
     width: float (default=0.)
-        Specifies the target width of the finest level octree cells. This parameter is ignored if depth is specified.
-        It is expressed in the point cloud unit (for example in meters for utm data).
+        Specifies the target width of the finest level octree cells.
+        This parameter is ignored if depth is specified.
+        It is expressed in the point cloud unit (for example in meters for
+        utm data).
     scale: float (default=1.1)
-        Specifies the ratio between the diameter of the cube used for reconstruction and the diameter of the
-        samples’ bounding cube.
+        Specifies the ratio between the diameter of the cube used for
+        reconstruction and the diameter of the samples’ bounding cube.
     linear_fit: bool (default=False)
-        If true, the reconstructor will use linear interpolation to estimate the positions of iso-vertices.
+        If true, the reconstructor will use linear interpolation to estimate
+        the positions of iso-vertices.
     n_threads: int (default=-1)
-        Number of threads used for reconstruction. Set to -1 to automatically determine it.
+        Number of threads used for reconstruction. Set to -1 to automatically
+        determine it.
     normal_search_method: str (default="knn")
         Search method for normal computation
     normal_nb_neighbor: int (default=30)
-        Number of neighbours used by the KNN algorithm to compute the normals with Open3D.
+        Number of neighbours used by the KNN algorithm to compute the normals
+        with Open3D.
     normal_radius: float (default=2.)
         Radius of search for neighbours for normal computation.
 
@@ -169,8 +184,9 @@ def poisson_reconstruction(
     # add normals
     if not pcd.has_normals:
         logger.warning(
-            "Some normal components are not included in the df point cloud (either 'n_x', or 'n_y', "
-            "or 'n_z'). The normal computation will be launched with open3d."
+            "Some normal components are not included in the df point cloud "
+            "(either 'n_x', or 'n_y', or 'n_z'). The normal computation "
+            "will be launched with open3d."
         )
 
         pcd = compute_pcd_normals_o3d(
@@ -192,8 +208,8 @@ def poisson_reconstruction(
     )
 
     # Init Mesh object
-    # TODO: Check consistency between pcd.df list of points and o3d list of points
-    #   Poisson creates new points
+    # TODO: Check consistency between pcd.df list of points and o3d list of
+    #  points Poisson creates new points
     mesh = Mesh(
         pcd=pcd.df,
         o3d_pcd=o3d.geometry.PointCloud(points=o3d_mesh[0].vertices),
@@ -208,14 +224,16 @@ def delaunay_2d_reconstruction(
     pcd: PointCloud, method: str = "matplotlib"
 ) -> Mesh:
     """
-    2.5D Delaunay triangulation: Delaunay triangulation on the planimetric points and add afterwards the z coordinates.
+    2.5D Delaunay triangulation: Delaunay triangulation on the planimetric
+    points and add afterwards the z coordinates.
 
     Parameters
     ----------
     pcd: PointCloud
         Point cloud object
     method: str, default='matplotlib'
-        Method to use for Delaunay 2.5D triangulation. Available methods are 'matplotlib' and 'scipy'.
+        Method to use for Delaunay 2.5D triangulation. Available methods are
+        'matplotlib' and 'scipy'.
 
     Returns
     -------
@@ -232,13 +250,12 @@ def delaunay_2d_reconstruction(
         mesh.set_df_from_vertices(mesh_data.simplices)
         return mesh
 
-    elif method == "matplotlib":
+    if method == "matplotlib":
         mesh_data = mtri.Triangulation(pcd.df.x, pcd.df.y)
         mesh.set_df_from_vertices(mesh_data.triangles)
         return mesh
 
-    else:
-        raise NotImplementedError(
-            f"Unknown library for Delaunay triangulation: '{method}'. Should either be 'scipy' "
-            f"or 'matplotlib'."
-        )
+    raise NotImplementedError(
+        f"Unknown library for Delaunay triangulation: '{method}'. "
+        f"Should either be 'scipy' or 'matplotlib'."
+    )

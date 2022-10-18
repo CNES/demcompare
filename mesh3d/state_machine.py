@@ -29,9 +29,23 @@ from .tools.handlers import Mesh
 
 
 class Mesh3DMachine(Machine):
+    """Mesh 3D state machine"""
+
     def __init__(
         self, mesh_data: Mesh, initial_state: str = "initial_pcd"
     ) -> None:
+        """
+        Init a state machine for 3D mesh reconstruction
+
+        Parameters
+        ----------
+        mesh_data: Mesh
+            Mesh instance to process
+        initial_state: str (default='initial_pcd')
+            Specify the initial state. Can either be 'initial_pcd' (if
+            input data is a point cloud) or 'meshed_pcd' (if input data is a
+            mesh)
+        """
         # Init arguments
         self.mesh_data = mesh_data
         self.initial_state = initial_state
@@ -145,7 +159,8 @@ class Mesh3DMachine(Machine):
 
         except (MachineError, KeyError, AttributeError):
             logger.error(
-                f"A problem occurs during Mesh 3D running {step['action']} step. Be sure of your sequencing."
+                f"A problem occurs during Mesh 3D running {step['action']} "
+                f"step. Be sure of your sequencing."
             )
             raise
 
@@ -164,10 +179,11 @@ class Mesh3DMachine(Machine):
         check_mode: bool (default=False)
             Option to run the transition checker
         """
+        assert isinstance(cfg, dict)
 
         if check_mode:
             # For checking transition validity
-            return
+            pass
 
         else:
             # Apply the filtering method chosen by the user
@@ -190,10 +206,11 @@ class Mesh3DMachine(Machine):
         check_mode: bool (default=False)
             Option to run the transition checker
         """
+        assert isinstance(cfg, dict)
 
         if check_mode:
             # For checking transition validity
-            return
+            pass
 
         else:
             # Apply the denoising method chosen by the user
@@ -214,10 +231,11 @@ class Mesh3DMachine(Machine):
         check_mode: bool (default=False)
             Option to run the transition checker
         """
+        assert isinstance(cfg, dict)
 
         if check_mode:
             # For checking transition validity
-            return
+            pass
 
         else:
             # Apply the meshing method chosen by the user
@@ -240,10 +258,11 @@ class Mesh3DMachine(Machine):
         check_mode: bool (default=False)
             Option to run the transition checker
         """
+        assert isinstance(cfg, dict)
 
         if check_mode:
             # For checking transition validity
-            return
+            pass
 
         else:
             # Apply the meshing method chosen by the user
@@ -266,10 +285,11 @@ class Mesh3DMachine(Machine):
         check_mode: bool (default=False)
             Option to run the transition checker
         """
+        assert isinstance(cfg, dict)
 
         if check_mode:
             # For checking transition validity
-            return
+            pass
 
         else:
             # Apply the meshing method chosen by the user
@@ -292,10 +312,11 @@ class Mesh3DMachine(Machine):
         check_mode: bool (default=False)
             Option to run the transition checker
         """
+        assert isinstance(cfg, dict)
 
         if check_mode:
             # For checking transition validity
-            return
+            pass
 
         else:
             # Apply the texturing method chosen by the user
@@ -305,7 +326,8 @@ class Mesh3DMachine(Machine):
 
     def check_transitions(self, cfg: dict) -> None:
         """
-        Browse user defined steps and pass them just to check they are valid steps in the state machine.
+        Browse user defined steps and pass them just to check they are valid
+        steps in the state machine.
         No action is done.
 
         Parameters
@@ -318,12 +340,13 @@ class Mesh3DMachine(Machine):
 
         try:
             # Check if the sequencing asked by the user is valid
-            for k, step in enumerate(cfg["state_machine"]):
+            for _, step in enumerate(cfg["state_machine"]):
                 self.trigger(step["action"], step, cfg, check_mode=True)
 
         except (MachineError, KeyError, AttributeError):
             logger.error(
-                f"A problem occurs during Mesh 3D transition check. Be sure of your sequencing."
+                "A problem occurs during Mesh 3D transition check. "
+                "Be sure of your sequencing."
             )
             raise
 

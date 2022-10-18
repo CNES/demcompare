@@ -30,8 +30,148 @@ from loguru import logger
 
 from . import param
 from .state_machine import Mesh3DMachine
+from .tools.handlers import Mesh, read_input_path
 
-from .tools.handlers import Mesh
+
+def check_general_items(cfg: dict) -> dict:
+    """
+    Check general items in configuration
+
+    Parameters
+    ----------
+    cfg: dict
+        Configuration dictionary
+
+    Returns
+    -------
+    cfg: dict
+        Configuration dictionary updated
+    """
+
+    if "input_path" not in cfg:
+        raise ValueError(
+            "Configuration dictionary is missing the 'input_path' field."
+        )
+
+    if not isinstance(cfg["input_path"], str):
+        raise TypeError(
+            f"'input_path' is invalid. It should be a string but got "
+            f"'{type(cfg['input_path'])}'."
+        )
+
+    if os.path.basename(cfg["input_path"]).split(".")[-1] not in (
+        param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS
+    ):
+        raise ValueError(
+            f"'input_path' extension is invalid. "
+            f"It should be in "
+            f"{param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS}."
+        )
+
+    for key in ["output_dir", "state_machine"]:
+        if key not in cfg:
+            raise ValueError(
+                f"Configuration dictionary should contains a '{key}' key."
+            )
+
+    if not isinstance(cfg["state_machine"], list):
+        raise TypeError(
+            f"State machine key in configuration should be a list of dict,"
+            f" each dict having two keys: 'action' and 'method'. "
+            f"Found '{type(cfg['state_machine'])}'."
+        )
+
+    if "initial_state" not in cfg:
+        cfg["initial_state"] = param.INITIAL_STATES[0]
+    else:
+        if cfg["initial_state"] not in param.INITIAL_STATES:
+            raise ValueError(
+                f"Initial state is invalid. It should be in"
+                f" {param.INITIAL_STATES}."
+            )
+
+    return cfg
+
+
+def check_state_machine(cfg: dict) -> dict:
+    """
+    Check state machine parameters in configuration
+
+    Parameters
+    ----------
+    cfg: dict
+        Configuration dictionary
+
+    Returns
+    -------
+    cfg: dict
+        Configuration dictionary updated
+    """
+
+    if cfg["state_machine"]:
+        for k, element in enumerate(cfg["state_machine"]):
+            # Action check
+            if "action" not in element:
+                raise ValueError(
+                    f"'action' key is missing in the "
+                    f"{k}th element of the state machine list."
+                )
+
+            if element["action"] not in param.TRANSITIONS_METHODS:
+                raise ValueError(
+                    f"Element #{k} of state machine configuration: action "
+                    f"'{element['action']}' unknown. It should be in "
+                    f"{list(param.TRANSITIONS_METHODS.keys())}."
+                )
+
+            # Texture
+            # Check that the parameters for rpc, image texture and utm code
+            # are given
+            if element["action"] == "texture":
+                if not cfg["tif_img_path"]:
+                    raise ValueError(
+                        "If a texturing step is asked, there should be a "
+                        "general configuration parameter 'tif_img_path' "
+                        "giving the path to the TIF image texture to process."
+                    )
+                if not cfg["rpc_path"]:
+                    raise ValueError(
+                        "If a texturing step is asked, there should be a "
+                        "general configuration parameter 'rpc_path' giving "
+                        "the path to the RPC data of the image texture."
+                    )
+                if not cfg["utm_code"]:
+                    raise ValueError(
+                        "If a texturing step is asked, there should be a "
+                        "general configuration parameter utm_code' giving "
+                        "the UTM code of the input point cloud or mesh for "
+                        "coordinate transforming step."
+                    )
+                if "image_offset" not in cfg:
+                    cfg["image_offset"] = None
+
+            # Method check
+            if "method" in element:
+                # Method specified
+                # Check if valid
+                if (
+                    element["method"]
+                    not in param.TRANSITIONS_METHODS[element["action"]]
+                ):
+                    raise ValueError(
+                        f"Element #{k} of state machine configuration: method "
+                        f"'{element['method']}' unknown. It should be in"
+                        f" {param.TRANSITIONS_METHODS[element['action']]}."
+                    )
+
+            else:
+                # Method not specified, then select the one by default
+                # (the first one in the list)
+                element["method"] = param.TRANSITIONS_METHODS[
+                    element["action"]
+                ][0]
+
+    return cfg
 
 
 def check_config(cfg_path: str) -> dict:
@@ -52,106 +192,25 @@ def check_config(cfg_path: str) -> dict:
     # Check the path validity
     if not isinstance(cfg_path, str):
         raise TypeError(
-            f"Configuration path is invalid. It should be a string but got '{type(cfg_path)}'."
+            f"Configuration path is invalid. It should be a string but got "
+            f"'{type(cfg_path)}'."
         )
 
     if os.path.basename(cfg_path).split(".")[-1] != "json":
         raise ValueError(
-            f"Configuration path should be a JSON file with extension '.json'. "
-            f"Found '{os.path.basename(cfg_path).split('.')[-1]}'."
+            f"Configuration path should be a JSON file with extension '.json'."
+            f" Found '{os.path.basename(cfg_path).split('.')[-1]}'."
         )
 
     # Read JSON file
-    with open(cfg_path, "r") as f:
-        cfg = json.load(f)
+    with open(cfg_path, "r", encoding="utf-8") as cfg_file:
+        cfg = json.load(cfg_file)
 
     # Check the validity of the content
-    if "input_path" not in cfg:
-        raise ValueError(
-            f"Configuration dictionary is missing the 'input_path' field."
-        )
-    else:
-        if not isinstance(cfg["input_path"], str):
-            raise TypeError(
-                f"'input_path' is invalid. It should be a string but got '{type(cfg['input_path'])}'."
-            )
-        if os.path.basename(cfg["input_path"]).split(".")[-1] not in (
-            param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS
-        ):
-            raise ValueError(
-                f"'input_path' extension is invalid. "
-                f"It should be in {param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS}."
-            )
+    cfg = check_general_items(cfg)
 
-    for key in ["output_dir", "state_machine"]:
-        if key not in cfg:
-            raise ValueError(
-                f"Configuration dictionary should contains a '{key}' key."
-            )
-
-    if not isinstance(cfg["state_machine"], list):
-        raise TypeError(
-            f"State machine key in configuration should be a list of dict, each dict having two keys: "
-            f"'action' and 'method'. Found '{type(cfg['state_machine'])}'."
-        )
-
-    if "initial_state" not in cfg:
-        cfg["initial_state"] = param.INITIAL_STATES[0]
-    else:
-        if cfg["initial_state"] not in param.INITIAL_STATES:
-            raise ValueError(
-                f"Initial state is invalid. It should be in {param.INITIAL_STATES}."
-            )
-
-    if cfg["state_machine"]:
-        for k, el in enumerate(cfg["state_machine"]):
-            # Action check
-            if "action" not in el:
-                raise ValueError(
-                    f"'action' key is missing in the {k}th element of the state machine list."
-                )
-
-            if el["action"] not in param.TRANSITIONS_METHODS:
-                raise ValueError(
-                    f"Element #{k} of state machine configuration: action '{el['action']}' unknown. "
-                    f"It should be in {list(param.TRANSITIONS_METHODS.keys())}."
-                )
-
-            # Texture
-            # Check that the parameters for rpc, image texture and utm code are given
-            if el["action"] == "texture":
-                if not cfg["tif_img_path"]:
-                    raise ValueError(
-                        "If a texturing step is asked, there should be a general configuration parameter "
-                        "'tif_img_path' giving the path to the TIF image texture to process."
-                    )
-                if not cfg["rpc_path"]:
-                    raise ValueError(
-                        "If a texturing step is asked, there should be a general configuration parameter "
-                        "'rpc_path' giving the path to the RPC data of the image texture."
-                    )
-                if not cfg["utm_code"]:
-                    raise ValueError(
-                        "If a texturing step is asked, there should be a general configuration parameter "
-                        "'utm_code' giving the UTM code of the input point cloud or mesh for "
-                        "coordinate transforming step."
-                    )
-                if "image_offset" not in cfg:
-                    cfg["image_offset"] = None
-
-            # Method check
-            if "method" in el:
-                # Method specified
-                # Check if valid
-                if el["method"] not in param.TRANSITIONS_METHODS[el["action"]]:
-                    raise ValueError(
-                        f"Element #{k} of state machine configuration: method '{el['method']}' unknown. "
-                        f"It should be in {param.TRANSITIONS_METHODS[el['action']]}."
-                    )
-
-            else:
-                # Method not specified, then select the one by default (the first one in the list)
-                el["method"] = param.TRANSITIONS_METHODS[el["action"]][0]
+    # Check state machine
+    cfg = check_state_machine(cfg)
 
     return cfg
 
@@ -222,31 +281,7 @@ def main(cfg_path: str) -> None:
     logger.info("Configuration file checked.")
 
     # Read input data
-    if (
-        os.path.basename(cfg["input_path"]).split(".")[-1]
-        in param.MESH_FILE_EXTENSIONS
-    ):
-
-        try:
-            # Try reading input data as a mesh if the extension is valid
-            mesh = Mesh()
-            mesh.deserialize(cfg["input_path"])
-            logger.debug("Input data read as a mesh format.")
-
-        except BaseException:
-            # If it does not work, try reading it with the point cloud deserializer
-            # instanciate objects
-            mesh = Mesh()
-            mesh.pcd.deserialize(cfg["input_path"])
-
-            logger.debug("Input data read as a point cloud format.")
-
-    else:
-
-        # If the extension is not a mesh extension, read the data as a point cloud and put it in a dict
-        mesh = Mesh()
-        mesh.pcd.deserialize(cfg["input_path"])
-        logger.debug("Input data read as a point cloud format.")
+    mesh = read_input_path(cfg["input_path"])
 
     # Init state machine model
     mesh3d_machine = Mesh3DMachine(
