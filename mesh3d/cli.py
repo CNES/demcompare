@@ -35,11 +35,13 @@ def get_parser() -> argparse.ArgumentParser:
 
     # Main parser
     parser = argparse.ArgumentParser(
-        description="3D textured reconstruction from remote sensing point cloud"
+        description="3D textured reconstruction from remote sensing point "
+        "cloud"
     )
     # parser.add_argument(
     #     "config",
-    #     help="Path to a json file containing the input files paths and algorithm parameters",
+    #     help="Path to a json file containing the input files paths and
+    #     algorithm parameters",
     # )
 
     # Create subcommand parser
@@ -52,7 +54,8 @@ def get_parser() -> argparse.ArgumentParser:
     )
     reconstruction_parser.add_argument(
         "config",
-        help="Path to a json file containing the input files paths and algorithm parameters",
+        help="Path to a json file containing the input files paths and "
+        "algorithm parameters",
     )
 
     # Evaluation parser
@@ -62,7 +65,8 @@ def get_parser() -> argparse.ArgumentParser:
     )
     evaluation_parser.add_argument(
         "config",
-        help="Path to a json file containing the input mesh or point cloud paths to compare and the metrics to compute",
+        help="Path to a json file containing the input mesh or point cloud "
+        "paths to compare and the metrics to compute",
     )
 
     return parser

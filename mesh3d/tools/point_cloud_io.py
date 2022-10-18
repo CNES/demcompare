@@ -29,32 +29,59 @@ import open3d as o3d
 import pandas as pd
 import plyfile
 import pyproj
+from loguru import logger
 
 # LAS tools
 
 
 def get_offset(arr_max, arr_min):
+    """Compute offset"""
     return (arr_max + arr_min) / 2
 
 
 def get_scale(arr_max, arr_min, number_values):
+    """Compute scale"""
     return (arr_max - arr_min) / number_values
 
 
 def apply_scale_offset(
-    arr, scale, offset, is_inverse=False, clip_min=None, clip_max=None
+    arr: np.ndarray,
+    scale: float,
+    offset: float,
+    is_inverse: bool = False,
+    clip_min: Union[float, None] = None,
+    clip_max: Union[float, None] = None,
 ):
+    """
+    Apply a scale and an offset to the input array
+
+    Parameters
+    ----------
+    arr: np.ndarray
+        Array to normalize
+    scale: float
+        Scaling factor
+    offset: float
+        Offset factor
+    is_inverse: bool (default=False)
+        Whether to denormalize ('inverse') (x = (x' - o) / s) rather than
+        normalize (x' = s * x + o)
+    clip_min: float or None (default=None)
+        Whether to limit the minimum output value
+    clip_max: float or None (default=None)
+        Whether to limit the maximum output value
+    """
     if not is_inverse:
-        # X ==> x
+        # x ==> x'
         return np.clip(arr * scale + offset, a_min=clip_min, a_max=clip_max)
-    else:
-        # x ==> X
-        return np.clip((arr - offset) / scale, a_min=clip_min, a_max=clip_max)
+
+    # x' ==> x
+    return np.clip((arr - offset) / scale, a_min=clip_min, a_max=clip_max)
 
 
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 # any point cloud format ===> pandas DataFrame
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 
 
 def o3d2df(o3d_pcd: o3d.geometry.PointCloud) -> pd.DataFrame:
@@ -63,8 +90,8 @@ def o3d2df(o3d_pcd: o3d.geometry.PointCloud) -> pd.DataFrame:
 
     if not o3d_pcd.is_empty():
         raise ValueError("Open3D Point Cloud does not contain any point.")
-    else:
-        pcd = PointCloud(o3d_pcd=o3d_pcd)
+
+    pcd = PointCloud(o3d_pcd=o3d_pcd)
 
     # Set df from open3d data
     pcd.set_df_from_o3d_pcd()
@@ -78,13 +105,13 @@ def las2df(filepath: str) -> pd.DataFrame:
     las = laspy.read(filepath)
     dimensions = las.points.array.dtype.names
 
-    df = pd.DataFrame(data=las.xyz, columns=["x", "y", "z"])
+    df_pcd = pd.DataFrame(data=las.xyz, columns=["x", "y", "z"])
 
     for c in ["red", "green", "blue", "nir", "classification"]:
         if c in dimensions:
-            df[c] = las.points.array[c]
+            df_pcd[c] = las.points.array[c]
 
-    return df
+    return df_pcd
 
 
 def pkl2df(filepath: str) -> pd.DataFrame:
@@ -96,13 +123,13 @@ def ply2df(filepath: str) -> pd.DataFrame:
     """PLY point cloud to pandas DataFrame"""
     plydata = plyfile.PlyData.read(filepath)
 
-    df = pd.DataFrame()
+    df_pcd = pd.DataFrame()
 
     for propty in plydata.elements[0].properties:
         name = propty.name
-        df[name] = np.array(plydata.elements[0].data[name])
+        df_pcd[name] = np.array(plydata.elements[0].data[name])
 
-    return df
+    return df_pcd
 
 
 def csv2df(filepath: str) -> pd.DataFrame:
@@ -110,31 +137,35 @@ def csv2df(filepath: str) -> pd.DataFrame:
     return pd.read_csv(filepath)
 
 
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 # pandas DataFrame ===> any point cloud format
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 
 
 def df2las(
     filepath: str,
-    df: pd.DataFrame,
+    df_pcd: pd.DataFrame,
     metadata: Union[laspy.LasHeader, None] = None,
+    point_format: int = 8,
+    version: str = "1.4",
 ):
     """
     This method serializes a pandas DataFrame in .las
     """
     if filepath.split(".")[-1] not in ["las", "laz"]:
         raise ValueError(
-            "Filepath extension is invalid. It should either be 'las' or 'laz'."
+            "Filepath extension is invalid. It should either be 'las' or "
+            "'laz'."
         )
 
     # Fill header
-    header = laspy.LasHeader(point_format=8, version="1.4")
+    header = laspy.LasHeader(point_format=point_format, version=version)
 
     if metadata is not None:
         header = metadata
 
-    # Compute normalization parameters specific to the LAS format (data is saved as an int32)
+    # Compute normalization parameters specific to the LAS format (data is
+    # saved as an int32)
     # 32 bits signed ==> 2**31 values (last bit for sign + or -)
     number_values = 2**32
 
@@ -142,11 +173,11 @@ def df2las(
     # x_min = s * X_min + o <==> x_min = - 2 ** 31 * s + o
 
     header.scales = [
-        get_scale(df[coord].max(), df[coord].min(), number_values)
+        get_scale(df_pcd[coord].max(), df_pcd[coord].min(), number_values)
         for coord in ["x", "y", "z"]
     ]
     header.offsets = [
-        get_offset(df[coord].max(), df[coord].min())
+        get_offset(df_pcd[coord].max(), df_pcd[coord].min())
         for coord in ["x", "y", "z"]
     ]
 
@@ -157,7 +188,7 @@ def df2las(
     [las.X, las.Y, las.Z] = [
         (
             apply_scale_offset(
-                df[coord],
+                df_pcd[coord],
                 header.scales[k],
                 header.offsets[k],
                 is_inverse=True,
@@ -169,8 +200,15 @@ def df2las(
     ]
 
     for c in ["red", "green", "blue", "nir", "classification"]:
-        if c in df:
-            las.points.array[c] = df[c]
+        if c in df_pcd:
+            try:
+                las.points.array[c] = df_pcd[c]
+            except ValueError:
+                logger.warning(
+                    f"Field '{c}' is not supported by the point format "
+                    f"specified ({point_format}). "
+                    f"It will be ignored."
+                )
 
     # Write file to disk
     las.write(filepath)
@@ -186,58 +224,59 @@ def df2o3d(df_pcd: pd.DataFrame) -> o3d.geometry.PointCloud:
     return pcd.o3d_pcd
 
 
-def df2csv(filepath: str, df: pd.DataFrame, **kwargs):
+def df2csv(filepath: str, df_pcd: pd.DataFrame, **kwargs):
     """pandas DataFrame to csv file"""
 
     if filepath.split(".")[-1] != "csv":
         raise ValueError("Filepath extension is invalid. It should be 'csv'.")
 
-    df.to_csv(filepath, index=False, **kwargs)
+    df_pcd.to_csv(filepath, index=False, **kwargs)
 
 
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 # General functions
-# -------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 
 
 def deserialize_point_cloud(filepath: str) -> pd.DataFrame:
     """Convert a point cloud to a pandas dataframe"""
     extension = filepath.split(".")[-1]
 
-    if extension == "las" or extension == "laz":
-        df = las2df(filepath)
+    if extension in ("las", "laz"):
+        df_pcd = las2df(filepath)
 
     elif extension == "pkl":
-        df = pkl2df(filepath)
+        df_pcd = pkl2df(filepath)
 
     elif extension == "ply":
-        df = ply2df(filepath)
+        df_pcd = ply2df(filepath)
 
     elif extension == "csv":
-        df = csv2df(filepath)
+        df_pcd = csv2df(filepath)
 
     else:
         raise NotImplementedError
 
-    return df
+    return df_pcd
 
 
 def serialize_point_cloud(
     filepath: str,
-    df: pd.DataFrame,
+    df_pcd: pd.DataFrame,
     metadata: Union[laspy.LasHeader, None] = None,
     extension: str = "las",
+    **kwargs,
 ):
     """Serialize a point cloud to disk in the format asked by the user"""
 
     if filepath.split(".")[-1] != extension:
         raise ValueError(
-            f"Filepath extension ('{filepath.split('.')[-1]}') is inconsistent with the extension "
-            f"asked ('{extension}')."
+            f"Filepath extension ('{filepath.split('.')[-1]}') "
+            f"is inconsistent with the extension asked ('{extension}')."
         )
 
-    if extension == "las" or extension == "laz":
-        df2las(filepath, df, metadata=metadata)
+    if extension in ("las", "laz"):
+        df2las(filepath, df_pcd, metadata=metadata, **kwargs)
 
     elif extension == "pkl":
         raise NotImplementedError
@@ -246,26 +285,35 @@ def serialize_point_cloud(
         raise NotImplementedError
 
     elif extension == "csv":
-        df2csv(filepath, df)
+        df2csv(filepath, df_pcd)
 
     else:
         raise NotImplementedError
 
 
-def change_frame(df, in_epsg, out_epsg) -> pd.DataFrame:
+def change_frame(df_pcd, in_epsg, out_epsg) -> pd.DataFrame:
     """Change frame in which the points are expressed"""
     proj_transformer = pyproj.Transformer.from_crs(
         in_epsg, out_epsg, always_xy=True
     )
-    df["x"], df["y"], df["z"] = proj_transformer.transform(
-        df["x"].to_numpy(), df["y"].to_numpy(), df["z"].to_numpy()
+    res = proj_transformer.transform(
+        df_pcd["x"].to_numpy(), df_pcd["y"].to_numpy(), df_pcd["z"].to_numpy()
     )
-    return df
+
+    if isinstance(res, tuple) and len(res) == 3:
+        df_pcd[["x", "y", "z"]] = np.asarray(res).T
+    else:
+        raise ValueError(
+            f"Something went wrong with the coordinate transform "
+            f"process: {res}"
+        )
+
+    return df_pcd
 
 
 def conversion_utm_to_geo(
     coords: Union[list, tuple, np.ndarray], utm_code: int
-):
+) -> np.ndarray:
     """
     Conversion points from epsg 32631 to epsg 4326
     """
@@ -275,3 +323,58 @@ def conversion_utm_to_geo(
     out = transformer.transform(coords[:, 0], coords[:, 1], coords[:, 2])
 
     return np.dstack(out)[0]
+
+
+def convert_color_to_8bits(
+    df_pcd: pd.DataFrame, q_percent: Union[tuple, list, np.ndarray] = (0, 100)
+) -> pd.DataFrame:
+    """
+    Convert the colors of the data to 8 bits. It will preserve the relative
+    colors between the bands (it is a global normalisation, not a by band
+    normalisation).
+
+    Parameters
+    ----------
+    df_pcd: pd.DataFrame
+        Point cloud data
+    q_percent: tuple or list or np.ndarray (default=(0, 100))
+        Whether to clip the colors to discard outliers. First term is the
+        minimum percentage to take into account, the second term is the
+        maximum. By default, no value is clipped.
+
+    Returns
+    -------
+    df_pcd: pd.DataFrame
+        Point cloud data with colors converted to 8bits
+    """
+    from .handlers import COLORS
+
+    # check which color band is in the dataframe
+    colors = [c for c in COLORS if c in df_pcd]
+
+    # convert colors to 8bits while preserving the ratio between bands
+    # (global normalisation)
+    if np.asarray(q_percent).size != 2:
+        raise ValueError(
+            f"Quantile percentage should be of size 2 (min, max), "
+            f"but found here {np.asarray(q_percent).size}."
+        )
+    q_percent_values = np.percentile(
+        df_pcd.loc[:, colors].to_numpy(), q_percent
+    )
+    arr = np.clip(
+        df_pcd.loc[:, colors].to_numpy(),
+        a_min=q_percent_values[0],
+        a_max=q_percent_values[1],
+    )
+
+    # Normalize
+    a = 255.0 / (q_percent_values[1] - q_percent_values[0])
+    b = -a * q_percent_values[0]
+
+    arr = a * arr + b * np.ones_like(arr)
+
+    # replace in df_pcd
+    df_pcd.loc[:, colors] = arr.astype(np.uint8)
+
+    return df_pcd

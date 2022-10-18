@@ -169,8 +169,7 @@ redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
 [MISCELLANEOUS]
 
 # List of note tags to take in consideration, separated by a comma.
-notes=FIXME,
-      TODO
+notes=FIXME
 
 # Regular expression of note tags to take in consideration.
 #notes-rgx=
@@ -345,6 +344,7 @@ good-names=i,
            p2,
            gt,
            dh,
+           df,
 	   x,
 	   y,
 	   z,
@@ -416,7 +416,7 @@ variable-naming-style=snake_case
 
 # List of modules that can be imported at any level, not just the top level
 # one.
-allow-any-import-level=
+allow-any-import-level=.mesh3d_reconstruct, .mesh3d_evaluate, mesh_io.deserialize_mesh, mesh_io.serialize_mesh, tools.handlers.PointCloud, handlers.COLORS, point_cloud_io.serialize_point_cloud, point_cloud_io.deserialize_point_cloud, param.MESH_FILE_EXTENSIONS
 
 # Allow wildcard imports from modules that define __all__.
 allow-wildcard-with-all=no
@@ -478,7 +478,7 @@ valid-metaclass-classmethod-first-arg=cls
 [DESIGN]
 
 # Maximum number of arguments for function / method.
-max-args=8
+max-args=9
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes=12
@@ -505,7 +505,7 @@ max-returns=6
 max-statements=100
 
 # Minimum number of public methods for a class (see R0903).
-min-public-methods=2
+min-public-methods=1
 
 
 [EXCEPTIONS]
