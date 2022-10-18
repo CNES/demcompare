@@ -17,7 +17,7 @@ To launch the 3D reconstruction pipeline, you first need to configure it in a JS
 .. code-block:: JSON
 
     {
-      "input_path": "/path/to/input/data.ply",
+      "input_path": "/path/to/input/data.las",
       "output_dir": "/path/to/output_dir",
       "initial_state": "initial_pcd",
       "tif_img_path": "/path/to/tif_img_texture.tif",
@@ -37,20 +37,27 @@ To launch the 3D reconstruction pipeline, you first need to configure it in a JS
           "action": "denoise_pcd",
           "method": "bilateral",
           "params": {
-            "knn": 20,
-            "knn_normals": 20,
-            "weights_distance": true,
-            "weights_color": true,
-            "num_workers_kdtree": 6,
-            "num_chunks": 4,
-            "use_open3d":  true
+            "num_iterations": 10,
+            "neighbour_kdtree_dict": {
+              "knn": 10,
+              "num_workers_kdtree": 6
+            },
+            "neighbour_normals_dict": {
+              "knn_normals": 10,
+              "weights_distance": true,
+              "weights_color": true,
+              "use_open3d": true
+            },
+            "sigma_d": 1.5,
+            "sigma_n": 1,
+            "num_chunks": 2
           }
         },
         {
           "action": "mesh",
           "method": "delaunay_2d",
           "params": {
-            "method": "matplotlib"
+            "method": "scipy"
           }
         },
         {

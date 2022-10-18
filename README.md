@@ -108,22 +108,26 @@ Configure the pipeline in a JSON file `/path/to/config.json`:
       "method": "bilateral",
       "params": {
         "num_iterations": 10,
-        "knn": 10,
-        "knn_normals": 10,
-        "weights_distance": true,
-        "weights_color": true,
+        "neighbour_kdtree_dict": {
+          "knn": 10,
+          "num_workers_kdtree": 6
+        },
+        "neighbour_normals_dict": {
+          "knn_normals": 10,
+          "weights_distance": true,
+          "weights_color": true,
+          "use_open3d": true
+        },
         "sigma_d": 1.5,
         "sigma_n": 1,
-        "num_workers_kdtree": 6,
-        "num_chunks": 2,
-        "use_open3d":  true
+        "num_chunks": 2
       }
     },
     {
       "action": "mesh",
       "method": "delaunay_2d",
       "params": {
-        "method": "matplotlib"
+        "method": "scipy"
       }
     },
     {
