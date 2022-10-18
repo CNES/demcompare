@@ -53,6 +53,7 @@ TODO
   * Add the possibility to use semantic maps and modify functions to take them into account for processing (for example building roofs could be processed differently from roads).
   * Recover correlation metrics from previous CARS processing and add it as an input to exploit them in further processings.
   * Make sure information in the PointCloud pandas DataFrame object are the same as the ones in the Point Cloud open3d object all along the process.
+  * To make it more large scale with potentially large point clouds, las files should be read by chunk (cf [LASPY documentation](https://laspy.readthedocs.io/en/latest/basic.html#chunked-writing))
 
 
 * **Filtering of outliers**
@@ -63,6 +64,7 @@ TODO
   * Make it satellite agnostic (for now it takes into account Pleiades imagery)
   * Handle multiple texture images
   * Handle occlusions
+  * Make percentiles (for better texture visualisation) computation large scale (avoid having to load the full raster in memory)
 
 ## Quick Start
 
@@ -106,22 +108,26 @@ Configure the pipeline in a JSON file `/path/to/config.json`:
       "method": "bilateral",
       "params": {
         "num_iterations": 10,
-        "knn": 10,
-        "knn_normals": 10,
-        "weights_distance": true,
-        "weights_color": true,
+        "neighbour_kdtree_dict": {
+          "knn": 10,
+          "num_workers_kdtree": 6
+        },
+        "neighbour_normals_dict": {
+          "knn_normals": 10,
+          "weights_distance": true,
+          "weights_color": true,
+          "use_open3d": true
+        },
         "sigma_d": 1.5,
         "sigma_n": 1,
-        "num_workers_kdtree": 6,
-        "num_chunks": 2,
-        "use_open3d":  true
+        "num_chunks": 2
       }
     },
     {
       "action": "mesh",
       "method": "delaunay_2d",
       "params": {
-        "method": "matplotlib"
+        "method": "scipy"
       }
     },
     {

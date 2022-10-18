@@ -37,18 +37,21 @@ def simplify_quadric_decimation(
     boundary_weight: float = 1.0,
 ) -> Mesh:
     """
-    Function to simplify mesh using Quadric Error Metric Decimation by Garland and Heckbert
+    Function to simplify mesh using Quadric Error Metric Decimation by
+    Garland and Heckbert
 
     Parameters
     ----------
     mesh: Mesh
         Mesh object
     reduction_ratio_of_triangles: float (default=0.9)
-        Reduction ratio of triangles (for instance, 0.9 to keep 90% of the triangles)
+        Reduction ratio of triangles (for instance, 0.9 to keep 90% of the
+        triangles)
     target_number_of_triangles: int or None (default=None)
-        The number of triangles that the simplified mesh should have. It is not guaranteed that this number will be
-        reached. If both reduction_ratio_of_triangles and target_number_of_triangles are specified, the latter will
-        be used.
+        The number of triangles that the simplified mesh should have. It is
+        not guaranteed that this number will be reached. If both
+        reduction_ratio_of_triangles and target_number_of_triangles are
+        specified, the latter will be used.
     maximum_error: float (default=inf)
         The maximum error where a vertex is allowed to be merged
     boundary_weight: float (default=1.0)
@@ -63,7 +66,8 @@ def simplify_quadric_decimation(
     # Check that mesh has triangle faces
     if not mesh.has_triangles:
         raise ValueError(
-            "Mesh has no triangle faces. Please apply a mesh reconstruction algorithm before."
+            "Mesh has no triangle faces. Please apply a mesh reconstruction "
+            "algorithm before."
         )
 
     # Create an open3d mesh if not present
@@ -81,7 +85,8 @@ def simplify_quadric_decimation(
             or reduction_ratio_of_triangles < 0.0
         ):
             raise ValueError(
-                f"'reduction_ratio_of_triangles' should be contained in [0, 1]. Here found: "
+                f"'reduction_ratio_of_triangles' should be contained in "
+                f"[0, 1]. Here found: "
                 f"{reduction_ratio_of_triangles}."
             )
 
@@ -92,9 +97,10 @@ def simplify_quadric_decimation(
 
     else:
         raise ValueError(
-            f"Either 'reduction_ratio_of_triangles' or 'target_number_of_triangles' should "
-            f"be specified. Here found:\n"
-            f"- 'reduction_ratio_of_triangles' = {reduction_ratio_of_triangles}\n"
+            f"Either 'reduction_ratio_of_triangles' or 'target_number_of_"
+            f"triangles' should be specified. Here found:\n"
+            f"- 'reduction_ratio_of_triangles' = "
+            f"{reduction_ratio_of_triangles}\n"
             f"- 'target_number_of_triangles' = {target_number_of_triangles}"
         )
 
@@ -115,7 +121,7 @@ def simplify_quadric_decimation(
 def simplify_vertex_clustering(
     mesh: Mesh,
     dividing_size: float = 16.0,
-    contraction: o3d.geometry.SimplificationContraction = o3d.geometry.SimplificationContraction.Average,
+    contraction=o3d.geometry.SimplificationContraction.Average,
 ) -> Mesh:
     """
     Function to simplify mesh using vertex clustering.
@@ -125,10 +131,12 @@ def simplify_vertex_clustering(
     mesh: Mesh
         Mesh object
     dividing_size: float
-        A new voxel size is computed as max(max_bound - min_bound) / dividing size
-    contraction: open3d.geometry.SimplificationContraction (default=<SimplificationContraction.Average – 0>)
-        Method to aggregate vertex information. Average computes a simple average, Quadric minimizes the distance
-        to the adjacent planes.
+        A new voxel size is computed as
+        max(max_bound - min_bound) / dividing size
+    contraction: open3d.geometry.SimplificationContraction
+    (default=<SimplificationContraction.Average – 0>)
+        Method to aggregate vertex information. Average computes a simple
+        average, Quadric minimizes the distance to the adjacent planes.
 
     Returns
     -------
@@ -139,7 +147,8 @@ def simplify_vertex_clustering(
     # Check that mesh has triangle faces
     if not mesh.has_triangles:
         raise ValueError(
-            "Mesh has no triangle faces. Please apply a mesh reconstruction algorithm before."
+            "Mesh has no triangle faces. Please apply a mesh reconstruction "
+            "algorithm before."
         )
 
     # Create an open3d mesh if not present
@@ -149,7 +158,7 @@ def simplify_vertex_clustering(
     # Simplify
     dividing_size = float(dividing_size)
     if dividing_size == 0.0:
-        raise ValueError(f"Dividing size needs to be > 0.")
+        raise ValueError("Dividing size needs to be > 0.")
 
     voxel_size = (
         max(

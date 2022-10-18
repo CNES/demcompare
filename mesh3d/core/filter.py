@@ -18,7 +18,8 @@
 # limitations under the License.
 #
 """
-Filtering methods aiming at removing outliers or groups of outliers from the point cloud.
+Filtering methods aiming at removing outliers or groups of outliers from the
+point cloud.
 """
 
 from typing import Union
@@ -30,15 +31,16 @@ from scipy.spatial import KDTree
 from ..tools.handlers import PointCloud
 
 # cars v3
-# from cars.steps.point_cloud import small_components_filtering, statistical_outliers_filtering
+# from cars.steps.point_cloud import small_components_filtering, statistical_
+# outliers_filtering
 
 
 def statistical_filtering_outliers_o3d(
     pcd: PointCloud, nb_neighbors: int, std_factor: float
 ) -> PointCloud:
     """
-    This method removes points which have mean distances with their k nearest neighbors
-    that are greater than a distance threshold (dist_thresh).
+    This method removes points which have mean distances with their k nearest
+    neighbors that are greater than a distance threshold (dist_thresh).
 
     This threshold is computed from the mean (mean_distances) and
     standard deviation (stddev_distances) of all the points mean distances
@@ -77,16 +79,17 @@ def statistical_filtering_outliers_o3d(
     # Reset indexes
     pcd.df.reset_index(drop=True, inplace=True)
 
-    # Check if output point cloud is empty (and thus cannot suffer other processing)
+    # Check if output point cloud is empty (and thus cannot suffer other
+    # processing)
     if pcd.df.empty:
         logger.error(
             "Point cloud output by the outlier filtering step is empty."
         )
-        raise
 
     logger.info(
-        f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
-        f"outliers and removed."
+        f"{num_points_before - pcd.df.shape[0]} points "
+        f"over {num_points_before} points were flagged as outliers "
+        f"and removed."
     )
 
     return pcd
@@ -96,16 +99,18 @@ def radius_filtering_outliers_o3(
     pcd: PointCloud, radius: float, nb_points: int
 ) -> PointCloud:
     """
-    This method removes points that have few neighbors in a given sphere around them
-    For each point, it computes the number of neighbors contained in a sphere of chosen radius,
-    if this number is lower than nb_point, this point is deleted.
+    This method removes points that have few neighbors in a given sphere
+    around them. For each point, it computes the number of neighbors
+    contained in a sphere of chosen radius, if this number is lower than
+    nb_point, this point is deleted.
 
     Parameters
     ----------
     pcd: PointCloud
         Point cloud data
     radius: float
-        Defines the radius of the sphere that will be used for counting the neighbors
+        Defines the radius of the sphere that will be used for counting the
+        neighbors
     nb_points: int
         Defines the minimum amount of points that the sphere should contain
 
@@ -132,16 +137,16 @@ def radius_filtering_outliers_o3(
     # Reset indexes
     pcd.df.reset_index(drop=True, inplace=True)
 
-    # Check if output point cloud is empty (and thus cannot suffer other processing)
+    # Check if output point cloud is empty (and thus cannot suffer
+    # other processing)
     if pcd.df.empty:
         logger.error(
             "Point cloud output by the outlier filtering step is empty."
         )
-        raise
 
     logger.info(
-        f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
-        f"outliers and removed."
+        f"{num_points_before - pcd.df.shape[0]} points over "
+        f"{num_points_before} points were flagged as outliers and removed."
     )
 
     return pcd
@@ -151,10 +156,11 @@ def local_density_analysis(
     pcd: PointCloud, nb_neighbors: int, proba_thresh: Union[None, float] = None
 ) -> PointCloud:
     """
-    Compute the probability of a point to be an outlier based on the local density.
+    Compute the probability of a point to be an outlier based on the local
+    density.
 
-    Reference: Xiaojuan Ning, Fan Li,  Ge Tian, and Yinghui Wang (2018). "An efficient outlier removal
-    method for scattered point cloud data".
+    Reference: Xiaojuan Ning, Fan Li,  Ge Tian, and Yinghui Wang (2018).
+    "An efficient outlier removal method for scattered point cloud data".
 
     Parameters
     ----------
@@ -163,9 +169,11 @@ def local_density_analysis(
     nb_neighbors: int
         Number of neighbors to consider
     proba_thresh: float (default = None)
-        Probability threshold of a point to be an outlier. If 'None', then it is computed automatically per point as:
+        Probability threshold of a point to be an outlier. If 'None', then it
+        is computed automatically per point as:
             proba_thresh_i = 0.1 * dist_average_i
-                with dist_average_i: Average distance of the point i to its neighbours
+                with dist_average_i: Average distance of the point i to its
+                neighbours
 
     Returns
     -------
@@ -195,7 +203,7 @@ def local_density_analysis(
     for idx, _ in enumerate(cloud_xyz):
 
         # get the point nearest neighbours
-        distances, pts = cloud_tree.query(cloud_xyz[idx], nb_neighbors)
+        distances, _ = cloud_tree.query(cloud_xyz[idx], nb_neighbors)
 
         # compute the local density
         mean_neighbors_distances = np.sum(distances) / nb_neighbors
@@ -221,19 +229,20 @@ def local_density_analysis(
     # Reset indexes
     pcd.df.reset_index(drop=True, inplace=True)
 
-    # Check if output point cloud is empty (and thus cannot suffer other processing)
+    # Check if output point cloud is empty (and thus cannot suffer other
+    # processing)
     if pcd.df.empty:
         logger.error(
             "Point cloud output by the outlier filtering step is empty."
         )
-        raise
 
     # Update open3d pcd
     if pcd.o3d_pcd is not None:
         pcd.set_o3d_pcd_from_df()
 
     logger.info(
-        f"{num_points_before - pcd.df.shape[0]} points over {num_points_before} points were flagged as "
+        f"{num_points_before - pcd.df.shape[0]} points over "
+        f"{num_points_before} points were flagged as "
         f"outliers and removed."
     )
 
@@ -246,7 +255,8 @@ def local_density_analysis(
 
 # def statistical_filtering_outliers_cars(cloud, nb_neighbors, std_factor):
 #     """
-#     This methode removes points which have mean distances with their k nearest neighbors
+#     This methode removes points which have mean distances with their k
+#     nearest neighbors
 #     that are greater than a distance threshold (dist_thresh).
 #
 #     This threshold is computed from the mean (mean_distances) and
@@ -257,33 +267,44 @@ def local_density_analysis(
 #
 #     :param cloud: cloud point, it should be a pandas DataFrame or a numpy
 #     :param nb_neighbors: number of neighbors
-#     :param std_factor: multiplication factor to use to compute the distance threshold
+#     :param std_factor: multiplication factor to use to compute the distance
+#     threshold
 #     :return: filtered pandas dataFrame cloud
 #     """
-#     if not (isinstance(cloud, pd.DataFrame) or isinstance(cloud, np.ndarray)):
-#         raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a
+#     if not (isinstance(cloud, pd.DataFrame) or isinstance(cloud,
+#     np.ndarray)):
+#         raise TypeError(f"Cloud is of an unknown type {type(cloud)}.
+#         It should either be a pandas DataFrame or a
 #         numpy "
 #                         f"ndarray.")
 #
-#     pos,_ = points_cloud.statistical_outliers_filtering(cloud,nb_neighbors,std_factor)
+#     pos,_ = points_cloud.statistical_outliers_filtering(cloud,nb_neighbors,
+#     std_factor)
 #
 #     return pos
 #
 # def small_components_filtering_outliers_cars(cloud, radius, nb_points):
 #     """
 #     This method removes small components that have not enough points inside
-#     For each point not yet processed, it computes the neighbors contained in a sphere of choosen radius, and the
-#     neighbors of neighbors until there are none left around. Those points are considered as processed and the
-#     identified cluster is added to a list For each cluster, if the number of points inside is lower than nb_point,
+#     For each point not yet processed, it computes the neighbors contained
+#     in a sphere of choosen radius, and the
+#     neighbors of neighbors until there are none left around. Those points
+#     are considered as processed and the
+#     identified cluster is added to a list For each cluster, if the number
+#     of points inside is lower than nb_point,
 #     this cluster is deleted
 #
 #     :param cloud: cloud point, it should be a pandas DataFrame or a numpy
-#     :param radius: defines the radius of the sphere that will be used for counting the neighbors
-#     :param nb_points: defines the minimm amount of points that the sphere should contain
+#     :param radius: defines the radius of the sphere that will be used for
+#     counting the neighbors
+#     :param nb_points: defines the minimm amount of points that the sphere
+#     should contain
 #     :return cloud: filtered pandas dataFrame cloud
 #     """
-#     if not (isinstance(cloud, pd.DataFrame) or isinstance(cloud, np.ndarray)):
-#         raise TypeError(f"Cloud is of an unknown type {type(cloud)}. It should either be a pandas DataFrame or a
+#     if not (isinstance(cloud, pd.DataFrame) or isinstance(cloud,
+#     np.ndarray)):
+#         raise TypeError(f"Cloud is of an unknown type {type(cloud)}.
+#         It should either be a pandas DataFrame or a
 #         numpy "
 #                         f"ndarray.")
 #     pos,_ = points_cloud.small_components_filtering(cloud,radius,nb_points)

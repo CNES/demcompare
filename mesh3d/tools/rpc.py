@@ -43,16 +43,15 @@ class RPC:
         if len(polynomials) != 4:
             raise ValueError("Output dimensions should be 4 (P1, Q1, P2, Q2)")
 
-        for i in range(len(polynomials)):
+        for i, _ in enumerate(polynomials):
             if len(degrees) != len(polynomials[i]):
                 raise ValueError(
-                    "Number of monomes in the degrees array shall equal number of coefficients in the polynomial array."
+                    "Number of monomes in the degrees array shall equal "
+                    "number of coefficients in the polynomial array."
                 )
 
         if rpc_type not in ["DIRECT", "INVERSE"]:
-            raise ValueError(
-                f"RPC type should either be 'DIRECT' or 'INVERSE'."
-            )
+            raise ValueError("RPC type should either be 'DIRECT' or 'INVERSE'.")
 
         self.polynomials = polynomials
         self.degrees = degrees
@@ -68,7 +67,8 @@ class RPC:
         """Set normalisation coefficients for RPC"""
         if len(coefs) != 10:
             raise ValueError(
-                "Normalisation and denormalisation coefficients shall be of size 10"
+                "Normalisation and denormalisation coefficients shall "
+                "be of size 10"
             )
 
         if self.rpc_type == "INVERSE":
@@ -121,7 +121,8 @@ class PleiadesRPC(RPC):
 
         elif polynomials is None:
             raise ValueError(
-                "Either a valid RPC path or polynomials should be given in input."
+                "Either a valid RPC path or polynomials should be "
+                "given in input."
             )
 
         else:
@@ -140,56 +141,44 @@ class PleiadesRPC(RPC):
                 coefs.append(float(coef.text))
 
         # coefs normalisation and denormalisation:
-        # [long_scale, long_offset, lat_scale, lat_offset, alt_scale, alt_offset, samp_scale,
-        # samp_offset, line_scale, line_offset]
+        # [long_scale, long_offset, lat_scale, lat_offset, alt_scale,
+        # alt_offset, samp_scale, samp_offset, line_scale, line_offset]
+
+        coefs_name_list = [
+            "LONG_SCALE",
+            "LONG_OFF",
+            "LAT_SCALE",
+            "LAT_OFF",
+            "HEIGHT_SCALE",
+            "HEIGHT_OFF",
+            "SAMP_SCALE",
+            "SAMP_OFF",
+            "LINE_SCALE",
+            "LINE_OFF",
+        ]
+        # init output
+        coefs_list = [None] * len(coefs_name_list)
+
         for coef_other in root.iter("RFM_Validity"):
             for coef in coef_other:
-                if coef.tag == "LONG_SCALE":
-                    long_scale = float(coef.text)
-                if coef.tag == "LONG_OFF":
-                    long_offset = float(coef.text)
-                if coef.tag == "LAT_SCALE":
-                    lat_scale = float(coef.text)
-                if coef.tag == "LAT_OFF":
-                    lat_offset = float(coef.text)
-                if coef.tag == "HEIGHT_SCALE":
-                    alt_scale = float(coef.text)
-                if coef.tag == "HEIGHT_OFF":
-                    alt_offset = float(coef.text)
-                if coef.tag == "SAMP_SCALE":
-                    samp_scale = float(coef.text)
-                if coef.tag == "SAMP_OFF":
-                    samp_offset = float(coef.text)
-                if coef.tag == "LINE_SCALE":
-                    line_scale = float(coef.text)
-                if coef.tag == "LINE_OFF":
-                    line_offset = float(coef.text)
+                try:
+                    index = coefs_name_list.index(coef.tag)
+                    coefs_list[index] = float(coef.text)
+                except ValueError:
+                    # if not in our list, ignore it
+                    continue
+
+        coefs_list[-3] -= 0.5  # samp_offset
+        coefs_list[-1] -= 0.5  # line_offset
 
         # Change image convention from (1, 1) to (0.5, 0.5)
-        return (
-            coefs[0:20],
-            coefs[20:40],
-            coefs[40:60],
-            coefs[60:80],
-            [
-                long_scale,
-                long_offset,
-                lat_scale,
-                lat_offset,
-                alt_scale,
-                alt_offset,
-                samp_scale,
-                samp_offset - 0.5,
-                line_scale,
-                line_offset - 0.5,
-            ],
-        )
+        return coefs[0:20], coefs[20:40], coefs[40:60], coefs[60:80], coefs_list
 
     def set_inverse_rpc(self, path_rpc: str) -> None:
         """Set RPC for inverse location from a XML RPC file"""
-        P1, Q1, P2, Q2, coefs = self._parse_rpc_xml(path_rpc)
+        num_1, den_1, num_2, den_2, coefs = self._parse_rpc_xml(path_rpc)
 
-        self.polynomials = [P1, Q1, P2, Q2]
+        self.polynomials = [num_1, den_1, num_2, den_2]
         self.rpc_type = "INVERSE"
         self.set_normalisation_coefs(coefs)
 
@@ -205,12 +194,14 @@ def apply_rpc_list(
     rpc: RPC
         RPC parameters
     input_coords: (N, 3) or (N, 2) tuple or list or np.ndarray
-        Coordinates expressed in geo (lon, lat) if ground coordinates, or (row, col) for image coordinates
+        Coordinates expressed in geo (lon, lat) if ground coordinates, or
+        (row, col) for image coordinates
 
     Returns
     -------
     res: (N, 3) or (N, 2) tuple or list or np.ndarray
-        Coordinates transformed by direct (lon, lat, alt) or inverse (col, row) location
+        Coordinates transformed by direct (lon, lat, alt) or inverse
+        (col, row) location
     """
     # normalize input
     norm_input = (np.array(input_coords) - np.array(rpc.ref_offset)) / np.array(
@@ -218,9 +209,9 @@ def apply_rpc_list(
     )
 
     result = []
-    for i in range(len(rpc.polynomials)):
+    for i, _ in enumerate(rpc.polynomials):
         val = np.zeros(len(input_coords))
-        for j in range(len(rpc.polynomials[0])):
+        for j, _ in enumerate(rpc.polynomials[0]):
             monomial = np.ones(len(input_coords))
             for k in range(3):
                 monomial *= np.power(norm_input[:, k], rpc.degrees[j][k])
@@ -232,7 +223,7 @@ def apply_rpc_list(
 
     # [XNorm = P1/Q1, YNorm = P2/Q2]
     output = [result[0][:] / result[1][:], result[2][:] / result[3][:]]
-    res = [[output[0][i], output[1][i]] for i in range(len(output[0]))]
+    res = [[output[0][i], output[1][i]] for i, _ in enumerate(output[0])]
 
     # denormalize output
     res = (np.array(res) * np.array(rpc.out_scale)) + np.array(rpc.out_offset)
