@@ -74,13 +74,11 @@ class Coregistration:
         try:
             coreg_class = cls.available_coregistrations[coreg_method]
             coreg = coreg_class(cfg)
-            logging.info("Coregistration method name: {}".format(coreg_method))
+            logging.info("Coregistration method name: %s", coreg_method)
 
         except KeyError:
             logging.error(
-                "No coregistration method named {0} supported".format(
-                    coreg_method
-                )
+                "No coregistration method named %s supported", coreg_method
             )
             raise
 

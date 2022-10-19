@@ -62,9 +62,7 @@ def recursive_search(directory: str, pattern: str) -> List[str]:
             for filename in fnmatch.filter(filenames, pattern):
                 matches.append(os.path.join(root, filename))
     else:
-        matches = glob.glob(
-            "{}/**/{}".format(directory, pattern), recursive=True
-        )
+        matches = glob.glob(f"{directory}/**/{pattern}", recursive=True)
 
     return matches
 
@@ -149,7 +147,7 @@ def fill_report_stats(
             else:
                 result = recursive_search(
                     os.path.join(working_dir, "*", classification_layer_name),
-                    "*_{}*.csv".format(mode),
+                    f"*_{mode}*.csv",
                 )
             if len(result) > 0:
                 if os.path.exists(result[0]):
@@ -240,7 +238,7 @@ def fill_report_stats(
                     src,
                     "* The :ref:`{mode} <{mode}>` mode".format(mode=mode),
                     "",
-                    "{} \n".format(the_mode_pitch),
+                    f"{the_mode_pitch} \n",
                     "",
                 ]
             )
@@ -250,15 +248,14 @@ def fill_report_stats(
         classification_layer_name,
         modes_dict,
     ) in stats_dataset.classif_layers_and_modes.items():
+        lines = "-" * len(classification_layer_name)
         src = "\n".join(
             [
                 src,
-                ".. _{}:".format(classification_layer_name),
+                f".. _{classification_layer_name}:",
                 "",
-                "Classification layer: {}".format(classification_layer_name),
-                "{}-----------------------".format(
-                    "-" * len(classification_layer_name)
-                ),
+                f"Classification layer: {classification_layer_name}",
+                f"{lines}-----------------------",
                 "",
             ]
         )
@@ -267,14 +264,15 @@ def fill_report_stats(
             the_mode_csv = modes_information[classification_layer_name][mode][
                 "csv"
             ]
+            lines = "^" * len(mode)
             src = "\n".join(
                 [
                     src,
                     "",
-                    ".. _{}:".format(mode),
+                    f".. _{mode}:",
                     "",
-                    "Mode: {}".format(mode),
-                    "^^^^^^^^^^^^^^^{}".format("^" * len(mode)),
+                    f"Mode: {mode}",
+                    f"^^^^^^^^^^^^^^^{lines}",
                     "",
                 ]
             )
@@ -287,7 +285,7 @@ def fill_report_stats(
                         "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%",
                         ".. csv-table::",
                         "",
-                        "{}".format(the_mode_csv),
+                        f"{the_mode_csv}",
                         "",
                     ]
                 )
@@ -362,15 +360,15 @@ def fill_report_coreg(  # noqa: C901
             "",
             "**Without coregistration**",
             "--------------------------",
-            ".. image:: /{}".format(dem_diff_without_coreg),
-            ".. image:: /{}".format(dem_diff_cdf_without_coreg),
+            f".. image:: /{dem_diff_without_coreg}",
+            f".. image:: /{dem_diff_cdf_without_coreg}",
             "",
             "*Input Initial DEMs:*",
             "",
-            "* Tested DEM (SEC): {}".format(sec_name),
-            "   * dir: {}".format(sec_name_dir),
-            "* Reference DEM (REF): {}".format(ref_name),
-            "   * dir: {}".format(ref_name_dir),
+            f"* Tested DEM (SEC): {sec_name}",
+            f"   * dir: {sec_name_dir}",
+            f"* Reference DEM (REF): {ref_name}",
+            f"   * dir: {ref_name_dir}",
             "",
         ]
     )
@@ -381,7 +379,7 @@ def fill_report_coreg(  # noqa: C901
             "**Elevation difference histogram on all pixels"
             + " without coregistration**",
             "-----------------------",
-            ".. image:: /{}".format(initial_dem_diff_pdf),
+            f".. image:: /{initial_dem_diff_pdf}",
             "",
         ]
     )
@@ -393,8 +391,8 @@ def fill_report_coreg(  # noqa: C901
                 src,
                 "**With coregistration**",
                 "-----------------------",
-                ".. image:: /{}".format(dem_diff_with_coreg),
-                ".. image:: /{}".format(dem_diff_cdf_with_coreg),
+                f".. image:: /{dem_diff_with_coreg}",
+                f".. image:: /{dem_diff_cdf_with_coreg}",
                 "",
             ]
         )
@@ -403,10 +401,10 @@ def fill_report_coreg(  # noqa: C901
                 src,
                 "**Generated coregistered DEMs:**",
                 "",
-                "* Tested Coreg DEM (COREG_SEC): {}".format(coreg_sec_name),
-                "   * dir: {} ".format(coreg_sec_name_dir),
-                "* Reference Coreg DEM (COREG_REF): {}".format(coreg_ref_name),
-                "   * dir: {}".format(coreg_ref_name_dir),
+                f"* Tested Coreg DEM (COREG_SEC): {coreg_sec_name}",
+                f"   * dir: {coreg_sec_name_dir} ",
+                f"* Reference Coreg DEM (COREG_REF): {coreg_ref_name}",
+                f"   * dir: {coreg_ref_name_dir}",
                 "",
             ]
         )
@@ -418,7 +416,7 @@ def fill_report_coreg(  # noqa: C901
                 "**Elevation difference histogram on all pixels "
                 + "with coregistration**",
                 "-----------------------",
-                ".. image:: /{}".format(final_dem_diff_pdf),
+                f".. image:: /{final_dem_diff_pdf}",
                 "",
             ]
         )
@@ -504,16 +502,12 @@ def build_report(spm: SphinxProjectManager, src: str) -> None:
     try:
         spm.build_project("html")
     except Exception:
-        logging.error(
-            ("Error when building report as {} output (ignored)".format("html"))
-        )
+        logging.error("Error when building report as html output (ignored)")
         raise
     try:
         spm.build_project("latexpdf")
     except Exception:
-        logging.error(
-            ("Error when building report as {} output (ignored)".format("pdf"))
-        )
+        logging.error("Error when building report as pdf output (ignored)")
 
     # Sphinx project install
     spm.install_project()

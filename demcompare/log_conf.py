@@ -71,12 +71,8 @@ def add_log_file(out_dir: str):
     """
     # set file log handler
     now = datetime.now()
-    h_log_file = logging.FileHandler(
-        os.path.join(
-            out_dir,
-            "{}_logs.log".format(now.strftime("%y-%m-%d_%Hh%Mm")),
-        )
-    )
+    date = now.strftime("%y-%m-%d_%Hh%Mm")
+    h_log_file = logging.FileHandler(os.path.join(out_dir, f"{date}_logs.log"))
 
     # add it to the logger
     logging.getLogger().addHandler(h_log_file)

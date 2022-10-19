@@ -95,14 +95,13 @@ class Transformation:
         """
         Represent transformation offsets
         """
-        return (
-            "Transformation(x_offset = {}, "
-            "y_offset = {}, z_offset = {})".format(
-                round(self.x_offset, 5),
-                round(self.y_offset, 5),
-                round(self.z_offset, 5),
-            )
+
+        output_string = (
+            f"Transformation(x_offset = {round(self.x_offset, 5)},"
+            + f" y_offset = {round(self.y_offset, 5)},"
+            + f" z_offset = {round(self.z_offset, 5)})"
         )
+        return output_string
 
     def apply_transform(self, dem: xr.Dataset) -> xr.Dataset:
         """
@@ -114,14 +113,14 @@ class Transformation:
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :type dem: xr.Dataset
         :return: transformed dem xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :rtype: xr.Dataset
         """
         # for this version of transform, (x,y) planimetric translation only

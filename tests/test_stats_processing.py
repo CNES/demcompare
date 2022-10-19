@@ -78,7 +78,6 @@ def fixture_initialize_stats_processing():
     # Initialize stats input configuration
     input_stats_cfg = {
         "remove_outliers": "False",
-        "save_results": "False",
         "classification_layers": {
             "Status": {
                 "type": "segmentation",
@@ -131,7 +130,6 @@ def fixture_initialize_stats_processing_with_metrics():
     # Initialize stats input configuration
     input_stats_cfg = {
         "remove_outliers": "False",
-        "save_results": "False",
         "classification_layers": {
             "Status": {
                 "type": "segmentation",
@@ -197,7 +195,6 @@ def test_create_classif_layers():
     # Initialize stats input configuration
     input_stats_cfg = {
         "remove_outliers": "False",
-        "save_results": "False",
         "classification_layers": {
             "Status": {
                 "type": "segmentation",
@@ -333,7 +330,6 @@ def test_create_classif_layers_without_input_classif():
     # Initialize stats input configuration
     input_stats_cfg = {
         "remove_outliers": "False",
-        "save_results": "False",
     }
 
     # Create StatsProcessing object
@@ -1049,15 +1045,15 @@ def test_compute_stats_from_cfg_slope(initialize_stats_processing_with_metrics):
 
 
 @pytest.mark.unit_tests
-def test_statistics_save_results():
+def test_statistics_output_dir():
     """
     Test that demcompare's execution with
-    the statistics save_results parameter
-    set to True correctly saves to disk all
+    the statistics output_dir parameter
+    set correctly saves to disk all
     classification layer's maps, csv and json files.
     Test that demcompare's execution with
-    the statistics save_results parameter
-    set to False does not save to disk
+    the statistics output_dir not set
+    does not save to disk
     the classification layer's maps, csv or json files.
     """
 
@@ -1100,7 +1096,7 @@ def test_statistics_save_results():
     # Compute altitude diff for stats computation
     stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
 
-    # Test with statistics save_results parameter set to True
+    # Test with statistics output_dir set
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
 
         mkdir_p(tmp_dir)
@@ -1169,13 +1165,12 @@ def test_statistics_save_results():
             is True
         )
 
-    # Test with statistics save_results parameter set to False
+    # Test with statistics without output_dir set
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-        cfg["statistics"]["save_results"] = "False"
 
         mkdir_p(tmp_dir)
         # Modify test's output dir in configuration to tmp test dir
-        cfg["output_dir"] = tmp_dir
+        cfg["output_dir"] = None
 
         # Create StatsProcessing object
         stats_processing = demcompare.StatsProcessing(cfg, stats_dem)

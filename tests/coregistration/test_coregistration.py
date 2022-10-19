@@ -685,10 +685,10 @@ def test_compute_coregistration_with_default_coregistration_srtm_sampling_dem():
     np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
 
 
-def test_coregistration_save_internal_dems():
+def test_coregistration_save_optional_outputss():
     """
     Test that demcompare's execution with the
-    coregistration save_internal_dems parameter
+    coregistration save_optional_outputs parameter
     set to True correctly saves the dems to disk
     """
 
@@ -699,7 +699,7 @@ def test_coregistration_save_internal_dems():
     cfg = read_config_file(test_cfg_path)
 
     # Manually set the saving of internal dems to True
-    cfg["coregistration"]["save_internal_dems"] = "True"
+    cfg["coregistration"]["save_optional_outputs"] = "True"
     # remove useless statistics part
     cfg.pop("statistics")
 
@@ -750,13 +750,13 @@ def test_coregistration_save_internal_dems():
         assert all(file in list_test for file in gt_truth_list_files) is True
 
 
-def test_coregistration_save_coreg_method_outputs():
+def test_coregistration_save_optional_outputs():
     """
     Test that demcompare's execution with the coregistration
-    save_coreg_method_outputs parameter set to True correctly
+    save_optional_outputs parameter set to True correctly
     saves to disk the iteration plots of Nuth et kaab.
     Test that demcompare's execution with the coregistration
-    save_coreg_method_outputs parameter set to False does
+    save_optional_outputs parameter set to False does
     not save to disk the iteration plots of Nuth et kaab.
     """
 
@@ -767,8 +767,8 @@ def test_coregistration_save_coreg_method_outputs():
     cfg = read_config_file(test_cfg_path)
     # remove useless statistics part
     cfg.pop("statistics")
-    # Set save_coreg_method_outputs to True
-    cfg["coregistration"]["save_coreg_method_outputs"] = "True"
+    # Set save_optional_outputs to True
+    cfg["coregistration"]["save_optional_outputs"] = "True"
 
     gt_truth_list_files = [
         "ElevationDiff_AfterCoreg.png",
@@ -822,8 +822,8 @@ def test_coregistration_save_coreg_method_outputs():
         # test all files in gt_truth_list_files are in coregistration directory
         assert all(file in list_test for file in gt_truth_list_files) is True
 
-    # Test with save_coreg_method_outputs set to False
-    cfg["coregistration"]["save_coreg_method_outputs"] = "False"
+    # Test with save_optional_outputs set to False
+    cfg["coregistration"]["save_optional_outputs"] = "False"
 
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
         mkdir_p(tmp_dir)
@@ -871,9 +871,8 @@ def test_coregistration_with_output_dir():
     the output file demcompare_results.json
     Test that demcompare's execution with
     the output_dir not being specified and
-    the parameters save_internal_dems and/or
-    save_coreg_method_outputs set to True
-    does rise an error.
+    the parameters save_optional_outputs
+    set to True does rise an error.
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -915,12 +914,10 @@ def test_coregistration_with_output_dir():
         # test output_dir/coregistration/coreg_SEC.tif creation
         assert os.path.isfile(tmp_dir + "/demcompare_results.json") is True
 
-        # Test with save_coreg_method_outputs set to False
         cfg.pop("output_dir")
-        # parameters save_internal_dems and save_coreg_method_outputs
+        # parameters save_optional_outputs
         # set to True
-        cfg["coregistration"]["save_coreg_method_outputs"] = "True"
-        cfg["coregistration"]["save_internal_dems"] = "True"
+        cfg["coregistration"]["save_optional_outputs"] = "True"
 
         # Create coregistration object
         with pytest.raises(SystemExit):

@@ -92,7 +92,7 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         self._merge_classes_and_create_classes_masks()
         self._create_labelled_map()
 
-        logging.debug("ClassificationLayer created as: {}".format(self))
+        logging.debug("ClassificationLayer created as: %s", self)
 
     def fill_fusion_conf(self, metrics: List = None) -> ConfigType:
         """
@@ -105,9 +105,6 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         """
         # Initialize cfg layer with necessary parameters
         cfg: Dict = {}
-        cfg["save_results"] = str(
-            self.classification_layer_masks[0].save_results
-        )
         cfg["remove_outliers"] = str(
             self.classification_layer_masks[0].remove_outliers
         )
@@ -118,7 +115,6 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         cfg["metrics"] = metrics
 
         self.schema = {
-            "save_results": bool,
             "output_dir": Or(str, None),
             "nodata": Or(float, int),
             "type": "fusion",
@@ -146,7 +142,7 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         # Add map_fusion on the map_image
         self.map_image[self.support] = map_fusion
         # Save results
-        if self.save_results:
+        if self._output_dir:
             self.save_map_img(map_fusion, self.support)
 
     def _merge_classes_and_create_classes_masks(self):

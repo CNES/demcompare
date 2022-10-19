@@ -94,7 +94,7 @@ def load_dem(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                xr.DataArray
+                  xr.DataArray
     :rtype: xr.Dataset
     """
 
@@ -167,8 +167,9 @@ def load_dem(
             map_array = classif_rasterio_source.read(band)
             if map_array.shape != dem_image.shape:
                 logging.error(
-                    "Input classification layer {} does not have the same size"
-                    " as its reference dem.".format(name)
+                    "Input classification layer %s does not have the same size"
+                    " as its reference dem.",
+                    name,
                 )
                 sys.exit(1)
             classif_layers["map_arrays"][:, :, idx] = map_array
@@ -202,7 +203,7 @@ def copy_dem(dem: xr.Dataset) -> xr.Dataset:
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type dem: xr.Dataset
     :return dem_copy: copy of the input dem, xr.DataSet
                 containing :
@@ -210,7 +211,7 @@ def copy_dem(dem: xr.Dataset) -> xr.Dataset:
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :rtype: xr.Dataset
     """
     # If present, the source_rasterio has to be temporarily set
@@ -241,7 +242,7 @@ def save_dem(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type dataset: xr.Dataset
     :param filename:  output filename
     :type filename: str
@@ -252,7 +253,7 @@ def save_dem(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :rtype: xr.Dataset
     """
 
@@ -320,7 +321,7 @@ def translate_dem(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type dataset: xr.Dataset
     :param x_offset: x offset
     :type x_offset: Union[float, int, ndarray]
@@ -331,7 +332,7 @@ def translate_dem(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :rtype: xr.Dataset
     """
     dataset_translated = copy_dem(dataset)
@@ -390,7 +391,7 @@ def create_dem(  # pylint: disable=too-many-arguments, too-many-branches
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
 
     :param data: image data
     :type data: np.ndarray
@@ -419,7 +420,7 @@ def create_dem(  # pylint: disable=too-many-arguments, too-many-branches
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :rtype: xr.Dataset
     """
 
@@ -538,12 +539,12 @@ def reproject_dems(
     by the sampling_source parameter.
     It defines which is the sampling of the output DEMs.
 
-    If sampling_source is "ref":
-        ref is cropped to the common bounds
-        sec is cropped to the common bounds and resampled
-    If sampling_source is "sec":
-        ref is cropped to the common bounds and resampled
-        sec is cropped to the common bounds
+    - If sampling_source is "ref":
+      ref is cropped to the common bounds
+      sec is cropped to the common bounds and resampled
+    - If sampling_source is "sec":
+      ref is cropped to the common bounds and resampled
+      sec is cropped to the common bounds
 
     :param sec: dem to align xr.DataSet containing :
 
@@ -736,21 +737,21 @@ def compute_dems_diff(dem_1: xr.Dataset, dem_2: xr.Dataset) -> xr.Dataset:
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type dem_1: xr.Dataset
     :param dem_2: dem_2 xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type dem_2: xr.Dataset
     :return: difference xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :rtype: xr.Dataset
     """
     diff_raster = dem_1["image"].data - dem_2["image"].data
@@ -776,7 +777,7 @@ def compute_waveform(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :param output_dir: optional output directory
     :type output_dir: str
     :return: the computed row and col waveforms
@@ -837,14 +838,14 @@ def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :param sec: sec dem
     :type ref: xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
 
     :return: the difference dem
     :rtype: xr.Dataset containing :
@@ -852,7 +853,7 @@ def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     """
     # Compute altitude diff dataset
     altitude_diff = compute_dems_diff(ref, sec)
@@ -960,7 +961,7 @@ def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :param degree:  True if is in degree
     :type degree: bool
     :return: slope
@@ -1108,9 +1109,7 @@ def compute_and_save_image_plots(
     fig.text(
         0.15,
         0.15,
-        "Image diff view: [Min, Max]=[{:.2f}, {:.2f}]".format(
-            mu - sigma, mu + sigma
-        ),
+        f"Image diff view: [Min, Max]=[{mu - sigma}.2f, {mu + sigma}.2f]",
         fontsize="medium",
     )
     # Save plot
@@ -1141,10 +1140,9 @@ def verify_fusion_layers(dem: xr.Dataset, classif_cfg: Dict, support: str):
         for layer_to_fusion in fusion_layer[support]:
             if layer_to_fusion not in classif_names:
                 logging.error(
-                    "Input layer to be fusioned {} not defined"
-                    " in the classification layers configuration.".format(
-                        layer_to_fusion
-                    )
+                    "Input layer to be fused %s not defined"
+                    " in the classification layers configuration.",
+                    layer_to_fusion,
                 )
                 raise ValueError
             layer_type = classif_cfg[layer_to_fusion]["type"]
@@ -1153,7 +1151,7 @@ def verify_fusion_layers(dem: xr.Dataset, classif_cfg: Dict, support: str):
             if layer_type == "slope":
                 if "ref_slope" not in dem:
                     logging.error(
-                        "Input layer to be fusioned is type slope, "
+                        "Input layer to be fused is type slope, "
                         " but slope has not been computed on the input dem."
                     )
                     raise ValueError
@@ -1168,17 +1166,15 @@ def verify_fusion_layers(dem: xr.Dataset, classif_cfg: Dict, support: str):
                     )
                     if layer_to_fusion not in dem_classif_names:
                         logging.error(
-                            "Input layer to be fusioned {}, "
-                            " is not defined on the input dem.".format(
-                                layer_to_fusion
-                            )
+                            "Input layer to be fused %s, "
+                            " is not defined on the input dem.",
+                            layer_to_fusion,
                         )
                         raise ValueError
                 else:
                     logging.error(
-                        "Input layer to be fusioned {}, "
-                        " is not defined on the input dem.".format(
-                            layer_to_fusion
-                        )
+                        "Input layer to be fused %s, "
+                        " is not defined on the input dem.",
+                        layer_to_fusion,
                     )
                     raise ValueError

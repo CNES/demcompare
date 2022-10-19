@@ -73,7 +73,7 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
         # Create class masks
         self._create_class_masks()
 
-        logging.debug("ClassificationLayer created as: {}".format(self))
+        logging.debug("ClassificationLayer created as: %s", self)
 
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
@@ -111,6 +111,6 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
                     support = "ref"
                 # Store map_image
                 self.map_image[support] = map_img
-                # If save_results, create map_dataset and save
-                if self.save_results:
+                # If _output_dir is set, create map_dataset and save
+                if self._output_dir:
                     self.save_map_img(map_img, support)

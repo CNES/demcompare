@@ -38,8 +38,8 @@ import demcompare
 def get_parser():
     """
     ArgumentParser for demcompare
-    :param None
-    :return parser
+
+    :return: parser
     """
     parser = argparse.ArgumentParser(
         description=("Compare Digital Elevation Models"),

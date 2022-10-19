@@ -68,9 +68,7 @@ class Metric:
             metric_class = cls.available_metrics[metric_method]
             metric = metric_class(parameters=parameters)
         except KeyError:
-            logging.error(
-                "No metric layer type {0} supported".format(metric_method)
-            )
+            logging.error("No metric layer type %s supported", metric_method)
             raise
         return metric
 

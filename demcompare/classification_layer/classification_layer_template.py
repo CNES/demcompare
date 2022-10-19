@@ -28,7 +28,6 @@ import collections
 import copy
 import logging
 import os
-import sys
 from abc import ABCMeta, abstractmethod
 from typing import Dict, List, Tuple, Union
 
@@ -91,7 +90,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :param cfg: layer's configuration
         :type cfg: ConfigType
         :return: None
@@ -115,8 +114,6 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         self.nodata: Union[float, int] = self.cfg["nodata"]
         # Remove outliers
         self.remove_outliers: bool = self.cfg["remove_outliers"]
-        # Save results option
-        self.save_results: bool = self.cfg["save_results"]
         # Output directory
         self._output_dir: Union[str, None] = self.cfg["output_dir"]
         # Output directory for plots
@@ -124,7 +121,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         # Output directory for stats
         self._stats_dir: Union[str, None] = None
         # Create output dir (where to store classification_layer results & data)
-        if self.save_results:
+        if self._output_dir:
             # Create stats dir
             self._stats_dir = os.path.join(
                 self._output_dir, get_out_dir("_stats_dir"), self.name
@@ -154,29 +151,16 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         # is not in the configuration
         if "nodata" not in cfg:
             cfg["nodata"] = DEFAULT_NODATA
-        if "save_results" in cfg:
-            cfg["save_results"] = cfg["save_results"] == "True"
-        else:
-            cfg["save_results"] = False
         if "remove_outliers" in cfg:
             cfg["remove_outliers"] = cfg["remove_outliers"] == "True"
         else:
             cfg["remove_outliers"] = False
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
-            if cfg["save_results"]:
-                logging.error(
-                    "save_results"
-                    " option is activated but no output_dir has been set. "
-                    "Please set the output_dir parameter or deactivate"
-                    " the saving options."
-                )
-                sys.exit(1)
         # Configuration schema
         self.schema = {
             "type": Or("slope", "segmentation", "global", "fusion"),
             "remove_outliers": bool,
-            "save_results": bool,
             "output_dir": Or(str, None),
             "nodata": Or(int, float),
             "metrics": list,
@@ -227,7 +211,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :param stats_dataset: StatsDataset object
         :type stats_dataset: StatsDataset
         :param metrics: metrics to be computed
@@ -255,7 +239,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
             )
 
         # Save stats as plots, csv and json and do so for each mode
-        if self.save_results:
+        if self._output_dir:
             stats_dataset.save_as_csv_and_json(self.name, self._stats_dir)
 
     def create_metrics(
@@ -457,9 +441,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         if metrics is None:
             metrics = self.cfg["metrics"]
 
-        logging.debug(
-            "Computing mode {}, metrics: {}".format(mode_name, metrics)
-        )
+        logging.debug("Computing mode %s, metrics: %s", mode_name, metrics)
 
         # Consider either the "ref" or "sec" classes masks.
         # If both exist, "ref" is considered

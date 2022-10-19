@@ -28,7 +28,6 @@ import copy
 # Standard imports
 import logging
 import os
-import sys
 import traceback
 from typing import Dict, List, Union
 
@@ -52,8 +51,6 @@ class StatsProcessing:
     """
 
     # Default parameters in case they are not specified in the cfg
-    # Save results option
-    _SAVE_RESULTS = False
     # Default global layer
     _DEFAULT_GLOBAL_LAYER_NAME = "global"
     _DEFAULT_GLOBAL_LAYER = {
@@ -121,8 +118,6 @@ class StatsProcessing:
 
         # Remove outliers option
         self.remove_outliers: bool = self.cfg["remove_outliers"]
-        # Save results boolean
-        self.save_results: bool = self.cfg["save_results"]
         # Input dem
         self.dem: xr.Dataset = dem
         # Initialize StatsDataset object
@@ -184,20 +179,8 @@ class StatsProcessing:
             cfg["remove_outliers"] = cfg["remove_outliers"] == "True"
         else:
             cfg["remove_outliers"] = self._REMOVE_OUTLIERS
-        if "save_results" in cfg:
-            cfg["save_results"] = cfg["save_results"] == "True"
-        else:
-            cfg["save_results"] = self._SAVE_RESULTS
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
-            if cfg["save_results"]:
-                logging.error(
-                    "save_results option is activated"
-                    " but no output_dir has been set. "
-                    "Please set the output_dir parameter or deactivate"
-                    " the saving options."
-                )
-                sys.exit(1)
         return cfg
 
     def _create_classif_layers(self):
@@ -215,10 +198,9 @@ class StatsProcessing:
                     fusion_layers.append(name)
                     continue
                 try:
-                    # Set output_dir and save_results on the classif
+                    # Set output_dir on the classif
                     # layer's cfg
                     clayer["output_dir"] = self.output_dir
-                    clayer["save_results"] = str(self.save_results)
                     # If outliers handling has not been specified
                     # on the classification layer cfg,
                     # add the global statistics one
@@ -239,9 +221,10 @@ class StatsProcessing:
                     logging.error(
                         (
                             "Cannot create classification_layer"
-                            " for {}:{} -> {}".format(
-                                clayer["name"], clayer, error
-                            )
+                            " for %s:%s -> %s",
+                            clayer["name"],
+                            clayer,
+                            error,
                         )
                     )
         # Compute fusion layer it specified in the conf
@@ -278,7 +261,7 @@ class StatsProcessing:
                 )
 
         for classif in self.classification_layers:
-            logging.debug("List of classification layers: {}".format(classif))
+            logging.debug("List of classification layers: %s", classif)
 
     def compute_stats(
         self,
@@ -314,9 +297,7 @@ class StatsProcessing:
             # Compute and fill the corresponding
             # stats_dataset classification layer's xr.Dataset stats
             logging.debug(
-                "Computing classification layer {} stats...".format(
-                    classif.name
-                )
+                "Computing classification layer %s stats...", classif.name
             )
 
             classif.compute_classif_stats(

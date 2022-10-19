@@ -88,7 +88,7 @@ def test_demcompare_coregistration_step_with_gironde_test_data():
         # Modify test's output dir in configuration to tmp test dir
         test_cfg["output_dir"] = tmp_dir
         # Manually set the saving of internal dems to True
-        test_cfg["coregistration"]["save_internal_dems"] = "True"
+        test_cfg["coregistration"]["save_optional_outputs"] = "True"
 
         # Set a new test_config tmp file path
         tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
@@ -195,7 +195,6 @@ def test_demcompare_statistics_step_with_gironde_test_data():
     # }},
     # "statistics": {
     #     "remove_outliers": "False",
-    #     "save_results": "True",
     #     "classification_layers": {
     #         "Status": {
     #             "type": "segmentation",
@@ -273,7 +272,6 @@ def test_demcompare_statistics_step_input_ref_with_gironde_test_data():
     #     },
     # "statistics": {
     #     "remove_outliers": "False",
-    #     "save_results": "True",
     #     "classification_layers": {
     #         "Status": {
     #             "type": "segmentation",

@@ -63,7 +63,7 @@ class ClassificationLayer:
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :param cfg: layer's configuration
         :type cfg: ConfigType
         """
@@ -98,7 +98,7 @@ class ClassificationLayer:
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :param cfg: layer's configuration
         :type cfg: ConfigType
         """
@@ -114,16 +114,15 @@ class ClassificationLayer:
                 cfg,
             )
             logging.debug(
-                "ClassificationLayer of type: {} and name: {}".format(
-                    classification_layer_kind, name
-                )
+                "ClassificationLayer of type: %s and name: %s",
+                classification_layer_kind,
+                name,
             )
 
         except KeyError:
             logging.error(
-                "No classification layer type {0} supported".format(
-                    classification_layer_kind
-                )
+                "No classification layer type %s supported",
+                classification_layer_kind,
             )
             raise
 

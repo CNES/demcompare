@@ -45,7 +45,6 @@ def fixture_initialize_segmentation_classification():
     clayer = {
         "type": "segmentation",
         "classes": {"sea": [0], "deep_land": [1], "coast": [2], "lake": [3]},
-        "save_results": False,
         "output_dir": "",
         "nodata": -9999,
         "metrics": ["mean"],

@@ -53,7 +53,6 @@ def fixture_initialize_slope_layer():
     clayer = {
         "type": "slope",
         "ranges": [0, 5, 10, 25, 45],
-        "save_results": False,
         "output_dir": "",
         "metrics": ["mean"],
     }

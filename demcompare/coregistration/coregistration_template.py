@@ -58,10 +58,8 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
     # Sampling source
     _SAMPLING_SOURCE: str = SamplingSourceParameter.SEC.value
-    # Internal dems
-    _SAVE_INTERNAL_DEMS = False
     # Coreg method outputs
-    _SAVE_COREG_METHOD_OUTPUTS = False
+    _SAVE_OPTIONAL_OUTPUTS = False
 
     @abstractmethod
     def __init__(self, cfg: ConfigType):
@@ -85,11 +83,10 @@ class CoregistrationTemplate(metaclass=ABCMeta):
            y shift. int or float. 0 by default,
          "output_dir": optional output directory. str. If given,
            the coreg_sec is saved,
-         "save_coreg_method_outputs": optional. bool. Requires output_dir
+         "save_optional_outputs": optional. bool. Requires output_dir
            to be set. If activated, the outputs of the coregistration method
-           (such as nuth et kaab iteration plots) are saved,
-         "save_internal_dems": optional. bool. Requires output_dir to be set.
-           If activated, the internal dems of the coregistration
+           (such as nuth et kaab iteration plots) are saveda and the internal
+           dems of the coregistration
            such as reproj_dem, reproj_ref, reproj_coreg_sec,
            reproj_coreg_ref are saved.
         }
@@ -136,10 +133,8 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         self.estimated_initial_shift_x = self.cfg["estimated_initial_shift_x"]
         # Estimated initial shift y
         self.estimated_initial_shift_y = self.cfg["estimated_initial_shift_y"]
-        # Save internal dems
-        self.save_internal_dems = self.cfg["save_internal_dems"]
         # Save coreg_method outputs
-        self.save_coreg_method_outputs = self.cfg["save_coreg_method_outputs"]
+        self.save_optional_outputs = self.cfg["save_optional_outputs"]
         # Output directory to save results
         self.output_dir = self.cfg["output_dir"]
 
@@ -151,7 +146,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
         :param cfg: coregistration configuration
         :type cfg: ConfigType
-        :return cfg: coregistration configuration updated
+        :return: cfg coregistration configuration updated
         :rtype: ConfigType
         """
         # If no cfg was given, initialize it
@@ -168,24 +163,20 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         if "estimated_initial_shift_x" not in cfg:
             cfg["estimated_initial_shift_x"] = 0
             cfg["estimated_initial_shift_y"] = 0
-        if "save_internal_dems" in cfg:
-            cfg["save_internal_dems"] = cfg["save_internal_dems"] == "True"
-        else:
-            cfg["save_internal_dems"] = self._SAVE_INTERNAL_DEMS
-        if "save_coreg_method_outputs" in cfg:
-            cfg["save_coreg_method_outputs"] = (
-                cfg["save_coreg_method_outputs"] == "True"
+        if "save_optional_outputs" in cfg:
+            cfg["save_optional_outputs"] = (
+                cfg["save_optional_outputs"] == "True"
             )
 
         else:
-            cfg["save_coreg_method_outputs"] = self._SAVE_COREG_METHOD_OUTPUTS
+            cfg["save_optional_outputs"] = self._SAVE_OPTIONAL_OUTPUTS
 
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
-            if cfg["save_internal_dems"] or cfg["save_coreg_method_outputs"]:
+            if cfg["save_optional_outputs"]:
                 logging.error(
-                    "save_internal_dems and/or save_coreg_method_outputs"
-                    " options are activated but no output_dir has been set. "
+                    "save_optional_outputs"
+                    " option IS activated but no output_dir has been set. "
                     "Please set the output_dir parameter or deactivate"
                     " the saving options."
                 )
@@ -204,8 +195,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
             "estimated_initial_shift_y": Or(int, float),
             "method_name": And(str, lambda input: "nuth_kaab_internal"),
             "output_dir": Or(str, None),
-            "save_coreg_method_outputs": bool,
-            "save_internal_dems": bool,
+            "save_optional_outputs": bool,
         }
         return cfg
 
@@ -218,7 +208,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
         :param cfg: coregistration configuration
         :type cfg: ConfigType
-        :return cfg: coregistration configuration updated
+        :return: cfg coregistration configuration updated
         :rtype: ConfigType
         """
 
@@ -237,18 +227,19 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         reproj_ref and the offset adapting_factor are stored as
         attributes of the class.
 
-        :type sec: dem to align xr.Dataset containing
+        :param sec: sec xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
-        :param ref: ref xr.Dataset containing
+                  xr.DataArray
+        :type sec: xarray Dataset
+        :param ref: ref xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :return: reproj_sec xr.Dataset, reproj_ref xr.Dataset,
                 orig_sec xr.Dataset, adapting_factor
                 Tuple[float, float].
@@ -257,16 +248,12 @@ class CoregistrationTemplate(metaclass=ABCMeta):
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :rtype: Transformation
         """
 
-        logging.debug(
-            "Input Coregistration SEC: {}".format(sec.attrs["input_img"])
-        )
-        logging.debug(
-            "Input Coregistration REF: {}".format(ref.attrs["input_img"])
-        )
+        logging.debug("Input Coregistration SEC: %s", sec.attrs["input_img"])
+        logging.debug("Input Coregistration REF: %s", ref.attrs["input_img"])
         # Store the original sec prior to reprojection
         self.orig_sec = copy_dem(sec)
 
@@ -298,18 +285,19 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         Reproject and compute coregistration between the two input DEMs.
         A Transformation object is returned.
 
-        :type sec: dem to align xr.Dataset containing
+        :param sec: sec xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
-        :param ref: ref xr.Dataset containing
+                  xr.DataArray
+        :type sec: xarray Dataset
+        :param ref: ref xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :return: transformation
         :rtype: Transformation
         """
@@ -332,7 +320,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         # Compute and store the demcompare_results dict
         self.save_results_dict()
         # Save internal_dems if the option was chosen
-        if self.save_internal_dems:
+        if self.save_optional_outputs:
             self.save_internal_outputs()
         # Return the transform
         return self.transform
@@ -353,22 +341,22 @@ class CoregistrationTemplate(metaclass=ABCMeta):
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :type sec: xarray Dataset
         :param ref: ref xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :type ref: xarray Dataset
         :return: transformation, reproj_coreg_sec xr.DataSet,
-                 reproj_coreg_ref xr.DataSet. The xr.Datasets containing :
+                reproj_coreg_ref xr.DataSet. The xr.Datasets containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :rtype: Tuple[Transformation, xr.Dataset, xr.Dataset]
         """
 
@@ -377,12 +365,12 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         Save the dems obtained from the coregistration to .tif
         and updates its path on the demcompare_results file
 
-            - ./coregistration/reproj_SEC.tif -> reprojected sec
-            - ./coregistration/reproj_REF.tif -> reprojected ref
-            - ./coregistration/reproj_coreg_SEC.tif -> reprojected
-               coregistered sec
-            - ./coregistration/reproj_coreg_REF.tif -> reprojected
-               coregistered ref
+        - ./coregistration/reproj_SEC.tif -> reprojected sec
+        - ./coregistration/reproj_REF.tif -> reprojected ref
+        - ./coregistration/reproj_coreg_SEC.tif -> reprojected
+          coregistered sec
+        - ./coregistration/reproj_coreg_REF.tif -> reprojected
+          coregistered ref
 
         :return: None
         """
@@ -537,30 +525,26 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         logging.info("# Coregistration results:")
         logging.info("Planimetry 2D shift between DEM and REF:")
         logging.info(
-            " -> row : {}".format(
-                self.demcompare_results["coregistration_results"]["dy"][
-                    "total_bias_value"
-                ]
-                * unit_bias_value
-            )
+            " -> row : %s",
+            self.demcompare_results["coregistration_results"]["dy"][
+                "total_bias_value"
+            ]
+            * unit_bias_value,
         )
         logging.info(
-            " -> col : {}".format(
-                self.demcompare_results["coregistration_results"]["dx"][
-                    "total_bias_value"
-                ]
-                * unit_bias_value
-            )
+            " -> col : %s",
+            self.demcompare_results["coregistration_results"]["dx"][
+                "total_bias_value"
+            ]
+            * unit_bias_value,
         )
         logging.info("GDAL translate bounds:")
         logging.info(
-            (
-                " -> ulx : {}, -> uly : {}, -> lrx : {}, -> lry : {}".format(
-                    ulx, uly, lrx, lry
-                )
-            )
+            " -> ulx : %.2f , -> uly : %.2f , -> lrx : %.2f , -> lry : %.2f ",
+            ulx,
+            uly,
+            lrx,
+            lry,
         )
         logging.info("Altimetry shift between COREG_DEM and COREG_REF:")
-        logging.info(
-            (" -> alti : {}".format(self.transform.z_offset * unit_bias_value))
-        )
+        logging.info(" -> alti : %s", self.transform.z_offset * unit_bias_value)

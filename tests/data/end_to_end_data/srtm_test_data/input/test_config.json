@@ -28,7 +28,6 @@
         ]
       }
     },
-    "remove_outliers": "True",
-    "save_results": "True"
+    "remove_outliers": "True"
   }
 }

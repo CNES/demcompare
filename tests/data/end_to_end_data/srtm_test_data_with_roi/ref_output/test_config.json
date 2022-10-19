@@ -22,7 +22,7 @@
     "number_of_iterations": 6,
     "estimated_initial_shift_x": 0,
     "estimated_initial_shift_y": 0,
-    "save_internal_dems": "True"
+    "save_optional_outputs": "True"
   },
   "statistics": {
     "classification_layers": {
@@ -37,7 +37,6 @@
         ]
       }
     },
-    "remove_outliers": "True",
-    "save_results": "True"
+    "remove_outliers": "True"
   }
 }

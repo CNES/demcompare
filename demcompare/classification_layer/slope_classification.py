@@ -66,7 +66,7 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
             - image : 2D (row, col) xr.DataArray float32
             - georef_transform: 1D (trans_len) xr.DataArray
             - classification_layer_masks : 3D (row, col, indicator)
-             xr.DataArray
+              xr.DataArray
         :param cfg: layer's configuration
         :type cfg: ConfigType
         :return: None
@@ -83,7 +83,7 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
         # Create class masks
         self._create_class_masks()
 
-        logging.debug("ClassificationLayer created as: {}".format(self))
+        logging.debug("ClassificationLayer created as: %s", self)
 
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
@@ -131,7 +131,7 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :return: None
         """
         # Classify slope
@@ -163,9 +163,9 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
         classes = collections.OrderedDict()
         for idx, range_item in enumerate(ranges):
             if idx == len(ranges) - 1:
-                key = "[{}%;inf[".format(range_item)
+                key = f"[{range_item}%;inf["
             else:
-                key = "[{}%;{}%[".format(range_item, ranges[idx + 1])
+                key = f"[{range_item}%;{ranges[idx + 1]}%["
             classes[key] = ranges[idx]
 
         return classes
@@ -183,7 +183,7 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :param support: support dem, ref or sec
         :type support: str
         :return: None
@@ -212,7 +212,6 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
                 ] = self.ranges[idx]
         # Store map_image
         self.map_image[support] = map_img
-        # If save_results, create map_dataset and save
-        if self.save_results:
-            if self.save_results:
-                self.save_map_img(map_img, support)
+        # If _output_dir is set, create map_dataset and save
+        if self._output_dir:
+            self.save_map_img(map_img, support)

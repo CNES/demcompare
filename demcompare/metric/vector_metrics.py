@@ -148,13 +148,8 @@ class CumulativeProbabilityFunction(MetricTemplate):
         # tidy up the figure and add axes titles
         fig_ax.set_xlabel(
             "Full absolute elevation differences (m) "
-            "\nmax_diff={} nb_bins={}"
-            "\nnb_pixels={} nb_nans={}".format(
-                round(self.max_diff, 3),
-                self.nb_bins,
-                self.nb_pixels,
-                self.nb_nans,
-            ),
+            f"\nmax_diff={round(self.max_diff, 3)} nb_bins={self.nb_bins}"
+            f"\nnb_pixels={self.nb_pixels} nb_nans={self.nb_nans}",
             fontsize="medium",
         )
         fig_ax.set_ylabel("Cumulative Probability [0,1]", fontsize="medium")

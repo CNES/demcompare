@@ -57,7 +57,6 @@ def fixture_initialize_fusion_layer():
     seg_clayer = {
         "type": "segmentation",
         "classes": {"sea": [0], "deep_land": [1]},
-        "save_results": False,
         "output_dir": "",
         "nodata": -9999,
         "metrics": ["mean"],
@@ -115,7 +114,6 @@ def fixture_initialize_fusion_layer():
     slope_clayer = {
         "type": "slope",
         "ranges": [0, 5, 10],
-        "save_results": False,
         "output_dir": "",
         "nodata": -9999,
         "metrics": ["mean"],

@@ -165,8 +165,8 @@ class SphinxProjectManager:
                     "numfig=True",
                     "source_suffix = '.rst'",
                     "source_encoding = 'utf-8'",
-                    "master_doc = '{}'".format(self._index_name),
-                    "project = u'{}'".format(self._project_name),
+                    f"master_doc = '{self._index_name}'",
+                    f"project = u'{self._project_name}'",
                     "copyright = u'2021 CNES'",
                     "author = u'CNES, CS'",
                     "language = 'en'",
@@ -180,9 +180,7 @@ class SphinxProjectManager:
                     "html_theme_options = {  'github_user': 'CNES', "
                     "'github_repo': 'demcompare',     'rightsidebar': 'true', }",
                     "# -- Options for LaTeX output ---------------------------------------------",
-                    "latex_documents = [(master_doc, '{}.tex', u'{}', u'', 'howto')]".format(
-                        self._index_name, self._project_name
-                    ),
+                    f"latex_documents = [(master_doc,'{self._index_name}.tex',u'{self._project_name}', u'', 'howto')]",
                     "#latex_logo = None" "",
                     "# -- Options for docx output ---------------------------------------------",
                     "docx_template = 'template.docx'",
@@ -218,7 +216,7 @@ class SphinxProjectManager:
         try:
             os.chdir(self._working_dir)
             with open(
-                os.path.join(self._working_dir, "cr_build-{}.txt".format(mode)),
+                os.path.join(self._working_dir, f"cr_build-{mode}.txt"),
                 "w",
                 encoding="utf8",
             ) as cr_build:
@@ -234,7 +232,7 @@ class SphinxProjectManager:
             os.chdir(cur_dir)
             raise
         else:
-            logging.debug(("Sphinx build succeeded for {} mode".format(mode)))
+            logging.debug("Sphinx build succeeded for %s mode", mode)
 
     def install_project(self):
         """
@@ -244,7 +242,7 @@ class SphinxProjectManager:
         shutil.rmtree(self._output_dir, ignore_errors=True)
         # Copy build directory to install directory
         shutil.copytree(self._build_dir, self._output_dir)
-        logging.info(("Generated report: {}".format(self._output_dir)))
+        logging.info("Generated report: %s", self._output_dir)
 
     @staticmethod
     def clean():

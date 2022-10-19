@@ -117,7 +117,7 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type data: xr.Dataset
     """
 
@@ -193,7 +193,7 @@ def reproject_dataset(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type dataset: xr.Dataset
     :param from_dataset: Dataset to get projection from
                 xr.DataSet containing :
@@ -201,7 +201,7 @@ def reproject_dataset(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type from_dataset: xr.Dataset
     :param interp: interpolation method
     :type interp: str
@@ -210,7 +210,7 @@ def reproject_dataset(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :rtype: xr.Dataset
     """
 
@@ -364,7 +364,7 @@ def _get_geoid_offset(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type dataset: xr.Dataset
     :param geoid_path: optional absolut geoid_path, if None egm96 is used
     :type geoid_path: str or None
@@ -422,8 +422,9 @@ def _get_geoid_offset(
         )
     except ValueError:
         logging.error(
-            "Input DSM {} coordinates outside of the"
-            " {} geoid scope.".format(dataset.attrs["input_img"], geoid_path)
+            "Input DSM %s coordinates outside of the %s geoid scope.",
+            dataset.attrs["input_img"],
+            geoid_path,
         )
         raise
 

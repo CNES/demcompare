@@ -22,6 +22,7 @@
 Demcompare init module file.
 Demcompare aims at coregistering and comparing two Digital Elevation Models(DEM)
 """
+import copy
 
 # Standard imports
 import logging
@@ -86,12 +87,11 @@ def run(
     cfg = helpers_init.compute_initialization(json_file)
     log_conf.setup_logging(default_level=loglevel)
     # Add output logging file
-    if cfg["output_dir"]:
-        log_conf.add_log_file(cfg["output_dir"])
-        logging.info("Output directory: {}".format(cfg["output_dir"]))
+    log_conf.add_log_file(cfg["output_dir"])
+    logging.info("Output directory: %s", cfg["output_dir"])
 
     logging.info("*** Demcompare ***")
-    logging.debug("Demcompare configuration: {}".format(cfg))
+    logging.debug("Demcompare configuration: %s", cfg)
 
     input_ref, input_sec = load_input_dems(cfg)
 
@@ -100,8 +100,8 @@ def run(
 
         sec_name = input_sec.input_img
         ref_name = input_ref.input_img
-        logging.info("Input Secondary DEM (SEC): {}".format(sec_name))
-        logging.info("Input Reference DEM (REF): {}".format(ref_name))
+        logging.info("Input Secondary DEM (SEC): %s", sec_name)
+        logging.info("Input Reference DEM (REF): %s", ref_name)
 
         # Do coregistration and obtain initial
         # and final intermediate dems for stats computation
@@ -123,22 +123,21 @@ def run(
             )
 
             # Coreg + Stats Report
-            if "output_dir" in cfg:
-                logging.info("[Coregistration + Stats Report]")
-                report.generate_report(
-                    working_dir=cfg["output_dir"],
-                    stats_dataset=stats_dataset,
-                    sec_name=reproj_sec.input_img,
-                    ref_name=reproj_ref.input_img,
-                    coreg_sec_name=reproj_coreg_sec.input_img,
-                    coreg_ref_name=reproj_coreg_ref.input_img,
-                    doc_dir=os.path.join(
-                        cfg["output_dir"], get_out_dir("sphinx_built_doc")
-                    ),
-                    project_dir=os.path.join(
-                        cfg["output_dir"], get_out_dir("sphinx_src_doc")
-                    ),
-                )
+            logging.info("[Coregistration + Stats Report]")
+            report.generate_report(
+                working_dir=cfg["output_dir"],
+                stats_dataset=stats_dataset,
+                sec_name=reproj_sec.input_img,
+                ref_name=reproj_ref.input_img,
+                coreg_sec_name=reproj_coreg_sec.input_img,
+                coreg_ref_name=reproj_coreg_ref.input_img,
+                doc_dir=os.path.join(
+                    cfg["output_dir"], get_out_dir("sphinx_built_doc")
+                ),
+                project_dir=os.path.join(
+                    cfg["output_dir"], get_out_dir("sphinx_src_doc")
+                ),
+            )
 
     # If only stats is present
     elif "statistics" in cfg:
@@ -189,26 +188,24 @@ def run(
         stats_dataset = stats_processing.compute_stats()
 
         # Stats Report
-        if "output_dir" in cfg:
-            # Save stats_dem
-
-            save_dem(
-                stats_dem,
-                os.path.join(
-                    cfg["output_dir"], get_out_file_path("dem_for_stats.tif")
-                ),
-            )
-            logging.info("[Stats Report]")
-            report.generate_report(
-                working_dir=cfg["output_dir"],
-                stats_dataset=stats_dataset,
-                doc_dir=os.path.join(
-                    cfg["output_dir"], get_out_dir("sphinx_built_doc")
-                ),
-                project_dir=os.path.join(
-                    cfg["output_dir"], get_out_dir("sphinx_src_doc")
-                ),
-            )
+        # Save stats_dem
+        save_dem(
+            stats_dem,
+            os.path.join(
+                cfg["output_dir"], get_out_file_path("dem_for_stats.tif")
+            ),
+        )
+        logging.info("[Stats Report]")
+        report.generate_report(
+            working_dir=cfg["output_dir"],
+            stats_dataset=stats_dataset,
+            doc_dir=os.path.join(
+                cfg["output_dir"], get_out_dir("sphinx_built_doc")
+            ),
+            project_dir=os.path.join(
+                cfg["output_dir"], get_out_dir("sphinx_src_doc")
+            ),
+        )
 
 
 def load_input_dems(cfg: Dict) -> Tuple[xr.Dataset, Union[None, xr.Dataset]]:
@@ -326,24 +323,20 @@ def run_coregistration(
     # Get demcompare_results dict
     demcompare_results = coregistration_.demcompare_results
 
-    # If output_dir is defined, save the coregistered DEM
-    if "output_dir" in cfg:
-        if cfg["output_dir"] is not None:  # Save coregistered DEM
-            # - coreg_SEC.tif -> coregistered sec
-            save_dem(
-                coreg_sec,
-                os.path.join(
-                    cfg["output_dir"], get_out_file_path("coreg_SEC.tif")
-                ),
-            )
-            # Save demcompare_results
-            helpers_init.save_config_file(
-                os.path.join(
-                    cfg["output_dir"],
-                    get_out_file_path("demcompare_results.json"),
-                ),
-                demcompare_results,
-            )
+    # Save the coregistered DEM
+    # - coreg_SEC.tif -> coregistered sec
+    save_dem(
+        coreg_sec,
+        os.path.join(cfg["output_dir"], get_out_file_path("coreg_SEC.tif")),
+    )
+    # Save demcompare_results
+    helpers_init.save_config_file(
+        os.path.join(
+            cfg["output_dir"],
+            get_out_file_path("demcompare_results.json"),
+        ),
+        demcompare_results,
+    )
 
     # Get internal dems
     reproj_ref = coregistration_.reproj_ref
@@ -384,28 +377,28 @@ def compute_stats_after_coregistration(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type coreg_sec: xr.Dataset
     :param coreg_ref: coreg reference dem xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :param initial_sec: optional initial dem
                 to align xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type initial_sec: xr.Dataset
     :param initial_ref: optional initial reference dem xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
     :type initial_ref: xr.Dataset
     :return: StatsDataset
     :rtype: StatsDataset
@@ -417,59 +410,57 @@ def compute_stats_after_coregistration(
     # Compute altitude diff
     initial_altitude_diff = compute_dems_diff(initial_ref, initial_sec)
 
-    if cfg["output_dir"]:
+    # Obtain output paths
+    (
+        dem_path,
+        plot_file_path,
+        plot_path_cdf,
+        csv_path_cdf,
+        plot_path_pdf,
+        csv_path_pdf,
+    ) = helpers_init.get_output_files_paths(
+        cfg["output_dir"], "initial_dem_diff"
+    )
+    # Compute and save initial altitude diff image plots
+    compute_and_save_image_plots(
+        initial_altitude_diff,
+        plot_file_path,
+        title="initial [REF - DEM] differences",
+        dem_path=dem_path,
+    )
 
-        # Obtain output paths
-        (
-            dem_path,
-            plot_file_path,
-            plot_path_cdf,
-            csv_path_cdf,
-            plot_path_pdf,
-            csv_path_pdf,
-        ) = helpers_init.get_output_files_paths(
-            cfg["output_dir"], "initial_dem_diff"
-        )
-        # Compute and save initial altitude diff image plots
-        compute_and_save_image_plots(
-            initial_altitude_diff,
-            plot_file_path,
-            title="initial [REF - DEM] differences",
-            dem_path=dem_path,
-        )
+    # Create StatsComputation object for the initial_dh
+    # We do not need any classification_layer for the initial_dh
+    initial_stats_cfg = {
+        "remove_outliers": "False",
+        "output_dir": cfg["output_dir"],
+    }
+    stats_processing_initial = StatsProcessing(
+        initial_stats_cfg, initial_altitude_diff, input_diff=True
+    )
 
-        # Create StatsComputation object for the initial_dh
-        # We do not need any classification_layer for the initial_dh
-        initial_stats_cfg = {
-            "remove_outliers": "False",
-            "output_dir": cfg["output_dir"],
-        }
-        stats_processing_initial = StatsProcessing(
-            initial_stats_cfg, initial_altitude_diff, input_diff=True
-        )
-
-        # For the initial_dh, compute cdf and pdf stats
-        # on the global classification layer (diff, pdf, cdf)
-        plot_metrics = [
-            {
-                "cdf": {
-                    "remove_outliers": "False",
-                    "output_plot_path": plot_path_cdf,
-                    "output_csv_path": csv_path_cdf,
-                }
-            },
-            {
-                "pdf": {
-                    "remove_outliers": "False",
-                    "output_plot_path": plot_path_pdf,
-                    "output_csv_path": csv_path_pdf,
-                }
-            },
-        ]
-        stats_processing_initial.compute_stats(
-            classification_layer=["global"],
-            metrics=plot_metrics,  # type: ignore
-        )
+    # For the initial_dh, compute cdf and pdf stats
+    # on the global classification layer (diff, pdf, cdf)
+    plot_metrics = [
+        {
+            "cdf": {
+                "remove_outliers": "False",
+                "output_plot_path": plot_path_cdf,
+                "output_csv_path": csv_path_cdf,
+            }
+        },
+        {
+            "pdf": {
+                "remove_outliers": "False",
+                "output_plot_path": plot_path_pdf,
+                "output_csv_path": csv_path_pdf,
+            }
+        },
+    ]
+    stats_processing_initial.compute_stats(
+        classification_layer=["global"],
+        metrics=plot_metrics,  # type: ignore
+    )
 
     # Final stats --------------------------------------------
 
@@ -492,62 +483,52 @@ def compute_stats_after_coregistration(
 
     # Compute altitude diff
     final_altitude_diff = compute_alti_diff_for_stats(coreg_ref, coreg_sec)
-    # Save dem for stats
-    if "output_dir" in cfg:
-        save_dem(
-            final_altitude_diff,
-            os.path.join(  # type:ignore
-                cfg["output_dir"], get_out_file_path("dem_for_stats.tif")
-            ),
-        )
+
     # Create StatsComputation object for the final_dh
-    final_stats_cfg = cfg
+    final_stats_cfg = copy.deepcopy(cfg)
     stats_processing_final = StatsProcessing(
         final_stats_cfg, final_altitude_diff, input_diff=True
     )
 
-    if cfg["output_dir"]:
-        # Obtain output paths
-        (
-            dem_path,
-            plot_file_path,
-            plot_path_cdf,
-            csv_path_cdf,
-            plot_path_pdf,
-            csv_path_pdf,
-        ) = helpers_init.get_output_files_paths(
-            cfg["output_dir"], "final_dem_diff"
-        )
+    # Obtain output paths
+    (
+        dem_path,
+        plot_file_path,
+        plot_path_cdf,
+        csv_path_cdf,
+        plot_path_pdf,
+        csv_path_pdf,
+    ) = helpers_init.get_output_files_paths(cfg["output_dir"], "final_dem_diff")
 
-        # Compute and save final altitude diff image plots
-        compute_and_save_image_plots(
-            final_altitude_diff,
-            plot_file_path,
-            title="final [REF - DEM] differences",
-            dem_path=dem_path,
-        )
-        # For the final_dh, first compute plot stats on the
-        # global classification layer (diff, pdf, cdf)
-        plot_metrics = [
-            {
-                "cdf": {
-                    "remove_outliers": "False",
-                    "output_plot_path": plot_path_cdf,
-                    "output_csv_path": csv_path_cdf,
-                }
-            },
-            {
-                "pdf": {
-                    "remove_outliers": "False",
-                    "output_plot_path": plot_path_pdf,
-                    "output_csv_path": csv_path_pdf,
-                }
-            },
-        ]
-        stats_processing_final.compute_stats(
-            classification_layer=["global"],
-            metrics=plot_metrics,  # type: ignore
-        )
+    # Compute and save final altitude diff image plots
+    compute_and_save_image_plots(
+        final_altitude_diff,
+        plot_file_path,
+        title="final [REF - DEM] differences",
+        dem_path=dem_path,
+    )
+    # For the final_dh, first compute plot stats on the
+    # global classification layer (diff, pdf, cdf)
+    plot_metrics = [
+        {
+            "cdf": {
+                "remove_outliers": "False",
+                "output_plot_path": plot_path_cdf,
+                "output_csv_path": csv_path_cdf,
+            }
+        },
+        {
+            "pdf": {
+                "remove_outliers": "False",
+                "output_plot_path": plot_path_pdf,
+                "output_csv_path": csv_path_pdf,
+            }
+        },
+    ]
+    stats_processing_final.compute_stats(
+        classification_layer=["global"],
+        metrics=plot_metrics,  # type: ignore
+    )
 
     # For the final_dh, also compute all classif layer default metric stats
     stats_dataset = stats_processing_final.compute_stats()

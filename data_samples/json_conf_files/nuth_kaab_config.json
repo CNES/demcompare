@@ -1,5 +1,5 @@
 {
-	"output_dir" : "./test_output/",
+    "output_dir": "./test_output/",
 	"input_ref" : {
 		"path" : "./srtm_ref.tif",
 		"zunit" : "m"
@@ -13,12 +13,9 @@
 		"method_name": "nuth_kaab_internal",
 		"number_of_iterations": 6,
 		"estimated_initial_shift_x": 0,
-		"estimated_initial_shift_y": 0,
-		"save_internal_dems": "True",
-		"save_coreg_method_outputs": "True"
+		"estimated_initial_shift_y": 0
 	},
   "statistics": {
-	"save_results": "True",
     "classification_layers": {
       "Slope0": {
         "type": "slope",

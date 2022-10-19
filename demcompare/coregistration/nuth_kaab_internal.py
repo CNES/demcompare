@@ -84,11 +84,10 @@ class NuthKaabInternal(
            y shift. int or float. 0 by default,
          "output_dir": optional output directory. str. If given,
            the coreg_sec is saved,
-         "save_coreg_method_outputs": optional. bool. Requires output_dir
+         "save_optional_outputs": optional. bool. Requires output_dir
            to be set. If activated, the outputs of the coregistration method
-           (such as nuth et kaab iteration plots) are saved,
-         "save_internal_dems": optional. bool. Requires output_dir to be set.
-           If activated, the internal dems of the coregistration
+           (such as nuth et kaab iteration plots) are saved and
+           the internal dems of the coregistration
            such as reproj_dem, reproj_ref, reproj_coreg_sec,
            reproj_coreg_ref, initial_dh and final_dh are saved.
         }
@@ -138,21 +137,21 @@ class NuthKaabInternal(
         Coregister_dems_algorithm, computes coregistration
         transformation and reprojected coregistered DEMs
         with Nuth et kaab algorithm
-        Plots might be saved if save_coreg_method_outputs is set.
+        Plots might be saved if save_optional_outputs is set.
 
         :param sec: sec xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :type sec: xarray Dataset
         :param ref: ref xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :type ref: xarray Dataset
         :return: transformation, reproj_coreg_sec xr.DataSet,
                  reproj_coreg_ref xr.DataSet. The xr.Datasets containing :
@@ -160,7 +159,7 @@ class NuthKaabInternal(
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         :rtype: Tuple[Transformation, xr.Dataset, xr.Dataset]
         """
         # Copy dataset and extract image array
@@ -187,7 +186,7 @@ class NuthKaabInternal(
         pl.imshow(initial_dh, vmin=-maxval, vmax=maxval)
         color_bar = pl.colorbar()
         color_bar.set_label("Elevation difference (m)")
-        if self.save_coreg_method_outputs:
+        if self.save_optional_outputs:
             output_dir_ = os.path.join(
                 self.output_dir, get_out_dir("nuth_kaab_tmp_dir")
             )
@@ -199,7 +198,7 @@ class NuthKaabInternal(
         pl.close()
         # Initialize offsets
         x_offset, y_offset = 0.0, 0.0
-        logging.debug("Nuth & Kaab iterations: {}".format(self.iterations))
+        logging.debug("Nuth & Kaab iterations: %s", self.iterations)
         coreg_sec = sec_im
 
         # Compute bounds for different aspect slices
@@ -212,13 +211,11 @@ class NuthKaabInternal(
             # Compute slope and aspect
             slope, aspect = self._grad2d(coreg_sec)
 
-            if self.save_coreg_method_outputs:
+            if self.save_optional_outputs:
                 output_dir_ = os.path.join(
                     self.output_dir, get_out_dir("nuth_kaab_tmp_dir")
                 )
-                plotfile = os.path.join(
-                    output_dir_, "nuth_kaab_iter#{}.png".format(i)
-                )
+                plotfile = os.path.join(output_dir_, f"nuth_kaab_iter#{i}.png")
             else:
                 plotfile = None
 
@@ -228,10 +225,11 @@ class NuthKaabInternal(
             )
 
             logging.debug(
-                "# {} - Offset in pixels : "
-                "({:.2f},{:.2f}), -bias : ({:.2f})".format(
-                    i + 1, east, north, z
-                )
+                "# %s - Offset in pixels : ( %.2f , %.2f ), -bias : ( %.2f )",
+                i + 1,
+                east,
+                north,
+                z,
             )
             # Update total offsets
             x_offset += east
@@ -260,11 +258,10 @@ class NuthKaabInternal(
             median = np.median(diff)
 
             logging.debug(
-                (
-                    "\tMedian : {0:.2f}, NMAD = {1:.2f}, Gain : {2:.2f}".format(
-                        median, nmad_new, (nmad_new - nmad_old) / nmad_old * 100
-                    )
-                )
+                "\t Median : %.2f, NMAD = %.2f, Gain : %.2f",
+                median,
+                nmad_new,
+                (nmad_new - nmad_old) / nmad_old * 100,
             )
             nmad_old = nmad_new
 
@@ -301,8 +298,9 @@ class NuthKaabInternal(
             classification_layer_masks=coreg_ref_classif,
         )
         logging.debug(
-            "Nuth & Kaab Final Offset in pixels (east, north):"
-            "({:.2f},{:.2f})".format(x_offset, y_offset)
+            "Nuth & Kaab Final Offset in pixels (east, north): ( %.2f , %.2f )",
+            x_offset,
+            y_offset,
         )
         # Display
         final_dh = coreg_ref - coreg_sec
@@ -315,7 +313,7 @@ class NuthKaabInternal(
         pl.imshow(final_dh, vmin=-maxval, vmax=maxval)
         color_bar = pl.colorbar()
         color_bar.set_label("Elevation difference (m)")
-        if self.save_coreg_method_outputs:
+        if self.save_optional_outputs:
             output_dir_ = os.path.join(
                 self.output_dir, get_out_dir("nuth_kaab_tmp_dir")
             )

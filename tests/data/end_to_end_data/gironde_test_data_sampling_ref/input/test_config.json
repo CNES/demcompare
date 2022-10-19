@@ -25,7 +25,6 @@
   },
   "statistics": {
     "remove_outliers": "False",
-    "save_results": "True",
     "classification_layers": {
       "Status": {
         "type": "segmentation",

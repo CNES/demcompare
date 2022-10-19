@@ -106,8 +106,8 @@ def crop_rasterio_source_with_roi(
         )
     except ValueError as roi_outside_dataset:
         logging.error(
-            "Input ROI coordinates outside of the"
-            " {} DEM scope.".format(src.files[0])
+            "Input ROI coordinates outside of the %s DEM scope.",
+            src.files[0],
         )
         raise ValueError from roi_outside_dataset
 

@@ -60,7 +60,6 @@ def fixture_initialize_slope_layer():
     clayer = {
         "type": "slope",
         "ranges": [0, 5, 10, 25, 45],
-        "save_results": False,
         "output_dir": "",
         "metrics": _DEFAULT_TEST_METRICS,
     }
@@ -120,7 +119,6 @@ def test_get_outliers_free_mask():
     clayer = {
         "type": "slope",
         "ranges": [0, 5, 10, 25, 45],
-        "save_results": False,
         "output_dir": "",
         "metrics": _DEFAULT_TEST_METRICS,
     }
@@ -242,7 +240,6 @@ def test_create_mode_masks():
     clayer = {
         "type": "slope",
         "ranges": [0, 5, 10, 25, 45],
-        "save_results": False,
         "output_dir": "",
         "nodata": -9999,
         "metrics": _DEFAULT_TEST_METRICS,
@@ -330,7 +327,6 @@ def test_statistics_classification_invalid_input_classes():
             "NoData": [3],
             "Outside_detector": [4],
         },
-        "save_results": False,
         "output_dir": "",
         "nodata": -9999,
         "metrics": _DEFAULT_TEST_METRICS,
@@ -357,7 +353,6 @@ def test_statistics_classification_invalid_input_ranges():
     _ = {
         "type": "slope",
         "ranges": [np.nan, "0"],
-        "save_results": False,
         "output_dir": "",
         "nodata": -9999,
         "metrics": _DEFAULT_TEST_METRICS,
@@ -385,7 +380,6 @@ def test_demcompare_with_wrong_fusion_cfg():
     clayer = {
         "type": "slope",
         "ranges": [0, 5, 10, 25, 45],
-        "save_results": False,
         "output_dir": "",
         "nodata": -9999,
         "metrics": _DEFAULT_TEST_METRICS,
@@ -409,7 +403,6 @@ def test_demcompare_with_wrong_fusion_cfg():
             "NoData": [3],
             "Outside_detector": [4],
         },
-        "save_results": False,
         "output_dir": "",
         "nodata": -9999,
         "metrics": _DEFAULT_TEST_METRICS,

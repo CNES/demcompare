@@ -20,7 +20,6 @@
 #
 # pylint:disable=too-many-branches
 """
-Init part of sec_compare
 This is where high level parameters are checked and default options are set
 """
 
@@ -148,26 +147,25 @@ def compute_initialization(config_json: str) -> Dict:
     check_input_parameters(cfg)
 
     # Create output directory and update config
-    if "output_dir" in cfg:
-        output_dir = os.path.abspath(cfg["output_dir"])
-        cfg["output_dir"] = output_dir
-        # Save output_dir parameter in "coregistration" and/or "statistics" dict
-        if "coregistration" in cfg:
-            cfg["coregistration"]["output_dir"] = output_dir
-        if "statistics" in cfg:
-            cfg["statistics"]["output_dir"] = output_dir
+    output_dir = os.path.abspath(cfg["output_dir"])
+    cfg["output_dir"] = output_dir
+    # Save output_dir parameter in "coregistration" and/or "statistics" dict
+    if "coregistration" in cfg:
+        cfg["coregistration"]["output_dir"] = output_dir
+    if "statistics" in cfg:
+        cfg["statistics"]["output_dir"] = output_dir
 
-        # Create output_dir
-        mkdir_p(cfg["output_dir"])
+    # Create output_dir
+    mkdir_p(cfg["output_dir"])
 
-        # Save initial config with inputs absolute paths into output_dir
-        save_config_file(
-            os.path.join(cfg["output_dir"], os.path.basename(config_json)), cfg
-        )
+    # Save initial config with inputs absolute paths into output_dir
+    save_config_file(
+        os.path.join(cfg["output_dir"], os.path.basename(config_json)), cfg
+    )
 
-        # create output tree dirs for each directory
-        for directory in get_otd_dirs(cfg["otd"]):
-            mkdir_p(os.path.join(cfg["output_dir"], directory))
+    # create output tree dirs for each directory
+    for directory in get_otd_dirs(cfg["otd"]):
+        mkdir_p(os.path.join(cfg["output_dir"], directory))
 
     # If defined, force the sampling_source of the
     # coregistration step into the stats step
@@ -214,7 +212,7 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
     for dem in input_dems:
         # Verify and make path absolute
         if "path" not in cfg[dem]:
-            raise NameError("ERROR: missing paths to {}".format(dem))
+            raise NameError(f"ERROR: missing paths to {dem}")
         # Verify z units
         if "zunit" not in cfg[dem]:
             cfg[dem]["zunit"] = "m"
@@ -222,22 +220,23 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
             try:
                 unit = u.Unit(cfg[dem]["zunit"])
             except ValueError as value_error:
+                output_msg = cfg[dem]["zunit"]
                 raise NameError(
-                    "ERROR: input DSM zunit ({}) not a "
-                    "supported unit".format(cfg[dem]["zunit"])
+                    f"ERROR: input DSM zunit ({output_msg}) not a "
+                    "supported unit"
                 ) from value_error
             if unit.physical_type != u.m.physical_type:
+                output_msg = cfg[dem]["zunit"]
                 raise NameError(
-                    "ERROR: input DSM zunit ({}) not a lenght unit".format(
-                        cfg[dem]["zunit"]
-                    )
+                    f"ERROR: input DSM zunit ({output_msg}) not a lenght unit"
                 )
     # check output tree design
     if "otd" in cfg and cfg["otd"] not in supported_OTD:
+        otd_name = cfg["otd"]
         raise NameError(
             "ERROR: output tree design set by user"
-            " ({}) is not supported"
-            " (available options are {})".format(cfg["otd"], supported_OTD)
+            f" ({otd_name}) is not supported"
+            f" (available options are {supported_OTD})"
         )
     # else
     cfg["otd"] = "default_OTD"
