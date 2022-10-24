@@ -37,6 +37,10 @@ and tends to create too smooth surfaces.
     It changes the points of the cloud. Thus the pandas DataFrame and the open3d point cloud
     instance are no longer equal.
 
+.. warning::
+    The Poisson reconstruction also creates outliers. 
+    After this step, texturing may not work. Indeed, the location of these outliers can be very bad and do not allow the completion of this step. 
+
 
 Delaunay Triangulation 2.5D
 ===========================

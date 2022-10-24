@@ -103,6 +103,8 @@ def ball_pivoting_reconstruction(
         )
 
     # Mesh point cloud
+    if not isinstance(radii, list):
+        radii = [radii]
     o3d_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
         pcd.o3d_pcd, o3d.utility.DoubleVector(radii)
     )
@@ -117,7 +119,7 @@ def ball_pivoting_reconstruction(
 def poisson_reconstruction(
     pcd: PointCloud,
     depth: int = 8,
-    width: float = 0.0,
+    width: float = 0.8,
     scale: float = 1.1,
     linear_fit: bool = False,
     n_threads: int = -1,

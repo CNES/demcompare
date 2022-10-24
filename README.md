@@ -59,6 +59,11 @@ TODO
 * **Filtering of outliers**
   * Integrate the use of CARS already existing functions (in its latest version)
 
+* **Mesh** 
+  * Texturing step can fail after a Poisson reconstruction because of the outliers created by this method:
+    * Adapt the parameters of the method such as width 
+    * Clean the point cloud after Poisson mesh to remove those blocking outliers
+  * Add to the tests Poisson reconstruction
 
 * **Texturing**
   * Make it satellite agnostic (for now it takes into account Pleiades imagery)
@@ -219,6 +224,13 @@ The Sphinx documentation should pop in a new tab of your browser.
 
 [//]: # (Documentation: https://mesh-3d.readthedocs.io)
 
+## Tests
+Run the following commands to run the tests:
+```bash
+source /venv/bin/activate
+make test
+```
+*Warning: there are no tests on Poisson reconstruction. (cf the TO DO part on mesh, and the documentation Core/Mesh/PoissonReconstruction).*
 
 ## Contribution
 
