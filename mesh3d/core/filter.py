@@ -216,7 +216,7 @@ def local_density_analysis(
 
         if proba_thresh is None:
             dist_average_list.append(proba)
-            proba_thresh_i = 0.1 * mean_neighbors_distances
+            proba_thresh_i = 0.3 * mean_neighbors_distances
             proba_thresh_list.append(proba_thresh_i)
 
         else:

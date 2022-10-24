@@ -119,13 +119,10 @@ def compute_point_normal(
             "is empty or with just one point. Increase the ball radius."
         )
 
-    # Compute the centroid of the nearest neighbours
-    centroid = np.mean(point_coordinates, axis=0)
-
     # Compute the covariance matrix
-    cov_mat = np.cov(
-        point_coordinates - centroid, rowvar=False, aweights=weights
-    )
+    # The biased estimator is used for computation purposes (otherwise
+    # we get a 0. value denominator for many cases)
+    cov_mat = np.cov(point_coordinates, rowvar=False, aweights=weights, ddof=0)
 
     # Find eigen values and vectors
     # use the Singular Value Decomposition A = U * S * V^T
@@ -141,7 +138,7 @@ def compute_point_normal(
 
 def weight_exp(distance: np.ndarray, mean_distance: np.ndarray) -> np.ndarray:
     """Decreasing exponential function for weighting"""
-    if mean_distance == 0.0:
+    if np.any(mean_distance == 0.0):
         raise ValueError("Mean distance should be > 0.")
     return np.exp(-(distance**2) / mean_distance**2)
 
@@ -159,9 +156,11 @@ def compute_pcd_normals(
     knn: int = 30,
     radius: float = 5.0,
     weights_distance: bool = False,
+    sigma_d: float = 0.5,
     weights_color: bool = False,
+    sigma_c: float = 125.0,
     workers: int = 1,
-    use_open3d: bool = False,
+    use_open3d: bool = True,
 ) -> PointCloud:
     """
     Compute the normal for each point of the cloud
@@ -180,8 +179,14 @@ def compute_pcd_normals(
     weights_distance: bool (default=False)
         Whether to add a weighting to the neighbours on the
         distance information
+    sigma_d: float (default=0.5)
+        If 'weights_distance' is True, it is the standard deviation over the
+        spatial distance to use in the exponential weighting function
     weights_color: bool (default=False)
         Whether to add a weighting to the neighbours on the color information
+    sigma_c: float (default=125.)
+        If 'weights_color' is True, it is the standard deviation over the
+        color distance to use in the exponential weighting function
     workers: int (default=1)
         Number of workers to query the KDtree (neighbour search)
     use_open3d: bool (default=False)
@@ -208,7 +213,6 @@ def compute_pcd_normals(
     else:
         # Init
         tree = KDTree(pcd.df[["x", "y", "z"]].to_numpy())
-        weights = None
         results = np.zeros_like(pcd.df[["x", "y", "z"]].to_numpy())
 
         if neighbour_search_method == "knn":
@@ -228,38 +232,45 @@ def compute_pcd_normals(
         else:
             raise NotImplementedError
 
+        weights = None
+        if weights_distance:
+            # Weighting of the variance according to the distance to
+            # the neighbours
+            data_tmp = tree.data[ind]
+            data_shape = np.shape(data_tmp)
+            data_duplicated = np.repeat(tree.data, data_shape[1], 0)
+            data_duplicated = np.reshape(
+                np.ravel(data_duplicated),
+                (data_shape[0], data_shape[1], data_shape[2]),
+            )
+            distance = data_tmp - data_duplicated
+            distance = np.linalg.norm(distance, axis=-1)
+            weights = weight_exp(distance, sigma_d)
+
         if weights_color:
             # Weighting of the variance according to the radiometric
             # difference with the neighbours
-            color_data = pcd.get_colors()
+            color_data = pcd.get_colors().to_numpy()
+            color_tmp = color_data[ind]
+            color_shape = np.shape(color_tmp)
+            color_duplicated = np.repeat(color_data, color_shape[1], 0)
+            color_duplicated = np.reshape(
+                np.ravel(color_duplicated),
+                (color_shape[0], color_shape[1], color_shape[2]),
+            )
+            distance = color_tmp - color_duplicated
+            distance = np.linalg.norm(distance, axis=-1)
+            weights = (
+                weight_exp(distance, sigma_c)
+                if weights is None
+                else weights * weight_exp(distance, sigma_c)
+            )
 
         # Loop on each point of the data to compute its normal
         for k, row in tqdm(
             enumerate(ind), desc="Normal computation by PCA per point"
         ):
-
-            if weights_distance:
-                # Weighting of the variance according to the distance to
-                # the neighbours
-                distance = tree.data[row, :] - tree.data[k, :]
-                mean_distance = np.mean(distance)
-
-                weights = weight_exp(distance, mean_distance)
-
-            if weights_color:
-                distance = color_data[row, :] - color_data[0, :]
-                mean_distance = np.mean(distance)
-
-                weights = (
-                    weight_exp(distance, mean_distance)
-                    if weights is None
-                    else weights * weight_exp(distance, mean_distance)
-                )
-
-            # Compute the normal
-            results[k, :] = compute_point_normal(tree.data[row, :], weights)
-
-        # results = np.asarray(results)
+            results[k, :] = compute_point_normal(tree.data[row, :], weights[k])
 
         # Add normals information to the dataframe
         pcd.df = pcd.df.assign(
@@ -269,87 +280,14 @@ def compute_pcd_normals(
     return pcd
 
 
-#     pcd: PointCloud,
-
-#     num_iterations: int,
-
-#     neighbour_search_method: str = "knn",
-#     knn: int = 30,
-#     radius: float = 5.0,
-#     num_workers_kdtree: int = 1,
-
-#     sigma_d: float = 0.5,
-#     sigma_n: float = 0.5,
-
-#     neighbour_search_method_normals: str = "knn",
-#     knn_normals: int = 50,
-#     radius_normals: float = 5.0,
-#     weights_distance: bool = False,
-#     weights_color: bool = False,
-
-#     num_chunks: int = 1,
-
-#     use_open3d: bool = False,
-
-
-#     pcd: PointCloud,
-
-#     num_iterations: int,
-
-#     neighbours_kdtree_dict
-#     neighbour_search_method: str = "knn",
-#     knn: int = 30,
-#     radius: float = 5.0,
-#     num_workers_kdtree: int = 1,
-
-#     sigma_d: float = 0.5,
-#     sigma_n: float = 0.5,
-
-#     neighbours_normals_dict
-#     neighbour_search_method_normals: str = "knn",
-#     knn_normals: int = 50,
-#     radius_normals: float = 5.0,
-#     weights_distance: bool = False,
-#     weights_color: bool = False,
-
-#     num_chunks: int = 1,
-
-#     use_open3d: bool = False,
-
-
 def bilateral_filtering(
-    # pcd: PointCloud,
-    # num_iterations: int,
-    # neighbour_search_method: str = "knn",
-    # knn: int = 30,
-    # radius: float = 5.0,
-    # sigma_d: float = 0.5,
-    # sigma_n: float = 0.5,
-    # neighbour_search_method_normals: str = "knn",
-    # knn_normals: int = 50,
-    # radius_normals: float = 5.0,
-    # weights_distance: bool = False,
-    # weights_color: bool = False,
-    # num_workers_kdtree: int = 1,
-    # num_chunks: int = 1,
-    # use_open3d: bool = False,
     pcd: PointCloud,
     num_iterations: int,
     neighbour_kdtree_dict: dict = None,
-    # neighbour_search_method: str = "knn",
-    # knn: int = 30,
-    # radius: float = 5.0,
-    # num_workers_kdtree: int = 1,
     sigma_d: float = 0.5,
     sigma_n: float = 0.5,
     neighbour_normals_dict: dict = None,
-    # neighbour_search_method_normals: str = "knn",
-    # knn_normals: int = 50,
-    # radius_normals: float = 5.0,
-    # weights_distance: bool = False,
-    # weights_color: bool = False,
     num_chunks: int = 1,
-    # use_open3d: bool = False,
 ):
     """
     Bilateral denoising

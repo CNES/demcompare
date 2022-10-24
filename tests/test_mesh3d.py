@@ -19,11 +19,19 @@
 #
 """Tests for `mesh3d` package."""
 
+import json
+
+# other import
+import os
+import shutil
+
 # Third party imports
 import pytest
 
 # mesh3d imports
 import mesh3d
+from mesh3d import param
+from mesh3d.tools.handlers import read_input_path
 
 
 @pytest.fixture
@@ -47,3 +55,45 @@ def test_mesh3d():
     assert mesh3d.__author__ == "CNES"
     assert mesh3d.__email__ == "cars@cnes.fr"
 
+
+# Poisson recontruction tests are missing (cf documentation and readme)
+def test_all_possible_combinations():
+    """Test all the possible combinations (except poisson reconstruction)"""
+    with open("tests/config_tests.json", "r", encoding="utf-8") as cfg_file:
+        cfg = json.load(cfg_file)
+
+    for filtering_method in param.TRANSITIONS_METHODS["filter"]:
+
+        for denoise_method in param.TRANSITIONS_METHODS["denoise_pcd"]:
+
+            for mesh_method in param.TRANSITIONS_METHODS["mesh"]:
+
+                if mesh_method == "poisson":
+                    continue
+
+                for simplify_mesh_method in param.TRANSITIONS_METHODS[
+                    "simplify_mesh"
+                ]:
+
+                    for texture_method in param.TRANSITIONS_METHODS["texture"]:
+
+                        mesh_data = read_input_path(cfg["input_path"])
+                        mesh_data.pcd = param.TRANSITIONS_METHODS["filter"][
+                            filtering_method
+                        ](mesh_data.pcd, **cfg[filtering_method]["params"])
+                        mesh_data.pcd = param.TRANSITIONS_METHODS[
+                            "denoise_pcd"
+                        ][denoise_method](
+                            mesh_data.pcd, **cfg[denoise_method]["params"]
+                        )
+                        mesh_data = param.TRANSITIONS_METHODS["mesh"][
+                            mesh_method
+                        ](mesh_data.pcd, **cfg[mesh_method]["params"])
+                        mesh_data = param.TRANSITIONS_METHODS["simplify_mesh"][
+                            simplify_mesh_method
+                        ](mesh_data, **cfg[simplify_mesh_method]["params"])
+                        os.makedirs("example/output", exist_ok=True)
+                        mesh_data = param.TRANSITIONS_METHODS["texture"][
+                            texture_method
+                        ](mesh_data, cfg)
+                        shutil.rmtree("example/output")
