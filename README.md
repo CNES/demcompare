@@ -60,10 +60,10 @@ TODO
   * [ ] Integrate the use of CARS already existing functions (in its latest version)
 
 * **Mesh** 
-  * Texturing step can fail after a Poisson reconstruction because of the outliers created by this method:
-    * Adapt the parameters of the method such as width 
-    * Clean the point cloud after Poisson mesh to remove those blocking outliers
-  * Add to the tests Poisson reconstruction
+  * [ ] Texturing step can fail after a Poisson reconstruction because of the outliers created by this method:
+    * [ ] Adapt the parameters of the method such as width 
+    * [ ] Clean the point cloud after Poisson mesh to remove those blocking outliers
+  * [ ] Add to the tests Poisson reconstruction
 
 * **Texturing**
   * [ ] Make it satellite agnostic (for now it takes into account Pleiades imagery)
@@ -120,8 +120,6 @@ Configure the pipeline in a JSON file `/path/to/config.json`:
         },
         "neighbour_normals_dict": {
           "knn_normals": 10,
-          "weights_distance": true,
-          "weights_color": true,
           "use_open3d": true
         },
         "sigma_d": 1.5,

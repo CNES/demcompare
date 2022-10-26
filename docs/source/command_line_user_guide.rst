@@ -44,8 +44,6 @@ To launch the 3D reconstruction pipeline, you first need to configure it in a JS
             },
             "neighbour_normals_dict": {
               "knn_normals": 10,
-              "weights_distance": true,
-              "weights_color": true,
               "use_open3d": true
             },
             "sigma_d": 1.5,
