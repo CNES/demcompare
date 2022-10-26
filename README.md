@@ -50,26 +50,27 @@ Mesh3D is a library allow to do 3D Surface reconstruction with texture and class
 TODO
 
 * **General**
-  * Add the possibility to use semantic maps and modify functions to take them into account for processing (for example building roofs could be processed differently from roads).
-  * Recover correlation metrics from previous CARS processing and add it as an input to exploit them in further processings.
-  * Make sure information in the PointCloud pandas DataFrame object are the same as the ones in the Point Cloud open3d object all along the process.
-  * To make it more large scale with potentially large point clouds, las files should be read by chunk (cf [LASPY documentation](https://laspy.readthedocs.io/en/latest/basic.html#chunked-writing))
+  * [ ] Add the possibility to use semantic maps and modify functions to take them into account for processing (for example building roofs could be processed differently from roads).
+  * [ ] Recover correlation metrics from previous CARS processing and add it as an input to exploit them in further processings.
+  * [ ] Make sure information in the PointCloud pandas DataFrame object are the same as the ones in the Point Cloud open3d object all along the process.
+  * [ ] To make it more large scale with potentially large point clouds, las files should be read by chunk (cf [LASPY documentation](https://laspy.readthedocs.io/en/latest/basic.html#chunked-writing))
 
 
 * **Filtering of outliers**
-  * Integrate the use of CARS already existing functions (in its latest version)
+  * [ ] Integrate the use of CARS already existing functions (in its latest version)
 
 * **Mesh** 
-  * Texturing step can fail after a Poisson reconstruction because of the outliers created by this method:
-    * Adapt the parameters of the method such as width 
-    * Clean the point cloud after Poisson mesh to remove those blocking outliers
-  * Add to the tests Poisson reconstruction
+  * [ ] Texturing step can fail after a Poisson reconstruction because of the outliers created by this method:
+    * [ ] Adapt the parameters of the method such as width 
+    * [ ] Clean the point cloud after Poisson mesh to remove those blocking outliers
+  * [ ] Add to the tests Poisson reconstruction
 
 * **Texturing**
-  * Make it satellite agnostic (for now it takes into account Pleiades imagery)
-  * Handle multiple texture images
-  * Handle occlusions
-  * Make percentiles (for better texture visualisation) computation large scale (avoid having to load the full raster in memory)
+  * [ ] Make it satellite agnostic (for now it takes into account Pleiades imagery)
+  * [ ] Handle multiple texture images
+  * [ ] Handle occlusions
+  * [ ] Make percentiles (for better texture visualisation) computation large scale (avoid having to load the full raster in memory). It can be done by computing percentiles only on a random portion of pixels (like 20%)
+
 
 ## Quick Start
 
@@ -119,8 +120,6 @@ Configure the pipeline in a JSON file `/path/to/config.json`:
         },
         "neighbour_normals_dict": {
           "knn_normals": 10,
-          "weights_distance": true,
-          "weights_color": true,
           "use_open3d": true
         },
         "sigma_d": 1.5,

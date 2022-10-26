@@ -28,8 +28,6 @@
         },
         "neighbour_normals_dict": {
           "knn_normals": 10,
-          "weights_distance": true,
-          "weights_color": true,
           "use_open3d": true
         },
         "sigma_d": 1.5,

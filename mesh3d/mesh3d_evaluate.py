@@ -23,9 +23,11 @@ Main module for evaluation.
 
 import json
 import os
+import shutil
 
 import pandas as pd
 from loguru import logger
+from tqdm import tqdm
 
 from . import param
 from .tools.handlers import Mesh, read_input_path
@@ -121,9 +123,11 @@ def run(cfg: dict, mesh_data_1: Mesh, mesh_data_2: Mesh) -> pd.DataFrame:
     columns = ["metric_name", "mode", "1vs2_or_symmetric", "2vs1"]
     data = []
 
-    for mode in metrics.modes:
-        for metric_name in metrics.metrics.items():
-            res = metrics.metrics[metric_name](mode)
+    for mode in tqdm(metrics.modes, position=0, leave=False, desc="Mode"):
+        for metric_name, metric_function in tqdm(
+            metrics.metrics.items(), position=1, leave=False, desc="Metrics"
+        ):
+            res = metric_function(mode)
 
             if isinstance(res, float):
                 data.append((metric_name, mode, res, None))
@@ -152,6 +156,15 @@ def main(cfg_path: str) -> None:
     """
     # Check the validity of the config path
     cfg = check_config(cfg_path)
+
+    # Copy the configuration file in the output dir
+    os.makedirs(cfg["output_dir"], exist_ok=True)
+    shutil.copy(
+        cfg_path,
+        os.path.join(
+            os.path.join(cfg["output_dir"], os.path.basename(cfg_path))
+        ),
+    )
 
     # Write logs to disk
     logger.add(sink=os.path.join(cfg["output_dir"], "{time}_logs.txt"))

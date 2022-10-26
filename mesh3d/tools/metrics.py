@@ -24,8 +24,9 @@ Evaluation metrics
 import os
 
 import numpy as np
-import open3d as o3d
 import plyfile
+from loguru import logger
+from scipy.spatial import KDTree
 
 from ..core.denoise_pcd import compute_pcd_normals
 from ..tools.handlers import PointCloud
@@ -91,16 +92,12 @@ def point_to_plane_distance(
 
     # Get indexes of the NN in the input point cloud from the reference
     # point cloud
-    pcd_in_indexes = []
-    pcd_in_tree = o3d.geometry.KDTreeFlann(pcd_in.o3d_pcd)
-
-    for i in range(pcd_ref.df.shape[0]):
-        [_, idx, _] = pcd_in_tree.search_knn_vector_3d(
-            pcd_ref.o3d_pcd.points[i], 1
-        )
-        pcd_in_indexes.append(idx)
-
-    pcd_in_indexes = np.asarray(pcd_in_indexes)[:, 0]
+    # init kdtree
+    tree = KDTree(pcd_in.df[["x", "y", "z"]].to_numpy())
+    # query the NN
+    _, pcd_in_indexes = tree.query(
+        pcd_ref.df[["x", "y", "z"]].to_numpy(), k=1, workers=workers
+    )
 
     # Project each distance onto the local normal and retrieve the
     # projected distance
@@ -168,20 +165,35 @@ class PointCloudMetrics:
                 self.pcd_ref.o3d_pcd
             )
         )
+        logger.debug(
+            "Point to point in -> ref distance was computed successfully."
+        )
+
         # Compute distance per point from nearest neighbours ref -> in
         self.dist_p2p_ref_in = np.asarray(
             self.pcd_ref.o3d_pcd.compute_point_cloud_distance(
                 self.pcd_in.o3d_pcd
             )
         )
+        logger.debug(
+            "Point to point ref -> in distance was computed successfully."
+        )
+
         # Init distance point to plane
         # in -> ref
         self.dist_p2s_in_ref = point_to_plane_distance(
             self.pcd_ref, self.pcd_in, **kwargs
         )
+        logger.debug(
+            "Point to surface in -> ref distance was computed successfully."
+        )
+
         # ref -> in
         self.dist_p2s_ref_in = point_to_plane_distance(
             self.pcd_in, self.pcd_ref, **kwargs
+        )
+        logger.debug(
+            "Point to surface ref -> in distance was computed successfully."
         )
 
     def mean_squared_distance(self, mode) -> tuple:

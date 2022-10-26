@@ -24,6 +24,8 @@ Simplifying methods for the mesh to decrease the number of faces
 from typing import Union
 
 import numpy as np
+
+# import open3d as o3d
 import open3d as o3d
 
 from ..tools.handlers import Mesh
