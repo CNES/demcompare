@@ -36,7 +36,7 @@ import rasterio
 import xarray as xr
 
 # Demcompare imports
-from demcompare import dataset_tools, dem_tools
+from demcompare import dataset_tools, dem_tools, load_input_dems
 from demcompare.dem_tools import DEFAULT_NODATA
 from demcompare.helpers_init import (
     compute_initialization,
@@ -1038,7 +1038,6 @@ def test_load_and_reproject_different_z_units():
     )
 
 
-@pytest.mark.skip(reason="Not yet developped option in _init_")
 def test_classification_layer_mask_with_wrong_size():
     """
     Test that demcompare's load_dems function raises an error
@@ -1046,33 +1045,31 @@ def test_classification_layer_mask_with_wrong_size():
     of the dem has a different size than its support dem
     """
 
-    # Get "srtm_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("srtm_test_data")
-    # Load "srtm_test_data" demcompare config from input/test_config.json
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-
     cfg = read_config_file(test_cfg_path)
-
-    # Get different size classification layer
-    classif_layer_path = os.path.join(
-        test_data_path,
-        "input/Small_FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF",
-    )
 
     # Set output_dir correctly
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
         mkdir_p(tmp_dir)
-        # blablablabla
-        cfg["input_sec"]["classification_layers"] = classif_layer_path
 
+        cfg["input_sec"]["classification_layers"]["Status"][
+            "map_path"
+        ] = os.path.join(
+            test_data_path,
+            "input/Small_FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF",
+        )
         # Set a new test_config tmp file path
         tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
 
         # Save the new configuration inside the tmp dir
         save_config_file(tmp_cfg_file, cfg)
 
-        # ici c'est un fail qui doit apparaitre
-        cfg = compute_initialization(tmp_cfg_file)
+        with pytest.raises(SystemExit):
+            # Compute initialization with wrong masks
+            _ = compute_initialization(tmp_cfg_file)
 
 
 def test_reproject_dems_without_intersection():
@@ -1193,3 +1190,79 @@ def test_wrong_classification_map():
         _ = dem_tools.load_dem(
             cfg["input_ref"]["path"], classification_layers=input_classif_cfg
         )
+
+
+def test_load_dem_with_roi_image_coords():
+    """
+    Test that coords image ROI are correctly
+    returned by the load_input_dems function
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    Validation data:
+    - ROI characteristics obtained by rasterio
+    Validation process:
+    - Load the dem with the load_dem function.
+    - Verify that the loaded dem has a correct ROI
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config
+    # from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    # add roi to cfg
+    cfg["input_ref"]["roi"] = {"x": 0, "y": 0, "w": 500, "h": 500}
+    ref, _ = load_input_dems(cfg)
+
+    # Instantiate ground truth ROI thanks to rasterio
+    src_dem = rasterio.open(cfg["input_ref"]["path"])
+    window_dem = rasterio.windows.Window(
+        0,
+        0,
+        500,
+        500,
+    )
+    left, bottom, right, top = rasterio.windows.bounds(
+        window_dem, src_dem.transform
+    )
+    gt_roi = rasterio.coords.BoundingBox(left, bottom, right, top)
+
+    assert gt_roi == ref.attrs["bounds"]
+
+
+def test_load_dem_with_roi_ground_coords():
+    """
+    Test that grounds coords image ROI are correctly
+    returned by the load_input_dems function
+    Input data:
+    - input DEMs present in "strm_test_data" test root data directory
+    Validation data:
+    - Manually computed ROI and BoundingBox obtained by rasterio
+    Validation process:
+    - Load the dem with the load_dem function.
+    - Verify that the loaded dem has a correct ROI
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config
+    # from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    # add roi to cfg
+    cfg["input_ref"]["roi"] = {
+        "left": -1.7413878040009774,
+        "bottom": 45.41864925736226,
+        "right": -1.2205544690009773,
+        "top": 45.93948259236226,
+    }
+    ref, _ = load_input_dems(cfg)
+
+    # Instantiate ground truth ROI thanks to rasterio
+    gt_roi = rasterio.coords.BoundingBox(
+        -1.7413878040009774,
+        45.41864925736226,
+        -1.2205544690009773,
+        45.93948259236226,
+    )
+
+    assert gt_roi == ref.attrs["bounds"]

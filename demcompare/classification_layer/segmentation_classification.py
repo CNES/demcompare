@@ -23,11 +23,11 @@ Mainly contains the SegmentationClassification class.
 """
 import collections
 import logging
-from typing import Dict
+import sys
+from typing import Any, Dict
 
 import xarray as xr
 
-from ..helpers_init import ConfigType
 from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
@@ -42,8 +42,8 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
         self,
         name: str,
         classification_layer_kind: str,
-        dem: xr.Dataset,
         cfg: Dict,
+        dem: xr.Dataset = None,
     ):
         """
         Init function
@@ -52,38 +52,43 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
         :type name: str
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
+        :param cfg: layer's configuration
+        :type cfg: Dict[str, Any]
         :param dem: dem
         :type dem:    xr.DataSet containing :
 
             - image : 2D (row, col) xr.DataArray float32
             - georef_transform: 1D (trans_len) xr.DataArray
             - classification_layer_masks : 3D (row, col, indicator) xr.DataArray
-        :param cfg: layer's configuration
-        :type cfg: ConfigType
         :return: None
         """
         # Call generic init before supercharging
-        super().__init__(name, classification_layer_kind, dem, cfg)
+        super().__init__(name, classification_layer_kind, cfg, dem)
 
         # Classes
         self.classes: collections.OrderedDict = self.cfg["classes"]
-        # Create labelled map to classification_layer from
-        self._create_labelled_map()
+        # Checking configuration during initialisation step
+        # doesn't require classification layers
+        if dem is not None:
+            # Create labelled map to classification_layer from
+            self._create_labelled_map()
 
-        # Create class masks
-        self._create_class_masks()
+            # Create class masks
+            self._create_class_masks()
 
         logging.debug("ClassificationLayer created as: %s", self)
 
-    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
+    def fill_conf_and_schema(
+        self, cfg: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """
         Add default values to the dictionary if there are missing
         elements and define the configuration schema
 
         :param cfg: coregistration configuration
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         :return cfg: coregistration configuration updated
-        :rtype: ConfigType
+        :rtype: Dict[str, Any]
         """
         cfg["classes"] = collections.OrderedDict(cfg["classes"])
 
@@ -92,7 +97,32 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
 
         # Add subclass parameter to the default schema
         self.schema["classes"] = collections.OrderedDict
+        self.check_classes(cfg)
         return cfg
+
+    @staticmethod
+    def check_classes(cfg: dict) -> None:
+        """
+        Verify users configuration for classes in segmentation classification
+        :param cfg: segmentation configuration
+        :type cfg: dict
+        :return: None
+        """
+        classes_dict = cfg["classes"]
+        if not all(
+            isinstance(values, list) for values in classes_dict.values()
+        ):
+            logging.error(
+                "Number associated to class in segmentation must be in a list"
+            )
+            sys.exit(1)
+        if not all(
+            isinstance(values[0], int) for values in classes_dict.values()
+        ):
+            logging.error(
+                "Number associated to class in segmentation must be an int"
+            )
+            sys.exit(1)
 
     def _create_labelled_map(self):
         """

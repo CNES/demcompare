@@ -25,10 +25,7 @@ such as an altitude difference map
 """
 
 import logging
-from typing import Dict, Union
-
-# Demcompare imports
-from ..helpers_init import ConfigType
+from typing import Any, Dict, Union
 
 
 class Metric:
@@ -38,7 +35,7 @@ class Metric:
     and instantiate them when needed.
     """
 
-    available_metrics: ConfigType = {}
+    available_metrics: Dict[str, Any] = {}
 
     def __new__(cls, metric_method: str, params: Union[Dict, None] = None):
         """

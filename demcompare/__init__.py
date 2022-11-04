@@ -84,6 +84,7 @@ def run(
     """
 
     # Initialization
+    # Configuration copy, checking inputs, create output dir tree
     cfg = helpers_init.compute_initialization(json_file)
     log_conf.setup_logging(default_level=loglevel)
     # Add output logging file

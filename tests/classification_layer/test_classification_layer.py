@@ -25,8 +25,9 @@ This module contains functions to test the
 methods in the classification layer class.
 """
 
-# Third party imports
+import os
 
+# Third party imports
 import numpy as np
 import pytest
 
@@ -35,6 +36,12 @@ from demcompare import dem_tools
 from demcompare.classification_layer.classification_layer import (
     ClassificationLayer,
 )
+from demcompare.classification_layer.classification_layer_template import (
+    ClassificationLayerTemplate,
+)
+from demcompare.helpers_init import read_config_file
+from demcompare.stats_processing import StatsProcessing
+from tests.helpers import demcompare_test_data_path
 
 _DEFAULT_TEST_METRICS = [
     "mean",
@@ -300,7 +307,7 @@ def test_create_mode_masks():
     )
 
 
-@pytest.mark.skip(reason="Not yet developped statistics verif in init")
+@pytest.mark.unit_tests
 def test_statistics_classification_invalid_input_classes():
     """
     Test that demcompare's initialization fails
@@ -311,29 +318,28 @@ def test_statistics_classification_invalid_input_classes():
     before the coregistration step if it is present.
     """
 
-    # Generate dsm with the following data
-    data = np.array([[1, 0, 1], [1, -9999, 1], [-1, 0, 1]], dtype=np.float32)
-    data_dataset = dem_tools.create_dem(data=data, nodata=-9999)
-    # Compute slope and add it as a classification_layer
-    data_dataset = dem_tools.compute_dem_slope(data_dataset)
-    # Classification layer configuration
-    _ = "Status"
-    _ = {
-        "type": "segmentation",
-        "classes": {
-            "valid": [0],
-            "KO": [1],
-            "Land": [2],
-            "NoData": [3],
-            "Outside_detector": [4],
-        },
-        "output_dir": "",
-        "nodata": -9999,
-        "metrics": _DEFAULT_TEST_METRICS,
-    }
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    test_cfg = read_config_file(test_cfg_path)
+
+    # test that all inputs are list
+    test_cfg["statistics"]["classification_layers"]["Status"]["classes"][
+        "valid"
+    ] = "a"
+    with pytest.raises(SystemExit):
+        _ = StatsProcessing(cfg=test_cfg["statistics"])
+    # test that all inputs are int
+    test_cfg["statistics"]["classification_layers"]["Status"]["classes"][
+        "valid"
+    ] = ["b"]
+    with pytest.raises(SystemExit):
+        _ = StatsProcessing(cfg=test_cfg["statistics"])
 
 
-@pytest.mark.skip(reason="Not yet developped statistics verif in init")
+@pytest.mark.unit_tests
 def test_statistics_classification_invalid_input_ranges():
     """
     Test that demcompare's initialization fails
@@ -343,23 +349,30 @@ def test_statistics_classification_invalid_input_ranges():
     before the coregistration step if it is present.
     """
 
-    # Generate dsm with the following data
-    data = np.array([[1, 0, 1], [1, -9999, 1], [-1, 0, 1]], dtype=np.float32)
-    data_dataset = dem_tools.create_dem(data=data, nodata=-9999)
-    # Compute slope and add it as a classification_layer
-    data_dataset = dem_tools.compute_dem_slope(data_dataset)
-    # Classification layer configuration with wrong ranges
-    _ = "Slope0"
-    _ = {
-        "type": "slope",
-        "ranges": [np.nan, "0"],
-        "output_dir": "",
-        "nodata": -9999,
-        "metrics": _DEFAULT_TEST_METRICS,
-    }
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    test_cfg = read_config_file(test_cfg_path)
+
+    # test that user's values ranges is a list
+    test_cfg["statistics"]["classification_layers"]["Slope0"]["ranges"] = "a"
+    with pytest.raises(SystemExit):
+        _ = StatsProcessing(cfg=test_cfg["statistics"])
+    # test that user's values ranges is a list of int
+    test_cfg["statistics"]["classification_layers"]["Slope0"]["ranges"] = [
+        0,
+        "a",
+        25,
+        50,
+        90,
+    ]
+    with pytest.raises(SystemExit):
+        _ = StatsProcessing(cfg=test_cfg["statistics"])
 
 
-@pytest.mark.skip(reason="Not yet developped statistics verif in init")
+@pytest.mark.unit_tests
 def test_demcompare_with_wrong_fusion_cfg():
     """
     Test that demcompare's initialization
@@ -370,51 +383,18 @@ def test_demcompare_with_wrong_fusion_cfg():
     before the coregistration step if it is present.
     """
 
-    # Generate dsm with the following data
-    data = np.array([[1, 0, 1], [1, -9999, 1], [-1, 0, 1]], dtype=np.float32)
-    data_dataset = dem_tools.create_dem(data=data, nodata=-9999)
-    # Compute slope and add it as a classification_layer
-    data_dataset = dem_tools.compute_dem_slope(data_dataset)
-    # Classification layer configuration
-    layer_name = "Slope0"
-    clayer = {
-        "type": "slope",
-        "ranges": [0, 5, 10, 25, 45],
-        "output_dir": "",
-        "nodata": -9999,
-        "metrics": _DEFAULT_TEST_METRICS,
-    }
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
 
-    # Initialize slope classification layer object
-    _ = ClassificationLayer(
-        name=layer_name,
-        classification_layer_kind=str(clayer["type"]),
-        dem=data_dataset,
-        cfg=clayer,
-    )
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    test_cfg = read_config_file(test_cfg_path)
 
-    layer_name = "Status"
-    clayer = {
-        "type": "segmentation",
-        "classes": {
-            "valid": [0],
-            "KO": [1],
-            "Land": [2],
-            "NoData": [3],
-            "Outside_detector": [4],
-        },
-        "output_dir": "",
-        "nodata": -9999,
-        "metrics": _DEFAULT_TEST_METRICS,
-    }
-
-    # Initialize slope classification layer object
-    _ = ClassificationLayer(
-        name=layer_name,
-        classification_layer_kind=str(clayer["type"]),
-        dem=data_dataset,
-        cfg=clayer,
-    )
-
-    _ = "Fusion0"
-    _ = {"type": "fusion", "sec": ["Slope0"]}
+    # test that user's gave correct fusion list
+    test_cfg["statistics"]["classification_layers"]["Fusion0"]["sec"] = [
+        "Slope0"
+    ]
+    with pytest.raises(
+        ClassificationLayerTemplate.NotEnoughDataToClassificationLayerError
+    ):
+        _ = StatsProcessing(cfg=test_cfg["statistics"])

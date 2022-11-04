@@ -157,7 +157,12 @@ def fixture_initialize_fusion_layer():
 def test_create_merged_classes(initialize_fusion_layer):
     """
     Test the _create_merged_classes function
-    - Tests that the computed classes from _create_merged_classes
+    Input data:
+    - initialize_fusion_layer from fixture
+    Validation data:
+    - Manually computed dictionary for merged classes : gt_merged_classes
+    Validation process:
+    - Verify that computed classes from _create_merged_classes
       are equal to ground truth
     """
     fusion_layer_ = initialize_fusion_layer
@@ -186,8 +191,13 @@ def test_create_merged_classes(initialize_fusion_layer):
 def test_merge_classes_and_create_sets_masks(initialize_fusion_layer):
     """
     Test the _merge_classes_and_create_sets_masks function
+    Input data:
+    - initialize_fusion_layer from fixture
+    Validation data:
+    - Manually computed standard, intersection and exclusion masks
+    Validation process:
     - Creates a map image for both sec and ref supports
-    - Manually computes the standard, intersection and exclusion masks
+    - Verify that fusion_layer_.classes_masks is equal to gt_sets_masks
     """
     # Test the _merge_classes_and_create_sets_masks function -------------
     # Slope0's map_image["Slope0"] is :
@@ -251,9 +261,14 @@ def test_merge_classes_and_create_sets_masks(initialize_fusion_layer):
 def test_create_labelled_map(initialize_fusion_layer):
     """
     Test the _create_labelled_map function
+    Input data:
+    - initialize_fusion_layer from fixture
+    Validation data:
+    - Manually computed gt_map_image
+    Validation process:
     - Creates a map image for both sec and ref supports
     - Tests that the computed map from _create_labelled_map
-      is equal to ground truth
+      is equal to gt_map_image
     """
     fusion_layer_ = initialize_fusion_layer
     # Slope0's map_image["Slope0"] is :

@@ -49,18 +49,23 @@ from tests.helpers import demcompare_test_data_path, temporary_dir
 @pytest.mark.unit_tests
 def test_compute_coregistration_with_gironde_test_data_sampling_dem():
     """
-    Test the compute_coregistration function:
+    Test the compute_coregistration function
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    - sampling value : "sec"
+    - coregistration method : "Nuth et kaab"
+    Validation data:
+    - Manually computed gt_xoff, gt_yoff,
+      gt_sampling_source and gt_plani_results
+    Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Tests that the output Transform has the correct offsets
-    - Tests that the considered sampling source is correct
-    - Test that the offsets, bias and and gdal_translate_bounds
-      on the demcompare_results output dict are corrects
-
-    Test configuration:
-    - "gironde_test_data" input DEMs
-    - sampling value dem
-    - coregistration method Nuth et kaab
+    - Checked parameters on the demcompare_results output dict are:
+        - output Transform correct offsets
+        - considered sampling source "sec"
+        - offsets
+        - bias
+        - gdal_translate_bounds
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -180,18 +185,23 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
 
 def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     """
-    Test the compute_coregistration function:
+    Test the compute_coregistration function
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    - sampling value : "ref"
+    - coregistration method : "Nuth et kaab"
+    Validation data:
+    - Manually computed gt_xoff, gt_yoff,
+      gt_sampling_source and gt_plani_results
+    Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Tests that the output Transform has the correct offsets
-    - Tests that the considered sampling source is correct
-    - Test that the offsets, bias and and gdal_translate_bounds
-      on the demcompare_results output dict are corrects
-
-    Test configuration:
-    - "gironde_test_data" input DEMs
-    - sampling value ref
-    - coregistration method Nuth et kaab
+    - Checked parameters on the demcompare_results output dict are:
+        - output Transform correct offsets
+        - considered sampling source "ref"
+        - offsets
+        - bias
+        - gdal_translate_bounds
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data")
@@ -310,21 +320,26 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     )
 
 
-def test_compute_coregistration_with_srtm_sampling_dem_and_initial_disparity():
+def test_compute_coregistration_with_srtm_sampling_sec_and_initial_disparity():
     """
-    Test the compute_coregistration function:
+    Test the compute_coregistration function
+    Input data:
+    - input DEMs present in "srtm_test_data" test root data directory
+    - sampling value : "sec"
+    - coregistration method : "Nuth et kaab"
+    - non-zero initial disparity
+    Validation data:
+    - Manually computed gt_xoff, gt_yoff,
+      gt_sampling_source and gt_plani_results
+    Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Tests that the output Transform has the correct offsets
-    - Tests that the considered sampling source is correct
-    - Test that the offsets, bias and and gdal_translate_bounds
-      on the demcompare_results output dict are corrects
-
-    Test configuration:
-    - "srtm_test_data" input DEMs
-    - sampling value dem
-    - coregistration method Nuth et kaab
-    - non-zero initial disparity
+    - Checked parameters on the demcompare_results output dict are:
+        - output Transform correct offsets
+        - considered sampling source "sec"
+        - offsets gt_xoff, gt_yoff
+        - bias
+        - gdal_translate_bounds
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -431,19 +446,24 @@ def test_compute_coregistration_with_srtm_sampling_dem_and_initial_disparity():
 
 def test_compute_coregistration_with_srtm_sampling_ref_and_initial_disparity():
     """
-    Test the compute_coregistration function:
+    Test the compute_coregistration function
+    Input data:
+    - input DEMs present in "srtm_test_data" test root data directory
+    - sampling value : "ref"
+    - coregistration method : "Nuth et kaab"
+    - non-zero initial disparity
+    Validation data:
+    - Manually computed gt_xoff, gt_yoff,
+      gt_sampling_source and gt_plani_results
+    Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Tests that the output Transform has the correct offsets
-    - Tests that the considered sampling source is correct
-    - Test that the offsets, bias and and gdal_translate_bounds
-      on the demcompare_results output dict are corrects
-
-    Test configuration:
-    - "srtm_test_data" input DEMs
-    - sampling value ref
-    - coregistration method Nuth et kaab
-    - non-zero initial disparity
+    - Checked parameters on the demcompare_results output dict are:
+        - output Transform correct offsets
+        - considered sampling source "ref"
+        - offsets gt_xoff, gt_yoff
+        - bias
+        - gdal_translate_bounds
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -552,19 +572,25 @@ def test_compute_coregistration_with_srtm_sampling_ref_and_initial_disparity():
     )
 
 
-def test_compute_coregistration_gironde_sampling_dem_and_initial_disparity():
+def test_compute_coregistration_gironde_sampling_sec_and_initial_disparity():
     """
-    Test the compute_coregistration function:
+    Test the compute_coregistration function
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    - sampling value dem : "sec"
+    - coregistration method : "Nuth et kaab"
+    - non-zero initial disparity
+    Validation data:
+    - Manually computed gt_xoff, gt_yoff and gt_sampling_source
+    Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Tests that the output Transform has the correct offsets
-    - Tests that the considered sampling source is correct
-
-    Test configuration:
-    - "gironde_test_data" input DEMs
-    - sampling value dem
-    - coregistration method Nuth et kaab
-    - non-zero initial disparity
+    - Checked parameters on the demcompare_results output dict are:
+        - output Transform correct offsets
+        - considered sampling source "sec"
+        - offsets gt_xoff, gt_yoff
+        - bias
+        - gdal_translate_bounds
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -600,17 +626,23 @@ def test_compute_coregistration_gironde_sampling_dem_and_initial_disparity():
 
 def test_compute_coregistration_gironde_sampling_ref_and_initial_disparity():
     """
-    Test the compute_coregistration function:
+    Test the compute_coregistration function
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    - sampling value dem : "ref"
+    - coregistration method : "Nuth et kaab"
+    - non-zero initial disparity
+    Validation data:
+    - Manually computed gt_xoff, gt_yoff and gt_sampling_source
+    Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Tests that the output Transform has the correct offsets
-    - Tests that the considered sampling source is correct
-
-    Test configuration:
-    - "gironde_test_data" input DEMs
-    - sampling value ref
-    - coregistration method Nuth et kaab
-    - non-zero initial disparity
+    - Checked parameters on the demcompare_results output dict are:
+        - output Transform correct offsets
+        - considered sampling source "ref"
+        - offsets gt_xoff, gt_yoff
+        - bias
+        - gdal_translate_bounds
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -646,19 +678,22 @@ def test_compute_coregistration_gironde_sampling_ref_and_initial_disparity():
     assert gt_sampling_source == coregistration_.sampling_source
 
 
-def test_compute_coregistration_with_default_coregistration_srtm_sampling_dem():
+def test_compute_coregistration_with_default_coregistration_srtm_sampling_ref():
     """
-    Test the compute_coregistration function:
+    Test the compute_coregistration function
+    Input data:
+    - default coregistration without input configuration
+    - input DEMs present in "srtm_test_data" test root data directory
+    - sampling value dem : "sec"
+    - coregistration method : "Nuth et kaab"
+    - non-zero initial disparity
+    Validation data:
+    - Manually computed gt_xoff, gt_yoff
+    Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Tests that the output Transform has the correct offsets
-
-    Test configuration:
-    - default coregistration without input configuration
-    - "srtm_test_data" input DEMs
-    - sampling value dem
-    - coregistration method Nuth et kaab
-    - non-zero initial disparity
+    - Checked parameters on the demcompare_results output dict are:
+        - output Transform has the correct offsets
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -687,9 +722,17 @@ def test_compute_coregistration_with_default_coregistration_srtm_sampling_dem():
 
 def test_coregistration_save_optional_outputss():
     """
-    Test that demcompare's execution with the
-    coregistration save_optional_outputs parameter
-    set to True correctly saves the dems to disk
+    Test the coregistration save_optional_outputs parameter
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    Validation data:
+    - Manually computed gt_truth_list_files
+    Validation process:
+    - parameter save_optional_outputs set to True in config
+    - Create temporary_dir named tmp_dir
+    - Loads the data present in the test root data directory
+    - Creates a coregistration object and does compute_coregistration
+    - Verify that all files in gt_truth_list_files are saves in tmp_dir
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -752,12 +795,23 @@ def test_coregistration_save_optional_outputss():
 
 def test_coregistration_save_optional_outputs():
     """
-    Test that demcompare's execution with the coregistration
-    save_optional_outputs parameter set to True correctly
-    saves to disk the iteration plots of Nuth et kaab.
-    Test that demcompare's execution with the coregistration
-    save_optional_outputs parameter set to False does
-    not save to disk the iteration plots of Nuth et kaab.
+    Test the coregistration save_optional_outputs parameter
+    for the iteration plots of Nuth et kaab.
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    Validation data:
+    - Manually computed gt_truth_list_files
+    Validation process:
+    - parameter save_optional_outputs set to True in config
+        - Create temporary_dir named tmp_dir
+        - Loads the data present in the test root data directory
+        - Creates a coregistration object and does compute_coregistration
+        - Verify that all files in gt_truth_list_files are saves in tmp_dir
+    - parameter save_optional_outputs set to False in config
+        - Create temporary_dir named tmp_dir
+        - Loads the data present in the test root data directory
+        - Creates a coregistration object and does compute_coregistration
+        - Verify that the iteration plots of Nuth et kaab aren't saved
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -865,14 +919,21 @@ def test_coregistration_save_optional_outputs():
 
 def test_coregistration_with_output_dir():
     """
-    Test that demcompare's execution with
-    the output_dir being specified correctly
-    saves to disk the dem coreg_sec.tif and
-    the output file demcompare_results.json
-    Test that demcompare's execution with
-    the output_dir not being specified and
-    the parameters save_optional_outputs
-    set to True does rise an error.
+    Test the output_dir param.
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    Validation data:
+    - Manually computed assertion
+    Validation process:
+    - parameter output_dir being specified correctly
+        - Create temporary_dir named tmp_dir
+        - Loads the data present in the test root data directory
+        - Creates a coregistration object and does compute_coregistration
+        - Verify that coreg_sec.tif and demcompare_results.json are saved
+    - parameter output_dir not being specified and save_optional_outputs
+      set to True
+        - Creates a new coregistration object and does compute_coregistration
+        - Verify that pytest raises an error
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -926,9 +987,16 @@ def test_coregistration_with_output_dir():
 
 def test_coregistration_with_wrong_initial_disparities():
     """
-    Test that demcompare's initialization
-    fails when the coregistration specifies
-    an invalid initial disparity value.
+    Test invalid initial disparity value
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    - invalid initial disparity
+    Validation data:
+    - Manually computed assertion
+    Validation process:
+    - Loads the data present in the test root data directory
+    - Creates a coregistration object and does compute_coregistration
+    - Verify that pytest raises an error
     """
 
     # Get "gironde_test_data" test root data directory absolute path

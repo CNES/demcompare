@@ -44,12 +44,14 @@ from .helpers import demcompare_test_data_path
 def test_apply():
     """
     Test the apply_transform function
-    Creates a DEM xr.Dataset with the georefence
-    from the "srtm_test_data" test root data directory
-    and creates a Transform object. Applies the transform to
-    the created DEM to test that the transformation has been
-    correctly applied.
-
+    Input data:
+    - strm_ref.tif dem present in "strm_test_data" test root data directory
+    Validation data:
+    - ground_truth_dataset created by img_tools.convert_pix_to_coord
+    Validation process:
+    - shift dataset with apply_transform
+    - Verify that output_dataset_transformed from apply_transform is
+      the same as gt_dataset_transformed
     """
     # Get "srtm_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("srtm_test_data")
@@ -102,9 +104,17 @@ def test_apply():
 def test_adapt_transform_offset():
     """
     Test the adapt_transform_offset function
-    Creates a Transform object and an adapting factor
-    and tests that the offsets has been correctly adapted
+    Input data:
+    - hand defined x_offset, y_offset, z_offset and adapting_factor
+    Validation data:
+    - calculated ground_truth
+    Validation process:
+    - create transform object thanks to hand defined offsets
+    - Verify that that the offsets has been correctly adapted
     by the input adapting_factor.
+    Checked parameters are:
+        - x_offset
+        - y_offset
     """
     # Define pixel offsets
     x_offset = 30000
@@ -141,8 +151,16 @@ def test_apply_original_dem():
     """
     Test that the dem given to
     the transformation.apply does not have its
-    georeference_transform modified,
-    only the returned dem does.
+    georeference_transform modified.
+    Input data:
+    - strm_ref.tif dem present in "strm_test_data" test root data directory
+    Validation data:
+    - dataset from dem_tools.create_dem()
+    Validation process:
+    - shift dataset with apply_transform
+    - Verify that georef_transform from apply_transform is
+      the same as the original georef_transform.
+      The check parameter is georef_transform.data
     """
 
     # Get "srtm_test_data" test root data directory absolute path
@@ -180,6 +198,6 @@ def test_apply_original_dem():
     # has the same offsets as the ground truth
     np.testing.assert_allclose(
         from_dataset.georef_transform.data,
-        dataset.georef_transform,
+        dataset.georef_transform.data,
         rtol=1e-02,
     )

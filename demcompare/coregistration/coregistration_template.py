@@ -29,7 +29,7 @@ import logging
 import os
 import sys
 from abc import ABCMeta, abstractmethod
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 
 # Third party imports
 import numpy as np
@@ -44,7 +44,6 @@ from ..dem_tools import (
     reproject_dems,
     save_dem,
 )
-from ..helpers_init import ConfigType
 from ..img_tools import compute_gdal_translate_bounds
 from ..output_tree_design import get_out_file_path
 from ..transformation import Transformation
@@ -62,7 +61,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
     _SAVE_OPTIONAL_OUTPUTS = False
 
     @abstractmethod
-    def __init__(self, cfg: ConfigType):
+    def __init__(self, cfg: Dict[str, Any]):
         """
         Return the coregistration object associated with the method_name
         given in the configuration
@@ -92,7 +91,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         }
 
         :param cfg: configuration {'method_name': value}
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         """
 
         # Original sec
@@ -139,15 +138,17 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         self.output_dir = self.cfg["output_dir"]
 
     @abstractmethod
-    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
+    def fill_conf_and_schema(
+        self, cfg: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """
         Add default values to the dictionary if there are missing
         elements and define the configuration schema
 
         :param cfg: coregistration configuration
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         :return: cfg coregistration configuration updated
-        :rtype: ConfigType
+        :rtype: Dict[str, Any]
         """
         # If no cfg was given, initialize it
         if bool(cfg) is False:
@@ -199,7 +200,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         }
         return cfg
 
-    def check_conf(self, cfg: ConfigType = None) -> ConfigType:
+    def check_conf(self, cfg: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Check if the config is correct according
         to the class configuration schema
@@ -207,9 +208,9 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         raises CheckerError if configuration invalid.
 
         :param cfg: coregistration configuration
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         :return: cfg coregistration configuration updated
-        :rtype: ConfigType
+        :rtype: Dict[str, Any]
         """
 
         checker = Checker(self.schema)

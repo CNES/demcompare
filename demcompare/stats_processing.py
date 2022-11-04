@@ -29,7 +29,7 @@ import copy
 import logging
 import os
 import traceback
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 # Third party imports
 import xarray as xr
@@ -41,7 +41,6 @@ from demcompare.classification_layer import (
 from demcompare.metric import Metric
 from demcompare.output_tree_design import get_out_dir
 
-from .helpers_init import ConfigType
 from .stats_dataset import StatsDataset
 
 
@@ -87,7 +86,9 @@ class StatsProcessing:
     }
     # Initialization
 
-    def __init__(self, cfg: Dict, dem: xr.Dataset, input_diff: bool = False):
+    def __init__(
+        self, cfg: Dict, dem: xr.Dataset = None, input_diff: bool = False
+    ):
         """
         Initialization of a StatsProcessing object
 
@@ -120,23 +121,30 @@ class StatsProcessing:
         self.remove_outliers: bool = self.cfg["remove_outliers"]
         # Input dem
         self.dem: xr.Dataset = dem
-        # Initialize StatsDataset object
-        self.stats_dataset: StatsDataset = StatsDataset(self.dem["image"].data)
         # Classification layers
         self.classification_layers: List[ClassificationLayer] = []
         # Classification layers names
         self.classification_layers_names: List[str] = []
-        # Create classification layers
-        self._create_classif_layers()
+        # Initialise and test parameters for StatProcessing object
+        if dem is None:
+            # Create classification layers
+            self._create_classif_layers()
+        else:
+            # Initialize StatsDataset object
+            self.stats_dataset: StatsDataset = StatsDataset(
+                self.dem["image"].data
+            )
+            # Create classification layers
+            self._create_classif_layers()
 
     def fill_conf(
-        self, cfg: ConfigType = None, input_diff: bool = False
+        self, cfg: Dict[str, Any] = None, input_diff: bool = False
     ):  # pylint:disable=too-many-branches
         """
         Init Stats options from configuration
 
         :param cfg: Input demcompare configuration
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         :param input_diff: If the input parameter is an altitude difference
         :type input_diff: bool
         """
@@ -211,8 +219,8 @@ class StatsProcessing:
                         ClassificationLayer(
                             name,
                             clayer["type"],
-                            self.dem,
                             clayer,
+                            self.dem,
                         )
                     )
                     self.classification_layers_names.append(name)

@@ -23,7 +23,8 @@ Mainly contains the SlopeClassification class.
 """
 import collections
 import logging
-from typing import Dict, List
+import sys
+from typing import Any, Dict, List
 
 import numpy as np
 import xarray as xr
@@ -31,7 +32,6 @@ import xarray as xr
 # DEMcompare imports
 from demcompare.dem_tools import create_dem
 
-from ..helpers_init import ConfigType
 from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
@@ -50,8 +50,8 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
         self,
         name: str,
         classification_layer_kind: str,
-        dem: xr.Dataset,
         cfg: Dict,
+        dem: xr.Dataset = None,
     ):
         """
         Init function
@@ -60,40 +60,44 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
         :type name: str
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
+        :param cfg: layer's configuration
+        :type cfg: Dict[str, Any]
         :param dem: dem
         :type dem:    xr.DataSet containing :
 
             - image : 2D (row, col) xr.DataArray float32
             - georef_transform: 1D (trans_len) xr.DataArray
             - classification_layer_masks : 3D (row, col, indicator)
-              xr.DataArray
-        :param cfg: layer's configuration
-        :type cfg: ConfigType
+             xr.DataArray
         :return: None
         """
         # Call generic init before supercharging
-        super().__init__(name, classification_layer_kind, dem, cfg)
+        super().__init__(name, classification_layer_kind, cfg, dem)
 
         # Ranges
         self.ranges: List = self.cfg["ranges"]
+        # Checking configuration during initialisation step
+        # doesn't require classification layers
+        if dem is not None:
+            # Create labelled map to classification_layer from
+            self._create_labelled_map()
 
-        # Create labelled map to classification_layer from
-        self._create_labelled_map()
-
-        # Create class masks
-        self._create_class_masks()
+            # Create class masks
+            self._create_class_masks()
 
         logging.debug("ClassificationLayer created as: %s", self)
 
-    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
+    def fill_conf_and_schema(
+        self, cfg: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """
         Add default values to the dictionary if there are missing
         elements and define the configuration schema
 
         :param cfg: coregistration configuration
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         :return cfg: coregistration configuration updated
-        :rtype: ConfigType
+        :rtype: Dict[str, Any]
         """
         # Call generic fill_conf_and_schema
         cfg = super().fill_conf_and_schema(cfg)
@@ -105,7 +109,24 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
 
         # Add subclass parameter to the default schema
         self.schema["ranges"] = list
+        self.check_ranges(cfg)
         return cfg
+
+    @staticmethod
+    def check_ranges(cfg: dict) -> None:
+        """
+        Verify users configuration for ranges in slope classification
+        :param cfg: slope configuration
+        :type cfg: dict
+        :return: None
+        """
+        ranges_dict = cfg["ranges"]
+        if not all(
+            isinstance(values, int) or (ranges_dict is list)
+            for values in ranges_dict
+        ):
+            logging.error("Ranges must be a list of int")
+            sys.exit(1)
 
     def _create_labelled_map(self):
         """

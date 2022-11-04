@@ -44,12 +44,23 @@ from .helpers import demcompare_path, demcompare_test_data_path
 @pytest.mark.unit_tests
 def test_reproject_dataset():
     """
-    Test the reproject_dataset function
-    Loads the DEMS present in "srtm_test_data" and "gironde_test_data"
-    test root data directory and reprojects one
-    onto another to test the obtained
-    reprojected DEMs.
+    Test the reproject_dataset function :reprojects one DEM
+    onto another one to test the obtained reprojected DEMs.
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    - Manually computed data, transform and nodata
+    Validation data:
+    - input DEMs present in "srtm_test_data" test root data directory
+    Validation process:
+    - Creation of reproject_on_dataset and dataset_to_be_reprojected
+    - Reproject the dataset_to_be_reprojected on reproject_on_dataset
+      thanks to dataset_tools.reproject_dataset function
+    - Checked parameters on the reprojected dataset are:
+        - georef_transform
+        - crs
+        - nodata
     """
+
     # Generate the "reproject_on_dataset" with the
     # following data, transform and nodata
     # and "srtm_test_data" DSM's georef
@@ -132,9 +143,15 @@ def test_reproject_dataset():
 def test_get_geoid_offset():
     """
     Test the _get_geoid_offset function
-    Loads the DEMS present in "srtm_test_data" test root data
-    directory and projects it on the geoid to test
-    the obtained dataset's geoid offset values.
+    Input data:
+    - input DEMs present in "srtm_test_data" test root data directory
+    Validation data:
+    - gt_arr_offset with manually computed data, trans,no data,
+      gt_data_coords and gt_interp_geoid
+    Validation process:
+    - Reproject the "srtm_test_data" DEM on the geoid
+    - Checked parameters on the reprojected dataset are:
+        - offset values
     """
     # Get "srtm_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("srtm_test_data")
@@ -195,9 +212,15 @@ def test_get_geoid_offset():
 def test_get_geoid_offset_error():
     """
     Test the _get_geoid_offset function
-    Loads the DEMS present in "srtm_test_data" test root data
-    directory and projects it on the geoid to test
-    the obtained dataset's geoid offset values.
+    Input data:
+    - input DEMs present in "srtm_test_data" test root data directory
+    - trans computed with data coordinates outside of the geoid scope
+    Validation data:
+    - gt_arr_offset with manually computed data, trans,no data,
+      gt_data_coords and gt_interp_geoid
+    Validation process:
+    - Reproject the "srtm_test_data" DEM on the geoid
+    - Verify that pytest raises an error on _get_geoid_offset
     """
     # Get "srtm_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("srtm_test_data")

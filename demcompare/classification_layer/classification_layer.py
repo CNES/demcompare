@@ -24,12 +24,9 @@ A classification_layer defines a way to classify the DEMs alti differences.
 """
 
 import logging
-from typing import Dict
+from typing import Any, Dict
 
 import xarray as xr
-
-# Demcompare imports
-from ..helpers_init import ConfigType
 
 
 class ClassificationLayer:
@@ -39,14 +36,14 @@ class ClassificationLayer:
     and instantiate them when needed.
     """
 
-    available_classification: ConfigType = {}
+    available_classification: Dict[str, Any] = {}
 
     def __new__(
         cls,
         name: str,
         classification_layer_kind: str,
-        dem: xr.Dataset,
         cfg: Dict = None,
+        dem: xr.Dataset = None,
     ):
         """
         Return a ClassificationLayerTemplate child instance
@@ -57,21 +54,21 @@ class ClassificationLayer:
         :type name: str
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
+        :param cfg: layer's configuration
+        :type cfg: Dict[str, Any]
         :param dem: ref dem
         :type dem:   xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-        :param cfg: layer's configuration
-        :type cfg: ConfigType
+                 xr.DataArray
         """
         return cls.create_classification(
             name,
             classification_layer_kind,
-            dem,
             cfg,
+            dem,
         )
 
     @classmethod
@@ -79,8 +76,8 @@ class ClassificationLayer:
         cls,
         name,
         classification_layer_kind,
-        dem,
         cfg,
+        dem,
     ):
         """
         Factory command to create the classification from
@@ -92,15 +89,15 @@ class ClassificationLayer:
         :type name: str
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
+        :param cfg: layer's configuration
+        :type cfg: Dict[str, Any]
         :param dem: sec dem
         :type dem:   xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-        :param cfg: layer's configuration
-        :type cfg: ConfigType
+                 xr.DataArray
         """
 
         try:
@@ -110,8 +107,8 @@ class ClassificationLayer:
             classif = classification_class(
                 name,
                 classification_layer_kind,
-                dem,
                 cfg,
+                dem,
             )
             logging.debug(
                 "ClassificationLayer of type: %s and name: %s",

@@ -29,7 +29,7 @@ import copy
 import logging
 import os
 from abc import ABCMeta, abstractmethod
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 # Third party imports
 import numpy as np
@@ -42,7 +42,6 @@ from demcompare.metric import Metric
 # DEMcompare imports
 from demcompare.output_tree_design import get_out_dir
 
-from ..helpers_init import ConfigType
 from ..stats_dataset import StatsDataset
 
 
@@ -74,8 +73,8 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         self,
         name: str,
         classification_layer_kind: str,
-        dem: xr.Dataset,
         cfg: Dict,
+        dem: xr.Dataset = None,
     ):
         """
         Initialization of a classification_layer object
@@ -84,15 +83,15 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         :type name: str
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
+        :param cfg: layer's configuration
+        :type cfg: Dict[str, Any]
         :param dem: dem
         :type dem:    xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-        :param cfg: layer's configuration
-        :type cfg: ConfigType
+                 xr.DataArray
         :return: None
         """
 
@@ -136,15 +135,17 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         # Init outliers free mask
         self.outliers_free_mask: np.ndarray = None
 
-    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
+    def fill_conf_and_schema(
+        self, cfg: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """
         Add default values to the dictionary if there are missing
         elements and define the configuration schema
 
         :param cfg: coregistration configuration
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         :return cfg: coregistration configuration updated
-        :rtype: ConfigType
+        :rtype: Dict[str, Any]
         """
 
         # Give the default value if the required element
@@ -167,7 +168,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         }
         return cfg
 
-    def check_conf(self, cfg: ConfigType = None) -> ConfigType:
+    def check_conf(self, cfg: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Check if the config is correct according
         to the class configuration schema
@@ -175,9 +176,9 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         raises CheckerError if configuration invalid.
 
         :param cfg: coregistration configuration
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         :return cfg: coregistration configuration updated
-        :rtype: ConfigType
+        :rtype: Dict[str, Any]
         """
 
         checker = Checker(self.schema)

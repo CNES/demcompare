@@ -229,7 +229,6 @@ def test_create_classif_layers():
     gt_status_layer = ClassificationLayer(
         "Status",
         "segmentation",
-        stats_dem,
         {
             "type": "segmentation",
             "classes": {
@@ -244,12 +243,12 @@ def test_create_classif_layers():
                 {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}},
             ],
         },
+        stats_dem,
     )
     # Create ground truth Slope layer
     gt_slope_layer = ClassificationLayer(
         "Slope0",
         "slope",
-        stats_dem,
         {
             "type": "slope",
             "ranges": [0, 10, 25, 50, 90],
@@ -259,12 +258,12 @@ def test_create_classif_layers():
                 {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}},
             ],
         },
+        stats_dem,
     )
     # Create ground truth Global layer
     gt_global_layer = ClassificationLayer(
         "global",
         "global",
-        stats_dem,
         {
             "type": "global",
             "metrics": [
@@ -272,6 +271,7 @@ def test_create_classif_layers():
                 {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}},
             ],
         },
+        stats_dem,
     )
     # Create ground truth Fusion layer
     gt_fusion_layer = FusionClassificationLayer(
@@ -339,7 +339,6 @@ def test_create_classif_layers_without_input_classif():
     gt_global_layer = ClassificationLayer(
         "global",
         "global",
-        stats_dem,
         {
             "type": "global",
             "metrics": [
@@ -352,6 +351,7 @@ def test_create_classif_layers_without_input_classif():
                 "std",
             ],
         },
+        stats_dem,
     )
 
     # Get StatsProcessing created classification layers

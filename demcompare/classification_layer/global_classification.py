@@ -23,12 +23,11 @@ Mainly contains the GlobalClassification class.
 """
 import logging
 from collections import OrderedDict
-from typing import Dict
+from typing import Any, Dict
 
 import numpy as np
 import xarray as xr
 
-from ..helpers_init import ConfigType
 from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
@@ -45,8 +44,8 @@ class GlobalClassificationLayer(ClassificationLayerTemplate):
         self,
         name: str,
         classification_layer_kind: str,
-        dem: xr.Dataset,
         cfg: Dict,
+        dem: xr.Dataset = None,
     ):
         """
         Init function
@@ -55,38 +54,42 @@ class GlobalClassificationLayer(ClassificationLayerTemplate):
         :type name: str
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
-        :param dem: dem_2 dem
+        :param cfg: layer's configuration
+        :type cfg: Dict[str, Any]
+        :param dem: dem
         :type dem:    xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                  xr.DataArray
-        :param cfg: layer's configuration
-        :type cfg: ConfigType
         :return: None
         """
 
         # Call generic init before supercharging
-        super().__init__(name, classification_layer_kind, dem, cfg)
+        super().__init__(name, classification_layer_kind, cfg, dem)
+        # Checking configuration during initialisation step
+        # doesn't require classification layers
+        if dem is not None:
+            # Create labelled map to classification_layer from
+            self._create_labelled_map()
 
-        # Create labelled map to classification_layer from
-        self._create_labelled_map()
-
-        # Create class masks
-        self._create_class_masks()
+            # Create class masks
+            self._create_class_masks()
 
         logging.debug("ClassificationLayer created as: %s", self)
 
-    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
+    def fill_conf_and_schema(
+        self, cfg: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """
         Add default values to the dictionary if there are missing
         elements and define the configuration schema
 
         :param cfg: coregistration configuration
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         :return cfg: coregistration configuration updated
-        :rtype: ConfigType
+        :rtype: Dict[str, Any]
         """
         # Default global class
         self.classes = OrderedDict([("global", [1])])

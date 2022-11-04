@@ -139,10 +139,12 @@ def load_dem(
                     input_roi["w"],
                     input_roi["h"],
                 )
-                bounds_dem = rasterio.coords.BoundingBox(
-                    rasterio.windows.bounds(window_dem, dem_geotransform)
+                left, bottom, right, top = rasterio.windows.bounds(
+                    window_dem, dem_geotransform
                 )
-
+                bounds_dem = rasterio.coords.BoundingBox(
+                    left, bottom, right, top
+                )
             else:
                 raise TypeError("Not the right conventions for ROI")
     # Get dem raster image from band image

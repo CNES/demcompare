@@ -24,13 +24,12 @@ Mainly contains the FussionClassification class.
 import collections
 import itertools
 import logging
-from typing import Dict, List
+from typing import Any, Dict, List
 
 # Third party imports
 import numpy as np
 from json_checker import Or
 
-from ..helpers_init import ConfigType
 from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
@@ -48,14 +47,14 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
 
     def __init__(
         self,
-        classification_layer_masks: List[ClassificationLayer],
+        classification_layers: List[ClassificationLayer],
         support: str,
         name: str,
         metrics: List = None,
     ):
         """
-        :param classification_layer_masks: list of ClassificationLayers
-        :type classification_layer_masks: List[ClassificationLayerTemplate]
+        :param classification_layers: list of ClassificationLayers
+        :type classification_layers: List[ClassificationLayerTemplate]
         :support: support dem, ref or sec
         :type support: str
         :name: layer name
@@ -65,7 +64,7 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         """
 
         # If only one classification_layer is given, raise error
-        if len(classification_layer_masks) == 1:
+        if len(classification_layers) == 1:
             logging.error(
                 "There must be at least 2"
                 " classification_layer_masks"
@@ -73,7 +72,7 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
             )
             raise self.NotEnoughDataToClassificationLayerError
         # Store classification layers
-        self.classification_layer_masks = classification_layer_masks
+        self.classification_layers = classification_layers
         # Initialize fusion conf
         cfg = self.fill_fusion_conf(metrics)
         # Support
@@ -83,34 +82,36 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         super().__init__(
             name=self.name,
             classification_layer_kind="classification_layer_masks",
-            dem=classification_layer_masks[0].dem,
+            dem=classification_layers[0].dem,
             cfg=cfg,
         )
-
-        # Create classification_layer classes
-        # (labelled map with associated classes)
-        self._merge_classes_and_create_classes_masks()
-        self._create_labelled_map()
+        # Checking configuration during initialisation step
+        # doesn't require classification layers
+        if classification_layers[0].dem is not None:
+            # Create classification_layer classes
+            # (labelled map with associated classes)
+            self._merge_classes_and_create_classes_masks()
+            self._create_labelled_map()
 
         logging.debug("ClassificationLayer created as: %s", self)
 
-    def fill_fusion_conf(self, metrics: List = None) -> ConfigType:
+    def fill_fusion_conf(self, metrics: List = None) -> Dict[str, Any]:
         """
         Fill the fusion layer configuration
 
         :param metrics: optinal input metrics
         :type metrics: List
         :return cfg: configuration updated
-        :rtype: ConfigType
+        :rtype: Dict[str, Any]
         """
         # Initialize cfg layer with necessary parameters
         cfg: Dict = {}
         cfg["remove_outliers"] = str(
-            self.classification_layer_masks[0].remove_outliers
+            self.classification_layers[0].remove_outliers
         )
-        cfg["output_dir"] = self.classification_layer_masks[0]._output_dir
+        cfg["output_dir"] = self.classification_layers[0]._output_dir
         cfg["type"] = "fusion"
-        cfg["nodata"] = self.classification_layer_masks[0].nodata
+        cfg["nodata"] = self.classification_layers[0].nodata
         # If metrics have been defined, add them
         cfg["metrics"] = metrics
 
@@ -154,16 +155,16 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         """
         # Create all combinations and new classes
         all_combi_labels, self.classes = self._create_merged_classes(
-            self.classification_layer_masks
+            self.classification_layers
         )
         # Dem shape
         dems_shape = self.dem["image"].data.shape
         # Create dict to easily access each classification layer
         dict_classification_layers = {
-            classif.name: classif for classif in self.classification_layer_masks
+            classif.name: classif for classif in self.classification_layers
         }
         # Iterate over the fusionned maps
-        for _ in self.classification_layer_masks:
+        for _ in self.classification_layers:
             # Initialize support masks
             support_masks = []
             # Iterate over all combined layers
@@ -187,18 +188,18 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
 
     @staticmethod
     def _create_merged_classes(
-        classification_layer_masks: List[ClassificationLayer],
+        classification_layers: List[ClassificationLayer],
     ):
         """
         Generate the 'classes' dictionary for merged layers
-        :param classification_layer_masks: list of classes to merge
-        :type classification_layer_masks: List[ClassificationLayer]
+        :param classification_layers: list of classes to merge
+        :type classification_layers: List[ClassificationLayer]
         :return:
         """
         # Initialize list of all classes to be combined
         classes_to_merge = []
         # Iterate over classification layers
-        for classification_layer in classification_layer_masks:
+        for classification_layer in classification_layers:
             # Add all the classes of each classification layer
             classes_to_merge.append(
                 [

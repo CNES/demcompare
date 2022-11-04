@@ -27,9 +27,7 @@ with coregistration configuration "method_name"
 
 # Standard imports
 import logging
-
-# Demcompare imports
-from ..helpers_init import ConfigType
+from typing import Any, Dict
 
 
 class Coregistration:
@@ -41,29 +39,29 @@ class Coregistration:
 
     # Dict (method_name: str, class: object) containing registered
     # available coregistration methods
-    available_coregistrations: ConfigType = {}
+    available_coregistrations: Dict[str, Any] = {}
     default_application = "nuth_kaab_internal"
 
-    def __new__(cls, cfg: ConfigType = None):
+    def __new__(cls, cfg: Dict[str, Any] = None):
         """
         Return a CoregistrationTemplate child instance
         associated with the "method_name" given in the configuration
         through create_coreg local method for clarity.
 
         :param cfg: JSON configuration {'method_name': value}
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         """
         return cls.create_coreg(cfg)
 
     @classmethod
-    def create_coreg(cls, cfg: ConfigType = None):
+    def create_coreg(cls, cfg: Dict[str, Any] = None):
         """
         Factory command to create the coregistration from method_name
         Return a CoregistrationTemplate child instance
         associated with the "method_name" given in the configuration
 
         :param cfg: configuration {'method_name': value}
-        :type cfg: ConfigType
+        :type cfg: Dict[str, Any]
         """
 
         # If no cfg is given, use default_application

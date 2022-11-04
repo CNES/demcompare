@@ -22,21 +22,24 @@
 """
 This is where high level parameters are checked and default options are set
 """
+import copy
 
 # Standard imports
 import errno
 import json
+import logging
 import os
+import sys
 from typing import Any, Dict, Tuple
 
 # Third party imports
+import rasterio
 from astropy import units as u
 
-# Demcompare imports
 from .output_tree_design import get_otd_dirs, get_out_file_path, supported_OTD
 
-# Declare a configuration json type for type hinting
-ConfigType = Dict[str, Any]
+# Demcompare imports
+from .stats_processing import StatsProcessing
 
 
 def mkdir_p(path):
@@ -73,7 +76,7 @@ def make_relative_path_absolute(path, directory):
     return out
 
 
-def read_config_file(config_file: str) -> ConfigType:
+def read_config_file(config_file: str) -> Dict[str, Any]:
     """
     Read a demcompare input json config file.
     Relative paths will be made absolute.
@@ -82,7 +85,7 @@ def read_config_file(config_file: str) -> ConfigType:
     :type config_file: str
 
     :returns: The json dictionary read from file
-    :rtype: dict
+    :rtype: Dict[str, Any]
     """
     with open(config_file, "r", encoding="utf-8") as _fstream:
         # Load json file
@@ -114,14 +117,14 @@ def read_config_file(config_file: str) -> ConfigType:
     return config
 
 
-def save_config_file(config_file: str, config: ConfigType):
+def save_config_file(config_file: str, config: Dict[str, Any]):
     """
     Save a json configuration file
 
     :param config_file: path to a json file
     :type config_file: string
-    :param config_file: configuration json dictionary
-    :type config_file: dict
+    :param config: configuration json dictionary
+    :type config: Dict[str, Any]
     """
     with open(config_file, "w", encoding="utf-8") as file_:
         json.dump(config, file_, indent=2)
@@ -145,6 +148,11 @@ def compute_initialization(config_json: str) -> Dict:
 
     # Checks input parameters config
     check_input_parameters(cfg)
+
+    if "statistics" in cfg:
+        logging.info("Verify statistics configuration")
+        cfg_verif = copy.deepcopy(cfg)
+        _ = StatsProcessing(cfg=cfg_verif["statistics"])
 
     # Create output directory and update config
     output_dir = os.path.abspath(cfg["output_dir"])
@@ -179,12 +187,12 @@ def compute_initialization(config_json: str) -> Dict:
     return cfg
 
 
-def check_input_parameters(cfg: ConfigType):  # noqa: C901
+def check_input_parameters(cfg: Dict[str, Any]):  # noqa: C901
     """
     Checks parameters
 
     :param cfg: configuration dictionary
-    :type cfg: Dict
+    :type cfg: Dict[str, Any]
     """
     input_dems = []
     # If coregistration is present in cfg, boths dems
@@ -213,6 +221,21 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
         # Verify and make path absolute
         if "path" not in cfg[dem]:
             raise NameError(f"ERROR: missing paths to {dem}")
+        # Verify masks size
+        if "classification_layers" in cfg[dem]:
+            img_dem = rasterio.open(cfg[dem]["path"])
+            for key in cfg[dem]["classification_layers"]:
+                if "map_path" in cfg[dem]["classification_layers"][key]:
+                    mask_dem = rasterio.open(
+                        cfg[dem]["classification_layers"][key]["map_path"]
+                    )
+                    if img_dem.shape != mask_dem.shape:
+                        logging.error(
+                            "Dem shape : %s not equal to mask shape : %s",
+                            img_dem.shape,
+                            mask_dem.shape,
+                        )
+                        sys.exit(1)
         # Verify z units
         if "zunit" not in cfg[dem]:
             cfg[dem]["zunit"] = "m"
