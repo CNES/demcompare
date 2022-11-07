@@ -18,7 +18,6 @@ A comparison report can be compiled as *html* or *pdf* documentation with statis
 
    getting_started
    userguide
-   developer_guide
    api_reference/index.rst
    faq
    glossary

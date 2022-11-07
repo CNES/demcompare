@@ -62,7 +62,7 @@ class ClassificationLayer:
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         """
         return cls.create_classification(
             name,
@@ -97,7 +97,7 @@ class ClassificationLayer:
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
-                 xr.DataArray
+                  xr.DataArray
         """
 
         try:

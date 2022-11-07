@@ -16,8 +16,6 @@ Demcompare is available on Pypi and can be installed by:
     source venv/bin/activate
     pip install demcompare
 
-For developer installation, please refer to :ref:`developer_guide`
-
 .. note::  In case of installation problems, please refer to :ref:`faq`
 
 Command line execution
