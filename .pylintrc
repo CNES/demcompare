@@ -130,7 +130,7 @@ min-similarity-lines=7
 
 # The type of string formatting that logging methods do. `old` means using %
 # formatting, `new` is for `{}` formatting.
-logging-format-style=new
+logging-format-style=old
 
 # Logging modules to check that the string format arguments are in logging
 # function parameter format.
@@ -196,7 +196,7 @@ indent-string='    '
 max-line-length=80
 
 # Maximum number of lines in a module.
-max-module-lines=1325
+max-module-lines=700
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
@@ -249,21 +249,13 @@ ignore-on-opaque-inference=yes
 # List of class names for which member attributes should not be checked (useful
 # for classes with dynamically set attributes). This supports the use of
 # qualified names.
-<<<<<<< HEAD
-<<<<<<< HEAD
-ignored-classes=optparse.Values,thread._local,_thread._local
-=======
-ignored-classes=Coregistration
->>>>>>> e5f981e... fix: update coregistration factory and template, clean, pylint clean,
-=======
 ignored-classes=Coregistration, Metric, ClassificationLayer
->>>>>>> 089ffda... refactor: add exceptions on pylintrc due to no-member errors
 
 # List of module names for which member attributes should not be checked
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis). It
 # supports qualified module names, as well as Unix pattern matching.
-ignored-modules= cv2, doc.sources.conf
+ignored-modules= astropy
 
 # Show a hint with possible names when a member name was not found. The aspect
 # of finding the hint is based on edit distance.
@@ -361,8 +353,8 @@ good-names=i,
            yf,
 	   p,
            n,
-           ny, 
-           nx, 
+           ny,
+           nx,
            xp,
            yp,
            dx,
