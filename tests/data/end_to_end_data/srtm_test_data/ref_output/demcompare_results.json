@@ -1,0 +1,81 @@
+{
+  "alti_results": {
+    "reproj_coreg_ref": {
+      "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_REF.tif",
+      "nodata": -32768,
+      "nb_points": 983070,
+      "nb_valid_points": 983070
+    },
+    "reproj_coreg_sec": {
+      "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_SEC.tif",
+      "nodata": -32768,
+      "nb_points": 983070,
+      "nb_valid_points": 983070
+    },
+    "dz": {
+      "dz_map_path": "TO/PATH/demcompare/test_output/final_dh.tif",
+      "total_bias_value": -0.01765,
+      "zunit": "m",
+      "percent": 100.0,
+      "nodata": -32768,
+      "nb_points": 983070,
+      "nb_valid_points": 983070
+    }
+  },
+  "coregistration_results": {
+    "dx": {
+      "nuth_offset": 3.0,
+      "total_offset": 3.0,
+      "unit_offset": "px",
+      "total_bias_value": 0.0025,
+      "unit_bias_value": "m"
+    },
+    "dy": {
+      "nuth_offset": 5.0,
+      "total_offset": 5.0,
+      "unit_offset": "px",
+      "total_bias_value": 0.00417,
+      "unit_bias_value": "m"
+    },
+    "gdal_translate_bounds": {
+      "ulx": 40.0025,
+      "uly": 39.99583,
+      "lrx": 40.83333,
+      "lry": 39.16667
+    }
+  },
+  "stats_results": {
+    "images": {
+      "list": [
+        "row_wise",
+        "col_wise"
+      ],
+      "row_wise": {
+        "path": "TO/PATH/demcompare/test_output/dh_row_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 983070
+      },
+      "col_wise": {
+        "path": "TO/PATH/demcompare/test_output/dh_col_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 983070
+      }
+    },
+    "classification_layer_masks": {
+      "slope": {
+        "standard": {
+          "ref_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/ref_support_map.tif"
+          },
+          "sec_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/sec_support_map.tif"
+          }
+        }
+      }
+    }
+  }
+}

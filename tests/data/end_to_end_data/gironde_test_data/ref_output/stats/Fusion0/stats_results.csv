@@ -1,0 +1,26 @@
+"Set Name","mean","median","max","min","sum","percentil_90","squared_sum","nmad","rmse","std","nbpts","percent_valid_points"
+"Slope0_[0%;10%[_&_Status_valid:1",1.32648,1.91784,58.27498,-36.03861,1306.58569,12.44714,68871.8125,4.58626,8.36186,8.25597,985,2.78076
+"Slope0_[0%;10%[_&_Status_KO:2",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[0%;10%[_&_Status_Land:3",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[0%;10%[_&_Status_NoData:4",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[0%;10%[_&_Status_Outside_detector:5",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[10%;25%[_&_Status_valid:6",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[10%;25%[_&_Status_KO:7",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[10%;25%[_&_Status_Land:8",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[10%;25%[_&_Status_NoData:9",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[10%;25%[_&_Status_Outside_detector:10",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_valid:11",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_KO:12",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_Land:13",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_NoData:14",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_Outside_detector:15",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_valid:16",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_KO:17",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_Land:18",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_NoData:19",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_Outside_detector:20",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_valid:21",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_KO:22",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_Land:23",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_NoData:24",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_Outside_detector:25",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0

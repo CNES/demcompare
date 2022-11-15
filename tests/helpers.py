@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+#
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -31,7 +32,7 @@ import numpy as np
 import rasterio as rio
 
 # Define tests tolerance
-TEST_TOL = 1e-03
+TEST_TOL = 1e-02
 
 
 def demcompare_test_data_path(test_name: str) -> str:
@@ -41,22 +42,62 @@ def demcompare_test_data_path(test_name: str) -> str:
     :param test_name: name of test directory
     :returns: full absolute path to demcompare test data.
     """
-    # TODO: find why the path is unset from the second test
     # Verify that the current path is well set
     os.chdir(os.path.dirname(__file__))
 
-    # Get absolute path from this file in root_src_demcompare/tests/ + data
-    test_data_folder = os.path.join(os.path.dirname(__file__), "data")
+    # Get absolute path from this file
+    # in root_src_demcompare/tests/ + data/end_to_end_data
+
+    test_data_folder = os.path.join(
+        os.path.dirname(__file__), os.path.join("data", "end_to_end_data")
+    )
     return os.path.join(test_data_folder, test_name)
 
 
-def read_csv_file(csv_file: str) -> List[float]:
+def demcompare_path(directory_name: str) -> str:
+    """
+    Return full absolute path to demcompare's desired directory
+
+    :param folder_name: name of directory to be located
+     inside demcompare/demcompare
+    :returns: full absolute path to demcompare directory.
+    """
+    # Verify that the current path is well set
+    os.chdir(os.path.dirname(__file__))
+    dir_path = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
+    # Get absolute path from this file in
+    # root_src_demcompare/demcompare/ + directory_name
+    test_data_folder = os.path.join(dir_path, "demcompare")
+
+    return os.path.join(test_data_folder, directory_name)
+
+
+def notebooks_demcompare_path(notebook_name: str) -> str:
+    """
+    Return full absolute path to demcompare's desired directory
+
+    :param notebook_name: name of notebook to be located
+     inside demcompare/notebooks
+    :returns: full absolute path to notebooks directory.
+    """
+    # Verify that the current path is well set
+    os.chdir(os.path.dirname(__file__))
+    dir_path = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
+    # Get absolute path from this file in
+    # root_src_demcompare/demcompare/ + notebook_name
+    notebooks_folder = os.path.join(dir_path, "notebooks")
+
+    return os.path.join(notebooks_folder, notebook_name)
+
+
+def read_csv_file(csv_file: str) -> List[np.ndarray]:
     """
     Read a csv file and save its number values to float
 
     :param csv_file: path to a csv file
     :type csv_file: string
     :returns: List of floats of input csv file
+    :rtype: List[np.ndarray]
     """
     output_file = []
 

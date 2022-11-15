@@ -1,0 +1,46 @@
+{
+  "output_dir": "/output/",
+  "input_ref": {
+    "path": "/Gironde.tif",
+    "zunit": "m",
+    "georef": "WGS84",
+    "classification_layers": {
+			"Status": {"map_path": "./ref_status.tif"}
+    }
+  },
+  "input_sec": {
+    "path": "/FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
+    "zunit": "m",
+    "georef": "EPSG:32630",
+    "nodata": -32768
+  },
+  "mode": "coregistration",
+  "coregistration": {
+    "sampling_source": "ref",
+    "method_name": "nuth_kaab_internal",
+    "number_of_iterations": 6,
+    "estimated_initial_shift_x": 0,
+    "estimated_initial_shift_y": 0,
+    "save_optional_outputs": "True"
+  },
+  "statistics": {
+    "remove_outliers": "False",
+    "classification_layers": {
+      "Status": {
+        "type": "segmentation",
+        "ref": "ref_status.tif",
+        "classes": {
+          "sea": [
+            0
+          ],
+          "deep_land": [
+            1
+          ],
+          "coast": [
+            2
+          ]
+        }
+      }
+    }
+  }
+}

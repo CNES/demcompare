@@ -1,0 +1,97 @@
+{
+  "alti_results": {
+    "reproj_coreg_ref": {
+      "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_REF.tif",
+      "nodata": -32768,
+      "nb_points": 35422,
+      "nb_valid_points": 34057
+    },
+    "reproj_coreg_sec": {
+      "path": "TO/PATH/demcompare/test_output/coregistration/reproj_coreg_SEC.tif",
+      "nodata": -32768,
+      "nb_points": 35422,
+      "nb_valid_points": 10364
+    },
+    "dz": {
+      "dz_map_path": "TO/PATH/demcompare/test_output/final_dh.tif",
+      "total_bias_value": -3.40256,
+      "zunit": "m",
+      "percent": 28.7025,
+      "nodata": -32768,
+      "nb_points": 35422,
+      "nb_valid_points": 10167
+    }
+  },
+  "coregistration_results": {
+    "dx": {
+      "nuth_offset": -1.43664,
+      "total_offset": -1.43664,
+      "unit_offset": "px",
+      "total_bias_value": -718.31907,
+      "unit_bias_value": "m"
+    },
+    "dy": {
+      "nuth_offset": -0.41903,
+      "total_offset": -0.41903,
+      "unit_offset": "px",
+      "total_bias_value": -209.51619,
+      "unit_bias_value": "m"
+    },
+    "gdal_translate_bounds": {
+      "ulx": 599536.68093,
+      "uly": 5099954.51619,
+      "lrx": 708536.68093,
+      "lry": 4990954.51619
+    }
+  },
+  "stats_results": {
+    "images": {
+      "list": [
+        "row_wise",
+        "col_wise"
+      ],
+      "row_wise": {
+        "path": "TO/PATH/demcompare/test_output/dh_row_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 10167
+      },
+      "col_wise": {
+        "path": "TO/PATH/demcompare/test_output/dh_col_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 10167
+      }
+    },
+    "classification_layer_masks": {
+      "Slope0": {
+        "standard": {
+          "ref_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/ref_support_map.tif"
+          },
+          "sec_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/sec_support_map.tif"
+          }
+        }
+      },
+      "Status": {
+        "standard": {
+          "sec_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/demcompare/tests/data/gironde_test_data/input/FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF"
+          }
+        }
+      },
+      "fusion_layer": {
+        "standard": {
+          "sec_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/fusion_layer/sec_fusion_layer.tif"
+          }
+        }
+      }
+    }
+  }
+}

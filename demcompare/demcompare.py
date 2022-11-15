@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
-# PYTHON_ARGCOMPLETE_OK
 #
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
@@ -19,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# PYTHON_ARGCOMPLETE_OK
 """
 demcompare aims at coregistering and comparing two dsms
 """
@@ -27,7 +27,6 @@ demcompare aims at coregistering and comparing two dsms
 from __future__ import print_function
 
 import argparse
-import copy
 
 # Third party imports
 import argcomplete
@@ -35,15 +34,12 @@ import argcomplete
 # DEMcompare import
 import demcompare
 
-DEFAULT_STEPS = ["coregistration", "stats", "report"]
-ALL_STEPS = copy.deepcopy(DEFAULT_STEPS)
-
 
 def get_parser():
     """
     ArgumentParser for demcompare
-    :param None
-    :return parser
+
+    :return: parser
     """
     parser = argparse.ArgumentParser(
         description=("Compare Digital Elevation Models"),
@@ -60,31 +56,8 @@ def get_parser():
         ),
     )
     parser.add_argument(
-        "--step",
-        type=str,
-        nargs="+",
-        choices=ALL_STEPS,
-        default=DEFAULT_STEPS,
-        help='choose steps to run: "{}". Default: all.'
-        " See README for details.".format(
-            '" "'.join(str(i) for i in ALL_STEPS)
-        ),
-        metavar="step_name",
-    )
-    parser.add_argument(
-        "--display",
-        action="store_true",
-        help="choose between plot show and plot save. " "default: plot save",
-    )
-    parser.add_argument(
-        "--version",
-        "-v",
-        action="version",
-        version="%(prog)s {version}".format(version=demcompare.__version__),
-    )
-    parser.add_argument(
         "--loglevel",
-        default="WARNING",
+        default="INFO",
         choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
         help="Logger level (default: INFO. Should be one of "
         "(DEBUG, INFO, WARNING, ERROR, CRITICAL)",
@@ -99,9 +72,7 @@ def main():
     parser = get_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    demcompare.run(
-        args.config, args.step, display=args.display, loglevel=args.loglevel
-    )
+    demcompare.run(args.config, loglevel=args.loglevel)
 
 
 if __name__ == "__main__":

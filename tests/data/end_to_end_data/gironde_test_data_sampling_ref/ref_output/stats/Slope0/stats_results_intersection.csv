@@ -1,0 +1,6 @@
+"Set Name","mean","median","max","min","sum","percentil_90","squared_sum","nmad","rmse","std","nbpts","percent_valid_points"
+"[0%;10%[:0",0.04807,1.65037,55.3683,-49.06409,2790.38672,17.6937,5895165.0,5.33963,10.07728,10.07716,58051,6.25593
+"[10%;25%[:10",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"[25%;50%[:25",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"[50%;90%[:50",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"[90%;inf[:90",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0

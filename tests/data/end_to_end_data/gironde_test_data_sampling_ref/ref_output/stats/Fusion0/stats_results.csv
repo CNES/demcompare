@@ -1,0 +1,16 @@
+"Set Name","mean","median","max","min","sum","percentil_90","squared_sum","nmad","rmse","std","nbpts","percent_valid_points"
+"Slope0_[0%;10%[_&_Status_sea:1",26.05652,25.09911,59.24025,8.23831,50445.42969,12.55843,1443453.25,7.88869,27.30541,8.16352,1936,0.20864
+"Slope0_[0%;10%[_&_Status_deep_land:2",-9.87232,-8.50879,16.17525,-50.81603,-293000.5,15.43977,5848462.5,9.92778,14.03771,9.97971,29679,3.19839
+"Slope0_[0%;10%[_&_Status_coast:3",3.59373,2.95817,68.16121,-18.42142,188174.67188,9.82811,2965910.75,3.50792,7.52612,6.61268,52362,5.64285
+"Slope0_[10%;25%[_&_Status_sea:4",31.96144,29.81546,46.87021,21.69983,639.22888,10.29972,21339.7168,6.48327,32.66475,6.74182,20,0.00216
+"Slope0_[10%;25%[_&_Status_deep_land:5",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[10%;25%[_&_Status_coast:6",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_sea:7",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_deep_land:8",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_coast:9",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_sea:10",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_deep_land:11",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_coast:12",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_sea:13",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_deep_land:14",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_coast:15",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0

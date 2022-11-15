@@ -1,0 +1,41 @@
+<PAMDataset>
+    <Metadata>
+        <MDI key="AcquisitionTime">20200622T105631</MDI>
+        <MDI key="ChainVersions">{'bathycommun': '1.1', 'bathyvaguesmultibandes': '2.0', 'bathyinversionvagues':
+            '3.0'}
+        </MDI>
+        <MDI key="CreationDate">20211115T170648</MDI>
+        <MDI key="Dir">[283.16107]</MDI>
+        <MDI key="epsg">EPSG:32630</MDI>
+        <MDI key="HHAT">[2.615543]</MDI>
+        <MDI key="Hs">[1.8481889]</MDI>
+        <MDI key="idZone">T30TXR</MDI>
+        <MDI key="institution">CNES-LEGOS</MDI>
+        <MDI key="LatERA5">[45.5]</MDI>
+        <MDI key="LLAT">[-2.7495837]</MDI>
+        <MDI key="LonERA5">[-1.5]</MDI>
+        <MDI key="Proc_baseline">N0209</MDI>
+        <MDI key="Proc_level">MSIL1C</MDI>
+        <MDI key="Rel_Orbit">R094</MDI>
+        <MDI key="sat">S2A</MDI>
+        <MDI key="TidalRange">[5.3651266]</MDI>
+        <MDI key="Tide">[-1.5653722]</MDI>
+        <MDI key="tideModel">FES2014</MDI>
+        <MDI key="title">Wave parameters and bathymetry derived from satellite imagery, with tidal adjustment</MDI>
+        <MDI key="Tm">[8.14718]</MDI>
+        <MDI key="Tp">[11.411]</MDI>
+        <MDI key="TR_ind_extreme">[-0.56931245]</MDI>
+        <MDI key="TR_ind_MSL">[-0.58353597]</MDI>
+        <MDI key="waveEstimationMethod">SPATIAL_DFT</MDI>
+    </Metadata>
+    <PAMRasterBand band="1">
+        <Description>D_MSL</Description>
+        <Metadata>
+            <MDI key="STATISTICS_MAXIMUM">-4.1513237953186</MDI>
+            <MDI key="STATISTICS_MEAN">-25.796518781602</MDI>
+            <MDI key="STATISTICS_MINIMUM">-104.17195892334</MDI>
+            <MDI key="STATISTICS_STDDEV">10.438454992679</MDI>
+            <MDI key="STATISTICS_VALID_PERCENT">23.99</MDI>
+        </Metadata>
+    </PAMRasterBand>
+</PAMDataset>

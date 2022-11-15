@@ -1,0 +1,42 @@
+{
+  "output_dir": "./test_output/",
+  "input_ref": {
+    "path": "tests/tests_data/strm_test_data/srtm_ref.tif",
+    "zunit": "m",
+    "georef": "WGS84"
+  },
+  "input_sec": {
+    "path": "tests/tests_data/strm_test_data/srtm_blurred_and_shifted.tif",
+    "zunit": "m",
+    "georef": "WGS84",
+    "nodata": -32768,
+    "roi": {
+      "left": 40.5,
+      "bottom": 38.0,
+      "right": 44.0,
+      "top": 39.0
+    }
+  },
+  "coregistration": {
+    "method_name": "nuth_kaab_internal",
+    "number_of_iterations": 6,
+    "estimated_initial_shift_x": 0,
+    "estimated_initial_shift_y": 0,
+    "save_optional_outputs": "True"
+  },
+  "statistics": {
+    "classification_layers": {
+      "Slope0": {
+        "type": "slope",
+        "ranges": [
+          0,
+          5,
+          10,
+          25,
+          45
+        ]
+      }
+    },
+    "remove_outliers": "True"
+  }
+}

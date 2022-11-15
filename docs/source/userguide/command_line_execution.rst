@@ -3,9 +3,6 @@
 .. role:: bash(code)
    :language: bash
 
-Command line execution
-**********************
-
 Execution from the command line
 ===============================
 
@@ -15,45 +12,27 @@ Execution from the command line
 
     demcompare config_file.json #run demcompare
 
-All the parameters on *config_file.json* are described on :ref:`inputs`.
+The following code-block is an input configuration file example including both **coregistration** and **statistics** steps. These steps are optional.
+Remove one of them from the config file to prevent demcompare from running it.
 
-Step by step execution from the command line
-============================================
+.. code-block:: json
 
-**Demcompare** allows one to execute only a subset of the whole process. As such, a :bash:`--step` command line argument is
-provided. It accepts the values `coregistration`, `stats` and `report` :
+    "output_dir": "./test_output/",
+    "input_ref": {
+        "path": "./Gironde.tif",
+    },
+    "input_sec": {
+        "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
+      },
+    "coregistration": {
+        "coregistration_method": "nuth_kaab_internal",
+    }
+    "statistics": {
+        "remove_outliers": "False",
+    }
 
-.. code-block:: bash
+Configuration parameters are described in associated sub-sections:
 
-    [user@machine] $ demcompare
-    usage: demcompare [-h]
-      [--step step_name [step_name ...]]
-      [--display] [--version]
-      config.json
-
-- All the steps but **stats** are optional
-
-- **Demcompare** can start at any step as long as the previously required steps have been launched.
-
-  - This means that one can launch the report step only as long as the stats step has already been performed from a previous **demcompare** launch and the *config.json* remains the same.
-  - The steps are space-separated (no comma).
-
-.. note::  Coregistration step is **not** mandatory as one may consider that the DEMs are already coregistered.
-
-
-Optional parameters file
-========================
-
-**Demcompare** can be launched with a file containing its parameters (one per line) with "@" character:
-
-.. code-block:: bash
-
-    demcompare @opts.txt
-
-Where a possible *opts.txt* file would contain:
-
-.. code-block:: bash
-
-    test_config.json
-    --display
-
+    - :ref:`input_dem`
+    - :ref:`coregistration`
+    - :ref:`statistics`

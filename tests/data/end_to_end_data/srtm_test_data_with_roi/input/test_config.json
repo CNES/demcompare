@@ -1,0 +1,39 @@
+{
+  "output_dir": "./test_standard_output/",
+  "input_ref": {
+    "path": "./srtm_ref.tif",
+    "zunit": "m"
+  },
+  "input_sec": {
+    "path": "./srtm_blurred_and_shifted.tif",
+    "zunit": "m",
+    "nodata": -32768,
+    "roi": {
+      "left": 40.5,
+      "bottom": 38.0,
+      "right": 44.0,
+      "top": 41.0
+    }
+  },
+  "coregistration": {
+    "method_name": "nuth_kaab_internal",
+    "number_of_iterations": 6,
+    "estimated_initial_shift_x": 0,
+    "estimated_initial_shift_y": 0
+  },
+  "statistics": {
+    "classification_layers": {
+      "Slope0": {
+        "type": "slope",
+        "ranges": [
+          0,
+          5,
+          10,
+          25,
+          45
+        ]
+      }
+    },
+    "remove_outliers": "True"
+  }
+}

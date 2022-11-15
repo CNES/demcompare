@@ -11,6 +11,23 @@ VENV = "venv"
 DEMCOMPARE_VERSION = $(shell python3 setup.py --version)
 DEMCOMPARE_VERSION_MIN = $(shell echo ${DEMCOMPARE_VERSION} | cut -d . -f 1,2,3)
 
+PYTHON_VERSION_MIN = 3.7
+
+PYTHON=$(shell command -v python3)
+
+PYTHON_VERSION_CUR=$(shell $(PYTHON) -c 'import sys; print("%d.%d"% sys.version_info[0:2])')
+PYTHON_VERSION_OK=$(shell $(PYTHON) -c 'import sys; cur_ver = sys.version_info[0:2]; min_ver = tuple(map(int, "$(PYTHON_VERSION_MIN)".split("."))); print(int(cur_ver >= min_ver))')
+
+ifeq (, $(PYTHON))
+    $(error "PYTHON=$(PYTHON) not found in $(PATH)")
+endif
+
+ifeq ($(PYTHON_VERSION_OK), 0)
+    $(error "Requires python version >= $(PYTHON_VERSION_MIN). Current version is $(PYTHON_VERSION_CUR)")
+endif
+
+
+
 .PHONY: help venv install lint format test-ci test doc docker clean
 
 help: ## this help
@@ -23,7 +40,7 @@ venv: ## create virtualenv in "venv" dir if not exists
 	@touch ${VENV}/bin/activate
 
 install: venv  ## install environment for development target (depends venv)
-	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install -e .[dev,doc]
+	@test -f ${VENV}/bin/demcompare || ${VENV}/bin/pip install -e .[dev,doc,notebook]
 	@test -f .git/hooks/pre-commit || ${VENV}/bin/pre-commit install -t pre-commit
 	@test -f .git/hooks/pre-push || ${VENV}/bin/pre-commit install -t pre-push
 	@chmod +x ${VENV}/bin/register-python-argcomplete
@@ -39,6 +56,8 @@ lint: install  ## run lint tools (depends install)
 	@${VENV}/bin/flake8 demcompare tests
 	@echo "Demcompare linting pylint check"
 	@set -o pipefail; ${VENV}/bin/pylint demcompare tests --rcfile=.pylintrc --output-format=parseable | tee pylint-report.txt # pipefail to propagate pylint exit code in bash
+	@echo "Demcompare linting mypy check"
+	@${VENV}/bin/mypy demcompare tests
 
 format: install  ## run black and isort formatting (depends install)
 	@${VENV}/bin/isort demcompare tests
@@ -56,12 +75,23 @@ doc: install ## build sphinx documentation
 	@${VENV}/bin/sphinx-build -M clean docs/source/ docs/build
 	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build
 
+notebook: install ## install Jupyter notebook kernel with venv and demcompare install
+	@echo "Install Jupyter Kernel in virtualenv dir"
+	@${VENV}/bin/python -m ipykernel install --sys-prefix --name=demcompare-${DEMCOMPARE_VERSION_MIN} --display-name=demcompare-${DEMCOMPARE_VERSION_MIN}
+	@echo "Use jupyter kernelspec list to know where is the kernel"
+	@echo " --> After demcompare virtualenv activation, please use following command to launch local jupyter notebook to open demcompare Notebooks:"
+	@echo "jupyter notebook"
+
 docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"
 	@docker pull hadolint/hadolint
 	@docker run --rm -i hadolint/hadolint < Dockerfile
 	@echo "Build Docker image Demcompare ${DEMCOMPARE_VERSION_MIN}"
 	@docker build -t cnes/demcompare:${DEMCOMPARE_VERSION_MIN} -t cnes/demcompare:latest .
+
+test-notebook: install ## run notebook tests only
+	@echo "Please source ${VENV}/bin/activate before launching tests\n"
+	@${VENV}/bin/pytest -m "notebook_tests" -o log_cli=true -o log_cli_level=${LOGLEVEL}
 
 clean: ## clean: remove venv and all generated files
 	@rm -f .git/hooks/pre-commit

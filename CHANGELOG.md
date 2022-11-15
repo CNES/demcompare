@@ -4,13 +4,22 @@ Only the first "Unreleased" section of this file corresponding of next release c
 When publication of a new release, the section "Unreleased" is blocked to the next chosen version and name of the milestone at a given date.
 A new section Unreleased is opened then for next dev phase.
 
-## Unreleased
+## Version 1.0.0 Refactoring demcompare (November 2022)
 
 ### Added
+- Add coregistration notebook for demcompare users. [#107]
+- Add statistics notebook for demcompare users.[#108]
+- Refactoring validation plan. [#61]
 
 ### Changed
+- Refactoring image and dem tools with demcompare dataset. [#76]
+- Refactoring coregistration module. [#76]
+- Refactoring statistics module. [#77]
+- Refactoring init demcompare. [#78]
+- Update user docuentation. [#81]
 
 ### Fixed
+- Correct pixel filtering and add exception when outside of the geoid scope. [#86]
 
 ## 0.4.0 Bugs
 

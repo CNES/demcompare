@@ -1,0 +1,105 @@
+{
+  "alti_results": {
+    "interm_rectified_ref": {
+      "path": "TO/PATH/demcompare/test_output/coregistration/interm_coreg_REF.tif",
+      "nodata": -32768,
+      "nb_points": 927936,
+      "nb_valid_points": 927936
+    },
+    "interm_rectified_sec": {
+      "path": "TO/PATH/demcompare/test_output/coregistration/interm_coreg_SEC.tif",
+      "nodata": -32768,
+      "nb_points": 927936,
+      "nb_valid_points": 85312
+    },
+    "dz": {
+      "dz_map_path": "TO/PATH/demcompare/test_output/final_dh.tif",
+      "total_bias_value": -0.53005,
+      "zunit": "m",
+      "percent": 9.19374,
+      "nodata": -32768,
+      "nb_points": 927936,
+      "nb_valid_points": 85312
+    }
+  },
+  "coregistration_results": {
+    "dx": {
+      "nuth_offset": -1.08642,
+      "unit_offset": "px",
+      "total_bias_value": -543.21172,
+      "unit_bias_value": "m"
+    },
+    "dy": {
+      "nuth_offset": -0.22552,
+      "unit_offset": "px",
+      "total_bias_value": -112.76041,
+      "unit_bias_value": "m"
+    },
+    "gdal_translate_bounds": {
+      "ulx": 599711.78828,
+      "uly": 5099857.76041,
+      "lrx": 708711.78828,
+      "lry": 4990857.76041
+    }
+  },
+  "stats_results": {
+    "images": {
+      "list": [
+        "row_wise",
+        "col_wise"
+      ],
+      "row_wise": {
+        "path": "TO/PATH/demcompare/test_output/dh_row_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 85312
+      },
+      "col_wise": {
+        "path": "TO/PATH/demcompare/test_output/dh_col_wise_wave_detection.tif",
+        "zunit": "m",
+        "nodata": -32768,
+        "nb_valid_points": 85312
+      }
+    },
+    "classification_layer_masks": {
+      "slope": {
+        "strm_test_data": {
+          "ref_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/ref_support_map.tif"
+          },
+          "sec_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/Slope0/sec_support_map.tif"
+          }
+        },
+        "intersection-classification": {
+          "ref_support": null,
+          "sec_support": null
+        },
+        "exclusion-classification": {
+          "ref_support": null,
+          "sec_support": null
+        }
+      },
+      "Status": {
+        "strm_test_data": {
+          "ref_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/tests/data/classification_layer_sampling_ref/input/ref_status.tif"
+          },
+          "sec_support": null
+        }
+      },
+      "fusion_layer": {
+        "strm_test_data": {
+          "ref_support": {
+            "nodata": -32768.0,
+            "path": "TO/PATH/demcompare/test_output/stats/fusion_layer/ref_fusion_layer.tif"
+          },
+          "sec_support": null
+        }
+      }
+    }
+  }
+}

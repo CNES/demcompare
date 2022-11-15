@@ -4,7 +4,7 @@
    :language: bash
 
 
-Frenquently Asked Questions
+Frequently Asked Questions
 ===========================
 
 Installation troubleshootings
@@ -22,14 +22,4 @@ Depending on pip version, installation problems can happen with packages depende
     .. code-block:: bash
 
         python3 -m pip install --no-binary rasterio rasterio
-
-Step by step run troubleshootings
-*********************************
-
-.. note::  Be careful: the positional argument for the configuration file can be wrongly considered as a step if used after the :bash:`--step` option.
-
-    .. code-block:: bash
-
-        demcompare --step stats config.json : KO
-        demcompare config.json --step stats : OK
 
