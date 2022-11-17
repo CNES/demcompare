@@ -38,11 +38,6 @@ def get_parser() -> argparse.ArgumentParser:
         description="3D textured reconstruction from remote sensing point "
         "cloud"
     )
-    # parser.add_argument(
-    #     "config",
-    #     help="Path to a json file containing the input files paths and
-    #     algorithm parameters",
-    # )
 
     # Create subcommand parser
     subparsers = parser.add_subparsers(dest="command")
@@ -93,7 +88,8 @@ def main() -> None:
         mesh3d_evaluate.main(args.config)
 
     else:
-        raise NotImplementedError(f"Command '{args.command}' is unknown.")
+        # Print the help message
+        parser.parse_args(["-h"])
 
 
 if __name__ == "__main__":
