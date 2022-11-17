@@ -26,7 +26,11 @@ from typing import Union
 import matplotlib.tri as mtri
 import open3d as o3d
 from loguru import logger
-from scipy.spatial.qhull import Delaunay
+
+try:
+    from scipy.spatial.qhull import Delaunay
+except DeprecationWarning:
+    from scipy.spatial import Delaunay
 
 from ..core.denoise_pcd import compute_pcd_normals_o3d
 from ..tools.handlers import Mesh, PointCloud

@@ -179,11 +179,13 @@ def compute_pcd_normals(
     weights_distance: bool (default=False)
         Whether to add a weighting to the neighbours on the
         distance information
+        It is only available if 'use_open3d' is False
     sigma_d: float (default=0.5)
         If 'weights_distance' is True, it is the standard deviation over the
         spatial distance to use in the exponential weighting function
     weights_color: bool (default=False)
         Whether to add a weighting to the neighbours on the color information
+        It is only available if 'use_open3d' is False
     sigma_c: float (default=125.)
         If 'weights_color' is True, it is the standard deviation over the
         color distance to use in the exponential weighting function
@@ -217,6 +219,7 @@ def compute_pcd_normals(
 
         if neighbour_search_method == "knn":
             # Query the tree by knn for each point cloud data
+            # ind is of shape (num_points, num_neighbours)
             _, ind = tree.query(
                 pcd.df[["x", "y", "z"]].to_numpy(), k=knn, workers=workers
             )
@@ -236,30 +239,39 @@ def compute_pcd_normals(
         if weights_distance:
             # Weighting of the variance according to the distance to
             # the neighbours
+            # Fetch points' nearest neighbours coordinates
             data_tmp = tree.data[ind]
-            data_shape = np.shape(data_tmp)
-            data_duplicated = np.repeat(tree.data, data_shape[1], 0)
+            # Duplicate points' coordinates for vector operation
             data_duplicated = np.reshape(
-                np.ravel(data_duplicated),
-                (data_shape[0], data_shape[1], data_shape[2]),
+                np.repeat(tree.data, data_tmp.shape[1], 0), data_tmp.shape
             )
+            # Compute distance for each point of the cloud to each of its
+            # neighbours
             distance = data_tmp - data_duplicated
+            del data_tmp
+            del data_duplicated
             distance = np.linalg.norm(distance, axis=-1)
+            # Deduce the associated weights
             weights = weight_exp(distance, sigma_d)
 
         if weights_color:
             # Weighting of the variance according to the radiometric
             # difference with the neighbours
+            # Fetch the points' colors
             color_data = pcd.get_colors().to_numpy()
+            # Fetch points' nearest neighbours colors
             color_tmp = color_data[ind]
-            color_shape = np.shape(color_tmp)
-            color_duplicated = np.repeat(color_data, color_shape[1], 0)
+            # Duplicate points' colors for vector operation
             color_duplicated = np.reshape(
-                np.ravel(color_duplicated),
-                (color_shape[0], color_shape[1], color_shape[2]),
+                np.repeat(color_data, color_tmp.shape[1], 0), color_tmp.shape
             )
+            # Compute distance for each point of the cloud to each of its
+            # neighbours' colors
             distance = color_tmp - color_duplicated
+            del color_tmp
+            del color_duplicated
             distance = np.linalg.norm(distance, axis=-1)
+            # Deduce the associated weights
             weights = (
                 weight_exp(distance, sigma_c)
                 if weights is None
@@ -270,7 +282,8 @@ def compute_pcd_normals(
         for k, row in tqdm(
             enumerate(ind), desc="Normal computation by PCA per point"
         ):
-            results[k, :] = compute_point_normal(tree.data[row, :], weights[k])
+            weights_k = weights if weights is None else weights[k]
+            results[k, :] = compute_point_normal(tree.data[row, :], weights_k)
 
         # Add normals information to the dataframe
         pcd.df = pcd.df.assign(

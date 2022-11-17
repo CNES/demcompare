@@ -59,22 +59,31 @@ def test_mesh3d():
 # Poisson recontruction tests are missing (cf documentation and readme)
 def test_all_possible_combinations():
     """Test all the possible combinations (except poisson reconstruction)"""
+    # open config file to launch automatically the tests
     with open("tests/config_tests.json", "r", encoding="utf-8") as cfg_file:
         cfg = json.load(cfg_file)
 
+    # Loop on filtering methods
     for filtering_method in param.TRANSITIONS_METHODS["filter"]:
 
+        # Loop on denoising methods
         for denoise_method in param.TRANSITIONS_METHODS["denoise_pcd"]:
 
+            # Loop on meshing methods
             for mesh_method in param.TRANSITIONS_METHODS["mesh"]:
 
+                # Do not test poisson reconstruction because it changes the
+                # points' positions and thus creates outliers that make the
+                # texturing step fail
                 if mesh_method == "poisson":
                     continue
 
+                # Loop on mesh simplification methods
                 for simplify_mesh_method in param.TRANSITIONS_METHODS[
                     "simplify_mesh"
                 ]:
 
+                    # Loop on texturing methods
                     for texture_method in param.TRANSITIONS_METHODS["texture"]:
 
                         mesh_data = read_input_path(cfg["input_path"])
