@@ -6,7 +6,7 @@ This library was created by Lisa Vo Thanh (Magellium) and Chloé Thenoz (Magelli
 
 Copyright: CNES
 
-**Contact:** cars AT cnes.fr
+**Contact:** cars@cnes.fr
 
 .. toctree::
    :maxdepth: 2
@@ -25,8 +25,8 @@ Copyright: CNES
   apidoc/modules
 
 
-.. Indices and tables
-    ==================
-    * :ref:`genindex`
-    * :ref:`modindex`
-    * :ref:`search`
+Indices and tables
+==================
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
