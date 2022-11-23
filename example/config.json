@@ -1,6 +1,7 @@
 {
   "input_path": "example/point_cloud.laz",
   "output_dir": "example/output",
+  "output_name": "textured_mesh",
   "rpc_path": "example/rpc.XML",
   "tif_img_path": "example/texture_image.tif",
   "image_offset": [
@@ -12,6 +13,7 @@
     {
       "action": "filter",
       "method": "radius_o3d",
+      "save_output": true,
       "params": {
         "radius": 4,
         "nb_points": 25
@@ -20,6 +22,7 @@
     {
       "action": "denoise_pcd",
       "method": "bilateral",
+      "save_output": true,
       "params": {
         "num_iterations": 10,
         "neighbour_kdtree_dict": {
@@ -38,6 +41,7 @@
     {
       "action": "mesh",
       "method": "delaunay_2d",
+      "save_output": true,
       "params": {
         "method": "scipy"
       }
@@ -45,6 +49,7 @@
     {
       "action": "simplify_mesh",
       "method": "garland-heckbert",
+      "save_output": true,
       "params": {
         "reduction_ratio_of_triangles": 0.75
       }
