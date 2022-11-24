@@ -64,7 +64,7 @@ def test_reprojection_and_coregistration():
 
 
 @pytest.mark.unit_tests
-@pytest.mark.notebook_test
+@pytest.mark.notebook_tests
 def test_statistics():
     """
     Test that the reprojection_and_coregistration

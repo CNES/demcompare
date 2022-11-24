@@ -985,6 +985,10 @@ def test_coregistration_with_output_dir():
             _ = coregistration.Coregistration(cfg["coregistration"])
 
 
+# ignore runtime for encountered value
+# ignore runtime for Degrees of freedom <= 0
+# ignore runtime for Mean of empty slice
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_coregistration_with_wrong_initial_disparities():
     """
     Test invalid initial disparity value
