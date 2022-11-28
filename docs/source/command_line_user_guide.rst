@@ -7,7 +7,7 @@ Command line
 You can run too functions with the ``mesh3d`` cli:
 
 * ``mesh3d reconstruct`` launches the 3D reconstruction pipeline according to the user specifications
-* ``mesh3d evaluate`` computes metrics between two point clouds and saves visuals for qualitative analysis
+* ``mesh3d evaluate`` computes metrics between two point clouds and saves visuals for qualitative analysis (If an input is a mesh, its vertices will be used for comparison)
 
 Reconstruct
 ===========
@@ -17,25 +17,30 @@ To launch the 3D reconstruction pipeline, you first need to configure it in a JS
 .. code-block:: JSON
 
     {
-      "input_path": "/path/to/input/data.las",
-      "output_dir": "/path/to/output_dir",
-      "initial_state": "initial_pcd",
-      "tif_img_path": "/path/to/tif_img_texture.tif",
-      "rpc_path": "/path/to/rpc.XML",
-      "image_offset": null,
+      "input_path": "example/point_cloud.laz",
+      "output_dir": "example/output_reconstruct",
+      "output_name": "textured_mesh",
+      "rpc_path": "example/rpc.XML",
+      "tif_img_path": "example/texture_image.tif",
+      "image_offset": [
+        15029,
+        17016
+      ],
       "utm_code": 32631,
       "state_machine": [
         {
           "action": "filter",
           "method": "radius_o3d",
+          "save_output": true,
           "params": {
-            "radius":  2,
-            "nb_points": 12
+            "radius": 4,
+            "nb_points": 25
           }
         },
         {
           "action": "denoise_pcd",
           "method": "bilateral",
+          "save_output": true,
           "params": {
             "num_iterations": 10,
             "neighbour_kdtree_dict": {
@@ -54,6 +59,7 @@ To launch the 3D reconstruction pipeline, you first need to configure it in a JS
         {
           "action": "mesh",
           "method": "delaunay_2d",
+          "save_output": true,
           "params": {
             "method": "scipy"
           }
@@ -61,12 +67,13 @@ To launch the 3D reconstruction pipeline, you first need to configure it in a JS
         {
           "action": "simplify_mesh",
           "method": "garland-heckbert",
+          "save_output": true,
           "params": {
             "reduction_ratio_of_triangles": 0.75
           }
         },
         {
-          "action":  "texture",
+          "action": "texture",
           "method": "texturing",
           "params": {}
         }
@@ -74,15 +81,21 @@ To launch the 3D reconstruction pipeline, you first need to configure it in a JS
     }
 
 
+
 Where:
 
 * ``input_path``: Filepath to the input. Should either be a point cloud or a mesh.
 * ``output_dir``: Directory path to the output folder where to save results.
+* ``output_name`` (optional, default=```output_mesh3d```): Name of the output mesh file (without extension)
 * ``initial_state`` (optional, default= ```initial_pcd```): Initial state in the state machine. If you input a point cloud, it should be ```initial_pcd```. If you input a mesh, it could either be ```initial_pcd``` (you can compute new values over the points) or ```meshed_pcd``` (if for instance you only want to texture an already existing mesh).
 * ``state_machine``: List of steps to process the input according to a predefined state machine (see below). Each step has three possible keys:``action`` (str) which corresponds to the trigger name, ``method`` (str) which specifies the method to use to do that step (possible methods are available in the ``/mesh3d/param.py`` file, by default it is the first method that is selected), ``params`` (dict) which specifies in a dictionary the parameters for each method.
 
 .. image:: images/fig_state_machine.png
     :alt: Mesh 3D State Machine
+
+For each step, you can specify whether to save the intermediate output to disk.
+To do so, in the step dictionary, you need to specify a key `save_output` as `true` (by default, it is `false`).
+It will create a folder in the output directory named "intermediate_results" where these intermediate results will be saved.
 
 
 If a texturing step is specified, then the following parameters become mandatory:
@@ -102,28 +115,28 @@ Finally, you can launch the following commands to activate the virtual environme
 .. code-block:: bash
 
     source /venv/bin/activate
-    mesh3d reconstruct /path/to/config.json
+    mesh3d reconstruct /path/to/config_reconstruct.json
 
 
 Evaluate
 ========
 
-The evaluation function computes a range of metrics between two point clouds and outputs visuals for
-qualitative analysis.
 
-Configure the pipeline in a JSON file like the following:
+The evaluation function computes a range of metrics between two point clouds and outputs visuals for
+qualitative analysis. If an input is a mesh, its vertices will be used for comparison.
+
+Configure the pipeline in a JSON file `/path/to/config_evaluate.json`:
 
 .. code-block:: JSON
 
     {
-      "input_path_1": "/path/to/point_cloud/or/mesh_1.ply",
-      "input_path_2": "/path/to/point_cloud/or/mesh_2.ply",
-      "output_dir": "/path/to/output_dir"
+      "input_path_1": "example/point_cloud.laz",
+      "input_path_2": "example/output/textured_mesh.ply",
+      "output_dir": "example/output_evaluate"
     }
 
 
 Where:
-
 * ``input_path_1``: Filepath to the first input. Should either be a point cloud or a mesh.
 * ``input_path_2``: Filepath to the second input. Should either be a point cloud or a mesh.
 * ``output_dir``: Directory path to the output folder where to save results.
@@ -132,5 +145,8 @@ Finally, you can launch the following commands to activate the virtual environme
 
 .. code-block:: bash
 
-    source /venv/bin/activate
-    mesh3d evaluate /path/to/config.json
+    source venv/bin/activate
+    mesh3d evaluate /path/to/config_evaluate.json
+
+
+*N.B.: To run the example above, you need to run the example reconstruction pipeline first (cf previous section)*

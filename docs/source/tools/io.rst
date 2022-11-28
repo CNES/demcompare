@@ -12,7 +12,9 @@ A limited amount of input/output formats are handled:
 
 .. note::
 
-    Visualisation should be done with CloudCompare or MeshLab. Other applications may not work.
+    Visualisation should be done with CloudCompare, MeshLab or potree. Other applications may not work.
+    If the coloured point cloud appears black (or mono-coloured), it might be because the colours
+    were not normalized as 8bits. RGB bands should be processed before visualization.
 
 
 .. warning::
