@@ -53,7 +53,7 @@ it dynamically).
     source /path/to/desired/folder/NAME_OF_VENV/bin/activate
 
     # Update pip and setuptools package
-    python -m pip --upgrade pip setuptools
+    python -m pip install --upgrade pip setuptools
 
     # Clone library repository
     # Make sure to check the right way to do it, whether you are internal or external to CNES
