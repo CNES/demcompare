@@ -171,9 +171,9 @@ def local_density_analysis(
     proba_thresh: float (default = None)
         Probability threshold of a point to be an outlier. If 'None', then it
         is computed automatically per point as:
-            proba_thresh_i = 0.1 * dist_average_i
-                with dist_average_i: Average distance of the point i to its
-                neighbours
+        proba_thresh_i = 0.1 * dist_average_i
+        with dist_average_i: Average distance of the point i to its
+        neighbours
 
     Returns
     -------

@@ -262,7 +262,7 @@ def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
                         cfg["output_dir"], "intermediate_results"
                     )
                     os.makedirs(intermediate_folder, exist_ok=True)
-                    if not os.listdir(intermediate_folder):
+                    if k == 0 and os.listdir(intermediate_folder):
                         logger.warning(
                             f"Directory '{intermediate_folder}' is not empty. "
                             f"Some files might be overwritten."
@@ -339,7 +339,7 @@ def main(cfg_path: str) -> None:
     out_mesh = run(mesh3d_machine, cfg)
 
     # Serialize data
-    # Check if user specified aan output name
+    # Check if user specified an output name
     # otherwise assign a default one
     if "output_name" not in cfg:
         cfg["output_name"] = "output_mesh3d"  # default output name

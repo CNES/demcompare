@@ -146,9 +146,9 @@ class Mesh3DMachine(Machine):
         """
         Run mesh 3d step by triggering the corresponding machine transition
 
-        Parameter
-        --------
-        input_step: str
+        Parameters
+        ----------
+        step: str
             Name of the step to trigger
         cfg: dict
             Configuration dictionary

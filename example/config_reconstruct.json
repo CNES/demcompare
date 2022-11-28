@@ -1,6 +1,6 @@
 {
   "input_path": "example/point_cloud.laz",
-  "output_dir": "example/output",
+  "output_dir": "example/output_reconstruct",
   "output_name": "textured_mesh",
   "rpc_path": "example/rpc.XML",
   "tif_img_path": "example/texture_image.tif",
