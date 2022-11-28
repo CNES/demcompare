@@ -42,6 +42,7 @@ from .helpers import TEST_TOL, demcompare_test_data_path, temporary_dir
 
 
 @pytest.mark.end2end_tests
+@pytest.mark.functional_tests
 def test_demcompare_coregistration_step_with_gironde_test_data():
     """
     Demcompare with gironde_test_data coregistration test.
@@ -162,6 +163,7 @@ def test_demcompare_coregistration_step_with_gironde_test_data():
 
 
 @pytest.mark.end2end_tests
+@pytest.mark.functional_tests
 def test_demcompare_statistics_step_with_gironde_test_data():
     """
     Demcompare with gironde_test_data running directly the
@@ -232,6 +234,7 @@ def test_demcompare_statistics_step_with_gironde_test_data():
 
 
 @pytest.mark.end2end_tests
+@pytest.mark.functional_tests
 def test_demcompare_statistics_step_input_ref_with_gironde_test_data():
     """
     Demcompare with gironde_test_data running directly the
