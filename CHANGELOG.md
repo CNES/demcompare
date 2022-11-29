@@ -12,8 +12,12 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Fixed
 
-## 0.1.0 First Official Release (2022-06-27)
+## 0.1.0 First Official Release (2022-11-29)
 
 ### Added
-- Add mesh3d features
-- Detail the release !!
+- Add mesh3d first features to generate mesh from point clouds
+- User guide and features documentation
+- Simple installation
+- First end to end test
+- Code quality with pylint, flake8, isort, black
+- some fixes to have a first experimental usable tool
