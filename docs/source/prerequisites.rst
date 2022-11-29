@@ -10,8 +10,11 @@ Input data is expected to follow some rules to be handled by the pipeline.
 Point cloud/Mesh coordinate system
 -----------------------------------
 
-An input point or mesh is assumed to be expressed in an appropriate **UTM coordinate system**.
+For the reconstruction pipeline, an input point or mesh is assumed to be expressed in an appropriate **UTM coordinate system**.
 If it is not the case, one can use the function ``change_frame`` in ``tools/point_cloud_io.py`` to do the conversion.
+
+For the evaluation pipeline, both inputs need to be in the same frame for consistency, but not necessarily in UTM (could be in Lambert93 for instance).
+This frame should be chosen wisely since the euclidean distance needs to make sense in this frame for the metrics to be meaningful.
 
 
 Input and output format

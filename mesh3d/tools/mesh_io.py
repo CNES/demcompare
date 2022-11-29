@@ -112,11 +112,10 @@ def mesh2ply(filepath: str, mesh: Mesh, compressed: bool = True):
     # pcd_io.df2las(filepath_pcd, dict_pcd_mesh["pcd"])
 
     # Write mesh in PLY file
-    filepath_mesh = filepath[:-4] + "_mesh.ply"
-    if mesh.has_texture:
-        serialize_ply_texture(filepath_mesh, mesh)
+    if mesh.df is not None and mesh.has_texture:
+        serialize_ply_texture(filepath, mesh)
     else:
-        write_triangle_mesh_o3d(filepath_mesh, mesh, compressed=compressed)
+        write_triangle_mesh_o3d(filepath, mesh, compressed=compressed)
 
 
 # -------------------------------------------------------------------------- #

@@ -7,9 +7,9 @@ Metrics
 In order to compare two data or quantify the contribution of the processings, some general metrics are implemented
 as well as a visualisation tool.
 
-The tools developed compare two point clouds, not meshes. Metrics over meshes are too complex for this study.
-Metro tool based on the VCG Lib can be used to extract mesh metrics. However, the visuals generation has a bug (reported
-in a github issue). Since this study focused on point cloud processing, it makes sense to focus on point clouds.
+The tools developed compare two point clouds, not the faces of meshes (if a mesh is input, its vertices are used for comparison).
+Faces comparison is not implemented for now. `Metro <http://vcg.isti.cnr.it/vcglib/metro.html>`_ tool based on the VCG Lib can be used to extract mesh metrics. However, the visuals generation has a bug (reported
+in a github issue).
 
 Point Cloud Quantification
 ==========================
@@ -17,7 +17,7 @@ Point Cloud Quantification
 Quantify the contribution of processings is an important subject. However, the right way to compare two point clouds
 or meshes is not obvious. To our knowledge, no simple metric allows to capture all the complexity of 3D information.
 
-There are two ways of computing the metrics:
+Two ways of computing metrics are implemented:
 
 * with a **point to point** approach : For each point in the cloud, its nearest neighbour (in the euclidean distance sense) is retrieved and the distance between the points is used to compute the statistics.
 * with a **point to surface** approach : For each point in the cloud, its nearest neighbour (in the euclidean distance sense) is retrieved and projected onto the line defined by the point in the cloud and its local normal. The projected distance is then used to compute the statistics.

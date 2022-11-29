@@ -244,10 +244,57 @@ def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
 
         # Browse user defined steps and execute them
         for k, step in enumerate(cfg["state_machine"]):
+
+            # Logger
             logger.info(
                 f"Step #{k + 1}: {step['action']} with {step['method']} method"
             )
+
+            # Run action
             mesh3d_machine.run(step, cfg)
+
+            # (Optional) Save intermediate results to disk if asked
+            if "save_output" in step:
+                if step["save_output"]:
+
+                    # Create directory to save intermediate results
+                    intermediate_folder = os.path.join(
+                        cfg["output_dir"], "intermediate_results"
+                    )
+                    os.makedirs(intermediate_folder, exist_ok=True)
+                    if k == 0 and os.listdir(intermediate_folder):
+                        logger.warning(
+                            f"Directory '{intermediate_folder}' is not empty. "
+                            f"Some files might be overwritten."
+                        )
+
+                    # Save intermediates results
+                    intermediate_filepath = os.path.join(
+                        intermediate_folder,
+                        f"{(str(k+1)).zfill(2)}"
+                        f"_{step['action']}"
+                        f"_{step['method']}",
+                    )
+                    if mesh3d_machine.mesh_data.df is not None:
+                        # Mesh serialisation
+                        extension = "ply"
+                        mesh3d_machine.mesh_data.serialize(
+                            filepath=intermediate_filepath + "." + extension,
+                            extension=extension,
+                        )
+                    else:
+                        # Point cloud serialisation
+                        extension = "laz"
+                        mesh3d_machine.mesh_data.pcd.serialize(
+                            filepath=intermediate_filepath + "." + extension,
+                            extension=extension,
+                        )
+
+                    # Logger debug
+                    logger.debug(
+                        f"Step #{k + 1}: Results saved in "
+                        f"'{intermediate_filepath  + '.' + extension}'."
+                    )
 
     return mesh3d_machine.mesh_data
 
@@ -292,18 +339,24 @@ def main(cfg_path: str) -> None:
     out_mesh = run(mesh3d_machine, cfg)
 
     # Serialize data
+    # Check if user specified an output name
+    # otherwise assign a default one
+    if "output_name" not in cfg:
+        cfg["output_name"] = "output_mesh3d"  # default output name
+    # If data is only a point cloud, prefer output extension 'laz'
+    # otherwise use 'ply'
+    extension = "ply" if out_mesh.df is not None else "laz"
+    out_filename = cfg["output_name"] + "." + extension
+
     if out_mesh.df is not None:
-        extension = "ply"
-        out_filename = "processed_mesh." + extension
+        # Mesh Serialisation
         out_mesh.serialize(
             filepath=os.path.join(cfg["output_dir"], out_filename),
             extension=extension,
         )
         logger.info(f"Mesh serialized as a '{extension}' file")
-
     else:
-        extension = "las"
-        out_filename = "processed_point_cloud." + extension
+        # Point Cloud Serialisation
         out_mesh.pcd.serialize(
             filepath=os.path.join(cfg["output_dir"], out_filename),
             extension=extension,

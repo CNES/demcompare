@@ -124,7 +124,7 @@ lint/pylint: ## check linting with pylint
 docs: install ## generate Sphinx HTML documentation, including API docs
 	@${VENV}/bin/sphinx-build -M clean docs/source/ docs/build
 	@${VENV}/bin/sphinx-apidoc -o docs/source/apidoc/ mesh3d
-	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build
+	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build --keep-going
 	$(BROWSER) docs/build/html/index.html
 
 ## Notebook section

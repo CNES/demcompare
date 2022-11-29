@@ -1,0 +1,6 @@
+{
+  "input_path_1": "example/point_cloud.laz",
+  "input_path_2": "example/output/textured_mesh.ply",
+  "output_dir": "example/output_evaluate"
+}
+

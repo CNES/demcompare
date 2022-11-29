@@ -302,14 +302,18 @@ def texturing(mesh: Mesh, cfg: dict) -> Mesh:
     cfg: dict:
         Configuration dictionary. The algorithm retrieves the following
         information:
+
         * output_dir: Str
-            Output directory to write the new texture image.
+          Output directory to write the new texture image.
+
         * rpc_path: Str
-            Path to the xml rpc file.
+          Path to the xml rpc file.
+
         * tif_img_path: Str
-            Path to the TIF image.
+          Path to the TIF image.
+
         * utm_code: int
-            UTM code of the point cloud
+          UTM code of the point cloud
 
     Returns
     -------

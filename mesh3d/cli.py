@@ -29,7 +29,6 @@ def get_parser() -> argparse.ArgumentParser:
     ArgumentParser for Mesh 3D
 
     Returns
-    -------
     parser
     """
 

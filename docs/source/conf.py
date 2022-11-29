@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+# pylint: disable-all
+# #!/usr/bin/env python
 #
 #
 # This file is execfile()d with the current directory set to its
@@ -63,6 +64,7 @@ extensions = [
     "sphinx.ext.mathjax",  # Add rst math capabilities with :math:
     "sphinx.ext.autodoc",  # apidoc automatic generation
     "sphinx.ext.viewcode",  # viewcode in automatic apidoc
+    "sphinx.ext.napoleon",  # to read the numpy doc format
 ]
 
 # Add any paths that contain templates here, relative to this directory.

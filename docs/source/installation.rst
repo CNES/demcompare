@@ -19,7 +19,7 @@ Git clone the repository, open a terminal and launch the following commands:
     # Make sure to check the right way to do it, whether you are internal or external to CNES
     # Internal: https://confluence.cnes.fr/pages/viewpage.action?pageId=26166114
     # External: https://confluence.cnes.fr/pages/viewpage.action?pageId=26159013
-    git clone git@gitlab.cnes.fr:cars/etudes/rt_mesh3d.git .
+    git clone git@gitlab.cnes.fr:3d/tools/mesh3d.git .
 
     # Install
     make install
@@ -53,13 +53,13 @@ it dynamically).
     source /path/to/desired/folder/NAME_OF_VENV/bin/activate
 
     # Update pip and setuptools package
-    python -m pip --upgrade pip setuptools
+    python -m pip install --upgrade pip setuptools
 
     # Clone library repository
     # Make sure to check the right way to do it, whether you are internal or external to CNES
     # Internal: https://confluence.cnes.fr/pages/viewpage.action?pageId=26166114
     # External: https://confluence.cnes.fr/pages/viewpage.action?pageId=26159013
-    git clone git@gitlab.cnes.fr:cars/etudes/rt_mesh3d.git .
+    git clone git@gitlab.cnes.fr:3d/tools/mesh3d.git .
 
     # Install the mesh3d lib in dev mode with the dev and doc tools
     python -m pip install -e .[dev,docs]

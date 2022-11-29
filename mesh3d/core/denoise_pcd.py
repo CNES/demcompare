@@ -314,16 +314,21 @@ def bilateral_filtering(
     neighbour_kdtree_dict: dict (default=None)
         Dictionary to define the kdtree options to encode the distance between
         points:
-        * neighbour_search_method: str (default="knn")
-            Neighbour search method
-        * knn: int (default=30)
-            If "neighbour_search_method" is "knn", number of neighbours to
-            consider
-        * radius: float (default=5.)
-            If "neighbour_search_method" is "ball", ball radius in which to
-            find the neighbours
-        * num_workers_kdtree: int (default=1)
-            Number of workers to query the KDtree (neighbour search)
+
+        * neighbour_search_method: str (default="knn").
+          Neighbour search method
+
+        * knn: int (default=30).
+          If "neighbour_search_method" is "knn", number of neighbours to
+          consider
+
+        * radius: float (default=5.).
+          If "neighbour_search_method" is "ball", ball radius in which to
+          find the neighbours
+
+        * num_workers_kdtree: int (default=1).
+          Number of workers to query the KDtree (neighbour search)
+
     sigma_d: float (default=0.5)
         Variance on the distance between a point and its neighbours
     sigma_n: float (default=0.5)
@@ -332,28 +337,34 @@ def bilateral_filtering(
     neighbour_normals_dict: dict (default=None)
         Dictionary to define the configuration to compute normals according
         to the ones of the neighbours
-        * neighbour_search_method_normals: str (default="knn")
-            Neighbour search method to compute the normals at each point
-        * knn_normals: int (default=30)
-            If "neighbour_search_method_normals" is "knn", number of neighbours
-            to consider
-        * radius_normals: float (default=5.)
-            If "neighbour_search_method_normals" is "ball", ball radius in
-            which to find the neighbours
-        * weights_distance: bool (default=False)
-            Whether to add a weighting to the neighbours on the distance
-            information
-            Only available if 'use_open3d' is False
-        * weights_color: bool (default=False)
-            Whether to add a weighting to the neighbours on the color
-            information. Only available if 'use_open3d' is False
-        * use_open3d: bool (default=False)
-            Whether to use open3d normal computation instead. No weighting is
-            applied to neighbours in that case.
+
+        * neighbour_search_method_normals: str (default="knn").
+          Neighbour search method to compute the normals at each point
+
+        * knn_normals: int (default=30).
+          If "neighbour_search_method_normals" is "knn", number of neighbours
+          to consider
+
+        * radius_normals: float (default=5.).
+          If "neighbour_search_method_normals" is "ball", ball radius in
+          which to find the neighbours
+
+        * weights_distance: bool (default=False).
+          Whether to add a weighting to the neighbours on the distance
+          information
+          Only available if 'use_open3d' is False
+
+        * weights_color: bool (default=False).
+          Whether to add a weighting to the neighbours on the color
+          information. Only available if 'use_open3d' is False
+
+        * use_open3d: bool (default=False).
+          Whether to use open3d normal computation instead. No weighting is
+          applied to neighbours in that case.
+
     num_chunks: int (default=1)
         Number of chunks to apply bilateral processing (to fit in memory since
         it is optimized as vectorial calculus).
-
 
     Returns
     -------
