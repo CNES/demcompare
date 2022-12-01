@@ -1045,6 +1045,9 @@ def test_compute_stats_from_cfg_slope(initialize_stats_processing_with_metrics):
 
 
 @pytest.mark.unit_tests
+# Assigning the 'data' attribute will be removed in the future
+# since 2017, seems to have no workaround
+@pytest.mark.filterwarnings("ignore::DeprecationWarning:")
 def test_statistics_output_dir():
     """
     Test that demcompare's execution with
