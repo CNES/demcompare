@@ -1,25 +1,52 @@
+#!/usr/bin/env python
+# coding: utf8
+# Disable the protected-access to test the functions
+# pylint:disable=protected-access
+#
+# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+#
+# This file is part of demcompare
+# (see https://github.com/CNES/demcompare).
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""
+utils functions for plotting in notebooks
+"""
+
+import itertools
+import random
+
 import numpy as np
-import xarray
 import xarray as xr
 from bokeh.colors import RGB
 from bokeh.io import output_notebook, show
 from bokeh.layouts import row
 from bokeh.models import BasicTicker, ColorBar, Legend, LinearColorMapper
+from bokeh.palettes import RdYlGn
 from bokeh.plotting import figure
 from matplotlib.colors import LinearSegmentedColormap
-from bokeh.palettes import RdYlGn
-import itertools
-import random
 
 
-def demcompare_cmap(colors: list = ["palegreen", "green", "lightcoral", "darkred"], color: int = None,) -> LinearSegmentedColormap:
+def demcompare_cmap(
+    color: int = None,
+) -> LinearSegmentedColormap:
     """
     Create a LinearSegmentedColormap from a list of colors.
-    :param colors: List of 4 colors
-    :type colors: list
+    :param color: List of 4 colors
+    :type color: list
     :return: LinearSegmentedColormap
     """
-
+    colors = ["palegreen", "green", "lightcoral", "darkred"]
     nodes = [0.0, 0.4, 0.5, 1.0]
     cmap_shift = LinearSegmentedColormap.from_list(
         "mycmap", list(zip(nodes, colors))
@@ -27,8 +54,8 @@ def demcompare_cmap(colors: list = ["palegreen", "green", "lightcoral", "darkred
 
     if color is not None:
         return cmap_shift(color)
-    else:
-        return cmap_shift
+
+    return cmap_shift
 
 
 def cmap_to_palette(cmap: LinearSegmentedColormap) -> list:
@@ -49,7 +76,6 @@ def stack_dems(
     legend_ref: str = "Ref DEM",
     legend_sec: str = "Second DEM",
     legend_extra: str = "Sample Sec",
-    colorbar: bool = False,
 ) -> figure:
     """
     Allows the user to view three stacked DEMs.
@@ -88,8 +114,10 @@ def stack_dems(
         title=title,
         width=800,
         height=450,
-        tools=["reset", "pan", "box_zoom"],
+        tools=["reset", "pan", "box_zoom", "save"],
         output_backend="webgl",
+        x_axis_label="latitude",
+        y_axis_label="longitude",
     )
 
     dem_ref_img = fig.image(
@@ -127,26 +155,22 @@ def stack_dems(
     legend = Legend(items=legend_items, location="center", click_policy="hide")
     fig.add_layout(legend, "right")
 
-    if colorbar:
-        color_bar = ColorBar(
-            color_mapper=mapper_avec_opti,
-            ticker=BasicTicker(),
-            label_standoff=12,
-            border_line_color=None,
-            location=(0, 0),
-        )
-        fig.add_layout(color_bar, "right")
+    color_bar = ColorBar(
+        color_mapper=mapper_avec_opti,
+        ticker=BasicTicker(),
+        label_standoff=12,
+        border_line_color=None,
+        location=(0, 0),
+        title="Altitudes (m)"
+    )
+    fig.add_layout(color_bar, "left")
 
     return fig
 
 
 def side_by_side_fig(
-    input_ref: xr.Dataset,
-    input_sec: xr.Dataset,
-    title_ref: str,
-    title_sec: str,
-    colorbar=True,
-) -> None:
+    input_ref: xr.Dataset, input_sec: xr.Dataset, title_ref: str, title_sec: str
+) -> row:
     """
     Show two figures side by side
     :param input_ref: DEMS
@@ -180,22 +204,22 @@ def side_by_side_fig(
         nan_color=(0, 0, 0, 0),
     )
 
-    dw = input_ref["image"].shape[1]
-    dh = input_ref["image"].shape[0]
+    d_w = input_ref["image"].shape[1]
+    d_h = input_ref["image"].shape[0]
 
     first_fig = figure(
         title=title_ref,
         width=480,
         height=450,
-        tools=["reset", "pan", "box_zoom"],
+        tools=["reset", "pan", "box_zoom", "save"],
         output_backend="webgl",
     )
     first_fig.image(
         image=[np.flip(input_ref["image"].data, 0)],
         x=1,
         y=0,
-        dw=dw,
-        dh=dh,
+        dw=d_w,
+        dh=d_h,
         color_mapper=mapper_avec_opti,
     )
 
@@ -203,31 +227,32 @@ def side_by_side_fig(
         title=title_sec,
         width=480,
         height=450,
-        tools=["reset", "pan", "box_zoom"],
+        tools=["reset", "pan", "box_zoom", "save"],
         output_backend="webgl",
     )
     second_fig.image(
         image=[np.flip(input_sec["image"].data, 0)],
         x=1,
         y=0,
-        dw=dw,
-        dh=dh,
+        dw=d_w,
+        dh=d_h,
         color_mapper=mapper_avec_opti,
     )
 
-    if colorbar:
-        color_bar = ColorBar(
-            color_mapper=mapper_avec_opti,
-            ticker=BasicTicker(),
-            label_standoff=12,
-            border_line_color=None,
-            location=(0, 0),
-        )
-        first_fig.add_layout(color_bar, "right")
-        second_fig.add_layout(color_bar, "right")
+    color_bar = ColorBar(
+        color_mapper=mapper_avec_opti,
+        ticker=BasicTicker(),
+        label_standoff=12,
+        border_line_color=None,
+        location=(0, 0),
+        title="Altitudes (m)"
+    )
+    first_fig.add_layout(color_bar, "left")
+    second_fig.add_layout(color_bar, "left")
 
-    layout = row(first_fig, second_fig)
-    show(layout)
+    layout = row([first_fig, second_fig])  # type:ignore
+
+    return layout
 
 
 def show_dem(
@@ -257,22 +282,22 @@ def show_dem(
         nan_color=(0, 0, 0, 0),
     )
 
-    dw = input_ref["image"].shape[1]
-    dh = input_ref["image"].shape[0]
+    d_w = input_ref["image"].shape[1]
+    d_h = input_ref["image"].shape[0]
 
     first_fig = figure(
         title=title_ref,
         width=480,
         height=450,
-        tools=["reset", "pan", "box_zoom"],
+        tools=["reset", "pan", "box_zoom", "save"],
         output_backend="webgl",
     )
     first_fig.image(
         image=[np.flip(input_ref["image"].data, 0)],
         x=1,
         y=0,
-        dw=dw,
-        dh=dh,
+        dw=d_w,
+        dh=d_h,
         color_mapper=mapper_avec_opti,
     )
 
@@ -282,6 +307,7 @@ def show_dem(
         label_standoff=12,
         border_line_color=None,
         location=(0, 0),
+        title="Altitudes (m)"
     )
     first_fig.add_layout(color_bar, "right")
 
@@ -297,14 +323,20 @@ def plot_cdf_pdf(datas: np.ndarray, title_fig: str) -> None:
     :type title_fig: str
     """
     output_notebook()
-    fig = figure(title=title_fig)
+    fig = figure(title=title_fig,
+                 tools=["reset", "pan", "box_zoom", "save"])
+
     if title_fig not in ("pdf", "cdf"):
         print(f"{title_fig} is not an available option")
         show(fig)
     else:
-        fig.line(datas[0][1], np.insert(datas[0][0], 0, 0), legend_label=title_fig)
+        fig.line(
+            datas[0][1], np.insert(datas[0][0], 0, 0), legend_label=title_fig
+        )
         if title_fig == "pdf":
-            fig.xaxis.axis_label = "Elevation difference (m) from - |p98| to |p98|"
+            fig.xaxis.axis_label = (
+                "Elevation difference (m) from - |p98| to |p98|"
+            )
             fig.yaxis.axis_label = "Probability density"
         if title_fig == "cdf":
             fig.xaxis.axis_label = "Full absolute elevation differences (m)"
@@ -321,7 +353,6 @@ def plot_ratio_above_threshold(rat: np.ndarray, title: str) -> None:
     :type title: str
     """
 
-    _, edges = np.histogram(rat[0][0], bins=rat[0][1])
     fig = figure(title=title)
     fig.vbar(x=rat[0][1], top=rat[0][0], color="lightsteelblue", width=0.2)
     fig.xaxis.axis_label = "Altitudes (m)"
@@ -329,12 +360,13 @@ def plot_ratio_above_threshold(rat: np.ndarray, title: str) -> None:
     show(fig)
 
 
-def plot_layers(processing_dataset: xr.Dataset,
-                input_type: str,
-                dem: xarray.Dataset,
-                title: str,
-                name_layer: str,
-                ) -> None:
+def plot_layers(
+    processing_dataset: xr.Dataset,
+    input_type: str,
+    dem: xr.Dataset,
+    title: str,
+    name_layer: str,
+) -> None:
     """
     plot layers dynamically
     :param processing_dataset: Processing dataset object
@@ -351,19 +383,20 @@ def plot_layers(processing_dataset: xr.Dataset,
     output_notebook()
 
     # Get image with mask layers
-    number_layer = processing_dataset.classification_layers_names.index(name_layer) #1
-    img = processing_dataset.classification_layers[number_layer].map_image[input_type]
+    number_layer = processing_dataset.classification_layers_names.index(
+        name_layer
+    )  # 1
+    img = processing_dataset.classification_layers[number_layer].map_image[
+        input_type
+    ]
     img[img == dem.attrs["nodata"]] = np.nan
 
-    dw = img.shape[1]
-    dh = img.shape[0]
+    d_w = img.shape[1]
+    d_h = img.shape[0]
 
     # Get dem
     dem_image = dem.image.data
     dem_image[dem_image == 0] = np.nan
-
-    # Create figure
-    size = 0.5
 
     # palette
     mapper_dem = LinearColorMapper(
@@ -374,25 +407,49 @@ def plot_layers(processing_dataset: xr.Dataset,
     )
 
     fig = figure(
-        title=title, width=800, height=450, tools=["reset", "pan", "box_zoom"], output_backend="webgl"
+        title=title,
+        width=1000,
+        height=1000,
+        tools=["reset", "pan", "box_zoom", "save"],
+        output_backend="webgl",
     )
 
     # Legend
     fig.image(
-        image=[np.flip(dem_image, 0)], x=1, y=0, dw=dw, dh=dh, color_mapper=mapper_dem
+        image=[np.flip(dem_image, 0)],
+        x=1,
+        y=0,
+        dw=d_w,
+        dh=d_h,
+        color_mapper=mapper_dem,
     )
     legend_items = []
 
     # create a color iterator
     colors = itertools.cycle(RdYlGn)
+    # Points attributes
+    size = 0.5
+    alpha = 0.2
 
     # Get mask values and add them
-    for iterateur, (key, value) in enumerate(processing_dataset.classification_layers[number_layer].classes.items()):
-        mask_layer = processing_dataset.classification_layers[number_layer].classes_masks[input_type][iterateur]
+    for iterateur, (key, _) in enumerate(
+        processing_dataset.classification_layers[number_layer].classes.items()
+    ):
+        mask_layer = processing_dataset.classification_layers[
+            number_layer
+        ].classes_masks[input_type][iterateur]
+
         mask_x = np.where(mask_layer != 0)[1]
-        mask_y = dh - np.where(mask_layer != 0)[0]
+        mask_y = d_h - np.where(mask_layer != 0)[0]
+
         color = next(colors)
-        mask = fig.circle(x=mask_x, y=mask_y, size=size, color=RdYlGn[color][random.choice([0, 1, 2])])
+        mask = fig.circle(
+            x=mask_x,
+            y=mask_y,
+            size=size,
+            color=RdYlGn[color][random.choice([0, 1, 2])],
+            alpha=alpha,
+        )
 
         legend_items.append((key, [mask]))
 
