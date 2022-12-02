@@ -46,6 +46,7 @@ from .helpers import (
 
 
 @pytest.mark.end2end_tests
+@pytest.mark.functional_tests
 def test_demcompare_with_gironde_test_data():
     """
     Demcompare with gironde_test_data main end2end test.
@@ -261,6 +262,7 @@ def test_demcompare_with_gironde_test_data():
 
 
 @pytest.mark.end2end_tests
+@pytest.mark.functional_tests
 def test_demcompare_with_gironde_test_data_sampling_ref():
     """
     Demcompare with classification layer with

@@ -48,6 +48,7 @@ from .helpers import (
 
 
 @pytest.mark.end2end_tests
+@pytest.mark.functional_tests
 def test_demcompare_srtm_test_data():
     """
     srtm_test_data main end2end test.
@@ -297,6 +298,7 @@ def test_demcompare_srtm_test_data():
 
 
 @pytest.mark.end2end_tests
+@pytest.mark.functional_tests
 def test_demcompare_srtm_test_data_with_roi():
     """
     srtm_test_data_with_roi main end2end test with ROI input.
