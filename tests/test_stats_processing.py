@@ -362,6 +362,7 @@ def test_create_classif_layers_without_input_classif():
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_compute_stats_segmentation_layer(initialize_stats_processing):
     """
     Tests the compute_stats. Manually computes
@@ -462,6 +463,7 @@ def test_compute_stats_segmentation_layer(initialize_stats_processing):
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_compute_stats_global_layer(initialize_stats_processing):
     """
     Tests the compute_stats. Manually computes
@@ -558,6 +560,7 @@ def test_compute_stats_global_layer(initialize_stats_processing):
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_compute_stats_slope_layer(initialize_stats_processing):
     """
     Tests the compute_stats. Manually computes
@@ -658,6 +661,7 @@ def test_compute_stats_slope_layer(initialize_stats_processing):
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_compute_stats_slope_classif_intersection_mode(
     initialize_stats_processing,
 ):
@@ -765,6 +769,7 @@ def test_compute_stats_slope_classif_intersection_mode(
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_compute_stats_slope_classif_exclusion_mode(
     initialize_stats_processing,
 ):
@@ -880,6 +885,7 @@ def test_compute_stats_slope_classif_exclusion_mode(
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_compute_stats_from_cfg_status(
     initialize_stats_processing_with_metrics,
 ):
@@ -964,6 +970,7 @@ def test_compute_stats_from_cfg_status(
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_compute_stats_from_cfg_slope(initialize_stats_processing_with_metrics):
     """
     Tests the compute_stats. Manually computes
@@ -1048,6 +1055,7 @@ def test_compute_stats_from_cfg_slope(initialize_stats_processing_with_metrics):
 # Assigning the 'data' attribute will be removed in the future
 # since 2017, seems to have no workaround
 @pytest.mark.filterwarnings("ignore::DeprecationWarning:")
+@pytest.mark.functional_tests
 def test_statistics_output_dir():
     """
     Test that demcompare's execution with

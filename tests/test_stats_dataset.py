@@ -22,7 +22,7 @@
 This module contains functions to test the
 methods in the StatsPair class.
 """
-
+# pylint:disable=too-many-lines
 # Standard imports
 
 import os
@@ -249,6 +249,7 @@ def test_add_classif_layer_and_mode_stats_names(initialize_stats_dataset):
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_add_classif_layer_and_mode_stats_status_layer(
     initialize_stats_dataset, input_stats_status_results, input_images
 ):
@@ -356,6 +357,7 @@ def test_add_classif_layer_and_mode_stats_status_layer(
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_add_classif_layer_and_mode_stats_slope_layer(
     initialize_stats_dataset, input_stats_slope_results, input_images
 ):
@@ -495,6 +497,7 @@ def test_add_classif_layer_and_mode_stats_slope_layer(
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_get_classification_layer_metric(initialize_stats_dataset):
     """
     Test the get_classification_layer_metric function.
@@ -577,6 +580,7 @@ def test_get_classification_layer_metric(initialize_stats_dataset):
 
 
 @pytest.mark.unit_tests
+@pytest.mark.functional_tests
 def test_get_classification_layer_metrics(initialize_stats_dataset):
     """
     Test the get_classification_layer_metrics function.
