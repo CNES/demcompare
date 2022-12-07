@@ -46,6 +46,24 @@ from demcompare.classification_layer.fusion_classification import (
 def fixture_initialize_fusion_layer():
     """
     Fixture to initialize the fusion layer
+
+    - Manually creates two input dems (dataset_ref and dataset_sec)
+      with an image array
+    - The dataset_sec dem contains
+      one classification_layer_mask, called "seg_classif"
+    - Computes the slope of both dems using the "compute_dem_slope" function
+    - Computes the altitude difference between both dems
+    - Creates a segmentation classification layer created using
+      altitude difference dataset
+      The classification layer is called "seg_classif".
+    - Creates a slope classification layer using the altitude difference
+      dataset
+    - Forces the map_image["sec"] of the slope classification to be
+      a manually created array
+    - Creates a Fusion classification layer using the segmentation and
+      the slope classification layers with sec support
+    - Returns the created fusion classification layer object
+
     """
     data = np.array(
         [[0, 1, 1], [0, -9999, 1], [-9999, 1, 1], [-9999, 1, 1]],
@@ -82,7 +100,7 @@ def fixture_initialize_fusion_layer():
     ]
     # Create the datarray with input classification layers
     # for the sec dataset
-    seg_classif_layer = xr.DataArray(
+    seg_classif_layer_mask = xr.DataArray(
         data=classif_data,
         coords=coords_classification_layers,
         dims=["row", "col", "indicator"],
@@ -90,7 +108,7 @@ def fixture_initialize_fusion_layer():
 
     # Create the sec dataset
     dataset_sec = dem_tools.create_dem(
-        data=data, classification_layer_masks=seg_classif_layer
+        data=data, classification_layer_masks=seg_classif_layer_mask
     )
 
     # Compute slope and add it as a classification_layer
@@ -158,12 +176,17 @@ def test_create_merged_classes(initialize_fusion_layer):
     """
     Test the _create_merged_classes function
     Input data:
-    - initialize_fusion_layer from fixture
+    - Manually computed fusion layer of one segmentation and one
+      slope layer with sec support
     Validation data:
-    - Manually computed dictionary for merged classes : gt_merged_classes
+    - Manually computed dictionary for the merged classes: gt_merged_classes
     Validation process:
-    - Verify that computed classes from _create_merged_classes
+    - Compute the fusion classification layer
+    - Check that the computed classes from _create_merged_classes
       are equal to ground truth
+    - Checked function : FusionClassificationLayer's _create_merged_classes
+    - Checked attribute : ClassificationLayer's classes
+
     """
     fusion_layer_ = initialize_fusion_layer
     # Test the _create_merged_classes function ------------------
@@ -191,13 +214,20 @@ def test_create_merged_classes(initialize_fusion_layer):
 def test_merge_classes_and_create_sets_masks(initialize_fusion_layer):
     """
     Test the _merge_classes_and_create_sets_masks function
+
     Input data:
-    - initialize_fusion_layer from fixture
+    - Manually computed fusion layer of one segmentation and one
+      slope layer with sec support
     Validation data:
-    - Manually computed standard, intersection and exclusion masks
+    - Manually computed classes masks: gt_sets_masks
     Validation process:
-    - Creates a map image for both sec and ref supports
-    - Verify that fusion_layer_.classes_masks is equal to gt_sets_masks
+    - Compute the fusion classification layer
+    - Check that the computed classes masks from
+      _merge_classes_and_create_sets_masks
+      are equal to ground truth
+    - Checked function : FusionClassificationLayer's
+      _merge_classes_and_create_sets_masks
+    - Checked attribute : ClassificationLayer's classes_masks
     """
     # Test the _merge_classes_and_create_sets_masks function -------------
     # Slope0's map_image["Slope0"] is :
@@ -261,14 +291,19 @@ def test_merge_classes_and_create_sets_masks(initialize_fusion_layer):
 def test_create_labelled_map(initialize_fusion_layer):
     """
     Test the _create_labelled_map function
+
     Input data:
-    - initialize_fusion_layer from fixture
+    - Manually computed fusion layer of one segmentation and one
+      slope layer with sec support
     Validation data:
-    - Manually computed gt_map_image
+    - Manually computed map_image: gt_map_image
     Validation process:
-    - Creates a map image for both sec and ref supports
-    - Tests that the computed map from _create_labelled_map
-      is equal to gt_map_image
+    - Compute the fusion classification layer
+    - Check that the computed map_image from
+      _create_labelled_map
+      is equal to ground truth
+    - Checked function : ClassificationLayer's _create_labelled_map
+    - Checked attribute : ClassificationLayer's map_image
     """
     fusion_layer_ = initialize_fusion_layer
     # Slope0's map_image["Slope0"] is :
