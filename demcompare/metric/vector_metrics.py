@@ -132,7 +132,7 @@ class CumulativeProbabilityFunction(MetricTemplate):
         ) as csv_file:
             writer = csv.writer(csv_file, delimiter=",")
             writer.writerow(["Bins", "CDF values"])
-            writer.writerows(zip(self.bins_count, self.cdf))
+            writer.writerows(zip(self.bins_count, self.cdf))  # noqa: B905
 
     def save_plot_metric(self, output_file: str):
         """
@@ -262,7 +262,7 @@ class ProbabilityDensityFunction(MetricTemplate):
         ) as csv_file:
             writer = csv.writer(csv_file, delimiter=",")
             writer.writerow(["Bins", "Normalized PDF values"])
-            writer.writerows(zip(self.bins, self.pdf))
+            writer.writerows(zip(self.bins, self.pdf))  # noqa: B905
 
     def save_plot_metric(self, output_file: str):
         """
@@ -386,5 +386,7 @@ class RatioAboveThreshold(MetricTemplate):
             writer = csv.writer(csv_file, delimiter=",")
             writer.writerow(["Thresholds", "Ratio above threshold"])
             writer.writerows(
-                zip(self.elevation_threshold, self.ratio_above_thrshld)
+                zip(  # noqa: B905
+                    self.elevation_threshold, self.ratio_above_thrshld
+                )
             )
