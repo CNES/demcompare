@@ -26,6 +26,7 @@ dem_tools module.
 # pylint:disable = duplicate-code
 # Standard imports
 import os
+from tempfile import TemporaryDirectory
 from typing import Dict
 
 # Third party imports
@@ -40,7 +41,7 @@ from demcompare.dem_tools import DEFAULT_NODATA
 from demcompare.helpers_init import read_config_file
 
 # Tests helpers
-from .helpers import demcompare_path, demcompare_test_data_path
+from .helpers import demcompare_path, demcompare_test_data_path, temporary_dir
 
 # Force protected access to test protected functions
 # pylint:disable=protected-access
@@ -151,6 +152,42 @@ def test_load_dem():
     assert gt_georef == dem.attrs["crs"]
     assert gt_shape == dem["image"].shape
     np.testing.assert_allclose(gt_transform, dem.georef_transform, rtol=1e-02)
+
+
+@pytest.mark.unit_tests
+def test_load_dem_with_nodata():
+    """
+    Test the load_dem function with NODATA values
+    Input data:
+     - Hand crafted dem with -32768.0 value as NODATA value
+    Validation data:
+    - NONE
+    Validation process:
+    - Load input/test_config.json
+    - Replace input_sec by input_ref in config
+    - Test that ValueError is raised
+    """
+
+    # Same dem for second and reference
+    # Create temporary directory for test output
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+        dem_nodata = np.ones((20, 20)) * -32768.0
+
+        new_dataset = rasterio.open(
+            f"{tmp_dir}/dem_nodata.tif",
+            "w",
+            driver="GTiff",
+            height=dem_nodata.shape[0],
+            width=dem_nodata.shape[1],
+            count=1,
+            dtype=str(dem_nodata.dtype),
+        )
+        new_dataset.write(dem_nodata, 1)
+        new_dataset.close()
+
+        # Test that ValueError is raised
+        with pytest.raises(ValueError):
+            _ = dem_tools.load_dem(f"{tmp_dir}/dem_nodata.tif", nodata=-32768.0)
 
 
 @pytest.mark.unit_tests
