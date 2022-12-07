@@ -1025,3 +1025,51 @@ def test_coregistration_with_wrong_initial_disparities():
     # Compute coregistration
     with pytest.raises(ValueError):
         _ = coregistration_.compute_coregistration(sec, ref)
+
+
+def test_coregistration_with_same_dems():
+    """
+    Test the coregistration with same dem as entry
+    Input data:
+    - input DEMs present in "gironde_test_data" test root data directory
+    - input_ref and input_sec are the same
+    - coregistration method : "Nuth et kaab"
+    Validation data:
+    - None
+    Validation process:
+    - Load input/test_config.json
+    - Replace input_sec by input_ref in config
+    - Test that ValueError is raised
+    Validation data:
+    - Manually computed gt_xoff, gt_yoff
+    Validation process:
+    - Loads the data present in the test root data directory
+    - Creates a coregistration object and does compute_coregistration
+    - Checked parameters on the demcompare_results output dict are:
+       - output Transform correct offsets
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Same dem for second and reference
+    cfg["input_sec"] = cfg["input_ref"]
+
+    # Load dems
+    ref = load_dem(cfg["input_ref"]["path"])
+    sec = load_dem(cfg["input_sec"]["path"])
+
+    # Define ground truth offsets
+    gt_xoff = 0.0
+    gt_yoff = 0.0
+
+    # Initialize coregistration object
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
+    # Compute coregistration
+    transform = coregistration_.compute_coregistration(sec, ref)
+
+    # Test that the output offsets and bias are the same as gt
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)

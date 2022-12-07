@@ -149,6 +149,12 @@ def load_dem(
                 raise TypeError("Not the right conventions for ROI")
     # Get dem raster image from band image
     dem_image = src_dem.read(band)
+    # Test nodata in DEM
+    if np.all(dem_image == nodata):
+        raise ValueError(
+            f"All values in {source_rasterio['source_dem'].name} are NODATA"
+        )
+
     classif_layers: Union[Dict, None] = None
     if classification_layers:
         classif_layers = {}

@@ -23,6 +23,7 @@ the "gironde_test_data" test root data
 """
 
 # Standard imports
+import logging
 import os
 from tempfile import TemporaryDirectory
 
@@ -34,7 +35,6 @@ import pytest
 import demcompare
 from demcompare.helpers_init import read_config_file, save_config_file
 from demcompare.output_tree_design import get_out_file_path
-
 # Tests helpers
 from .helpers import (
     TEST_TOL,
@@ -506,3 +506,52 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
+
+
+@pytest.mark.end2end_tests
+@pytest.mark.functional_tests
+def test_demcompare_with_gironde_identical_ref_and_sec(capsys):
+    """
+    Demcompare with gironde_test_data main end2end test.
+    Test that the outputs given by the Demcompare execution
+    of data/gironde_test_data/input/test_config.json are
+    the same as the reference ones
+    in data/gironde_test_data/ref_output/
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    test_cfg = read_config_file(test_cfg_path)
+
+    # Same dem for second and reference
+    test_cfg["input_ref"] = test_cfg["input_sec"]
+
+    # Create temporary directory for test output
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+        # Modify test's output dir in configuration to tmp test dir
+        test_cfg["output_dir"] = tmp_dir
+        # Manually set the saving of internal dems to True
+        test_cfg["coregistration"]["save_optional_outputs"] = "True"
+
+        # Set a new test_config tmp file path
+        tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
+
+        # Save the new configuration inside the tmp dir
+        save_config_file(tmp_cfg_file, test_cfg)
+
+        LOGGER = logging.getLogger(__name__)
+
+        # Run demcompare with "gironde_test_data"
+        # configuration (and replace conf file)
+        with pytest.raises(ValueError) as error:
+            demcompare.run(tmp_cfg_file)
+
+       # captured = capsys.readouterr()
+
+      #  assert captured.out == "Vectors metrics aren't computed because REF and SEC are the same"
+
+        # TEST DIFF TIF
+        print("toto")
+

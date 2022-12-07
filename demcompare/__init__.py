@@ -273,9 +273,11 @@ def load_input_dems(cfg: Dict) -> Tuple[xr.Dataset, Union[None, xr.Dataset]]:
                 else None
             ),
         )
+
     else:
         sec = None
-    return (ref, sec)
+
+    return ref, sec
 
 
 def run_coregistration(
