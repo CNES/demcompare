@@ -46,7 +46,6 @@ from demcompare.classification_layer.fusion_classification import (
 def fixture_initialize_fusion_layer():
     """
     Fixture to initialize the fusion layer
-
     - Manually creates two input dems (dataset_ref and dataset_sec)
       with an image array
     - The dataset_sec dem contains
@@ -63,7 +62,6 @@ def fixture_initialize_fusion_layer():
     - Creates a Fusion classification layer using the segmentation and
       the slope classification layers with sec support
     - Returns the created fusion classification layer object
-
     """
     data = np.array(
         [[0, 1, 1], [0, -9999, 1], [-9999, 1, 1], [-9999, 1, 1]],
@@ -176,8 +174,8 @@ def test_create_merged_classes(initialize_fusion_layer):
     """
     Test the _create_merged_classes function
     Input data:
-    - Manually computed fusion layer of one segmentation and one
-      slope layer with sec support
+    - Fusion classification layer from the "initialize_fusion_layer"
+      fixture
     Validation data:
     - Manually computed dictionary for the merged classes: gt_merged_classes
     Validation process:
@@ -186,7 +184,6 @@ def test_create_merged_classes(initialize_fusion_layer):
       are equal to ground truth
     - Checked function : FusionClassificationLayer's _create_merged_classes
     - Checked attribute : ClassificationLayer's classes
-
     """
     fusion_layer_ = initialize_fusion_layer
     # Test the _create_merged_classes function ------------------
@@ -214,10 +211,9 @@ def test_create_merged_classes(initialize_fusion_layer):
 def test_merge_classes_and_create_sets_masks(initialize_fusion_layer):
     """
     Test the _merge_classes_and_create_sets_masks function
-
     Input data:
-    - Manually computed fusion layer of one segmentation and one
-      slope layer with sec support
+    - Fusion classification layer from the "initialize_fusion_layer"
+      fixture
     Validation data:
     - Manually computed classes masks: gt_sets_masks
     Validation process:
@@ -291,10 +287,9 @@ def test_merge_classes_and_create_sets_masks(initialize_fusion_layer):
 def test_create_labelled_map(initialize_fusion_layer):
     """
     Test the _create_labelled_map function
-
     Input data:
-    - Manually computed fusion layer of one segmentation and one
-      slope layer with sec support
+    - Fusion classification layer from the "initialize_fusion_layer"
+      fixture
     Validation data:
     - Manually computed map_image: gt_map_image
     Validation process:
