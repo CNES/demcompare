@@ -167,7 +167,7 @@ class SphinxProjectManager:
                     "source_encoding = 'utf-8'",
                     f"master_doc = '{self._index_name}'",
                     f"project = u'{self._project_name}'",
-                    "copyright = u'2021 CNES'",
+                    "copyright = u'2022 CNES'",
                     "author = u'CNES, CS'",
                     "language = 'en'",
                     "pygments_style = 'sphinx'",
