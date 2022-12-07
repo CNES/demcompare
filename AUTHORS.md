@@ -22,8 +22,9 @@ This file keeps track of authors contributions.
 * Julien Michel <julien.michel@cnes.fr>
 * David Youssefi <david.youssefi@cnes.fr>
 * Yoann Steux <yoann.steux@csgroup.eu>
-* Marina BERTOLINO <marina.bertolino@c-s.fr>
+* Marina Bertolino <marina.bertolino@csgroup.eu>
 * Fabrice Buffe <fabrice.buffe@cnes.fr>
+* Florie Languille <florie.languille@cnes.fr>
 
 Update here with new contributors.
 
@@ -31,3 +32,5 @@ Update here with new contributors.
 
 * Julien Michel <julien.michel@cnes.fr>
 * Loïc Dumas <loic.dumas@csgroup.eu>
+* Myriam Cournet <myriam.cournet@cnes.fr>
+* Jean Marc Delvit <jean-marc.delvit@cnes.fr>
