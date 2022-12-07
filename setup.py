@@ -26,9 +26,7 @@ All packaging in setup.cfg, except setuptools_scm version activation
 from setuptools import setup
 
 try:
-    setup(
-        use_scm_version=True,
-    )
+    setup()
 except Exception:
     print(
         "\n\nAn error occurred while building the project, "

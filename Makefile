@@ -11,7 +11,7 @@ VENV = "venv"
 DEMCOMPARE_VERSION = $(shell python3 setup.py --version)
 DEMCOMPARE_VERSION_MIN = $(shell echo ${DEMCOMPARE_VERSION} | cut -d . -f 1,2,3)
 
-PYTHON_VERSION_MIN = 3.7
+PYTHON_VERSION_MIN = 3.8
 
 PYTHON=$(shell command -v python3)
 

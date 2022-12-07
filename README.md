@@ -3,7 +3,7 @@
 
 <h4 align="center">DEMcompare, a DEM comparison tool  </h4>
 
-[![Python](https://img.shields.io/badge/python-v3.7+-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](CONTRIBUTING.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0/)
 [![Docs](https://readthedocs.org/projects/demcompare/badge/?version=latest)]('https://demcompare.readthedocs.io/?badge=latest)
@@ -19,7 +19,7 @@
 
 ## Overview
 
-Demcompare is a python software that aims at **comparing two DEMs** together.   
+Demcompare is a python software that aims at **comparing two DEMs** together.
 
 A DEM is a 3D computer graphics representation of elevation data to represent terrain.
 
@@ -27,13 +27,13 @@ A DEM is a 3D computer graphics representation of elevation data to represent te
 
 * Works whether or not the two DEMs share common format projection system, planimetric resolution, and altimetric unit.
 * Performs the coregistration based on the Nuth & Kääb universal coregistration method.
-* Offers two coregistration modes to choose which of both DEMs is to be adapted during coregistration. 
+* Offers two coregistration modes to choose which of both DEMs is to be adapted during coregistration.
 * Provides a wide variety of standard metrics which can be classified.
 * Classifies the stats by slope ranges by default, but one can provide any other data to classify the stats.
 
 ## Install
 
-Only **Linux Plaforms** are supported (virtualenv or bare machine) with **Python >= 3.7** installed.
+Only **Linux Plaforms** are supported (virtualenv or bare machine) with **Python >= 3.8** installed.
 
 Demcompare is available on Pypi and can be typically installed through a [virtualenv](https://docs.python.org/3/library/venv):
 
@@ -54,7 +54,7 @@ wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/image
 wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/json_conf_files/nuth_kaab_config.json # configuration file
 
 # uncompress data
-unzip srtm_sample.zip 
+unzip srtm_sample.zip
 
 #run demcompare
 demcompare nuth_kaab_config.json
