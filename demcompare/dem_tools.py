@@ -763,6 +763,7 @@ def compute_dems_diff(dem_1: xr.Dataset, dem_2: xr.Dataset) -> xr.Dataset:
         transform=dem_2.georef_transform.data,
         nodata=dem_1.attrs["nodata"],
         img_crs=dem_2.crs,
+        bounds=dem_2.bounds,
     )
     return diff_dem
 

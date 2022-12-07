@@ -45,6 +45,7 @@ from scipy.optimize import leastsq
 
 # Demcompare imports
 from ..dem_tools import DEFAULT_NODATA, create_dem
+from ..img_tools import compute_gdal_translate_bounds
 from ..output_tree_design import get_out_dir
 from ..transformation import Transformation
 from .coregistration import Coregistration
@@ -283,6 +284,13 @@ class NuthKaabInternal(
                 sec.classification_layer_masks, x_offset, y_offset
             )
 
+        reproj_bounds = compute_gdal_translate_bounds(
+            y_offset,
+            x_offset,
+            (coreg_sec.shape[0], coreg_sec.shape[1]),
+            sec.georef_transform.data,
+        )
+
         # Generate the dataset dems
         coreg_sec_dataset = create_dem(
             coreg_sec,
@@ -290,6 +298,7 @@ class NuthKaabInternal(
             nodata=DEFAULT_NODATA,
             img_crs=sec.crs,
             classification_layer_masks=coreg_sec_classif,
+            bounds=reproj_bounds,
         )
         coreg_ref_dataset = create_dem(
             coreg_ref,
@@ -297,6 +306,7 @@ class NuthKaabInternal(
             nodata=DEFAULT_NODATA,
             img_crs=sec.crs,
             classification_layer_masks=coreg_ref_classif,
+            bounds=reproj_bounds,
         )
         logging.debug(
             "Nuth & Kaab Final Offset in pixels (east, north): ( %.2f , %.2f )",

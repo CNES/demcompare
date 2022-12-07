@@ -121,7 +121,7 @@ def compute_gdal_translate_bounds(
     georef_transform: np.ndarray,
 ) -> Tuple[float, float, float, float]:
     """
-    Obtain the gdal coordinate bounds to apply the tranlation offsets to
+    Obtain the gdal coordinate bounds to apply the translation offsets to
     the DEM to coregister/translate with gdal.
 
     The offsets can be applied with the command line:
