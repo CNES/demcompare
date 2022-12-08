@@ -41,6 +41,13 @@ from demcompare.dem_tools import create_dem
 def fixture_initialize_slope_layer():
     """
     Fixture to initialize a slope layer
+
+    - Manually creates input dem dataset
+    - Computes the dem slope with the "compute_dem_slope" function
+    - Creates a slope classification layer created using the input
+      dataset. The classification layer is called "Slope0"
+    - Returns the created classification layer object and the input dem
+
     """
     # Generate dsm with the following data and
     # "gironde_test_data" DSM's georef and resolution
@@ -71,10 +78,20 @@ def fixture_initialize_slope_layer():
 def test_classify_slope_by_ranges(initialize_slope_layer):
     """
     Test the classify_slope_by_ranges function
-    - Creates a slope dem
-    - Manually classifies the slope dem with the input ranges
-    - Tests that the classified slope by the function
-      classify_slope_by_ranges is the same as ground truth
+    Input data:
+    - "Slope0" classification layer and dem dataset from
+      the "initialize_slope_layer" fixture.
+    Validation data:
+    - The slope manually classified by the
+      input ranges: gt_classified_slope
+    Validation process:
+    - Creation of the slope dataset
+    - Classification of the slope using the function
+      "_classify_slope_by_ranges"
+    - Check that the classified slope by the function
+      "classify_slope_by_ranges" is the same as ground truth
+    - Checked function : SlopeClassificationLayer's _classify_slope_by_ranges
+
     """
     slope_classif_layer_, dem_dataset = initialize_slope_layer
     # Initialize slope array
@@ -106,9 +123,24 @@ def test_classify_slope_by_ranges(initialize_slope_layer):
 def test_create_class_masks(initialize_slope_layer):
     """
     Test the _create_class_masks function
-    - Creates a slope dem
-    - Manually classifies the slope dem with the input ranges
-    - Tests that the computed sets_masks_dict is equal to ground truth
+    Input data:
+    - "Slope0" classification layer from
+      the "initialize_slope_layer" fixture.
+    Validation data:
+    - The manually computed classes masks of
+      the classified slope: gt_classes_masks_masks
+    Validation process:
+    - Creation of the slope classification layer
+    - Modify the classification layer's map_image
+    - Compute the classification layer's classes masks
+      with the function "_create_class_masks"
+    - Classification of the slope using the function
+      "_create_class_masks"
+    - Check that the obtained masks by the function
+      "_classify_slope_by_ranges" are the same as ground truth
+    - Checked function : SlopeClassificationLayer's _create_class_masks
+    - Checked attribute : ClassificationLayer's classes_masks
+
     """
     slope_classif_layer_, _ = initialize_slope_layer
 
