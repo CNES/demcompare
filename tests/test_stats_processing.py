@@ -3,7 +3,7 @@
 # Disable the protected-access to test the functions
 # pylint:disable=protected-access
 #
-# Copyright (c) 2021 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 # (see https://github.com/CNES/demcompare).
