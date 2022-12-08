@@ -103,6 +103,9 @@ def stack_dems(
     min_d = np.nanmin(input_ref["image"].data)
     max_d = np.nanmax(input_ref["image"].data)
 
+    d_w = input_ref["image"].shape[1]
+    d_h = input_ref["image"].shape[0]
+
     mapper_avec_opti = LinearColorMapper(
         palette=cmap_to_palette(demcompare_cmap()),
         low=min_d,
@@ -124,8 +127,8 @@ def stack_dems(
         image=[np.flip(input_ref["image"].data, 0)],
         x=input_ref.bounds[0],
         y=input_ref.bounds[1],
-        dw=input_ref.bounds[2] - input_ref.bounds[0],
-        dh=input_ref.bounds[3] - input_ref.bounds[1],
+        dw=d_w,
+        dh=d_h,
         color_mapper=mapper_avec_opti,
     )
 
@@ -133,8 +136,8 @@ def stack_dems(
         image=[np.flip(input_sec["image"].data, 0)],
         x=input_sec.bounds[0],
         y=input_sec.bounds[1],
-        dw=input_sec.bounds[2] - input_sec.bounds[0],
-        dh=input_sec.bounds[3] - input_sec.bounds[1],
+        dw=d_w,
+        dh=d_h,
         color_mapper=mapper_avec_opti,
     )
 
@@ -145,8 +148,8 @@ def stack_dems(
             image=[np.flip(input_sec["image"].data, 0)],
             x=input_extra.bounds[0],
             y=input_extra.bounds[1],
-            dw=input_extra.bounds[2] - input_extra.bounds[0],
-            dh=input_extra.bounds[3] - input_extra.bounds[1],
+            dw=d_w,
+            dh=d_h,
             color_mapper=mapper_avec_opti,
         )
 
@@ -161,7 +164,7 @@ def stack_dems(
         label_standoff=12,
         border_line_color=None,
         location=(0, 0),
-        title="Altitudes (m)"
+        title="Altitudes (m)",
     )
     fig.add_layout(color_bar, "left")
 
@@ -197,6 +200,9 @@ def side_by_side_fig(
         np.nanmax(input_ref["image"].data), np.nanmax(input_sec["image"].data)
     )
 
+    d_w = input_ref["image"].shape[1]
+    d_h = input_ref["image"].shape[0]
+
     mapper_avec_opti = LinearColorMapper(
         palette=cmap_to_palette(demcompare_cmap()),
         low=min_d,
@@ -204,20 +210,19 @@ def side_by_side_fig(
         nan_color=(0, 0, 0, 0),
     )
 
-    d_w = input_ref["image"].shape[1]
-    d_h = input_ref["image"].shape[0]
-
     first_fig = figure(
         title=title_ref,
         width=480,
         height=450,
         tools=["reset", "pan", "box_zoom", "save"],
         output_backend="webgl",
+        x_axis_label="latitude",
+        y_axis_label="longitude",
     )
     first_fig.image(
         image=[np.flip(input_ref["image"].data, 0)],
-        x=1,
-        y=0,
+        x=input_ref.bounds[0],
+        y=input_ref.bounds[1],
         dw=d_w,
         dh=d_h,
         color_mapper=mapper_avec_opti,
@@ -229,11 +234,13 @@ def side_by_side_fig(
         height=450,
         tools=["reset", "pan", "box_zoom", "save"],
         output_backend="webgl",
+        x_axis_label="latitude",
+        y_axis_label="longitude",
     )
     second_fig.image(
         image=[np.flip(input_sec["image"].data, 0)],
-        x=1,
-        y=0,
+        x=input_sec.bounds[0],
+        y=input_sec.bounds[1],
         dw=d_w,
         dh=d_h,
         color_mapper=mapper_avec_opti,
@@ -245,7 +252,7 @@ def side_by_side_fig(
         label_standoff=12,
         border_line_color=None,
         location=(0, 0),
-        title="Altitudes (m)"
+        title="Altitudes (m)",
     )
     first_fig.add_layout(color_bar, "left")
     second_fig.add_layout(color_bar, "left")
@@ -282,22 +289,21 @@ def show_dem(
         nan_color=(0, 0, 0, 0),
     )
 
-    d_w = input_ref["image"].shape[1]
-    d_h = input_ref["image"].shape[0]
-
     first_fig = figure(
         title=title_ref,
         width=480,
         height=450,
         tools=["reset", "pan", "box_zoom", "save"],
         output_backend="webgl",
+        x_axis_label="latitude",
+        y_axis_label="longitude",
     )
     first_fig.image(
         image=[np.flip(input_ref["image"].data, 0)],
-        x=1,
-        y=0,
-        dw=d_w,
-        dh=d_h,
+        x=input_ref.bounds[0],
+        y=input_ref.bounds[1],
+        dw=input_ref.bounds[2] - input_ref.bounds[0],
+        dh=input_ref.bounds[3] - input_ref.bounds[1],
         color_mapper=mapper_avec_opti,
     )
 
@@ -307,9 +313,9 @@ def show_dem(
         label_standoff=12,
         border_line_color=None,
         location=(0, 0),
-        title="Altitudes (m)"
+        title="Altitudes (m)",
     )
-    first_fig.add_layout(color_bar, "right")
+    first_fig.add_layout(color_bar, "left")
 
     show(first_fig)
 
@@ -323,8 +329,7 @@ def plot_cdf_pdf(datas: np.ndarray, title_fig: str) -> None:
     :type title_fig: str
     """
     output_notebook()
-    fig = figure(title=title_fig,
-                 tools=["reset", "pan", "box_zoom", "save"])
+    fig = figure(title=title_fig, tools=["reset", "pan", "box_zoom", "save"])
 
     if title_fig not in ("pdf", "cdf"):
         print(f"{title_fig} is not an available option")

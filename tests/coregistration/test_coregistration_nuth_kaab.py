@@ -131,6 +131,72 @@ def test_coregister_dems_algorithm_gironde_sampling_sec():
 
 
 @pytest.mark.unit_tests
+def test_bounds_in_coregister_dems_algorithm_gironde_sampling_sec():
+    """
+    Test the _coregister_dems_algorithm function of
+    the Nuth et Kaab class.
+    Loads the data present in the "gironde_test_data" root data
+    directory and test that the output Transform is
+    correct.
+    The following configurations are tested:
+    - "gironde_test_data" test root input DEMs,
+     sampling value sec
+    """
+    # Test with "gironde_test_data" test root
+    # input DEMs and sampling value sec -----------------------------
+
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Load dems
+    ref = dem_tools.load_dem(cfg["input_ref"]["path"])
+    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
+    sampling_source = "sec"
+
+    # Define ground truth outputs
+    ulx = 599536.6809346128
+    uly = 5090035.483811519
+    lrx = 688536.6809346128
+    lry = 4990535.483811519
+
+    # Reproject and crop DEMs
+    (
+        reproj_crop_dem,
+        reproj_crop_ref,
+        _,
+    ) = dem_tools.reproject_dems(sec, ref, sampling_source=sampling_source)
+
+    # Coregistration configuration is the following :
+    # "coregistration": {
+    #    "method_name": "nuth_kaab_internal",
+    #    "number_of_iterations": 6,
+    #    "estimated_initial_shift_x": 0,
+    #    "estimated_initial_shift_y": 0
+    # }
+    # Create coregistration object
+    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
+    # Run _coregister_dems_algorithm
+    (
+        _,
+        coreg_sec_dataset,
+        coreg_ref_dataset,
+    ) = coregistration_._coregister_dems_algorithm(
+        reproj_crop_dem, reproj_crop_ref
+    )
+
+    # Test that the outputs match the ground truth
+    np.testing.assert_allclose(
+        coreg_sec_dataset.bounds, (ulx, uly, lrx, lry), rtol=1e-02
+    )
+    np.testing.assert_allclose(
+        coreg_ref_dataset.bounds, (ulx, uly, lrx, lry), rtol=1e-02
+    )
+
+
+@pytest.mark.unit_tests
 def test_coregister_dems_algorithm_gironde_sampling_ref():
     """
     Test the _coregister_dems_algorithm function of

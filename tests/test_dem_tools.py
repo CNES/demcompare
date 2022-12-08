@@ -1266,3 +1266,81 @@ def test_load_dem_with_roi_ground_coords():
     )
 
     assert gt_roi == ref.attrs["bounds"]
+
+
+def test_compute_dem_diff():
+    """
+    Test that grounds coords image ROI are correctly
+    returned by the load_input_dems function
+    Input data:
+    - input DEMs present in "strm_test_data" test root data directory
+    - Hand crafted data
+    Validation data:
+    - Manually computed ROI and BoundingBox obtained by rasterio
+    - Hand crafted ground truth
+    Validation process:
+    - Load the dem with the load_dem function.
+    - Create dems with create_dem function.
+    - Testing datas are:
+        - bounds
+        - data
+        - crs
+    """
+    # Get "srtm_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("srtm_test_data")
+    # Load "srtm_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+    # Load dem
+    from_dataset = dem_tools.load_dem(cfg["input_sec"]["path"])
+
+    # Define data dem 1
+    data_1 = np.array(
+        [[1, 2, 3], [1, 4, 5], [-1, -32768, 6], [1, 7, -32768], [1, 8, -32768]],
+        dtype=np.float32,
+    )
+
+    # Define data dem 2
+    data_2 = np.array(
+        [[1, 9, 8], [1, 7, 6], [-1, -32768, 5], [1, 4, -32768], [1, 3, -32768]],
+        dtype=np.float32,
+    )
+
+    ground_truth = np.array(
+        [
+            [0.0, -7.0, -5.0],
+            [0.0, -3.0, -1.0],
+            [0.0, np.nan, 1.0],
+            [0.0, 3.0, np.nan],
+            [0.0, 5.0, np.nan],
+        ],
+        dtype=np.float32,
+    )
+
+    # Create dataset from "srtm_test_data" DSM and specific nodata value
+    dem_1 = dem_tools.create_dem(
+        data=data_1,
+        transform=from_dataset.georef_transform.data,
+        img_crs=from_dataset.crs,
+        nodata=-32768,
+        bounds=from_dataset.bounds,
+    )
+
+    # Create dataset from "srtm_test_data" DSM and specific nodata value
+    dem_2 = dem_tools.create_dem(
+        data=data_2,
+        transform=from_dataset.georef_transform.data,
+        img_crs=from_dataset.crs,
+        nodata=-32768,
+        bounds=from_dataset.bounds,
+    )
+
+    alti_dif = dem_tools.compute_dems_diff(dem_1, dem_2)
+
+    np.testing.assert_allclose(
+        alti_dif["image"].data,
+        ground_truth,
+        rtol=1e-02,
+    )
+    assert alti_dif.bounds == from_dataset.bounds
+    assert alti_dif.crs == from_dataset.crs
