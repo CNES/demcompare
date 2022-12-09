@@ -39,6 +39,14 @@ from demcompare.classification_layer.classification_layer import (
 def fixture_initialize_segmentation_classification():
     """
     Fixture to initialize a segmentation classification
+
+    - Manually creates input dem dataset with an image array and
+      two classification_layer_masks, called "test_first_classif" and
+      "test_second_classif"
+    - Creates a segmentation classification layer created using the input
+      dataset. The classification layer is called "test_first_classif".
+    - Returns the created classification layer object and the
+      classification layer masks present in the input dem.
     """
     # Classification layer configuration
     layer_name = "test_first_classif"
@@ -103,10 +111,22 @@ def fixture_initialize_segmentation_classification():
 def test_create_labelled_map(initialize_segmentation_classification):
     """
     Test the test_create_labelled_map function
-    Manually computes an input dem with two input
-    classification layers,
-    then creates the classification layer object
-    and verifies the computed map_image (function _create_labelled_map)
+    Input data:
+    - "test_first_classif" classification layer and its
+      classification_layer_mask from
+      the "initialize_segmentation_classification" fixture.
+    Validation data:
+    - The classification_layer_mask present in the input
+      dem dataset with the indicator "test_first_classif": gt_map_image
+    Validation process:
+    - Creation of the input dem dataset
+    - Creation of the segmentation classification layer with the
+      input dem dataset and the name "test_first_classif"
+    - Check that the map_image of the classification layer is the
+      classification_layer_mask of the input dem dataset
+    - Checked function : ClassificationLayer's _create_labelled_map
+    - Checked attribute : ClassificationLayer's map_image
+
     """
 
     classif_layer_, classif_data = initialize_segmentation_classification
@@ -123,17 +143,33 @@ def test_create_labelled_map(initialize_segmentation_classification):
 def _test_create_class_masks(initialize_segmentation_classification):
     """
     Test the _create_classification_layer_class_masks function
-    Manually computes an input dem and with two input
-    classification layers,
-    then creates the first classification layer object
-    and verifies the computed sets_masks_dict
-    (function _create_class_masks)
+    Input data:
+    - "test_first_classif" classification layer from
+      the "initialize_segmentation_classification" fixture.
+    Validation data:
+    - The manually created classes_masks (one mask per class) corresponding
+      to the "test_first_classif" classification layer mask: gt_classes_masks
+    Validation process:
+    - Creation of the input dem dataset
+    - Creation of the segmentation classification layer with the
+      input dem dataset and the name "test_first_classif"
+    - Check that the classes_masks of the classification layer are the
+      same as the gt
+    - Checked function : ClassificationLayer's
+      _create_classification_layer_class_masks
+    - Checked attribute : ClassificationLayer's classes_masks
+
     """
     classif_layer_, _ = initialize_segmentation_classification
 
     # test _create_class_masks -------------------------------
 
-    # Create gt sets masks dict for the test_first_classif map
+    # Create gt classes masks dict for the test_first_classif map
+    # The original classes and mask are :
+    # "classes": {"sea": [0], "deep_land": [1], "coast": [2], "lake": [3]}
+    # classif_data[:, :, 0] = np.array(
+    #         [[0, 1, 1], [2, 2, 3], [-9999, 3, 3], [-9999, 1, 0]]
+    #     )
     mask_sea = np.array(
         [[1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
     )
@@ -147,12 +183,12 @@ def _test_create_class_masks(initialize_segmentation_classification):
         [[0.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [0.0, 0.0, 0.0]]
     )
     gt_classes_masks = {
-        "Slope0": [mask_sea, mask_deep_land, mask_coast, mask_lake],
+        "test_first_classif": [mask_sea, mask_deep_land, mask_coast, mask_lake],
     }
 
-    # Test that the computed sets_masks_dict is the same as gt
+    # Test that the computed classes_masks are the same as gt
     np.testing.assert_allclose(
-        gt_classes_masks["Slope0"],
+        gt_classes_masks["test_first_classif"],
         classif_layer_.classes_masks["ref"],
         rtol=1e-02,
     )
