@@ -54,6 +54,17 @@ from .helpers import demcompare_test_data_path, temporary_dir
 def fixture_initialize_stats_processing():
     """
     Fixture to initialize the stats_processing object for tests
+    - Loads the ref and sec dems present in the "gironde_test_data_sampling_ref"
+      test data directory using the load_dem function
+    - Reprojects both dems using the reproject_dems function
+    - Computes the slope of both reprojected dems
+    - Computes the altitude difference between both dems
+    - Computes an input statistics configuration containing a slope
+      classification layer called "Slope0" and a segmentation
+      classification layer called "Status"
+    - Creates a StatsProcessing object with the altitude difference and
+      the statistics configuration
+    - Returns the StatsProcessing object
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
@@ -106,6 +117,18 @@ def fixture_initialize_stats_processing_with_metrics():
     """
     Fixture to initialize the stats_processing object
     with an input cfg containing the desired metrics for tests
+    - Loads the ref and sec dems present in the "gironde_test_data_sampling_ref"
+      test data directory using the load_dem function
+    - Reprojects both dems using the reproject_dems function
+    - Computes the slope of both reprojected dems
+    - Computes the altitude difference between both dems
+    - Computes an input statistics configuration containing a slope
+      classification layer called "Slope0" and a segmentation
+      classification layer called "Status", each layer having
+      some specified metrics
+    - Creates a StatsProcessing object with the altitude difference and
+      the statistics configuration
+    - Returns the StatsProcessing object
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
@@ -166,10 +189,32 @@ def fixture_initialize_stats_processing_with_metrics():
 def test_create_classif_layers():
     """
     Test the create_classif_layers function
-    Creates a StatsProcessing object with an input configuration
-    and tests that its created classification layers
-    are the same as gt.
-
+    Input data:
+    - Ref and sec dems present in the "gironde_test_data" test data
+      directory
+    - Manually computed statistics configuration containing a slope,
+      a segmentation and a fusion classification layer and
+      some metrics at different configuration levels
+    Validation data:
+    - The ground truth configuration of the ClassificationLayers
+      to be created by StatsProcessing: gt_status_layer,
+      gt_slope_layer, gt_fusion_layer, gt_global_layer
+    Validation process:
+    - Loads the ref and sec dems present in the "gironde_test_data"
+      test data directory using the load_dem function
+    - Reprojects both dems using the reproject_dems function
+    - Computes the slope of both reprojected dems
+    - Computes the altitude difference between both dems
+    - Computes an input statistics configuration containing a slope,
+      a segmentation and a fusion layer
+    - Creates a StatsProcessing object with the altitude difference and
+      the statistics configuration
+    - Checks that the configuration of the ClassificationLayers
+      created in StatsProcessing are the same as ground truth
+    - Checked function: StatsProcessing's
+      _create_classif_layers
+    - Checked attribute: StatsProcessing's classification_layers
+      configuration
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data")
@@ -299,11 +344,28 @@ def test_create_classif_layers():
 def test_create_classif_layers_without_input_classif():
     """
     Test the create_classif_layers function
-    Creates a StatsProcessing object with an input configuration
+    with an input configuration
     that does not specify any classification layer
-    and tests that its created classification layers
-    are the same as the default gt.
-
+    Input data:
+    - Sec dem present in the "gironde_test_data" test data
+      directory
+    - Manually computed statistics configuration that
+      does not contain any classification layer
+    Validation data:
+    - The ground truth configuration of the ClassificationLayer
+      to be created by StatsProcessing: gt_global_layer
+    Validation process:
+    - Loads the sec dem present in the "gironde_test_data"
+      test data directory using the load_dem function
+    - Computes an input statistics configuration
+    - Creates a StatsProcessing object with the input dem and
+      the statistics configuration
+    - Checks that the configuration of the ClassificationLayer
+      created in StatsProcessing is the same as ground truth
+    - Checked function: StatsProcessing's
+      _create_classif_layers
+    - Checked attribute: StatsProcessing's classification_layers
+      configuration
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data")
@@ -317,15 +379,6 @@ def test_create_classif_layers_without_input_classif():
         cfg["input_sec"]["path"],
         classification_layers=(cfg["input_sec"]["classification_layers"]),
     )
-    ref = dem_tools.load_dem(cfg["input_ref"]["path"])
-    sec, ref, _ = dem_tools.reproject_dems(sec, ref)
-
-    # Compute slope and add it as a classification_layer
-    ref = dem_tools.compute_dem_slope(ref)
-    sec = dem_tools.compute_dem_slope(sec)
-    # Compute altitude diff for stats computation
-    # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
 
     # Initialize stats input configuration
     input_stats_cfg = {
@@ -333,7 +386,7 @@ def test_create_classif_layers_without_input_classif():
     }
 
     # Create StatsProcessing object
-    stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
+    stats_processing = demcompare.StatsProcessing(input_stats_cfg, sec)
 
     # Create ground truth default Global layer
     gt_global_layer = ClassificationLayer(
@@ -351,7 +404,7 @@ def test_create_classif_layers_without_input_classif():
                 "std",
             ],
         },
-        stats_dem,
+        sec,
     )
 
     # Get StatsProcessing created classification layers
@@ -365,10 +418,27 @@ def test_create_classif_layers_without_input_classif():
 @pytest.mark.functional_tests
 def test_compute_stats_segmentation_layer(initialize_stats_processing):
     """
-    Tests the compute_stats. Manually computes
-    the stats for the classification_layer_masks for a given class
-    and mode and tests that the compute_stats function obtains
-    the same values on the segmentation layer.
+    Tests the compute_stats for a segmentation classification layer
+    Input data:
+    - StatsProcessing object from the "initialize_stats_processing"
+      fixture
+    Validation data:
+    - The manually computed statistics on the pixels
+      corresponding to the class 0 of the segmentation
+      classification layer: gt_mean, gt_sum,
+      gt_ratio
+    Validation process:
+    - Creates the StatsProcessing object
+    - Computes the nodata_nan_mask of the StatsProcessing's
+      input dem
+    - Computes the ground truth metrics on the valid pixels
+      corresponding to the class 0
+    - Computes the metrics using the StatsProcessing's compute_stats
+      function and gets the result using the get_classification_layer_metric
+      function
+    - Checks that the obtained metrics are the same as ground truth
+    - Checked function: StatsProcessing's
+      compute_stats and get_classification_layer_metric
     """
     # Initialize stats processing object
     stats_processing = initialize_stats_processing
@@ -466,10 +536,27 @@ def test_compute_stats_segmentation_layer(initialize_stats_processing):
 @pytest.mark.functional_tests
 def test_compute_stats_global_layer(initialize_stats_processing):
     """
-    Tests the compute_stats. Manually computes
-    the stats for the classification_layer_masks for a given class
-    and mode and tests that the compute_stats function obtains
-    the same values on the global layer.
+    Tests the compute_stats for a global classification layer
+    Input data:
+    - StatsProcessing object from the "initialize_stats_processing"
+      fixture
+    Validation data:
+    - The manually computed statistics on the pixels
+      corresponding to the class 0 of the global classification
+      layer: gt_mean, gt_sum,
+      gt_ratio
+    Validation process:
+    - Creates the StatsProcessing object
+    - Computes the nodata_nan_mask of the StatsProcessing's
+      input dem
+    - Computes the ground truth metrics on the valid pixels
+      corresponding to the class 0
+    - Computes the metrics using the StatsProcessing's compute_stats
+      function and gets the result using the get_classification_layer_metric
+      function
+    - Checks that the obtained metrics are the same as ground truth
+    - Checked function: StatsProcessing's
+      compute_stats and get_classification_layer_metric
     """
     # Initialize stats processing object
     stats_processing = initialize_stats_processing
@@ -563,10 +650,27 @@ def test_compute_stats_global_layer(initialize_stats_processing):
 @pytest.mark.functional_tests
 def test_compute_stats_slope_layer(initialize_stats_processing):
     """
-    Tests the compute_stats. Manually computes
-    the stats for the classification_layer_masks for a given class
-    and mode and tests that the compute_stats function obtains
-    the same values on the slope layer.
+    Tests the compute_stats for a slope classification layer
+    Input data:
+    - StatsProcessing object from the "initialize_stats_processing"
+      fixture
+    Validation data:
+    - The manually computed statistics on the pixels
+      corresponding to the class 0 of the slope classification
+      layer: gt_mean, gt_sum,
+      gt_ratio
+    Validation process:
+    - Creates the StatsProcessing object
+    - Computes the nodata_nan_mask of the StatsProcessing's
+      input dem
+    - Computes the ground truth metrics on the valid pixels
+      corresponding to the class 0
+    - Computes the metrics using the StatsProcessing's compute_stats
+      function and gets the result using the get_classification_layer_metric
+      function
+    - Checks that the obtained metrics are the same as ground truth
+    - Checked function: StatsProcessing's
+      compute_stats and get_classification_layer_metric
     """
     # Initialize stats processing object
     stats_processing = initialize_stats_processing
@@ -583,7 +687,7 @@ def test_compute_stats_slope_layer(initialize_stats_processing):
         0,
         stats_processing.dem["image"].data,
     )
-    # Get valid class indexes for slope dataset and class 1
+    # Get valid class indexes for slope dataset and class 0
     idxes_map_class_0_dataset_0 = np.where(
         nodata_nan_mask
         * stats_processing.classification_layers[dataset_idx].classes_masks[
@@ -666,16 +770,33 @@ def test_compute_stats_slope_classif_intersection_mode(
     initialize_stats_processing,
 ):
     """
-    Tests the compute_stats. Manually computes
-    the stats for the slope function for a given class
-    and intersection mode and tests that the
-    compute_stats function obtains
-    the same values.
+    Tests the compute_stats for a slope classification layer and
+    intersection mode
+    Input data:
+    - StatsProcessing object from the "initialize_stats_processing"
+      fixture
+    Validation data:
+    - The manually computed statistics on the pixels
+      corresponding to the class 0 of the slope classification
+      layer in mode intersection: gt_mean, gt_sum,
+      gt_ratio
+    Validation process:
+    - Creates the StatsProcessing object
+    - Computes the nodata_nan_mask of the StatsProcessing's
+      input dem
+    - Computes the ground truth metrics on the valid pixels
+      corresponding to the class 0 in mode intersection
+    - Computes the metrics using the StatsProcessing's compute_stats
+      function and gets the result using the get_classification_layer_metric
+      function
+    - Checks that the obtained metrics are the same as ground truth
+    - Checked function: StatsProcessing's
+      compute_stats and get_classification_layer_metric
     """
     # Initialize stats processing object
     stats_processing = initialize_stats_processing
 
-    # Test slope layer class 0
+    # Test slope layer class 0 mode intersection
     # ----------------------------------------------------------
     classif_class = 0
     dataset_idx = stats_processing.classification_layers_names.index("Slope0")
@@ -688,7 +809,7 @@ def test_compute_stats_slope_classif_intersection_mode(
         stats_processing.dem["image"].data,
     )
 
-    # Get valid class indexes for slope dataset and class 1 mode intersection
+    # Get valid class indexes for slope dataset and class 0 mode intersection
     idxes_map_class_0_dataset_0 = np.where(
         nodata_nan_mask
         * stats_processing.classification_layers[dataset_idx].classes_masks[
@@ -774,11 +895,28 @@ def test_compute_stats_slope_classif_exclusion_mode(
     initialize_stats_processing,
 ):
     """
-    Tests the compute_stats. Manually computes
-    the stats for the slope function for a given class
-    and exclusion mode and tests that the
-    compute_stats function obtains
-    the same values.
+    Tests the compute_stats for a slope classification layer and
+    exclusion mode
+    Input data:
+    - StatsProcessing object from the "initialize_stats_processing"
+      fixture
+    Validation data:
+    - The manually computed statistics on the pixels
+      corresponding to the class 0 of the slope classification
+      layer in mode exclusion: gt_mean, gt_sum,
+      gt_ratio
+    Validation process:
+    - Creates the StatsProcessing object
+    - Computes the nodata_nan_mask of the StatsProcessing's
+      input dem
+    - Computes the ground truth metrics on the valid pixels
+      corresponding to the class 0 in mode exclusion
+    - Computes the metrics using the StatsProcessing's compute_stats
+      function and gets the result using the get_classification_layer_metric
+      function
+    - Checks that the obtained metrics are the same as ground truth
+    - Checked function: StatsProcessing's
+      compute_stats and get_classification_layer_metric
     """
     # Initialize stats processing object
     stats_processing = initialize_stats_processing
@@ -796,7 +934,7 @@ def test_compute_stats_slope_classif_exclusion_mode(
         stats_processing.dem["image"].data,
     )
 
-    # Get valid class indexes for slope dataset and class 1 mode exclusion
+    # Get valid class indexes for slope dataset and class 0 mode exclusion
     idxes_map_class_0_dataset_0 = np.where(
         nodata_nan_mask
         * stats_processing.classification_layers[dataset_idx].classes_masks[
@@ -890,10 +1028,30 @@ def test_compute_stats_from_cfg_status(
     initialize_stats_processing_with_metrics,
 ):
     """
-    Tests the compute_stats. Manually computes
-    the stats for the classification_layer_masks for a given class
-    and mode and tests that the compute_stats function obtains
-    the same values.
+    Tests that the initialization of StatsProcessing
+    with an input configuration containing metrics correctly
+    computes the specified metrics for
+    the segmentation classification layer
+    Input data:
+    - StatsProcessing object from the
+      "initialize_stats_processing_with_metrics" fixture
+    Validation data:
+    - The manually computed statistics on the pixels
+      corresponding to the class 1 of the segmentation classification
+      layer: gt_std, gt_ratio
+    Validation process:
+    - Creates the StatsProcessing object
+    - Computes the nodata_nan_mask of the StatsProcessing's
+      input dem
+    - Computes the ground truth metrics on the valid pixels
+      corresponding to the class 1
+    - Computes the metrics using the StatsProcessing's compute_stats
+      function and gets the result using the get_classification_layer_metric
+      function
+    - Checks that the obtained metrics are the same as ground truth
+    - Checks that the nmad metric has not been computed
+    - Checked function: StatsProcessing's initialization,
+      compute_stats and get_classification_layer_metric
     """
     # Initialize stats processing object with metrics on the cfg
     stats_processing = initialize_stats_processing_with_metrics
@@ -973,10 +1131,30 @@ def test_compute_stats_from_cfg_status(
 @pytest.mark.functional_tests
 def test_compute_stats_from_cfg_slope(initialize_stats_processing_with_metrics):
     """
-    Tests the compute_stats. Manually computes
-    the stats for the classification_layer_masks for a given class
-    and mode and tests that the compute_stats function obtains
-    the same values.
+    Tests that the initialization of StatsProcessing
+    with an input configuration containing metrics correctly
+    computes the specified metrics for
+    the slope classification layer
+    Input data:
+    - StatsProcessing object from the
+      "initialize_stats_processing_with_metrics" fixture
+    Validation data:
+    - The manually computed statistics on the pixels
+      corresponding to the class 1 of the slope classification
+      layer: gt_std, gt_nmad
+    Validation process:
+    - Creates the StatsProcessing object
+    - Computes the nodata_nan_mask of the StatsProcessing's
+      input dem
+    - Computes the ground truth metrics on the valid pixels
+      corresponding to the class 1
+    - Computes the metrics using the StatsProcessing's compute_stats
+      function and gets the result using the get_classification_layer_metric
+      function
+    - Checks that the obtained metrics are the same as ground truth
+    - Checks that the ratio metric has not been computed
+    - Checked function: StatsProcessing's initialization,
+      compute_stats and get_classification_layer_metric
     """
     # Initialize stats processing object with metrics on the cfg
     stats_processing = initialize_stats_processing_with_metrics
@@ -1062,12 +1240,18 @@ def test_statistics_output_dir():
     the statistics output_dir parameter
     set correctly saves to disk all
     classification layer's maps, csv and json files.
-    Test that demcompare's execution with
-    the statistics output_dir not set
-    does not save to disk
-    the classification layer's maps, csv or json files.
+    Input data:
+    - Configuration file on the "gironde_test_data_sampling_ref"
+      directory
+    Validation data:
+    - The manually computed list of files to be present
+      on the output directory after the statistics computation
+    Validation process:
+    - Reads the input configuration file and suppress the
+      coregistration configuration
+    - Run demcompare
+    - Check that the output files are present on the output directory
     """
-
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
     # Load "gironde_test_data" demcompare config from input/test_config.json
@@ -1093,20 +1277,6 @@ def test_statistics_output_dir():
         "stats_results_intersection.json",
     ]
 
-    # Initialize sec and ref
-    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
-    ref = dem_tools.load_dem(
-        cfg["input_ref"]["path"],
-        classification_layers=(cfg["input_ref"]["classification_layers"]),
-    )
-    sec, ref, _ = dem_tools.reproject_dems(sec, ref)
-
-    # Compute slope and add it as a classification_layer
-    ref = dem_tools.compute_dem_slope(ref)
-    sec = dem_tools.compute_dem_slope(sec)
-    # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
-
     # Test with statistics output_dir set
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
 
@@ -1120,14 +1290,9 @@ def test_statistics_output_dir():
         # Save the new configuration inside the tmp dir
         save_config_file(tmp_cfg_file, cfg)
 
-        # Run demcompare with "strm_test_data"
+        # Run demcompare with "gironde_test_data_sampling_ref"
         # Put output_dir in coregistration dict config
         demcompare.run(tmp_cfg_file)
-        tmp_cfg = read_config_file(tmp_cfg_file)
-
-        # Create StatsProcessing object
-        stats_processing = demcompare.StatsProcessing(tmp_cfg, stats_dem)
-        _ = stats_processing.compute_stats()
 
         assert os.path.isfile(tmp_dir + "/stats/dem_for_stats.tif") is True
 
@@ -1174,62 +1339,4 @@ def test_statistics_output_dir():
                 for file in gt_truth_list_for_fusion_global_status
             )
             is True
-        )
-
-    # Test with statistics without output_dir set
-    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-
-        mkdir_p(tmp_dir)
-        # Modify test's output dir in configuration to tmp test dir
-        cfg["output_dir"] = None
-
-        # Create StatsProcessing object
-        stats_processing = demcompare.StatsProcessing(cfg, stats_dem)
-        _ = stats_processing.compute_stats()
-
-        assert os.path.isfile(tmp_dir + "/stats/dem_for_stats.tif") is False
-
-        assert os.path.exists(tmp_dir + "/stats/Fusion0/") is False
-        list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Fusion0/*")
-        ]
-        assert (
-            all(
-                file in list_basename
-                for file in gt_truth_list_for_fusion_global_status
-            )
-            is False
-        )
-
-        assert os.path.exists(tmp_dir + "/stats/global/") is False
-        list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/global/*")
-        ]
-        assert (
-            all(
-                file in list_basename
-                for file in gt_truth_list_for_fusion_global_status
-            )
-            is False
-        )
-
-        assert os.path.exists(tmp_dir + "/stats/Slope0/") is False
-        list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Slope0/*")
-        ]
-        assert (
-            all(file in list_basename for file in gt_truth_list_for_slope)
-            is False
-        )
-
-        assert os.path.exists(tmp_dir + "/stats/Status/") is False
-        list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Status/*")
-        ]
-        assert (
-            all(
-                file in list_basename
-                for file in gt_truth_list_for_fusion_global_status
-            )
-            is False
         )
