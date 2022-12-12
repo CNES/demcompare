@@ -28,7 +28,7 @@ import copy
 import logging
 import logging.config
 import os
-import sys
+from importlib.metadata import version
 from typing import Dict, Tuple, Union
 
 # Third party imports
@@ -51,23 +51,14 @@ from .output_tree_design import get_out_dir, get_out_file_path
 from .stats_dataset import StatsDataset
 from .stats_processing import StatsProcessing
 
-# ** VERSION **
-# pylint: disable=import-error,no-name-in-module
-# Depending on python version get importlib standard lib or backported package
-if sys.version_info[:2] >= (3, 8):
-    # when python3 > 3.8
-    from importlib.metadata import PackageNotFoundError  # pragma: no cover
-    from importlib.metadata import version
-else:
-    from importlib_metadata import PackageNotFoundError  # pragma: no cover
-    from importlib_metadata import version
-# Get demcompare package version (installed from setuptools_scm)
+# VERSION through setuptools_scm when python3 > 3.8
 try:
     __version__ = version("demcompare")
-except PackageNotFoundError:
-    __version__ = "unknown"  # pragma: no cover
-finally:
-    del version, PackageNotFoundError
+except Exception:  # pylint: disable=broad-except
+    __version__ = "unknown"
+
+__author__ = "CNES"
+__email__ = "cars@cnes.fr"
 
 
 def run(
