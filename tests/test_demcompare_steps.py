@@ -45,12 +45,19 @@ from .helpers import TEST_TOL, demcompare_test_data_path, temporary_dir
 @pytest.mark.functional_tests
 def test_demcompare_coregistration_step_with_gironde_test_data():
     """
-    Demcompare with gironde_test_data coregistration test.
-    Test that the outputs given by the Demcompare execution
-    of data/gironde_test_data/input/test_config.json are
-    the same as the reference ones
-    in data/gironde_test_data/ref_output/
-
+    Demcompare with only coregistration step end2end test.
+    Input data:
+    - Input dems and configuration present in the
+      "gironde_test_data/input" test data directory
+    Validation data:
+    - Output data present in the
+      "gironde_test_data/ref_output" test data directory
+    Validation process:
+    - Reads the input configuration file
+    - Deletes the statistics step of the configuration file
+    - Runs demcompare on a temporary directory
+    - Checks that the output files are the same as ground truth
+    - Checked files: demcompare_results.json
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data")
@@ -166,10 +173,16 @@ def test_demcompare_coregistration_step_with_gironde_test_data():
 @pytest.mark.functional_tests
 def test_demcompare_statistics_step_with_gironde_test_data():
     """
-    Demcompare with gironde_test_data running directly the
-    statistics step test.
-    Test that the cfg is executed without errors.
-
+    Demcompare with only statistics step on two input dems
+    end2end test.
+    Input data:
+    - Input dems and configuration present in the
+      "gironde_test_data/input" test data directory
+    Validation process:
+    - Reads the input configuration file
+    - Deletes the coregistration step of the configuration file
+    - Runs demcompare on a temporary directory
+    - Checks that no error is raised
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data")
@@ -237,10 +250,17 @@ def test_demcompare_statistics_step_with_gironde_test_data():
 @pytest.mark.functional_tests
 def test_demcompare_statistics_step_input_ref_with_gironde_test_data():
     """
-    Demcompare with gironde_test_data running directly the
-    statistics step test with a single input dem.
-    Test that the cfg is executed without errors.
-
+    Demcompare with only statistics step on one input dem
+    end2end test.
+    Input data:
+    - Input dems and configuration present in the
+      "gironde_test_data_sampling_ref/input" test data directory
+    Validation process:
+    - Reads the input configuration file
+    - Deletes the input_sec of the configuration file
+    - Deletes the coregistration step of the configuration file
+    - Runs demcompare on a temporary directory
+    - Checks that no error is raised
     """
     # Get "gironde_test_data" test root
     # data directory absolute path

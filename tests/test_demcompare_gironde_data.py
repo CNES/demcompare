@@ -50,11 +50,24 @@ from .helpers import (
 def test_demcompare_with_gironde_test_data():
     """
     Demcompare with gironde_test_data main end2end test.
-    Test that the outputs given by the Demcompare execution
-    of data/gironde_test_data/input/test_config.json are
-    the same as the reference ones
-    in data/gironde_test_data/ref_output/
-
+    Input data:
+    - Input dems and configuration present in the
+      "gironde_test_data/input" test data directory
+    Validation data:
+    - Output data present in the
+      "gironde_test_data/ref_output" test data directory
+    Validation process:
+    - Reads the input configuration file
+    - Runs demcompare on a temporary directory
+    - Checks that the output files are the same as ground truth
+    - Checked files: test_config.json, demcompare_results.json,
+      initial_dem_diff.tif, final_dem_diff.tif, coreg_SEC.tif,
+      reproj_coreg_REF.tif, reproj_coreg_SEC.tif,
+      classif_layer/stats_results.csv,
+      classif_layer/stats_results_intersection.csv,
+      classif_layer/stats_results_exclusion.csv,
+      classif_layer/ref_rectified_support_map.tif,
+      classif_layer/sec_rectified_support_map.tif
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data")
@@ -265,20 +278,26 @@ def test_demcompare_with_gironde_test_data():
 @pytest.mark.functional_tests
 def test_demcompare_with_gironde_test_data_sampling_ref():
     """
-    Demcompare with classification layer with
+    Demcompare with gironde_test_data layer with
     sampling source ref main end2end test.
-    Test that the outputs given by the Demcompare execution
-    of data/gironde_test_data_sampling_ref/input/test_config.json are
-    the same as the reference ones
-    in data/gironde_test_data_sampling_ref/ref_output/
-
-    - Loads the data present in the gironde_test_data data directory
-    - Runs demcompare
-    - Tests the initial cfg file
-    - Tests the demcompare_results file
-    - Tests the output .tif dems
-    - Tests the output .csv and .tif stats
-
+    Input data:
+    - Input dems and configuration present in the
+      "gironde_test_data_sampling_ref/input" test data directory
+    Validation data:
+    - Output data present in the
+      "gironde_test_data_sampling_ref/ref_output" test data directory
+    Validation process:
+    - Reads the input configuration file
+    - Runs demcompare on a temporary directory
+    - Checks that the output files are the same as ground truth
+    - Checked files: test_config.json, demcompare_results.json,
+      initial_dem_diff.tif, final_dem_diff.tif, coreg_SEC.tif,
+      reproj_coreg_REF.tif, reproj_coreg_SEC.tif,
+      classif_layer/stats_results.csv,
+      classif_layer/stats_results_intersection.csv,
+      classif_layer/stats_results_exclusion.csv,
+      classif_layer/ref_rectified_support_map.tif,
+      classif_layer/sec_rectified_support_map.tif
     """
     # Get "gironde_test_data_sampling_ref" test root data
     # directory absolute path
