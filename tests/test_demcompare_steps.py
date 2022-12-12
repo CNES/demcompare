@@ -34,7 +34,12 @@ import pytest
 
 # Demcompare imports
 import demcompare
-from demcompare.helpers_init import read_config_file, save_config_file
+from demcompare.helpers_init import (
+    compute_initialization,
+    mkdir_p,
+    read_config_file,
+    save_config_file,
+)
 from demcompare.output_tree_design import get_out_file_path
 
 # Tests helpers
@@ -305,3 +310,49 @@ def test_demcompare_statistics_step_input_ref_with_gironde_test_data():
         # Run demcompare with "gironde_test_data"
         # configuration (and replace conf file)
         demcompare.run(tmp_cfg_file)
+
+
+@pytest.mark.end2end_tests
+@pytest.mark.functional_tests
+def test_initialization_with_wrong_classification_layers():
+    """
+    Test that demcompare's initialization raises an error
+    when the input classification layer mask
+    of the dem has a different size than its support dem
+    Demcompare with only statistics step on one input dem
+    end2end test.
+    Input data:
+    - Input dems and configuration present in the
+      "gironde_test_data/input" test data directory
+    Validation process:
+    - Reads the input configuration file
+    - Modifies the map_path of the input_sec classification layer
+      to a different-sized mask
+    - Runs demcompare on a temporary directory
+    - Checks that an error is raised
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Set output_dir correctly
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+        mkdir_p(tmp_dir)
+
+        cfg["input_sec"]["classification_layers"]["Status"][
+            "map_path"
+        ] = os.path.join(
+            test_data_path,
+            "input/Small_FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF",
+        )
+        # Set a new test_config tmp file path
+        tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
+
+        # Save the new configuration inside the tmp dir
+        save_config_file(tmp_cfg_file, cfg)
+
+        with pytest.raises(SystemExit):
+            # Compute initialization with wrong masks
+            _ = compute_initialization(tmp_cfg_file)
