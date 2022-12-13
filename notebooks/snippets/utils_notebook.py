@@ -76,6 +76,7 @@ def stack_dems(
     legend_ref: str = "Ref DEM",
     legend_sec: str = "Second DEM",
     legend_extra: str = "Sample Sec",
+    long_lat: bool = True
 ) -> figure:
     """
     Allows the user to view three stacked DEMs.
@@ -93,9 +94,8 @@ def stack_dems(
     :type legend_sec: str
     :param legend_extra: Legend for extra DEM
     :type legend_extra: str
-    :param colorbar: Activate colobar
-    :type colorbar: bool
-
+    :param long_lat: Uses ground coordinates
+    :type long_lat: bool
     :return: figure
     """
     output_notebook()
@@ -103,8 +103,8 @@ def stack_dems(
     min_d = np.nanmin(input_ref["image"].data)
     max_d = np.nanmax(input_ref["image"].data)
 
-    d_w = input_ref["image"].shape[1]
-    d_h = input_ref["image"].shape[0]
+    xlabel = "latitude"
+    ylabel = "longitude"
 
     mapper_avec_opti = LinearColorMapper(
         palette=cmap_to_palette(demcompare_cmap()),
@@ -119,16 +119,16 @@ def stack_dems(
         height=450,
         tools=["reset", "pan", "box_zoom", "save"],
         output_backend="webgl",
-        x_axis_label="latitude",
-        y_axis_label="longitude",
+        x_axis_label=xlabel,
+        y_axis_label=ylabel,
     )
 
     dem_ref_img = fig.image(
         image=[np.flip(input_ref["image"].data, 0)],
         x=input_ref.bounds[0],
         y=input_ref.bounds[1],
-        dw=d_w,
-        dh=d_h,
+        dw=input_ref.bounds[2] - input_ref.bounds[0],
+        dh=input_ref.bounds[3] - input_ref.bounds[1],
         color_mapper=mapper_avec_opti,
     )
 
@@ -136,8 +136,8 @@ def stack_dems(
         image=[np.flip(input_sec["image"].data, 0)],
         x=input_sec.bounds[0],
         y=input_sec.bounds[1],
-        dw=d_w,
-        dh=d_h,
+        dw=input_sec.bounds[2] - input_sec.bounds[0],
+        dh=input_sec.bounds[3] - input_sec.bounds[1],
         color_mapper=mapper_avec_opti,
     )
 
@@ -146,10 +146,10 @@ def stack_dems(
     if input_extra:
         dem_extra = fig.image(
             image=[np.flip(input_sec["image"].data, 0)],
-            x=input_extra.bounds[0],
-            y=input_extra.bounds[1],
-            dw=d_w,
-            dh=d_h,
+            x=input_sec.bounds[0],
+            y=input_sec.bounds[1],
+            dw=input_sec.bounds[2] - input_sec.bounds[0],
+            dh=input_sec.bounds[3] - input_sec.bounds[1],
             color_mapper=mapper_avec_opti,
         )
 
