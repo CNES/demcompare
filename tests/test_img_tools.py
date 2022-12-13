@@ -43,6 +43,7 @@ from .helpers import demcompare_test_data_path
 def fixture_initialize_transformation():
     """
     Fixture to initialize the image georef transform
+    - Creates and returns a transformation array
     """
     # Define transformation
     trans = np.array(
@@ -63,14 +64,23 @@ def test_convert_pix_to_coord_neg_x_pos_y(initialize_transformation):
     """
     Test convert_pix_to_coord function with negative x
     and positive y
-    Makes the conversion from pix to coord for
-    different pixel values and tests the obtained
-    coordinates.
+    Input data:
+    - Transformation array from the "initialize_transformation"
+      fixture
+    - Pixelic points to be converted to coordinates (-x, +y)
+    Validation data:
+    - Ground truth coordinate values of the pixelic points
+    Validation process:
+    - Convert the pixels to coordinates using the
+      "convert_pix_to_coord" function and the input transform
+    - Check that the obtained coordinates are the same as ground truth
+    - Checked function : image_tools's
+      convert_pix_to_coord
     """
     trans = initialize_transformation
 
     # Positive y and negative x ----------------------------
-    # Define pixellic points
+    # Define pixelic points
     y_pix = 5.1
     x_pix = -4.35
     # Convert to coords
@@ -88,14 +98,23 @@ def test_convert_pix_to_coord_pos_x_pos_y(initialize_transformation):
     """
     Test convert_pix_to_coord function with positive x
     and positive y
-    Makes the conversion from pix to coord for
-    different pixel values and tests the obtained
-    coordinates.
+    Input data:
+    - Transformation array from the "initialize_transformation"
+      fixture
+    - Pixelic points to be converted to coordinates (+x, +y)
+    Validation data:
+    - Ground truth coordinate values of the pixelic points
+    Validation process:
+    - Convert the pixels to coordinates using the
+      "convert_pix_to_coord" function and the input transform
+    - Check that the obtained coordinates are the same as gt
+    - Checked function : image_tools's
+      convert_pix_to_coord
     """
     trans = initialize_transformation
 
     # Positive y and positive x ----------------------------
-    # Define pixellic points
+    # Define pixelic points
     y_pix = 5.1
     x_pix = 4.35
     # Convert to coords
@@ -113,14 +132,23 @@ def test_convert_pix_to_coord_neg_x_neg_y(initialize_transformation):
     """
     Test convert_pix_to_coord function with negative x
     and negative y
-    Makes the conversion from pix to coord for
-    different pixel values and tests the obtained
-    coordinates.
+    Input data:
+    - Transformation array from the "initialize_transformation"
+      fixture
+    - Pixelic points to be converted to coordinates (-x, -y)
+    Validation data:
+    - Ground truth coordinate values of the pixelic points
+    Validation process:
+    - Convert the pixels to coordinates using the
+      "convert_pix_to_coord" function and the input transform
+    - Check that the obtained coordinates are the same as ground truth
+    - Checked function : image_tools's
+      convert_pix_to_coord
     """
     trans = initialize_transformation
 
     # Negative y and negative x ---------------------------
-    # Define pixellic points
+    # Define pixelic points
     y_pix = -5.1
     x_pix = -4.35
     # Convert to coords
@@ -138,14 +166,23 @@ def test_convert_pix_to_coord_pos_x_neg_y(initialize_transformation):
     """
     Test convert_pix_to_coord function with positive x
     and negative y
-    Makes the conversion from pix to coord for
-    different pixel values and tests the obtained
-    coordinates.
+    Input data:
+    - Transformation array from the "initialize_transformation"
+      fixture
+    - Pixelic points to be converted to coordinates (+x, -y)
+    Validation data:
+    - Ground truth coordinate values of the pixelic points
+    Validation process:
+    - Convert the pixels to coordinates using the
+      "convert_pix_to_coord" function and the input transform
+    - Check that the obtained coordinates are the same as ground truth
+    - Checked function : image_tools's
+      convert_pix_to_coord
     """
     trans = initialize_transformation
 
     # Negative y and positive x ---------------------------
-    # Define pixellic points
+    # Define pixelic points
     y_pix = -5.1
     x_pix = 4.35
     # Convert to coords
@@ -159,13 +196,24 @@ def test_convert_pix_to_coord_pos_x_neg_y(initialize_transformation):
 
 
 @pytest.mark.unit_tests
-def test_compute_gdal_translate_bounds():
+def test_compute_gdal_translate_bounds_srtm_dir():
     """
-    Test the compute_offset_bounds function
-    Loads the DEMS present in "srtm_test_data" and "gironde_test_data"
-    test root data directory and computes the coordinate offset
-    bounds for a given pixellic offset to test the resulting
-    bounds.
+    Test the gdal_translate_bounds function with the
+    srtm_test_data data
+    Test compute_offset_bounds function
+    Input data:
+    - Sec dem from the "srtm_test_data" test data directory
+    - Pixelic offset to compute the new bounds
+    Validation data:
+    - Ground truth coordinate bounds of the dem considering
+      the pixelic offset
+    Validation process:
+    - Load the dem
+    - Compute the new bounds using the "compute_gdal_translate_bounds"
+      function
+    - Check that the obtained bounds are the same as ground truth
+    - Checked function : image_tools's
+      compute_gdal_translate_bounds
     """
 
     # Test with "srtm_test_data" input dem
@@ -179,7 +227,7 @@ def test_compute_gdal_translate_bounds():
     # Load dem
     dem = dem_tools.load_dem(cfg["input_sec"]["path"])
 
-    # Pixellic offset
+    # Pixelic offset
     dy_px = 0.00417
     dx_px = 0.0025
 
@@ -201,6 +249,27 @@ def test_compute_gdal_translate_bounds():
     np.testing.assert_allclose(lrx, gt_lrx, rtol=1e-04)
     np.testing.assert_allclose(lry, gt_lry, rtol=1e-04)
 
+
+@pytest.mark.unit_tests
+def test_compute_gdal_translate_bounds_gironde_dir():
+    """
+    Test the gdal_translate_bounds function with the
+    gironde_test_data data
+    Test compute_offset_bounds function
+    Input data:
+    - Sec dem from the "srtm_test_data" test data directory
+    - Pixelic offset to compute the new bounds
+    Validation data:
+    - Ground truth coordinate bounds of the dem considering
+      the pixelic offset
+    Validation process:
+    - Load the dem
+    - Compute the new bounds using the "compute_gdal_translate_bounds"
+      function
+    - Check that the obtained bounds are the same as ground truth
+    - Checked function : image_tools's
+      compute_gdal_translate_bounds
+    """
     # Test with "gironde_test_data" input dem
     # Get "gironde_test_data" test
     # root data directory absolute path
@@ -212,7 +281,7 @@ def test_compute_gdal_translate_bounds():
     # Load dem
     dem = dem_tools.load_dem(cfg["input_sec"]["path"])
 
-    # Pixellic offset
+    # Pixelic offset
     dy_nuth = 0.41903
     dx_nuth = -1.43664
 
