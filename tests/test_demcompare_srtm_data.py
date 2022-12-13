@@ -51,12 +51,25 @@ from .helpers import (
 @pytest.mark.functional_tests
 def test_demcompare_srtm_test_data():
     """
-    srtm_test_data main end2end test.
-    Test that the outputs given by the Demcompare execution
-    of data/srtm_test_data/input/test_config.json
-    are the same as the reference ones
-    in data/srtm_test_data/ref_output/
-
+    Demcompare with strm_test_data main end2end test.
+    Input data:
+    - Input dems and configuration present in the
+      "strm_test_data/input" test data directory
+    Validation data:
+    - Output data present in the
+      "strm_test_data/ref_output" test data directory
+    Validation process:
+    - Reads the input configuration file
+    - Runs demcompare on a temporary directory
+    - Checks that the output files are the same as ground truth
+    - Checked files: test_config.json, demcompare_results.json,
+      initial_dem_diff.tif, final_dem_diff.tif, coreg_SEC.tif,
+      reproj_coreg_REF.tif, reproj_coreg_SEC.tif,
+      classif_layer/stats_results.csv,
+      classif_layer/stats_results_intersection.csv,
+      classif_layer/stats_results_exclusion.csv,
+      classif_layer/ref_rectified_support_map.tif,
+      classif_layer/sec_rectified_support_map.tif
     """
     # Get "srtm_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("srtm_test_data")
@@ -301,11 +314,22 @@ def test_demcompare_srtm_test_data():
 @pytest.mark.functional_tests
 def test_demcompare_srtm_test_data_with_roi():
     """
-    srtm_test_data_with_roi main end2end test with ROI input.
-    Test that the outputs given by the Demcompare execution
-    of data/srtm_test_data_with_roi/input/test_config.json are the same
-    as the reference ones in data/srtm_test_data_with_roi/ref_output/
-
+    Demcompare with srtm_test_data_with_roi main end2end test.
+    Input data:
+    - Input dems and configuration present in the
+      "srtm_test_data_with_roi/input" test data directory
+    Validation data:
+    - Output data present in the
+      "srtm_test_data_with_roi/ref_output" test data directory
+    Validation process:
+    - Reads the input configuration file
+    - Runs demcompare on a temporary directory
+    - Checks that the output files are the same as ground truth
+    - Checked files: test_config.json, demcompare_results.json,
+      initial_dem_diff.tif, final_dem_diff.tif, coreg_SEC.tif,
+      reproj_coreg_REF.tif, reproj_coreg_SEC.tif,
+      classif_layer/stats_results.csv,
+      classif_layer/stats_results_intersection.csv
     """
     # Get "srtm_test_data_with_roi" test root
     # data directory absolute path
