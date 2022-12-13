@@ -182,6 +182,10 @@ def fixture_initialize_stats_dataset(
 ):
     """
     Fixture to initialize the StatsDataset object for tests
+    The StatsDataset contains the metrics and information of
+    a segmentation layer named "Status" for mode
+    standard and intersection, and a slope layer named
+    "Slope0" for mode standard, intersection and exclusion
     """
     (
         input_stats_status_standard,
@@ -233,11 +237,18 @@ def fixture_initialize_stats_dataset(
 @pytest.mark.unit_tests
 def test_add_classif_layer_and_mode_stats_names(initialize_stats_dataset):
     """
-    Test the add_classif_layer_and_mode_stats function.
-    Manually computes input stats for two classification
-    layers and different modes, and tests that the
-    add_classif_layer_and_mode_stats function correctly
-    adds the dataset names.
+    Test the add_classif_layer_and_mode_stats function for
+    the classification layer names
+    Input data:
+    - StatsDataset from the "initialize_stats_dataset" fixture
+    Validation data:
+    - Ground truth names of the datasets that should
+      be present on StatsDataset: gt_dataset_names
+    Validation process:
+    - Check that the classification layers on StatsDataset
+      are the same as ground truth
+    - Checked function : StatsDataset's
+      add_classif_layer_and_mode_stats
     """
     stats_dataset = initialize_stats_dataset
 
@@ -254,13 +265,22 @@ def test_add_classif_layer_and_mode_stats_status_layer(
     initialize_stats_dataset, input_stats_status_results, input_images
 ):
     """
-    Test the add_classif_layer_and_mode_stats function.
-    Manually computes input stats for two classification
-    layers and different modes, and tests that the
-    add_classif_layer_and_mode_stats function correctly
-    adds the Status layer information on the stats_dataset.
-
-    Also indirectly tests the get_dataset function.
+    Test the add_classif_layer_and_mode_stats function for
+    the Status classification layer
+    Input data:
+    - StatsDataset from the "initialize_stats_dataset" fixture
+    Validation data:
+    - Ground truth information and metrics of the classification
+      layer: gt_image, input_stats_status_standard,
+      input_stats_status_intersection
+    Validation process:
+    - Check that the metrics "mean" and "nbpts" for class 0 and 1
+      and modes standard and intersection on the StatsDataset
+      are the same as ground truth
+    - Check that the image and the image_by_class for standard
+      and intersection are the same as ground truth
+    - Checked function : StatsDataset's
+      add_classif_layer_and_mode_stats and get_classification_layer_dataset
     """
     stats_dataset = initialize_stats_dataset
     (
@@ -362,13 +382,22 @@ def test_add_classif_layer_and_mode_stats_slope_layer(
     initialize_stats_dataset, input_stats_slope_results, input_images
 ):
     """
-    Test the add_classif_layer_and_mode_stats function.
-    Manually computes input stats for two classification
-    layers and different modes, and tests that the
-    add_classif_layer_and_mode_stats function correctly
-    adds the Slope layer information on the stats_dataset.
-
-    Also indirectly tests the get_dataset function.
+    Test the add_classif_layer_and_mode_stats function for
+    the Slope0 classification layer
+    Input data:
+    - StatsDataset from the "initialize_stats_dataset" fixture
+    Validation data:
+    - Ground truth information and metrics of the classification
+      layer: gt_image, input_stats_status_standard,
+      input_stats_status_intersection, nput_stats_status_exclusion
+    Validation process:
+    - Check that the metrics "mean" and "nbpts" for class 0 and 1
+      and modes standard, intersection and exclusion on the StatsDataset
+      are the same as ground truth
+    - Check that the image and the image_by_class for standard
+      and intersection are the same as ground truth
+    - Checked function : StatsDataset's
+      add_classif_layer_and_mode_stats and get_classification_layer_dataset
     """
     stats_dataset = initialize_stats_dataset
     (
@@ -501,10 +530,18 @@ def test_add_classif_layer_and_mode_stats_slope_layer(
 def test_get_classification_layer_metric(initialize_stats_dataset):
     """
     Test the get_classification_layer_metric function.
-    Manually computes input stats for one classification
-    layers and different modes, and tests that the
-    get_classification_layer_metric function correctly
-    returns the corresponding metric.
+    Input data:
+    - StatsDataset from the "initialize_stats_dataset" fixture
+    Validation data:
+    - Manually obtained metric value by accessing the corresponding
+      StatsDataset attributes and indexes: gt_mean_standard_class_0,
+      output_sum_intersection_class_1, output_mean_standard_all_class,
+      output_sum_intersection_all_class
+    Validation process:
+    - Check that the metric value obtained with the
+      "get_classification_layer_metric" is the same as ground truth
+    - Checked function : StatsDataset's
+      get_classification_layer_metric
     """
     # Initialize input stats dict for two modes
     stats_dataset = initialize_stats_dataset
@@ -546,12 +583,12 @@ def test_get_classification_layer_metric(initialize_stats_dataset):
 
     # Get the mean metric for all classes and mode standard
 
-    output_mean_standard_class_0 = (
+    output_mean_standard_all_class = (
         stats_dataset.get_classification_layer_metric(
             classification_layer="Status", mode="standard", metric="mean"
         )
     )
-    gt_mean_standard_class_0 = [
+    gt_mean_standard_all_class = [
         stats_dataset.classif_layers_dataset[dataset_idx].attrs[
             "stats_by_class"
         ][0]["mean"],
@@ -559,16 +596,16 @@ def test_get_classification_layer_metric(initialize_stats_dataset):
             "stats_by_class"
         ][1]["mean"],
     ]
-    assert gt_mean_standard_class_0 == output_mean_standard_class_0
+    assert gt_mean_standard_all_class == output_mean_standard_all_class
 
     # Get the mean metric for all classes and mode intersection
 
-    output_sum_intersection_class_1 = (
+    output_sum_intersection_all_class = (
         stats_dataset.get_classification_layer_metric(
             classification_layer="Status", mode="intersection", metric="sum"
         )
     )
-    gt_sum_intersection_class_1 = [
+    gt_sum_intersection_all_class = [
         stats_dataset.classif_layers_dataset[dataset_idx].attrs[
             "stats_by_class_intersection"
         ][0]["sum"],
@@ -576,7 +613,7 @@ def test_get_classification_layer_metric(initialize_stats_dataset):
             "stats_by_class_intersection"
         ][1]["sum"],
     ]
-    assert gt_sum_intersection_class_1 == output_sum_intersection_class_1
+    assert gt_sum_intersection_all_class == output_sum_intersection_all_class
 
 
 @pytest.mark.unit_tests
@@ -584,10 +621,16 @@ def test_get_classification_layer_metric(initialize_stats_dataset):
 def test_get_classification_layer_metrics(initialize_stats_dataset):
     """
     Test the get_classification_layer_metrics function.
-    Manually computes input stats for one classification
-    layers and different modes, and tests that the
-    get_classification_layer_metrics function correctly
-    returns the corresponding metric names.
+    Input data:
+    - StatsDataset from the "initialize_stats_dataset" fixture
+    Validation data:
+    - Names of all metrics that are available in the StatsDataset:
+      gt_available_metrics
+    Validation process:
+    - Check that the metric names obtained with the
+      "get_classification_layer_metrics" are the same as ground truth
+    - Checked function : StatsDataset's
+      get_classification_layer_metrics
     """
     # Initialize stats_dataset
     stats_dataset = initialize_stats_dataset
@@ -611,11 +654,24 @@ def test_get_classification_layer_metrics(initialize_stats_dataset):
 def test_get_classification_layer_metrics_from_stats_processing():
     """
     Tests the get_classification_layer_metrics function.
-    Manually computes input stats for one classification
-    layer and different modes, then computes more stats via the
-    StatsProcessing.compute_stats API and tests that the
-    get_classification_layer_metrics function correctly
-    returns the metric names.
+    Manually computes input stats via the StatsProcessing.compute_stats
+    API and tests that the get_classification_layer_metrics function
+    correctly returns the metric names.
+    Input data:
+    - Manually created StatsProcessing with two classification layers,
+      one global and one segmentation named "Status"
+    Validation data:
+    - Names of all metrics that are available in the StatsDataset
+      for each classification layer: gt_metrics_global, gt_metrics_status
+    Validation process:
+    - Obtain StatsDataset from the StatsProcessing.compute_stats
+    - Compute new metrics using the API of the StatsProcessing object
+    - Check that the metric names obtained with the
+      "get_classification_layer_metrics" are the same as ground truth
+      (hence the new metrics computed via the API have been added to the
+      StatsDataset)
+    - Checked function : StatsDataset's
+      get_classification_layer_metrics
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
