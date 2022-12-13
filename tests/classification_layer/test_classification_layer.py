@@ -60,7 +60,11 @@ _DEFAULT_TEST_METRICS = [
 @pytest.fixture(name="initialize_slope_layer")
 def fixture_initialize_slope_layer():
     """
-    Fixture to initialize the slope clasification object
+    Fixture to initialize the slope classification object
+    - Manually creates an input dem with an image array
+    - Computes the slope of the dems using the "compute_dem_slope" function
+    - Creates a slope classification layer called "Slope0"
+    - Returns the created slope classification layer object
     """
     # Classification layer configuration
     layer_name = "Slope0"
@@ -94,10 +98,22 @@ def fixture_initialize_slope_layer():
 def test_get_outliers_free_mask():
     """
     Test the _get_outliers_free_mask function
-    Manually computes an input array and filters it,
-    and tests that the resulting
-    arrays form the _get_outliers_free_mask are the
-    same.
+    Input data:
+    - Manually created input dem dataset with an image array containing
+      nodata values
+    - Slope classification layer created using the input
+      dataset. The classification layer is called "Slope0".
+    Validation data:
+    - The manually created outliers_free_mask: gt_filtered_mask
+    Validation process:
+    - Compute the input dem dataset
+    - Compute the slope classification layer
+    - Compute the outliers_free_mask using the function _get_outliers_free_mask
+    - Check that the outliers_free_mask of the classification layer is the
+      same as the ground truth
+    - Checked function : ClassificationLayer's
+      _get_outliers_free_mask
+
     """
 
     # Generate dsm with the following data and
@@ -164,12 +180,21 @@ def test_get_outliers_free_mask():
 @pytest.mark.unit_tests
 def test_get_nonan_mask_custom_nodata(initialize_slope_layer):
     """
-    Test the _get_nonan_mask function with
-    custom nodata value
-    Manually computes an input array and filters it,
-    and tests that the resulting
-    arrays form the _get_nonan_mask are the
-    same.
+    Test the _get_nonan_mask function with custom nodata value
+    Input data:
+    - Manually created input dem dataset with an image array containing
+      custom nodata values (-9999)
+    - Slope classification layer from the "initialize_slope_layer"
+      fixture
+    Validation data:
+    - The manually created nonan_mask: gt_nonan_mask
+    Validation process:
+    - Compute the slope classification layer
+    - Compute the nonan_mask using the function _get_nonan_mask
+    - Check that the nonan_mask of the classification layer is the
+      same as the ground truth
+    - Checked function : ClassificationLayer's
+      _get_nonan_mask
     """
     slope_classif_layer_ = initialize_slope_layer
 
@@ -197,12 +222,21 @@ def test_get_nonan_mask_custom_nodata(initialize_slope_layer):
 @pytest.mark.unit_tests
 def test_get_nonan_mask_defaut_nodata(initialize_slope_layer):
     """
-    Test the _get_nonan_mask function with
-    defaut nodata value
-    Manually computes an input array and filters it,
-    and tests that the resulting
-    arrays form the _get_nonan_mask are the
-    same.
+    Test the _get_nonan_mask function with the default nodata value
+    Input data:
+    - Manually created input dem dataset with an image array containing
+      nodata values (np.nan)
+    - Slope classification layer from the "initialize_slope_layer"
+      fixture
+    Validation data:
+    - The manually created nonan_mask: gt_nonan_mask
+    Validation process:
+    - Compute the slope classification layer
+    - Compute the nonan_mask using the function _get_nonan_mask
+    - Check that the nonan_mask of the classification layer is the
+      same as the ground truth
+    - Checked function : ClassificationLayer's
+      _get_nonan_mask
     """
     slope_classif_layer_ = initialize_slope_layer
 
@@ -231,10 +265,21 @@ def test_get_nonan_mask_defaut_nodata(initialize_slope_layer):
 def test_create_mode_masks():
     """
     Test the _create_mode_masks function
-    - Creates a map image for both sec and ref supports
-    - Manually computes the standard, intersection and exclusion masks
-    - Tests that the computed masks from _create_mode_masks
-      are equal to ground truth
+    Input data:
+    - Manually created ref and sec map_images
+    - Slope classification layer with
+      manually-added ref and sec map_images.
+      The classification layer is called "Slope0".
+    Validation data:
+    - The manually created mode_masks: gt_intersection_mode_mask,
+      gt_exclusion_mode_mask, gt_standard_mode_mask
+    Validation process:
+    - Compute the slope classification layer
+    - Compute the mode_masks using the function _create_mode_masks
+    - Check that the mode_masks of the classification layer are the
+      same as the ground truth
+    - Checked function : ClassificationLayer's
+      _create_mode_masks
     """
 
     # Generate dsm with the following data
@@ -312,10 +357,14 @@ def test_statistics_classification_invalid_input_classes():
     """
     Test that demcompare's initialization fails
     when the configuration file
-    specifies a classification layer
+    specifies a segmentation classification layer
     with invalid class values.
-    The error should be raised in advance,
-    before the coregistration step if it is present.
+    Input data:
+    - Configuration containing a segmentation layer with
+      an invalid class pixel value: "a" and ["b"]
+    Validation process:
+    - Create the StatsProcessing object
+    - Check that a SystemExit error is raised
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -344,9 +393,13 @@ def test_statistics_classification_invalid_input_ranges():
     """
     Test that demcompare's initialization fails
     when the configuration file specifies a
-    classification layer with invalid range values.
-    The error should be raised in advance,
-    before the coregistration step if it is present.
+    slope classification layer with invalid range values.
+    Input data:
+    - Configuration containing a segmentation layer with
+      an invalid range pixel value: "a" and [0,"a",25,50,90,]
+    Validation process:
+    - Create the StatsProcessing object
+    - Check that a SystemExit error is raised
     """
 
     # Get "gironde_test_data" test root data directory absolute path
@@ -379,8 +432,14 @@ def test_demcompare_with_wrong_fusion_cfg():
     fails when the configuration file
     specifies a fusion layer with a
     single layer to be fused.
-    The error should be raised in advance,
-    before the coregistration step if it is present.
+    Input data:
+    - Configuration containing a fusion layer with
+      a single layer to be fused
+    Validation process:
+    - Create the StatsProcessing object
+    - Check that a
+      ClassificationLayerTemplate.NotEnoughDataToClassificationLayerError
+      error is raised
     """
 
     # Get "gironde_test_data" test root data directory absolute path
