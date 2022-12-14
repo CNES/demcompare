@@ -51,7 +51,7 @@ lint: install  ## run lint tools (depends install)
 	@echo "Demcompare linting isort check"
 	@${VENV}/bin/isort --check demcompare tests
 	@echo "Demcompare linting black check"
-	@${VENV}/bin/black --check demcompare tests
+	@${VENV}/bin/black --check demcompare tests notebooks/snippets/utils_notebook.py
 	@echo "Demcompare linting flake8 check"
 	@${VENV}/bin/flake8 demcompare tests
 	@echo "Demcompare linting pylint check"
@@ -60,8 +60,8 @@ lint: install  ## run lint tools (depends install)
 	@${VENV}/bin/mypy demcompare tests
 
 format: install  ## run black and isort formatting (depends install)
-	@${VENV}/bin/isort demcompare tests
-	@${VENV}/bin/black demcompare tests
+	@${VENV}/bin/isort demcompare tests notebooks/snippets/utils_notebook.py
+	@${VENV}/bin/black demcompare tests notebooks/snippets/utils_notebook.py
 
 test-ci: install ## tox run all tests with python3.7 and python3.8 + coverage
 	# Run tox (recreate venv (-r) and parallel mode (-p auto)) for CI
