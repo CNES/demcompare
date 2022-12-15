@@ -44,6 +44,7 @@ from demcompare.classification_layer.fusion_classification import (
 )
 from demcompare.helpers_init import read_config_file
 from demcompare.stats_dataset import StatsDataset
+from demcompare.stats_processing import StatsProcessing
 
 # Tests helpers
 from .helpers import demcompare_test_data_path
@@ -709,3 +710,22 @@ def initialize_fusion_layer():
         metrics=["mean"],
     )
     return fusion_layer_
+
+
+@pytest.fixture
+def get_default_metrics():
+    """
+    Fixture to initialize _DEFAULT_METRICS list
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data")
+
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    test_cfg = read_config_file(test_cfg_path)
+
+    statsprocessing_ = StatsProcessing(cfg=test_cfg["statistics"])
+
+    metrics_list = statsprocessing_._DEFAULT_METRICS["metrics"]
+
+    return metrics_list
