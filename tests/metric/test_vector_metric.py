@@ -24,6 +24,9 @@ methods in the vector metric class.
 """
 
 # Third party imports
+
+# pylint: disable=protected-access
+
 import numpy as np
 import pytest
 
