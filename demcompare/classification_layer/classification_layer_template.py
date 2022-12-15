@@ -580,14 +580,17 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
             else:
                 array = data
             if array.size:
-                computed_metric = metric_object.compute_metric(array)
                 # Format output list according to the metric type
                 # Round the float results
                 if metric_object.type == "scalar":
+                    computed_metric = metric_object.compute_metric(array)
                     metric_results[metric_name] = round(
                         float(computed_metric), 5
                     )
-                elif metric_object.type == "vector":
+                elif metric_object.type == "vector" and not np.all(
+                    np.round(array, decimals=6) == 0
+                ):
+                    computed_metric = metric_object.compute_metric(array)
                     for idx_vec, _ in enumerate(computed_metric[0]):
                         computed_metric[0][idx_vec] = round(
                             float(computed_metric[0][idx_vec]), 5
@@ -598,6 +601,14 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                     metric_results[metric_name] = (
                         computed_metric[0],
                         computed_metric[1],
+                    )
+                elif metric_object.type == "vector" and np.all(
+                    np.round(array, decimals=6) == 0
+                ):
+                    logging.warning(
+                        "%s is not computed because reference and "
+                        "second DEMs are the same",
+                        metric_name,
                     )
             else:
                 # If the input array is empty, the metric is np.nan

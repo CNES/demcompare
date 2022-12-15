@@ -1,0 +1,4 @@
+"Set Name","mean","median","max","min","sum","percentil_90","squared_sum","nmad","rmse","std","nbpts","percent_valid_points"
+"sea:[0]",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"deep_land:[1]",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"coast:[2]",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0

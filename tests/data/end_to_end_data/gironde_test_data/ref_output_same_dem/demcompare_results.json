@@ -1,0 +1,47 @@
+{
+  "alti_results": {
+    "reproj_coreg_ref": {
+      "path": "./test_classification_layer_output/./coregistration/reproj_coreg_REF.tif",
+      "nodata": -32768,
+      "nb_points": 1248206,
+      "nb_valid_points": 1248206
+    },
+    "reproj_coreg_sec": {
+      "path": "./test_classification_layer_output/./coregistration/reproj_coreg_SEC.tif",
+      "nodata": -32768,
+      "nb_points": 1248206,
+      "nb_valid_points": 1248206
+    },
+    "dz": {
+      "dz_map_path": null,
+      "total_bias_value": 0.0,
+      "zunit": "m",
+      "percent": 100.0,
+      "nodata": -32768,
+      "nb_points": 1248206,
+      "nb_valid_points": 1248206
+    }
+  },
+  "coregistration_results": {
+    "dx": {
+      "total_offset": 0.0,
+      "unit_offset": "px",
+      "total_bias_value": 0.0,
+      "unit_bias_value": "m",
+      "nuth_offset": 0.0
+    },
+    "dy": {
+      "total_offset": 0.0,
+      "unit_offset": "px",
+      "total_bias_value": 0.0,
+      "unit_bias_value": "m",
+      "nuth_offset": -0.0
+    },
+    "gdal_translate_bounds": {
+      "ulx": -1.74139,
+      "uly": 45.93948,
+      "lrx": -0.60285,
+      "lry": 44.7499
+    }
+  }
+}

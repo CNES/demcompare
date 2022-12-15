@@ -1,0 +1,16 @@
+"Set Name","mean","median","max","min","sum","percentil_90","squared_sum","nmad","rmse","std","nbpts","percent_valid_points"
+"Slope0_[0%;10%[_&_Status_sea:1",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[0%;10%[_&_Status_deep_land:2",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[0%;10%[_&_Status_coast:3",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[10%;25%[_&_Status_sea:4",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[10%;25%[_&_Status_deep_land:5",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[10%;25%[_&_Status_coast:6",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_sea:7",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_deep_land:8",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[25%;50%[_&_Status_coast:9",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_sea:10",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_deep_land:11",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[50%;90%[_&_Status_coast:12",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_sea:13",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_deep_land:14",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[90%;inf[_&_Status_coast:15",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
