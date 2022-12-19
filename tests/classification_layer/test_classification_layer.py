@@ -43,56 +43,6 @@ from demcompare.helpers_init import read_config_file
 from demcompare.stats_processing import StatsProcessing
 from tests.helpers import demcompare_test_data_path
 
-_DEFAULT_TEST_METRICS = [
-    "mean",
-    "median",
-    "max",
-    "min",
-    "sum",
-    {"percentil_90": {"remove_outliers": "False"}},
-    "squared_sum",
-    "nmad",
-    "rmse",
-    "std",
-]
-
-
-@pytest.fixture(name="initialize_slope_layer")
-def fixture_initialize_slope_layer():
-    """
-    Fixture to initialize the slope classification object
-    - Manually creates an input dem with an image array
-    - Computes the slope of the dems using the "compute_dem_slope" function
-    - Creates a slope classification layer called "Slope0"
-    - Returns the created slope classification layer object
-    """
-    # Classification layer configuration
-    layer_name = "Slope0"
-    clayer = {
-        "type": "slope",
-        "ranges": [0, 5, 10, 25, 45],
-        "output_dir": "",
-        "metrics": _DEFAULT_TEST_METRICS,
-    }
-
-    data = np.array(
-        [[0, 1, 1], [0, -9999, 1], [-9999, 1, 1], [-9999, 1, 1]],
-        dtype=np.float32,
-    )
-    dem_dataset = dem_tools.create_dem(
-        data=data,
-    )
-    # Compute dem's slope
-    dem_dataset = dem_tools.compute_dem_slope(dem_dataset)
-    # Initialize slope classification layer object
-    slope_classif_layer_ = ClassificationLayer(
-        name=layer_name,
-        classification_layer_kind=str(clayer["type"]),
-        dem=dem_dataset,
-        cfg=clayer,
-    )
-    return slope_classif_layer_
-
 
 @pytest.mark.unit_tests
 def test_get_outliers_free_mask():
@@ -143,7 +93,18 @@ def test_get_outliers_free_mask():
         "type": "slope",
         "ranges": [0, 5, 10, 25, 45],
         "output_dir": "",
-        "metrics": _DEFAULT_TEST_METRICS,
+        "metrics": [
+            "mean",
+            "median",
+            "max",
+            "min",
+            "sum",
+            {"percentil_90": {"remove_outliers": "False"}},
+            "squared_sum",
+            "nmad",
+            "rmse",
+            "std",
+        ],
     }
 
     # Initialize slope classification layer object
@@ -196,7 +157,7 @@ def test_get_nonan_mask_custom_nodata(initialize_slope_layer):
     - Checked function : ClassificationLayer's
       _get_nonan_mask
     """
-    slope_classif_layer_ = initialize_slope_layer
+    slope_classif_layer_, _ = initialize_slope_layer
 
     # Test with custom nodata value -------------------------------
     # Compute no nan mask
@@ -238,7 +199,7 @@ def test_get_nonan_mask_defaut_nodata(initialize_slope_layer):
     - Checked function : ClassificationLayer's
       _get_nonan_mask
     """
-    slope_classif_layer_ = initialize_slope_layer
+    slope_classif_layer_, _ = initialize_slope_layer
 
     # Test with default nodata value -------------------------------
     data = np.array(
@@ -294,7 +255,18 @@ def test_create_mode_masks():
         "ranges": [0, 5, 10, 25, 45],
         "output_dir": "",
         "nodata": -9999,
-        "metrics": _DEFAULT_TEST_METRICS,
+        "metrics": [
+            "mean",
+            "median",
+            "max",
+            "min",
+            "sum",
+            {"percentil_90": {"remove_outliers": "False"}},
+            "squared_sum",
+            "nmad",
+            "rmse",
+            "std",
+        ],
     }
 
     # Initialize slope classification layer object

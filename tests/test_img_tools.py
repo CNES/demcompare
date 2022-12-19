@@ -39,26 +39,6 @@ from demcompare.helpers_init import read_config_file
 from .helpers import demcompare_test_data_path
 
 
-@pytest.fixture(name="initialize_transformation")
-def fixture_initialize_transformation():
-    """
-    Fixture to initialize the image georef transform
-    - Creates and returns a transformation array
-    """
-    # Define transformation
-    trans = np.array(
-        [
-            5.962550e05,
-            5.000000e02,
-            0.000000e00,
-            5.099745e06,
-            0.000000e00,
-            -5.000000e02,
-        ]
-    )
-    return trans
-
-
 @pytest.mark.unit_tests
 def test_convert_pix_to_coord_neg_x_pos_y(initialize_transformation):
     """
