@@ -89,7 +89,6 @@ def run(
 
     # If coregistration step is present
     if "coregistration" in cfg:
-
         sec_name = input_sec.input_img
         ref_name = input_ref.input_img
         logging.info("Input Secondary DEM (SEC): %s", sec_name)
@@ -135,7 +134,11 @@ def run(
     elif "statistics" in cfg:
         # If both dems have been defined, compute altitude difference for stats
         if input_ref and input_sec:
-            (reproj_sec, reproj_ref, _,) = reproject_dems(
+            (
+                reproj_sec,
+                reproj_ref,
+                _,
+            ) = reproject_dems(
                 input_sec,
                 input_ref,
                 sampling_source=cfg["sampling_source"]
