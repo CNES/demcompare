@@ -119,7 +119,11 @@ def test_coregister_dems_algorithm_gironde_sampling_sec():
     # Create coregistration object
     coregistration_ = coregistration.Coregistration(cfg["coregistration"])
     # Run _coregister_dems_algorithm
-    (transform, _, _,) = coregistration_._coregister_dems_algorithm(
+    (
+        transform,
+        _,
+        _,
+    ) = coregistration_._coregister_dems_algorithm(
         reproj_crop_dem, reproj_crop_ref
     )
 
@@ -246,7 +250,11 @@ def test_coregister_dems_algorithm_gironde_sampling_ref():
     # Create coregistration object
     coregistration_ = coregistration.Coregistration(cfg["coregistration"])
     # Run coregister_dems
-    (transform, _, _,) = coregistration_._coregister_dems_algorithm(
+    (
+        transform,
+        _,
+        _,
+    ) = coregistration_._coregister_dems_algorithm(
         reproj_crop_dem, reproj_crop_ref
     )
 

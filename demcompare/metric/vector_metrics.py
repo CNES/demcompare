@@ -79,7 +79,6 @@ class CumulativeProbabilityFunction(MetricTemplate):
     def compute_metric(
         self, data: np.ndarray
     ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
-
         """
         Metric computation method
 
@@ -348,7 +347,6 @@ class RatioAboveThreshold(MetricTemplate):
     def compute_metric(
         self, data: np.ndarray
     ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
-
         """
         Metric computation method
 

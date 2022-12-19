@@ -758,7 +758,6 @@ def test_coregistration_save_optional_outputss():
     sec = load_dem(cfg["input_sec"]["path"])
 
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-
         mkdir_p(tmp_dir)
         # Modify test's output dir in configuration to tmp test dir
         cfg["output_dir"] = tmp_dir
