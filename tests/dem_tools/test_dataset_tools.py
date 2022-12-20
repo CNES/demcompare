@@ -38,7 +38,7 @@ from demcompare import dataset_tools, dem_tools
 from demcompare.helpers_init import read_config_file
 
 # Tests helpers
-from .helpers import demcompare_path, demcompare_test_data_path
+from tests.helpers import demcompare_path, demcompare_test_data_path
 
 
 @pytest.mark.unit_tests

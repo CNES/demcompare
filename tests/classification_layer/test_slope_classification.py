@@ -30,48 +30,7 @@ import numpy as np
 import pytest
 
 # Demcompare imports
-from demcompare import dem_tools
-from demcompare.classification_layer.classification_layer import (
-    ClassificationLayer,
-)
 from demcompare.dem_tools import create_dem
-
-
-@pytest.fixture(name="initialize_slope_layer")
-def fixture_initialize_slope_layer():
-    """
-    Fixture to initialize a slope layer
-
-    - Manually creates input dem dataset
-    - Computes the dem slope with the "compute_dem_slope" function
-    - Creates a slope classification layer created using the input
-      dataset. The classification layer is called "Slope0"
-    - Returns the created classification layer object and the input dem
-
-    """
-    # Generate dsm with the following data and
-    # "gironde_test_data" DSM's georef and resolution
-    data = np.array([[1, 0, 1], [1, 0, 1], [-1, 0, 1]], dtype=np.float32)
-    dem_dataset = dem_tools.create_dem(data=data)
-    # Compute dem's slope
-    dem_dataset = dem_tools.compute_dem_slope(dem_dataset)
-    # Classification layer configuration
-    layer_name = "Slope0"
-    clayer = {
-        "type": "slope",
-        "ranges": [0, 5, 10, 25, 45],
-        "output_dir": "",
-        "metrics": ["mean"],
-    }
-
-    # Initialize slope classification layer object
-    slope_classif_layer_ = ClassificationLayer(
-        name=layer_name,
-        classification_layer_kind=str(clayer["type"]),
-        dem=dem_dataset,
-        cfg=clayer,
-    )
-    return slope_classif_layer_, dem_dataset
 
 
 @pytest.mark.unit_tests

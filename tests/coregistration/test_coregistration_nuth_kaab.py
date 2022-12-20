@@ -26,7 +26,6 @@ methods in the Nuth et Kaab coregistration method.
 """
 # pylint:disable=protected-access
 # pylint:disable=duplicate-code
-# pylint:disable=too-many-lines
 # Standard imports
 import os
 
@@ -42,32 +41,6 @@ from demcompare.helpers_init import read_config_file
 
 # Tests helpers
 from tests.helpers import demcompare_test_data_path
-
-
-@pytest.fixture(name="initialize_dem_and_coreg")
-def fixture_initialize_dem_and_coreg():
-    """
-    Fixture to initialize the input dem and the
-    coregistration object
-    """
-
-    # Define cfg
-    cfg = {
-        "method_name": "nuth_kaab_internal",
-        "number_of_iterations": 6,
-        "estimated_initial_shift_x": 0,
-        "estimated_initial_shift_y": 0,
-    }
-
-    # Initialize coregistration object
-    coregistration_ = coregistration.Coregistration(cfg)
-
-    # Define input_dem array
-    input_dem = np.array(
-        ([1, 1, 1], [-1, 2, 1], [4, -3, 2], [2, 1, 1], [1, 1, 2]),
-        dtype=np.float64,
-    )
-    return coregistration_, input_dem
 
 
 @pytest.mark.unit_tests
@@ -609,106 +582,6 @@ def test_interpolate_dem_on_grid():
     np.testing.assert_allclose(
         gt_spline_2.tck[2], output_spline_2.tck[2], rtol=1e-02
     )
-
-
-@pytest.mark.unit_tests
-def test_crop_dem_with_offset_pos_x_pos_y(initialize_dem_and_coreg):
-    """
-    Test the crop_dem_with_offset function with
-    positive x and positive y offsets.
-    Manually computes an input array and crops it
-    with offset, and tests that the resulting
-    array form the crop_dem_with_offset is the
-    same.
-    """
-    coregistration_, input_dem = initialize_dem_and_coreg
-
-    # Test with positive x_offset and positive y_offset
-    x_offset = 2.3
-    y_offset = 4.7
-    output_cropped_dem = coregistration_.crop_dem_with_offset(
-        input_dem, x_offset, y_offset
-    )
-    gt_cropped_dem = input_dem[
-        int(np.floor(y_offset)) : input_dem.shape[0],
-        0 : input_dem.shape[1] - int(np.ceil(x_offset)),
-    ]
-    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
-
-
-@pytest.mark.unit_tests
-def test_crop_dem_with_offset_pos_x_neg_y(initialize_dem_and_coreg):
-    """
-    Test the crop_dem_with_offset function with
-    positive x and negative y offsets.
-    Manually computes an input array and crops it
-    with offset, and tests that the resulting
-    array form the crop_dem_with_offset is the
-    same.
-    """
-    coregistration_, input_dem = initialize_dem_and_coreg
-
-    # Test with positive x_offset and negative y_offset
-    x_offset = 2.3
-    y_offset = -4.7
-    output_cropped_dem = coregistration_.crop_dem_with_offset(
-        input_dem, x_offset, y_offset
-    )
-    gt_cropped_dem = input_dem[
-        0 : input_dem.shape[0] - int(np.ceil(-y_offset)),
-        0 : input_dem.shape[1] - int(np.ceil(x_offset)),
-    ]
-    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
-
-
-@pytest.mark.unit_tests
-def test_crop_dem_with_offset_neg_x_pos_y(initialize_dem_and_coreg):
-    """
-    Test the crop_dem_with_offset function with
-    negative x and positive y offsets.
-    Manually computes an input array and crops it
-    with offset, and tests that the resulting
-    array form the crop_dem_with_offset is the
-    same.
-    """
-    coregistration_, input_dem = initialize_dem_and_coreg
-
-    # Test with negative x_offset and positive y_offset
-    x_offset = -2.3
-    y_offset = 4.7
-    output_cropped_dem = coregistration_.crop_dem_with_offset(
-        input_dem, x_offset, y_offset
-    )
-    gt_cropped_dem = input_dem[
-        int(np.floor(y_offset)) : input_dem.shape[0],
-        int(np.floor(-x_offset)) : input_dem.shape[1],
-    ]
-    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
-
-
-@pytest.mark.unit_tests
-def test_crop_dem_with_offset_neg_x_neg_y(initialize_dem_and_coreg):
-    """
-    Test the crop_dem_with_offset function with
-    negative x and negative y offsets.
-    Manually computes an input array and crops it
-    with offset, and tests that the resulting
-    array form the crop_dem_with_offset is the
-    same.
-    """
-    coregistration_, input_dem = initialize_dem_and_coreg
-
-    # Test with negative x_offset and negative y_offset
-    x_offset = -2.3
-    y_offset = -4.7
-    output_cropped_dem = coregistration_.crop_dem_with_offset(
-        input_dem, x_offset, y_offset
-    )
-    gt_cropped_dem = input_dem[
-        0 : input_dem.shape[0] - int(np.ceil(-y_offset)),
-        int(np.floor(-x_offset)) : input_dem.shape[1],
-    ]
-    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
 
 
 @pytest.mark.unit_tests
