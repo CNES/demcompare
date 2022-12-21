@@ -34,11 +34,14 @@ from demcompare.metric import Metric
 def test_mean():
     """
     Test the mean metric class function compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
     data = np.array([-7.0, 3.0, 3.0, 1, 3.0, 1.0, 0.0], dtype=np.float32)
     # Manually compute metric
@@ -55,11 +58,14 @@ def test_mean():
 def test_max():
     """
     Test the max metric class function compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
     data = np.array([-7.0, 3.0, 3.0, 1, 3.0, 1.0, 0.0], dtype=np.float32)
     # Manually compute metric
@@ -76,11 +82,14 @@ def test_max():
 def test_min():
     """
     Test the min metric class function compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
     data = np.array([-7.0, 3.0, 3.0, 1, 3.0, 1.0, 0.0], dtype=np.float32)
     # Manually compute metric
@@ -97,11 +106,14 @@ def test_min():
 def test_std():
     """
     Test the std metric class function compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
     data = np.array([-7.0, 3.0, 3.0, 1, 3.0, 1.0, 0.0], dtype=np.float32)
     # Manually compute metric
@@ -118,11 +130,14 @@ def test_std():
 def test_rmse():
     """
     Test the rmse metric class function compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
     data = np.array([-7.0, 3.0, 3.0, 1, 3.0, 1.0, 0.0], dtype=np.float32)
     # Manually compute metric
@@ -139,11 +154,14 @@ def test_rmse():
 def test_median():
     """
     Test the median metric class function compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
     data = np.array([-7.0, 3.0, 3.0, 1, 3.0, 1.0, 0.0], dtype=np.float32)
     # Manually compute metric
@@ -160,11 +178,14 @@ def test_median():
 def test_nmad():
     """
     Test the nmad metric class function compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
     data = np.array([-7.0, 3.0, 3.0, 1, 3.0, 1.0, 0.0], dtype=np.float32)
     # Manually compute metric
@@ -181,11 +202,14 @@ def test_nmad():
 def test_sum():
     """
     Test the sum_err metric class function compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
     data = np.array([-7.0, 3.0, 3.0, 1, 3.0, 1.0, 0.0], dtype=np.float32)
     # Manually compute metric
@@ -201,13 +225,15 @@ def test_sum():
 @pytest.mark.unit_tests
 def test_percentil_90():
     """
-    Test the percentil_90 metric class function
-    compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Test the percentil_90 metric class function compute_metric.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
 
     # Initialize input data

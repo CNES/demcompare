@@ -26,8 +26,6 @@ methods in the Nuth et Kaab coregistration method.
 """
 # pylint:disable=protected-access
 # pylint:disable=duplicate-code
-# Standard imports
-import os
 
 # Third party imports
 import numpy as np
@@ -36,217 +34,22 @@ import scipy
 from json_checker import DictCheckerError
 
 # Demcompare imports
-from demcompare import coregistration, dem_tools
-from demcompare.helpers_init import read_config_file
-
-# Tests helpers
-from tests.helpers import demcompare_test_data_path
-
-
-@pytest.mark.unit_tests
-def test_coregister_dems_algorithm_gironde_sampling_sec():
-    """
-    Test the _coregister_dems_algorithm function of
-    the Nuth et Kaab class.
-    Loads the data present in the "gironde_test_data" root data
-    directory and test that the output Transform is
-    correct.
-    The following configurations are tested:
-    - "gironde_test_data" test root input DEMs,
-     sampling value sec
-    """
-    # Test with "gironde_test_data" test root
-    # input DEMs and sampling value sec -----------------------------
-
-    # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("gironde_test_data")
-    # Load "gironde_test_data" demcompare config from input/test_config.json
-    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-    cfg = read_config_file(test_cfg_path)
-
-    # Load dems
-    ref = dem_tools.load_dem(cfg["input_ref"]["path"])
-    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
-    sampling_source = "sec"
-
-    # Define ground truth outputs
-    rotation = None
-    x_offset = -1.4366
-    y_offset = -0.4190
-    z_offset = -3.4025
-
-    # Reproject and crop DEMs
-    (
-        reproj_crop_dem,
-        reproj_crop_ref,
-        _,
-    ) = dem_tools.reproject_dems(sec, ref, sampling_source=sampling_source)
-
-    # Coregistration configuration is the following :
-    # "coregistration": {
-    #    "method_name": "nuth_kaab_internal",
-    #    "number_of_iterations": 6,
-    #    "estimated_initial_shift_x": 0,
-    #    "estimated_initial_shift_y": 0
-    # }
-    # Create coregistration object
-    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
-    # Run _coregister_dems_algorithm
-    (
-        transform,
-        _,
-        _,
-    ) = coregistration_._coregister_dems_algorithm(
-        reproj_crop_dem, reproj_crop_ref
-    )
-
-    # Test that the outputs match the ground truth
-    assert rotation == transform.rotation
-    np.testing.assert_allclose(x_offset, transform.x_offset, rtol=1e-02)
-    np.testing.assert_allclose(y_offset, transform.y_offset, rtol=1e-02)
-    np.testing.assert_allclose(z_offset, transform.z_offset, rtol=1e-02)
-
-
-@pytest.mark.unit_tests
-def test_bounds_in_coregister_dems_algorithm_gironde_sampling_sec():
-    """
-    Test the _coregister_dems_algorithm function of
-    the Nuth et Kaab class.
-    Loads the data present in the "gironde_test_data" root data
-    directory and test that the output Transform is
-    correct.
-    The following configurations are tested:
-    - "gironde_test_data" test root input DEMs,
-     sampling value sec
-    """
-    # Test with "gironde_test_data" test root
-    # input DEMs and sampling value sec -----------------------------
-
-    # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("gironde_test_data")
-    # Load "gironde_test_data" demcompare config from input/test_config.json
-    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-    cfg = read_config_file(test_cfg_path)
-
-    # Load dems
-    ref = dem_tools.load_dem(cfg["input_ref"]["path"])
-    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
-    sampling_source = "sec"
-
-    # Define ground truth outputs
-    ulx = 599536.6809346128
-    uly = 5090035.483811519
-    lrx = 688536.6809346128
-    lry = 4990535.483811519
-
-    # Reproject and crop DEMs
-    (
-        reproj_crop_dem,
-        reproj_crop_ref,
-        _,
-    ) = dem_tools.reproject_dems(sec, ref, sampling_source=sampling_source)
-
-    # Coregistration configuration is the following :
-    # "coregistration": {
-    #    "method_name": "nuth_kaab_internal",
-    #    "number_of_iterations": 6,
-    #    "estimated_initial_shift_x": 0,
-    #    "estimated_initial_shift_y": 0
-    # }
-    # Create coregistration object
-    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
-    # Run _coregister_dems_algorithm
-    (
-        _,
-        coreg_sec_dataset,
-        coreg_ref_dataset,
-    ) = coregistration_._coregister_dems_algorithm(
-        reproj_crop_dem, reproj_crop_ref
-    )
-
-    # Test that the outputs match the ground truth
-    np.testing.assert_allclose(
-        coreg_sec_dataset.bounds, (ulx, uly, lrx, lry), rtol=1e-02
-    )
-    np.testing.assert_allclose(
-        coreg_ref_dataset.bounds, (ulx, uly, lrx, lry), rtol=1e-02
-    )
-
-
-@pytest.mark.unit_tests
-def test_coregister_dems_algorithm_gironde_sampling_ref():
-    """
-    Test the _coregister_dems_algorithm function of
-    the Nuth et Kaab class.
-    Loads the data present in the "gironde_test_data" root data
-    directory and test that the output Transform is
-    correct.
-    The following configurations are tested:
-    - "gironde_test_data" test root input DEMs,
-     sampling value ref
-    """
-
-    # Test with "gironde_test_data" test root
-    # input DEMs and sampling value ref -----------------------------
-
-    # Get "gironde_test_data" test root data directory absolute path
-    test_data_path = demcompare_test_data_path("gironde_test_data")
-    # Load "gironde_test_data" demcompare config from input/test_config.json
-    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
-    cfg = read_config_file(test_cfg_path)
-
-    # Load dems
-    ref = dem_tools.load_dem(cfg["input_ref"]["path"])
-    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
-    sampling_source = "ref"
-
-    # Define ground truth outputs
-    rotation = None
-    x_offset = -5.44706
-    y_offset = -1.18139
-    z_offset = -0.53005
-
-    # Reproject and crop DEMs
-    (
-        reproj_crop_dem,
-        reproj_crop_ref,
-        _,
-    ) = dem_tools.reproject_dems(sec, ref, sampling_source=sampling_source)
-
-    # Coregistration configuration is the following :
-    # "coregistration": {
-    #    "method_name": "nuth_kaab_internal",
-    #    "number_of_iterations": 6,
-    #    "estimated_initial_shift_x": 0,
-    #    "estimated_initial_shift_y": 0
-    # }
-    # Create coregistration object
-    coregistration_ = coregistration.Coregistration(cfg["coregistration"])
-    # Run coregister_dems
-    (
-        transform,
-        _,
-        _,
-    ) = coregistration_._coregister_dems_algorithm(
-        reproj_crop_dem, reproj_crop_ref
-    )
-
-    # Test that the outputs match the ground truth
-    assert rotation == transform.rotation
-    np.testing.assert_allclose(x_offset, transform.x_offset, rtol=1e-02)
-    np.testing.assert_allclose(y_offset, transform.y_offset, rtol=1e-02)
-    np.testing.assert_allclose(z_offset, transform.z_offset, rtol=1e-02)
+from demcompare import coregistration
 
 
 @pytest.mark.unit_tests
 def test_grad2d():
     """
     Test the grad2d function
-    Manually computes an input array and its
-    slope and gradient, and tests that the obtained
-    values resulting from the grad2d function are
-    correct.
-
+    Input data:
+    - Manually computed coregistration configuration
+    Validation data:
+     - Manually computed inputs with his slope and gradient.
+    Validation process:
+    - Creates a coregistration object and does _grad2d
+    -  Checked parameters are:
+        - slope
+        - aspect
     """
     # Define cfg
     cfg = {
@@ -341,10 +144,15 @@ def test_grad2d():
 def test_filter_target():
     """
     Test the filter_target function
-    Computes an input target and manually adds noise
-    to it, then tests that the filter_target function
-    correctly filters the added noise.
-
+    Input data:
+    - Manually computed coregistration configuration
+    Validation data:
+     - Manually computed target with manually computed noise.
+    Validation process:
+    - Creates a coregistration object and does filter_target
+    -  Checked parameters are:
+        - filtered target
+        - filtered median
     """
     # Initialize cfg
     cfg = {
@@ -411,11 +219,17 @@ def test_filter_target():
 @pytest.mark.unit_tests
 def test_nuth_kaab_single_iter():
     """
-    Manually computes an input array and its
-    output offsets, and tests that the resulting
-    offsets form the nuth_kaab_single_iter are the
-    same.
-
+    Test nuth kaab coregistration single iteration
+    Input data:
+    - Manually computed coregistration configuration and data
+    Validation data:
+     - Manually computed ground truth gt_east, gt_north, gt_c
+    Validation process:
+    - Creates a coregistration object and does _nuth_kaab_single_iter
+    - Checked parameters are:
+        - output_east
+        - output_north
+        - output_c
     """
     # Define cfg
     cfg = {
@@ -493,10 +307,16 @@ def test_nuth_kaab_single_iter():
 def test_interpolate_dem_on_grid():
     """
     Test the interpolate_dem_on_grid function
-    Manually computes an input array and its
-    spline interpolators, and tests that the resulting
-    splines form the interpolate_dem_on_grid are the
-    same.
+    Input data:
+    - Manually computed data with spline interpolators
+    Validation data:
+    - Manually computed ground truth gt_masked_dem, gt_nan_mask
+    and gt_spline_1 and gt_spline_2 with scipy RectBivariateSpline function
+    Validation process:
+    - Creates a coregistration object and does interpolate_dem_on_grid
+    - Test that the output splines are the same as ground_truth
+      spline.tck is a tuple (t,c,k) containing the vector of knots,
+      the B-spline coefficients, and the degree of the spline.
     """
     # Define cfg
     cfg = {
@@ -587,8 +407,14 @@ def test_interpolate_dem_on_grid():
 @pytest.mark.unit_tests
 def test_limit_iteration_number():
     """
-    Test that the user can not specify
-    an iteration number higher than 15.
+    Test the configuration of coregistration for nuth and kaab
+    Input data:
+    - Manually computed coregistration configuration
+    Validation data:
+    - None
+    Validation process:
+    - Instantiate "number_of_iterations" to 16
+    - Check that DictCheckerError error is raised
     """
 
     # Define cfg with too many iterations
@@ -608,8 +434,14 @@ def test_limit_iteration_number():
 @pytest.mark.unit_tests
 def test_limit_0_iteration_number():
     """
-    Test that the user can not specify
-    0 as an iteration value.
+    Test the configuration of coregistration for nuth and kaab
+    Input data:
+    - Manually computed coregistration configuration
+    Validation data:
+    - None
+    Validation process:
+    - Instantiate "number_of_iterations" to 0
+    - Check that DictCheckerError error is raised
     """
 
     # Define cfg with 0 iteration
@@ -629,8 +461,14 @@ def test_limit_0_iteration_number():
 @pytest.mark.unit_tests
 def test_type_iteration_number():
     """
-    Test that the user can not specify
-    an iteration which is not an int.
+    Test the configuration of coregistration for nuth and kaab
+    Input data:
+    - Manually computed coregistration configuration
+    Validation data:
+    - None
+    Validation process:
+    - Instantiate "number_of_iterations" to "test"
+    - Check that DictCheckerError error is raised
     """
 
     # Define cfg with an str as iteration
@@ -650,8 +488,14 @@ def test_type_iteration_number():
 @pytest.mark.unit_tests
 def test_limit_negative_iteration_number():
     """
-    Test that the user can not specify
-    a negative iteration.
+    Test the configuration of coregistration for nuth and kaab
+    Input data:
+    - Manually computed coregistration configuration
+    Validation data:
+    - None
+    Validation process:
+    - Instantiate "number_of_iterations" to -5
+    - Check that DictCheckerError error is raised
     """
 
     # Define cfg with negative iterations
