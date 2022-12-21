@@ -49,7 +49,7 @@ def demcompare_cmap(
     colors = ["palegreen", "green", "lightcoral", "darkred"]
     nodes = [0.0, 0.4, 0.5, 1.0]
     cmap_shift = LinearSegmentedColormap.from_list(
-        "mycmap", list(zip(nodes, colors))
+        "mycmap", list(zip(nodes, colors))  # noqa: B905
     )
 
     if color is not None:
@@ -76,7 +76,6 @@ def stack_dems(
     legend_ref: str = "Ref DEM",
     legend_sec: str = "Second DEM",
     legend_extra: str = "Sample Sec",
-    long_lat: bool = True
 ) -> figure:
     """
     Allows the user to view three stacked DEMs.
@@ -94,8 +93,6 @@ def stack_dems(
     :type legend_sec: str
     :param legend_extra: Legend for extra DEM
     :type legend_extra: str
-    :param long_lat: Uses ground coordinates
-    :type long_lat: bool
     :return: figure
     """
     output_notebook()
