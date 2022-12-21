@@ -92,3 +92,36 @@ def test_statistics():
         )
 
     assert out.returncode == 0
+
+
+@pytest.mark.unit_tests
+@pytest.mark.notebook_tests
+def test_introduction_and_basic_usage():
+    """
+    Test that the introduction_and_basic_usage
+    notebook runs without errors
+    """
+    introduction_and_basic_usage_path = notebooks_demcompare_path(
+        "introduction_and_basic_usage.ipynb"
+    )
+
+    with tempfile.TemporaryDirectory() as directory:
+        subprocess.run(
+            [
+                f"jupyter nbconvert --to script \
+                {introduction_and_basic_usage_path} \
+                --output-dir {directory}"
+            ],
+            shell=True,
+            check=False,
+        )
+        out = subprocess.run(
+            [f"ipython {directory}/introduction_and_basic_usage.py"],
+            shell=True,
+            check=False,
+            cwd="../notebooks",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+    assert out.returncode == 0

@@ -12,6 +12,6 @@ Those notebooks include all demcompare's steps such as the DEMs loading, its rep
 
 The available notebooks are:
 
-- Notebook coregistration
-- Notebook stats
-- Notebook coregistration + stats
+- Notebook introduction and basic usage
+- Notebook reprojection and coregistration
+- Notebook statistiques
