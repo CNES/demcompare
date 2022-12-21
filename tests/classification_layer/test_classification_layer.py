@@ -25,6 +25,8 @@ This module contains functions to test the
 methods in the classification layer class.
 """
 
+# pylint: disable=protected-access
+
 import os
 
 # Third party imports
@@ -45,7 +47,7 @@ from tests.helpers import demcompare_test_data_path
 
 
 @pytest.mark.unit_tests
-def test_get_outliers_free_mask():
+def test_get_outliers_free_mask(get_default_metrics):
     """
     Test the _get_outliers_free_mask function
     Input data:
@@ -93,18 +95,7 @@ def test_get_outliers_free_mask():
         "type": "slope",
         "ranges": [0, 5, 10, 25, 45],
         "output_dir": "",
-        "metrics": [
-            "mean",
-            "median",
-            "max",
-            "min",
-            "sum",
-            {"percentil_90": {"remove_outliers": "False"}},
-            "squared_sum",
-            "nmad",
-            "rmse",
-            "std",
-        ],
+        "metrics": get_default_metrics,
     }
 
     # Initialize slope classification layer object
@@ -223,7 +214,7 @@ def test_get_nonan_mask_defaut_nodata(initialize_slope_layer):
 
 
 @pytest.mark.unit_tests
-def test_create_mode_masks():
+def test_create_mode_masks(get_default_metrics):
     """
     Test the _create_mode_masks function
     Input data:
@@ -255,18 +246,7 @@ def test_create_mode_masks():
         "ranges": [0, 5, 10, 25, 45],
         "output_dir": "",
         "nodata": -9999,
-        "metrics": [
-            "mean",
-            "median",
-            "max",
-            "min",
-            "sum",
-            {"percentil_90": {"remove_outliers": "False"}},
-            "squared_sum",
-            "nmad",
-            "rmse",
-            "std",
-        ],
+        "metrics": get_default_metrics,
     }
 
     # Initialize slope classification layer object
