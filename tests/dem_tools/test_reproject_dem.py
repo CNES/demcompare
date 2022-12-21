@@ -58,11 +58,7 @@ def test_reproject_dems_sampling_sec(load_gironde_dem):
     """
     sec_orig, ref_orig = load_gironde_dem
     # Reproject dems with sampling source sec  -------------------------------
-    (
-        reproj_sec,
-        reproj_ref,
-        adapting_factor,
-    ) = dem_tools.reproject_dems(
+    reproj_sec, reproj_ref, adapting_factor = dem_tools.reproject_dems(
         sec_orig,
         ref_orig,
         sampling_source=dem_tools.SamplingSourceParameter.SEC.value,
@@ -141,11 +137,7 @@ def test_reproject_dems_sampling_ref(load_gironde_dem):
     sec_orig, ref_orig = load_gironde_dem
     # Reproject dems with sampling source ref --------------------------------
 
-    (
-        reproj_sec,
-        reproj_ref,
-        adapting_factor,
-    ) = dem_tools.reproject_dems(
+    reproj_sec, reproj_ref, adapting_factor = dem_tools.reproject_dems(
         sec_orig,
         ref_orig,
         sampling_source=dem_tools.SamplingSourceParameter.REF.value,
@@ -227,11 +219,7 @@ def test_reproject_dems_sampling_sec_initial_disparity(load_gironde_dem):
 
     # Reproject dems with sampling value sec and initial disparity -------------
 
-    (
-        reproj_sec,
-        reproj_ref,
-        adapting_factor,
-    ) = dem_tools.reproject_dems(
+    reproj_sec, reproj_ref, adapting_factor = dem_tools.reproject_dems(
         sec_orig,
         ref_orig,
         sampling_source=dem_tools.SamplingSourceParameter.SEC.value,
