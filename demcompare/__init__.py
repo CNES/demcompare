@@ -134,11 +134,7 @@ def run(
     elif "statistics" in cfg:
         # If both dems have been defined, compute altitude difference for stats
         if input_ref and input_sec:
-            (
-                reproj_sec,
-                reproj_ref,
-                _,
-            ) = reproject_dems(
+            reproj_sec, reproj_ref, _ = reproject_dems(
                 input_sec,
                 input_ref,
                 sampling_source=cfg["sampling_source"]
