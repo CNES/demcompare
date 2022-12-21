@@ -37,10 +37,15 @@ def test_crop_dem_with_offset_pos_x_pos_y(initialize_dem_and_coreg):
     """
     Test the crop_dem_with_offset function with
     positive x and positive y offsets.
-    Manually computes an input array and crops it
-    with offset, and tests that the resulting
-    array form the crop_dem_with_offset is the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually cropped input dem with the corresponding offsets: gt_cropped_dem.
+    Validation process:
+    - Crops the input dem with the crop_dem_with_offset function.
+    - Checks that the obtained dem is the same as ground truth.
+        - Checked function: coregistration.crop_dem_with_offset
     """
     coregistration_, input_dem = initialize_dem_and_coreg
 
@@ -62,10 +67,15 @@ def test_crop_dem_with_offset_pos_x_neg_y(initialize_dem_and_coreg):
     """
     Test the crop_dem_with_offset function with
     positive x and negative y offsets.
-    Manually computes an input array and crops it
-    with offset, and tests that the resulting
-    array form the crop_dem_with_offset is the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually cropped input dem with the corresponding offsets: gt_cropped_dem.
+    Validation process:
+    - Crops the input dem with the crop_dem_with_offset function.
+    - Checks that the obtained dem is the same as ground truth.
+        - Checked function: coregistration.crop_dem_with_offset
     """
     coregistration_, input_dem = initialize_dem_and_coreg
 
@@ -87,10 +97,15 @@ def test_crop_dem_with_offset_neg_x_pos_y(initialize_dem_and_coreg):
     """
     Test the crop_dem_with_offset function with
     negative x and positive y offsets.
-    Manually computes an input array and crops it
-    with offset, and tests that the resulting
-    array form the crop_dem_with_offset is the
-    same.
+     Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually cropped input dem with the corresponding offsets: gt_cropped_dem.
+    Validation process:
+    - Crops the input dem with the crop_dem_with_offset function.
+    - Checks that the obtained dem is the same as ground truth.
+        - Checked function: coregistration.crop_dem_with_offset
     """
     coregistration_, input_dem = initialize_dem_and_coreg
 
@@ -112,10 +127,15 @@ def test_crop_dem_with_offset_neg_x_neg_y(initialize_dem_and_coreg):
     """
     Test the crop_dem_with_offset function with
     negative x and negative y offsets.
-    Manually computes an input array and crops it
-    with offset, and tests that the resulting
-    array form the crop_dem_with_offset is the
-    same.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually cropped input dem with the corresponding offsets: gt_cropped_dem.
+    Validation process:
+    - Crops the input dem with the crop_dem_with_offset function.
+    - Checks that the obtained dem is the same as ground truth.
+        - Checked function: coregistration.crop_dem_with_offset
     """
     coregistration_, input_dem = initialize_dem_and_coreg
 

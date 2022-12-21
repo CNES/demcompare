@@ -22,11 +22,8 @@
 This module contains functions to test the
 methods in the vector metric class.
 """
-
+# pylint:disable=protected-access
 # Third party imports
-
-# pylint: disable=protected-access
-
 import numpy as np
 import pytest
 
@@ -36,13 +33,15 @@ from demcompare.metric import Metric
 @pytest.mark.unit_tests
 def test_ratio_above_threshold():
     """
-    Test the ratio_above_threshold metric class function
-    compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Test the ratio_above_threshold metric class function compute_metric.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output and gt_ratio with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
 
     # Test with default elevation threshold ----------------------------
@@ -91,13 +90,16 @@ def test_ratio_above_threshold():
 @pytest.mark.unit_tests
 def test_cdf():
     """
-    Test the cdf metric class function
-    compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Test the cdf metric class function compute_metric.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output, gt_bins_count and gt_cdf
+    with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
 
     # Initialize input data
@@ -138,13 +140,15 @@ def test_cdf():
 @pytest.mark.unit_tests
 def test_pdf():
     """
-    Test the pdf metric class function
-    compute_metric.
-    Manually computes an input array and
-    computes its metric,
-    and tests that the resulting
-    arrays form the metric_class.compute_metric function are the
-    same.
+    Test the pdf metric class function compute_metric.
+    Input data:
+    - Manually computed data array
+    - Coregistration object created by fixture initialize_dem_and_coreg
+    Validation data:
+    - Manually computed ground truth gt_output, gt_bins and gt_pdf with numpy
+    Validation process:
+    - Create the metric object and test compute_metric
+    - Check that the obtained metrics are the same as ground truth
     """
     # Test without percentil 98 filtering ---------------------------
 
