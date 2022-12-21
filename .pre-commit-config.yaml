@@ -36,11 +36,17 @@ repos:
     entry: mypy
     files: \.py$
 
-  - id: sphinx-build
-    name: Build Sphinx Doc
-    stages: [push]
-    entry: make doc
+  - id: jupyter-nb-clear-output
+    name: jupyter-nb-clear-output
+    files: \.ipynb$
+    stages: [commit]
+    language: system
+    entry: jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace
+
+  - id: sphinx-checking
+    name: Checking Sphinx building
+    entry: sphinx-build -M html docs/source/ docs/build -W --keep-going
     language: system
     files: ^(docs/.*|demcompare/.*)$
     pass_filenames: False
-
+    stages: [push]

@@ -40,6 +40,7 @@ Demcompare is available on Pypi and can be typically installed through a [virtua
 ```
 python3 -m venv venv
 source venv/bin/activate
+pip install --upgrade pip
 pip install demcompare
 ```
 
