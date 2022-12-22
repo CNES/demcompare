@@ -383,10 +383,9 @@ def test_compute_stats_from_cfg_status(
         )
 
 
+# Filter warning: Assigning the 'data' attribute will be removed in the future
+@pytest.mark.filterwarnings("ignore: Assigning the 'data' attribute")
 @pytest.mark.unit_tests
-# Assigning the 'data' attribute will be removed in the future
-# since 2017, seems to have no workaround
-@pytest.mark.filterwarnings("ignore::DeprecationWarning:")
 @pytest.mark.functional_tests
 def test_statistics_output_dir():
     """

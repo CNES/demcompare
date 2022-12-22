@@ -94,6 +94,10 @@ def test_load_dem():
     np.testing.assert_allclose(gt_transform, dem.georef_transform, rtol=1e-02)
 
 
+# Filter warning: Dataset has no geotransform, gcps, or rpcs
+@pytest.mark.filterwarnings(
+    "ignore: Dataset has no geotransform, gcps, or rpcs"
+)
 @pytest.mark.unit_tests
 def test_load_dem_with_nodata():
     """

@@ -260,11 +260,17 @@ class NuthKaabInternal(
             median = np.median(diff)
 
             logging.debug(
-                "\t Median : %.2f, NMAD = %.2f, Gain : %.2f",
+                "\t Median : %.2f, NMAD = %.2f",
                 median,
                 nmad_new,
-                (nmad_new - nmad_old) / nmad_old * 100,
             )
+            # with same dems test, nmad_old divive by zero. don't show gain
+            if nmad_old != 0:
+                logging.debug(
+                    "\t Gain : %.2f",
+                    (nmad_new - nmad_old) / nmad_old * 100,
+                )
+            # put new nmad to old for next iteration
             nmad_old = nmad_new
 
         # Initialize coregistered classification layers
