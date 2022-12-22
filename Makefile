@@ -56,8 +56,8 @@ help: ## this help
 .PHONY: venv
 venv: ## create virtualenv in "venv" dir if not exists
 	@test -d ${VENV} || python3 -m venv ${VENV}
-	@${VENV}/bin/python -m pip install --upgrade pip setuptools wheel # no check to upgrade each time
 	@touch ${VENV}/bin/activate
+	@${VENV}/bin/python -m pip install --upgrade wheel setuptools pip # no check to upgrade each time
 
 .PHONY: install
 install: venv  ## install environment for development target (depends venv)
