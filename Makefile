@@ -159,7 +159,7 @@ notebook: install ## install Jupyter notebook kernel with venv and demcompare in
 .PHONY: notebook-clean-output ## Clean Jupyter notebooks outputs
 notebook-clean-output:
 	@echo "Clean Jupyter notebooks"
-	jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace notebooks/*.ipynb
+	@${VENV}/bin/jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace notebooks/*.ipynb
 
 ## Docker section
 
@@ -180,16 +180,16 @@ dist: clean install ## clean, install, builds source and wheel package
 
 .PHONY: release
 release: dist ## package and upload a release
-	@twine check dist/*
-	@twine upload dist/* --verbose ##  update your .pypirc accordingly
+	@${VENV}/bin/twine check dist/*
+	@${VENV}/bin/twine upload dist/* --verbose ##  update your .pypirc accordingly
 
 ## Clean section
 
 .PHONY: clean
-clean: clean-venv clean-build clean-precommit clean-pyc clean-test clean-docs clean-notebook ## remove all build, test, precommit, coverage, notebook checkpoints and Python artifacts
+clean: clean-venv clean-build clean-precommit clean-pyc clean-test clean-lint clean-docs clean-notebook ## clean all (except docker)
 
 .PHONY: clean-venv
-clean-venv:
+clean-venv: ## clean venv
 	@echo "+ $@"
 	@rm -rf ${VENV}
 
@@ -203,7 +203,7 @@ clean-build: ## remove build artifacts
 	@find . -name '*.egg' -exec rm -f {} +
 
 .PHONY: clean-precommit
-clean-precommit:
+clean-precommit: ## clean precommit hooks in .git/hooks
 	@rm -f .git/hooks/pre-commit
 	@rm -f .git/hooks/pre-push
 
@@ -224,25 +224,29 @@ clean-test: ## remove test and coverage artifacts
 	@rm -fr htmlcov/
 	@rm -fr .pytest_cache
 	@rm -f pytest-report.xml
+	@find . -type f -name "debug.log" -exec rm -fr {} +
+
+.PHONY: clean-lint
+clean-lint: ## remove linting artifacts
+	@echo "+ $@"
 	@rm -f pylint-report.txt
 	@rm -f pylint-report.xml
-	@rm -f debug.log
-	@rm -f tests/debug.log
+	@rm -rf .mypy_cache/
 
 .PHONY: clean-docs
-clean-docs:
+clean-docs: ## clean builded documentations
 	@echo "+ $@"
 	@rm -rf docs/build/
 	@rm -rf docs/source/api_reference/
 	@rm -rf docs/source/apidoc/
 
 .PHONY: clean-notebook
-clean-notebook:
+clean-notebook: ## clean notebooks cache
 	@echo "+ $@"
 	@find . -type d -name ".ipynb_checkpoints" -exec rm -fr {} +
 
 .PHONY: clean-docker
-clean-docker:
+clean-docker: ## clean created docker images
 		@echo "+ $@"
 		@echo "Clean Docker image demcompare ${VERSION_MIN}"
 		@docker image rm cnes/demcompare:${VERSION_MIN}
