@@ -118,7 +118,6 @@ def process_raster_by_tile(
     # Process by tile
     for j in range(num_tiles_xy[0]):  # col
         for i in range(num_tiles_xy[1]):  # row
-
             # Temporary tile size (row, col)
             tmp_tile_size = [
                 min(tile_size[0], rio_outfile.height - i * tile_size[0]),
@@ -280,11 +279,14 @@ def generate_uvs(
         uvs.append(
             [
                 (img_pts[triangles[i, 0], 0] - bbox[0]) / img_texture_size[0],
-                -(img_pts[triangles[i, 0], 1] - bbox[1]) / img_texture_size[1],
+                1
+                - (img_pts[triangles[i, 0], 1] - bbox[1]) / img_texture_size[1],
                 (img_pts[triangles[i, 1], 0] - bbox[0]) / img_texture_size[0],
-                -(img_pts[triangles[i, 1], 1] - bbox[1]) / img_texture_size[1],
+                1
+                - (img_pts[triangles[i, 1], 1] - bbox[1]) / img_texture_size[1],
                 (img_pts[triangles[i, 2], 0] - bbox[0]) / img_texture_size[0],
-                -(img_pts[triangles[i, 2], 1] - bbox[1]) / img_texture_size[1],
+                1
+                - (img_pts[triangles[i, 2], 1] - bbox[1]) / img_texture_size[1],
             ]
         )
 
