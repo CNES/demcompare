@@ -15,7 +15,7 @@ ifndef VENV
 	VENV = "venv"
 endif
 
-VERSION = $(shell python3 setup.py --version)
+VERSION = $(shell python3 -c 'from importlib.metadata import version; print(version("demcompare"))')
 VERSION_MIN = $(shell echo ${VERSION} | cut -d . -f 1,2,3)
 
 # Browser definition
