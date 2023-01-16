@@ -16,7 +16,7 @@ ifndef VENV
 endif
 
 # Software version from setup.py and setuptools_scm
-VERSION = $(shell python3 setup.py --version)
+VERSION = $(shell python3 -c 'from mesh3d import __version__; print(__version__)')
 VERSION_MIN = $(shell echo ${VERSION} | cut -d . -f 1,2,3)
 
 # Browser definition
