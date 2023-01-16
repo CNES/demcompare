@@ -65,13 +65,10 @@ def test_all_possible_combinations():
 
     # Loop on filtering methods
     for filtering_method in param.TRANSITIONS_METHODS["filter"]:
-
         # Loop on denoising methods
         for denoise_method in param.TRANSITIONS_METHODS["denoise_pcd"]:
-
             # Loop on meshing methods
             for mesh_method in param.TRANSITIONS_METHODS["mesh"]:
-
                 # Do not test poisson reconstruction because it changes the
                 # points' positions and thus creates outliers that make the
                 # texturing step fail
@@ -82,10 +79,8 @@ def test_all_possible_combinations():
                 for simplify_mesh_method in param.TRANSITIONS_METHODS[
                     "simplify_mesh"
                 ]:
-
                     # Loop on texturing methods
                     for texture_method in param.TRANSITIONS_METHODS["texture"]:
-
                         mesh_data = read_input_path(cfg["input_path"])
                         mesh_data.pcd = param.TRANSITIONS_METHODS["filter"][
                             filtering_method

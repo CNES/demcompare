@@ -201,7 +201,6 @@ def local_density_analysis(
 
     # Loop over the point cloud
     for idx, _ in enumerate(cloud_xyz):
-
         # get the point nearest neighbours
         distances, _ = cloud_tree.query(cloud_xyz[idx], nb_neighbors)
 

@@ -68,7 +68,6 @@ def check_config(cfg_path: str) -> dict:
 
     # Check the validity of the content
     for input_path in ["input_path_1", "input_path_2"]:
-
         if input_path not in cfg:
             raise ValueError(
                 f"Configuration dictionary is missing the '{input_path}' "

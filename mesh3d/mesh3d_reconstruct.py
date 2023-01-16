@@ -244,7 +244,6 @@ def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
 
         # Browse user defined steps and execute them
         for k, step in enumerate(cfg["state_machine"]):
-
             # Logger
             logger.info(
                 f"Step #{k + 1}: {step['action']} with {step['method']} method"
@@ -256,7 +255,6 @@ def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
             # (Optional) Save intermediate results to disk if asked
             if "save_output" in step:
                 if step["save_output"]:
-
                     # Create directory to save intermediate results
                     intermediate_folder = os.path.join(
                         cfg["output_dir"], "intermediate_results"
