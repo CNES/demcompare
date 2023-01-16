@@ -55,12 +55,20 @@ def get_parser():
             "parameters"
         ),
     )
+
     parser.add_argument(
         "--loglevel",
         default="INFO",
         choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
         help="Logger level (default: INFO. Should be one of "
         "(DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
+
+    parser.add_argument(
+        "--version",
+        "-v",
+        action="version",
+        version=f"%(prog)s {demcompare.__version__}",
     )
     return parser
 
