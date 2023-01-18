@@ -22,7 +22,7 @@ Copyright: CNES
   :maxdepth: 2
   :caption: API Reference
 
-  apidoc/modules
+  api_reference/index.rst
 
 
 Indices and tables

@@ -1,0 +1,57 @@
+{
+  "input_path": "point_cloud.laz",
+  "output_dir": "output/",
+  "rpc_path": "rpc.XML",
+  "tif_img_path": "texture_image.tif",
+  "image_offset": [
+    15029,
+    17016
+  ],
+  "utm_code": 32631,
+  "radius_o3d": {
+    "params": {
+      "radius": 4,
+      "nb_points": 25
+    }
+  },
+  "statistics_o3d": {
+    "params": {
+      "nb_neighbors": 25,
+      "std_factor": 1
+    }
+  },
+  "local_density_analysis": {
+    "params": {
+      "nb_neighbors": 100
+    }
+  },
+  "bilateral": {
+    "action": "denoise_pcd",
+    "method": "bilateral",
+    "params": {
+      "num_iterations": 2
+    }
+  },
+  "delaunay_2d": {
+    "params": {
+      "method": "scipy"
+    }
+  },
+  "poisson": {
+    "params": {}
+  },
+  "bpa": {
+    "params": {}
+  },
+  "garland-heckbert": {
+    "params": {
+      "reduction_ratio_of_triangles": 0.75
+    }
+  },
+  "vertex_clustering": {
+    "params": {}
+  },
+  "texturing": {
+    "params": {}
+  }
+}

@@ -1,9 +1,9 @@
 {
-  "input_path": "example/point_cloud.laz",
-  "output_dir": "example/output_reconstruct",
+  "input_path": "point_cloud.laz",
+  "output_dir": "output_reconstruct",
   "output_name": "textured_mesh",
-  "rpc_path": "example/rpc.XML",
-  "tif_img_path": "example/texture_image.tif",
+  "rpc_path": "rpc.XML",
+  "tif_img_path": "texture_image.tif",
   "image_offset": [
     15029,
     17016

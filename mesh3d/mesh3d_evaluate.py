@@ -36,7 +36,7 @@ from .tools.metrics import PointCloudMetrics
 
 def check_config(cfg_path: str) -> dict:
     """
-    Check if the config is valid and readable
+    Check if the evaluate config is valid and readable
 
     Parameters
     ----------
