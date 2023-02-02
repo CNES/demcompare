@@ -92,8 +92,8 @@ class SphinxProjectManager:
         except Exception:
             os.chdir(cur_dir)
             raise
-        else:
-            logging.debug("Sphinx clean succeeded ")
+
+        logging.debug("Sphinx clean succeeded ")
 
     def _create_makefile(self):
         # pylint: disable=line-too-long, anomalous-backslash-in-string
@@ -231,8 +231,8 @@ class SphinxProjectManager:
         except:
             os.chdir(cur_dir)
             raise
-        else:
-            logging.debug("Sphinx build succeeded for %s mode", mode)
+
+        logging.debug("Sphinx build succeeded for %s mode", mode)
 
     def install_project(self):
         """
