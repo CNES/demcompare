@@ -15,9 +15,6 @@ ifndef VENV
 	VENV = "venv"
 endif
 
-VERSION = $(shell python3 -c 'from demcompare import __version__; print(__version__)')
-VERSION_MIN = $(shell echo ${VERSION} | cut -d . -f 1,2,3)
-
 # Browser definition
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -49,6 +46,10 @@ endif
 
 ################ MAKE targets by sections ######################
 
+version: ## show version
+	@echo "Version: ${VERSION}"
+	@echo "Version minimal: ${VERSION_MIN}"
+
 help: ## this help
 	@echo "      DEMCOMPARE MAKE HELP"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -59,6 +60,7 @@ venv: ## create virtualenv in "venv" dir if not exists
 	@touch ${VENV}/bin/activate
 	@${VENV}/bin/python -m pip install --upgrade wheel setuptools pip # no check to upgrade each time
 
+
 .PHONY: install
 install: venv  ## install environment for development target (depends venv)
 	@test -f ${VENV}/bin/demcompare || echo "Install demcompare package from local directory"
@@ -67,7 +69,7 @@ install: venv  ## install environment for development target (depends venv)
 	@test -f .git/hooks/pre-commit || ${VENV}/bin/pre-commit install -t pre-commit
 	@test -f .git/hooks/pre-push || ${VENV}/bin/pre-commit install -t pre-push
 	@chmod +x ${VENV}/bin/register-python-argcomplete
-	@echo "Demcompare ${VERSION} installed in dev mode in virtualenv ${VENV} with Sphinx docs"
+	@echo "Demcompare installed in dev mode in virtualenv ${VENV} with Sphinx docs"
 	@echo "Demcompare venv usage : source ${VENV}/bin/activate; demcompare -h"
 
 ## Test section
@@ -167,8 +169,8 @@ docker: ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"
 	@docker pull hadolint/hadolint
 	@docker run --rm -i hadolint/hadolint < Dockerfile
-	@echo "Build Docker image demcompare ${VERSION_MIN}"
-	@docker build -t cnes/demcompare:${VERSION_MIN} -t cnes/demcompare:latest .
+	@echo "Build Docker image demcompare dev"
+	@docker build -t cnes/demcompare:dev -t cnes/demcompare:latest .
 
 ## Release section
 
@@ -248,6 +250,6 @@ clean-notebook: ## clean notebooks cache
 .PHONY: clean-docker
 clean-docker: ## clean created docker images
 		@echo "+ $@"
-		@echo "Clean Docker image demcompare ${VERSION_MIN}"
-		@docker image rm cnes/demcompare:${VERSION_MIN}
+		@echo "Clean Docker image demcompare dev"
+		@docker image rm cnes/demcompare:dev
 		@docker image rm cnes/demcompare:latest
