@@ -46,10 +46,6 @@ endif
 
 ################ MAKE targets by sections ######################
 
-version: ## show version
-	@echo "Version: ${VERSION}"
-	@echo "Version minimal: ${VERSION_MIN}"
-
 help: ## this help
 	@echo "      DEMCOMPARE MAKE HELP"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
