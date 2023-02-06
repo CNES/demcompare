@@ -42,7 +42,6 @@ class PointCloud:
         df: Union[None, pd.DataFrame] = None,
         o3d_pcd: Union[None, o3d.geometry.PointCloud] = None,
     ) -> None:
-
         if (not isinstance(df, pd.DataFrame)) and (df is not None):
             raise TypeError(
                 f"Input point cloud data 'df' should either be None or a "
@@ -266,7 +265,6 @@ class Mesh:
         o3d_pcd: Union[None, o3d.geometry.PointCloud] = None,
         o3d_mesh: Union[None, o3d.geometry.TriangleMesh] = None,
     ):
-
         self.pcd = PointCloud(df=pcd, o3d_pcd=o3d_pcd)
         self.df = mesh
 
@@ -556,11 +554,12 @@ class Mesh:
 def read_input_path(input_path: str) -> Mesh:
     """
     Read input path as either a PointCloud or a Mesh object
+    and returns in generic Mesh() object (containing pcd dict if point cloud)
 
     Parameters
     ----------
     input_path: str
-        Input path to read
+        Input path to read (best with absolute path)
 
     Returns
     -------
@@ -570,16 +569,14 @@ def read_input_path(input_path: str) -> Mesh:
     from ..param import MESH_FILE_EXTENSIONS
 
     if os.path.basename(input_path).split(".")[-1] in MESH_FILE_EXTENSIONS:
-
         # Try reading input data as a mesh if the extension is valid
         mesh = Mesh()
         mesh.deserialize(input_path)
         logger.debug("Input data read as a mesh format.")
 
     else:
-
         # If the extension is not a mesh extension, read the data as a
-        # point cloud and put it in a dict
+        # point cloud and put it in a dict in Mesh structure
         mesh = Mesh()
         mesh.pcd.deserialize(input_path)
         logger.debug("Input data read as a point cloud format.")

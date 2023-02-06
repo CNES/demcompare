@@ -1,6 +1,7 @@
 # Example
 
 This folder provides small data to test the pipeline extracted from Toulouse Pleiades triplet acquired on 27/09/2013 and contains:
+
 * `point_cloud.laz`: a point cloud generated with CARS with panchromatic images P01 and P02,
 * `rpc.XML`: a RPC file of panchromatic P01,
 * `texture_image.tif`: a texture image extracted from panchromatic P01 (top left point at (col, row) = (15029, 17016)),
@@ -8,6 +9,7 @@ This folder provides small data to test the pipeline extracted from Toulouse Ple
 * `config_evaluate.json`: an example of configuration to launch the evaluation pipeline between the input point cloud and the output of the reconstruction pipeline.
 
 To launch the code, please follow the guidelines below:
+
 ```bash
 # Install Mesh3D library
 cd path/to/dir/mesh_3d
@@ -16,17 +18,22 @@ make install
 # Activate virtual environment
 source venv/bin/activate
 
+# Go to example directory
+cd example/
+
 # Launch reconstruction
-mesh3d reconstruct example/config_reconstruct.json
+mesh3d reconstruct config_reconstruct.json
 
 # Launch evaluation between the input point cloud and the vertices of the reconstructed mesh
-mesh3d evaluate example/config_evaluate.json
+mesh3d evaluate config_evaluate.json
 ```
 
 For more information, please check the documentation.
 Run the following commands to build the doc:
+
 ```bash
 source venv/bin/activate
 make docs
 ```
+
 The Sphinx documentation should pop in a new tab of your browser.

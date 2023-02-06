@@ -21,6 +21,7 @@
 Denoising methods aiming at smoothing surfaces without losing genuine
 high-frequency information.
 """
+# pylint: disable=unsubscriptable-object
 
 import numpy as np
 import open3d as o3d

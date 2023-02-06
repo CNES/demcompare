@@ -23,6 +23,8 @@ Console script for mesh3d.
 
 import argparse
 
+from mesh3d import __version__
+
 
 def get_parser() -> argparse.ArgumentParser:
     """
@@ -61,6 +63,14 @@ def get_parser() -> argparse.ArgumentParser:
         "config",
         help="Path to a json file containing the input mesh or point cloud "
         "paths to compare and the metrics to compute",
+    )
+
+    # General arguments at first level
+    parser.add_argument(
+        "--version",
+        "-v",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
 
     return parser

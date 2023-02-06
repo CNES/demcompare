@@ -65,6 +65,19 @@ extensions = [
     "sphinx.ext.autodoc",  # apidoc automatic generation
     "sphinx.ext.viewcode",  # viewcode in automatic apidoc
     "sphinx.ext.napoleon",  # to read the numpy doc format
+    "autoapi.extension",  # autoapi automatic generation
+]
+
+autoapi_dirs = ["../../mesh3d"]
+autoapi_root = "api_reference"
+autoapi_keep_files = True
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "private-members",
+    "show-inheritance",
+    "show-module-summary",
+    "special-members",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

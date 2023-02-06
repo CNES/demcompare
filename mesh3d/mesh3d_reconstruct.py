@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 CNES.
+# Copyright (C) 2023 CNES.
 #
 # This file is part of mesh3d
 #
@@ -21,198 +21,14 @@
 Main Reconstruct module of mesh3d tool.
 """
 
-import json
 import logging
 import os
-import shutil
 
 from loguru import logger
 
-from . import param
+from .config import check_config, save_config_file
 from .state_machine import Mesh3DMachine
 from .tools.handlers import Mesh, read_input_path
-
-
-def check_general_items(cfg: dict) -> dict:
-    """
-    Check general items in configuration
-
-    Parameters
-    ----------
-    cfg: dict
-        Configuration dictionary
-
-    Returns
-    -------
-    cfg: dict
-        Configuration dictionary updated
-    """
-
-    if "input_path" not in cfg:
-        raise ValueError(
-            "Configuration dictionary is missing the 'input_path' field."
-        )
-
-    if not isinstance(cfg["input_path"], str):
-        raise TypeError(
-            f"'input_path' is invalid. It should be a string but got "
-            f"'{type(cfg['input_path'])}'."
-        )
-
-    if os.path.basename(cfg["input_path"]).split(".")[-1] not in (
-        param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS
-    ):
-        raise ValueError(
-            f"'input_path' extension is invalid. "
-            f"It should be in "
-            f"{param.PCD_FILE_EXTENSIONS + param.MESH_FILE_EXTENSIONS}."
-        )
-
-    for key in ["output_dir", "state_machine"]:
-        if key not in cfg:
-            raise ValueError(
-                f"Configuration dictionary should contains a '{key}' key."
-            )
-
-    if not isinstance(cfg["state_machine"], list):
-        raise TypeError(
-            f"State machine key in configuration should be a list of dict,"
-            f" each dict having two keys: 'action' and 'method'. "
-            f"Found '{type(cfg['state_machine'])}'."
-        )
-
-    if "initial_state" not in cfg:
-        cfg["initial_state"] = param.INITIAL_STATES[0]
-    else:
-        if cfg["initial_state"] not in param.INITIAL_STATES:
-            raise ValueError(
-                f"Initial state is invalid. It should be in"
-                f" {param.INITIAL_STATES}."
-            )
-
-    return cfg
-
-
-def check_state_machine(cfg: dict) -> dict:
-    """
-    Check state machine parameters in configuration
-
-    Parameters
-    ----------
-    cfg: dict
-        Configuration dictionary
-
-    Returns
-    -------
-    cfg: dict
-        Configuration dictionary updated
-    """
-
-    if cfg["state_machine"]:
-        for k, element in enumerate(cfg["state_machine"]):
-            # Action check
-            if "action" not in element:
-                raise ValueError(
-                    f"'action' key is missing in the "
-                    f"{k}th element of the state machine list."
-                )
-
-            if element["action"] not in param.TRANSITIONS_METHODS:
-                raise ValueError(
-                    f"Element #{k} of state machine configuration: action "
-                    f"'{element['action']}' unknown. It should be in "
-                    f"{list(param.TRANSITIONS_METHODS.keys())}."
-                )
-
-            # Texture
-            # Check that the parameters for rpc, image texture and utm code
-            # are given
-            if element["action"] == "texture":
-                if not cfg["tif_img_path"]:
-                    raise ValueError(
-                        "If a texturing step is asked, there should be a "
-                        "general configuration parameter 'tif_img_path' "
-                        "giving the path to the TIF image texture to process."
-                    )
-                if not cfg["rpc_path"]:
-                    raise ValueError(
-                        "If a texturing step is asked, there should be a "
-                        "general configuration parameter 'rpc_path' giving "
-                        "the path to the RPC data of the image texture."
-                    )
-                if not cfg["utm_code"]:
-                    raise ValueError(
-                        "If a texturing step is asked, there should be a "
-                        "general configuration parameter utm_code' giving "
-                        "the UTM code of the input point cloud or mesh for "
-                        "coordinate transforming step."
-                    )
-                if "image_offset" not in cfg:
-                    cfg["image_offset"] = None
-
-            # Method check
-            if "method" in element:
-                # Method specified
-                # Check if valid
-                if (
-                    element["method"]
-                    not in param.TRANSITIONS_METHODS[element["action"]]
-                ):
-                    raise ValueError(
-                        f"Element #{k} of state machine configuration: method "
-                        f"'{element['method']}' unknown. It should be in"
-                        f" {param.TRANSITIONS_METHODS[element['action']]}."
-                    )
-
-            else:
-                # Method not specified, then select the one by default
-                # (the first one in the list)
-                element["method"] = param.TRANSITIONS_METHODS[
-                    element["action"]
-                ][0]
-
-    return cfg
-
-
-def check_config(cfg_path: str) -> dict:
-    """
-    Check if the config is valid and readable
-
-    Parameters
-    ----------
-    cfg_path: str
-        Path to the JSON configuration file
-
-    Return
-    ------
-    cfg: dict
-        Configuration dictionary
-    """
-
-    # Check the path validity
-    if not isinstance(cfg_path, str):
-        raise TypeError(
-            f"Configuration path is invalid. It should be a string but got "
-            f"'{type(cfg_path)}'."
-        )
-
-    if os.path.basename(cfg_path).split(".")[-1] != "json":
-        raise ValueError(
-            f"Configuration path should be a JSON file with extension '.json'."
-            f" Found '{os.path.basename(cfg_path).split('.')[-1]}'."
-        )
-
-    # Read JSON file
-    with open(cfg_path, "r", encoding="utf-8") as cfg_file:
-        cfg = json.load(cfg_file)
-
-    # Check the validity of the content
-    cfg = check_general_items(cfg)
-
-    # Check state machine
-    cfg = check_state_machine(cfg)
-
-    return cfg
 
 
 def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
@@ -244,7 +60,6 @@ def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
 
         # Browse user defined steps and execute them
         for k, step in enumerate(cfg["state_machine"]):
-
             # Logger
             logger.info(
                 f"Step #{k + 1}: {step['action']} with {step['method']} method"
@@ -256,7 +71,6 @@ def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
             # (Optional) Save intermediate results to disk if asked
             if "save_output" in step:
                 if step["save_output"]:
-
                     # Create directory to save intermediate results
                     intermediate_folder = os.path.join(
                         cfg["output_dir"], "intermediate_results"
@@ -311,16 +125,20 @@ def main(cfg_path: str) -> None:
     # To avoid having a logger INFO for each state machine step
     logging.getLogger("transitions").setLevel(logging.WARNING)
 
-    # Check the validity of the config path
+    # Check the validity of the config and update cfg with absolute paths
     cfg = check_config(cfg_path)
 
-    # Copy the configuration file in the output dir
+    # Create output directory and update config
+    output_dir = os.path.abspath(cfg["output_dir"])
+    cfg["output_dir"] = output_dir
+
+    # Create output_dir
     os.makedirs(cfg["output_dir"], exist_ok=True)
-    shutil.copy(
-        cfg_path,
-        os.path.join(
-            os.path.join(cfg["output_dir"], os.path.basename(cfg_path))
-        ),
+
+    # Save the configuration in the output dir
+    # with inputs and output absolute paths
+    save_config_file(
+        os.path.join(cfg["output_dir"], os.path.basename(cfg_path)), cfg
     )
 
     # Write logs to disk

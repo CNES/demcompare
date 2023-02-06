@@ -1,4 +1,6 @@
 [MASTER]
+#  analyze C extensions capabilities packages.
+extension-pkg-whitelist=scipy
 
 # Extend Recursion limit for RecursionError in big files
 init-hook='import sys; sys.setrecursionlimit(8 * sys.getrecursionlimit())'
@@ -247,7 +249,7 @@ ignore-on-opaque-inference=yes
 # List of class names for which member attributes should not be checked (useful
 # for classes with dynamically set attributes). This supports the use of
 # qualified names.
-ignored-classes=
+ignored-classes=Delaunay
 
 # List of module names for which member attributes should not be checked
 # (useful for modules/projects where namespaces are manipulated during runtime

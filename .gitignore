@@ -46,6 +46,12 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+pytest-report.xml
+pytest-report.txt
+
+#  Code quality
+pylint-report.xml
+pylint-report.txt
 
 # Translations
 *.mo
@@ -65,6 +71,7 @@ instance/
 # Sphinx documentation
 docs/_build/
 docs/source/apidoc/
+docs/source/api_reference/
 
 
 # PyBuilder
@@ -106,5 +113,9 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
+
+# example generation and evaluation
+example/point_cloud.*
+example/output*
 
 

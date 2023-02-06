@@ -40,7 +40,6 @@ class RPC:
         degrees: Union[list, tuple, np.ndarray],
         rpc_type: str,
     ):
-
         if len(polynomials) != 4:
             raise ValueError("Output dimensions should be 4 (P1, Q1, P2, Q2)")
 
@@ -90,7 +89,6 @@ class PleiadesRPC(RPC):
         polynomials: Union[list, tuple, np.ndarray] = None,
         path_rpc: str = None,
     ):
-
         self.degrees = [
             [0, 0, 0],
             [1, 0, 0],

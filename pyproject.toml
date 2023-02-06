@@ -1,8 +1,7 @@
 # pyproject.toml main python packaging configuration
 
 [build-system]
-# setup with setuptools and setuptools_scm (git automatic versioning)
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+requires = ["setuptools>=65.5", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 # Tools configuration supporting pyproject.toml

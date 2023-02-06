@@ -30,6 +30,25 @@ endef
 export BROWSER_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
+
+# Python global variables definition
+PYTHON_VERSION_MIN = 3.8
+
+PYTHON=$(shell command -v python3)
+
+PYTHON_VERSION_CUR=$(shell $(PYTHON) -c 'import sys; print("%d.%d"% sys.version_info[0:2])')
+PYTHON_VERSION_OK=$(shell $(PYTHON) -c 'import sys; cur_ver = sys.version_info[0:2]; min_ver = tuple(map(int, "$(PYTHON_VERSION_MIN)".split("."))); print(int(cur_ver >= min_ver))')
+
+############### Check python version supported ############
+
+ifeq (, $(PYTHON))
+    $(error "PYTHON=$(PYTHON) not found in $(PATH)")
+endif
+
+ifeq ($(PYTHON_VERSION_OK), 0)
+    $(error "Requires python version >= $(PYTHON_VERSION_MIN). Current version is $(PYTHON_VERSION_CUR)")
+endif
+
 ################ MAKE targets by sections ######################
 
 .PHONY: help
@@ -123,8 +142,7 @@ lint/pylint: ## check linting with pylint
 .PHONY: docs
 docs: install ## generate Sphinx HTML documentation, including API docs
 	@${VENV}/bin/sphinx-build -M clean docs/source/ docs/build
-	@${VENV}/bin/sphinx-apidoc -o docs/source/apidoc/ mesh3d
-	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build --keep-going
+	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build -W --keep-going
 	$(BROWSER) docs/build/html/index.html
 
 ## Notebook section

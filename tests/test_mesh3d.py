@@ -19,90 +19,111 @@
 #
 """Tests for `mesh3d` package."""
 
-import json
-
-# other import
+# Standard imports
 import os
-import shutil
+from tempfile import TemporaryDirectory
 
 # Third party imports
 import pytest
 
 # mesh3d imports
-import mesh3d
 from mesh3d import param
+from mesh3d.config import read_config
 from mesh3d.tools.handlers import read_input_path
 
-
-@pytest.fixture
-def response():
-    """Sample pytest fixture.
-
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
-    # Example to edit
-    return "response"
+# Tests helpers
+from .helpers import get_temporary_dir, get_test_data_path
 
 
-def test_content(response):  # pylint: disable=redefined-outer-name
-    """Sample pytest test function with the pytest fixture as an argument."""
-    # Example to edit
-    print(response)
-
-
-def test_mesh3d():
-    """Sample pytest mesh3d module test function"""
-    assert mesh3d.__author__ == "CNES"
-    assert mesh3d.__email__ == "cars@cnes.fr"
-
-
-# Poisson recontruction tests are missing (cf documentation and readme)
+# Filter rasterio warning when image is not georeferenced
+@pytest.mark.filterwarnings(
+    "ignore: Dataset has no geotransform, gcps, or rpcs"
+)
+@pytest.mark.functional_tests
 def test_all_possible_combinations():
-    """Test all the possible combinations (except poisson reconstruction)"""
-    # open config file to launch automatically the tests
-    with open("tests/config_tests.json", "r", encoding="utf-8") as cfg_file:
-        cfg = json.load(cfg_file)
+    """
+    Test all the possible combinations directly from methods
+    except poisson reconstruction (cf documentation and readme)
 
-    # Loop on filtering methods
-    for filtering_method in param.TRANSITIONS_METHODS["filter"]:
+    Doesn't test the state machine and the main CLI.
+    Only each algorithm steps manually !
 
-        # Loop on denoising methods
-        for denoise_method in param.TRANSITIONS_METHODS["denoise_pcd"]:
+    """
+    # Get "toulouse_test_data" test root data
+    # directory absolute path
+    test_data_path = get_test_data_path("toulouse_test_data")
 
-            # Loop on meshing methods
-            for mesh_method in param.TRANSITIONS_METHODS["mesh"]:
+    # Load a config_tests json config containing all sub steps configuration
+    # Not a mesh3d config file !
+    test_cfg_path = os.path.join(test_data_path, "config_tests.json")
+    print(test_cfg_path)
+    # open json config file to launch automatically the tests
+    test_cfg = read_config(test_cfg_path)
 
-                # Do not test poisson reconstruction because it changes the
-                # points' positions and thus creates outliers that make the
-                # texturing step fail
-                if mesh_method == "poisson":
-                    continue
+    # Create temporary directory for test output
+    with TemporaryDirectory(dir=get_temporary_dir()) as tmp_dir:
+        # Modify test's output dir in configuration to tmp test dir
+        test_cfg["output_dir"] = tmp_dir
 
-                # Loop on mesh simplification methods
-                for simplify_mesh_method in param.TRANSITIONS_METHODS[
-                    "simplify_mesh"
-                ]:
+        # Loop on all steps listed in param.TRANSITION_METHODS:
+        # filtering, denoising, meshing, simplify meshing, texturing
 
-                    # Loop on texturing methods
-                    for texture_method in param.TRANSITIONS_METHODS["texture"]:
+        # Loop on filtering methods
+        for filtering_method in param.TRANSITIONS_METHODS["filter"]:
+            # Loop on denoising methods
+            for denoise_method in param.TRANSITIONS_METHODS["denoise_pcd"]:
+                # Loop on meshing methods
+                for mesh_method in param.TRANSITIONS_METHODS["mesh"]:
+                    # Do not test poisson reconstruction because it changes the
+                    # points' positions and thus creates outliers that make the
+                    # texturing step fail
+                    if mesh_method == "poisson":
+                        continue
 
-                        mesh_data = read_input_path(cfg["input_path"])
-                        mesh_data.pcd = param.TRANSITIONS_METHODS["filter"][
-                            filtering_method
-                        ](mesh_data.pcd, **cfg[filtering_method]["params"])
-                        mesh_data.pcd = param.TRANSITIONS_METHODS[
-                            "denoise_pcd"
-                        ][denoise_method](
-                            mesh_data.pcd, **cfg[denoise_method]["params"]
-                        )
-                        mesh_data = param.TRANSITIONS_METHODS["mesh"][
-                            mesh_method
-                        ](mesh_data.pcd, **cfg[mesh_method]["params"])
-                        mesh_data = param.TRANSITIONS_METHODS["simplify_mesh"][
-                            simplify_mesh_method
-                        ](mesh_data, **cfg[simplify_mesh_method]["params"])
-                        os.makedirs("example/output", exist_ok=True)
-                        mesh_data = param.TRANSITIONS_METHODS["texture"][
-                            texture_method
-                        ](mesh_data, cfg)
-                        shutil.rmtree("example/output")
+                    # Loop on mesh simplification methods
+                    for simplify_mesh_method in param.TRANSITIONS_METHODS[
+                        "simplify_mesh"
+                    ]:
+                        # Loop on texturing methods
+                        for texture_method in param.TRANSITIONS_METHODS[
+                            "texture"
+                        ]:
+                            # for each transition methods,
+                            # run the pipeline steps.
+
+                            # get point cloud in generic Mesh() structure
+                            mesh_data = read_input_path(test_cfg["input_path"])
+
+                            # Do filtering step
+                            mesh_data.pcd = param.TRANSITIONS_METHODS["filter"][
+                                filtering_method
+                            ](
+                                mesh_data.pcd,
+                                **test_cfg[filtering_method]["params"]
+                            )
+
+                            # Do denoise step
+                            mesh_data.pcd = param.TRANSITIONS_METHODS[
+                                "denoise_pcd"
+                            ][denoise_method](
+                                mesh_data.pcd,
+                                **test_cfg[denoise_method]["params"]
+                            )
+
+                            # Do mesh step (except poisson)
+                            mesh_data = param.TRANSITIONS_METHODS["mesh"][
+                                mesh_method
+                            ](mesh_data.pcd, **test_cfg[mesh_method]["params"])
+
+                            # Do simplify mesh step
+                            mesh_data = param.TRANSITIONS_METHODS[
+                                "simplify_mesh"
+                            ][simplify_mesh_method](
+                                mesh_data,
+                                **test_cfg[simplify_mesh_method]["params"]
+                            )
+
+                            # do texturing step
+                            mesh_data = param.TRANSITIONS_METHODS["texture"][
+                                texture_method
+                            ](mesh_data, test_cfg)
