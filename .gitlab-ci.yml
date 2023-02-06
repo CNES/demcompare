@@ -1,0 +1,112 @@
+# MESH3D Gitlab-ci configuration file
+
+# Workflow to allow no duplicated pipeline between branch and MR : https://docs.gitlab.com/ee/ci/yaml/workflow.html#switch-between-branch-pipelines-and-merge-request-pipelines
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - init
+  - quality
+
+# Default configuration for all jobs
+default:
+  tags:
+    - Usine_Logicielle
+
+# Variable definition for all jobs
+variables:
+  # Variable to show more logs
+  # Allows to have predefined variables for manual pipelines: https://docs.gitlab.com/ee/ci/pipelines/index.html#prefill-variables-in-manual-pipelines
+  DEBUG:
+    value: "false"
+    description: "Show more logs"
+  # Permet de minimiser les logs inutiles ex : % d'avancement de l'upload ou download
+  CI: "true"
+  # Necessaire pour le virtual env pour ne pas partir en timeout car internet n'est pas configuré
+  PIP_INDEX_URL: "https://${ARTIFACTORY_USER}:${ARTIFACTORY_TOKEN}@${ARTIFACTORY_HOST}/artifactory/api/pypi/pypi/simple"
+  PIP_CERT: "${CNES_CERTIFICATE}"
+  # Precision des tags pour les images à utiliser
+  # quid d'autres versions ou plusieurs versions dans le meme docker
+  TAG_IMAGE_PYTHON: "python:3.10.8"
+  # Variable pour deplacer le dossier de cache de pip dans le workspace
+  PIP_CACHE_DIR: "${WORKSPACE}/.pip-cache/"
+  # url générique du serveur contenant les images docker
+  ARTIFACTORY_URL: "${ARTIFACTORY_HOST}/docker"
+
+# Steps:
+#    - checkout (done automatically as gitlab-ci is in the same project)
+#    - build (stage, init)
+#    - test
+#    - lint
+#    - docs
+
+build:
+  stage: init
+  image:
+    ${ARTIFACTORY_URL}/${TAG_IMAGE_PYTHON}
+    #  before_script:
+    # set up du proxy (pour l'instant sans ARTIFACTORY pour simplifier)
+    #- export HTTP_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
+    #- export HTTPS_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
+  script:
+    # TODO: variable de bascule artifactory/web
+    # Installation de mesh3d + requirements depuis l'artifactory depuis le code dans un python "venv"
+    - VENV="venv" make install
+    # Active le virtualenv
+    - source venv/bin/activate
+    # Test rapidement la commande mesh3d
+    - mesh3d -h
+    # Voir la taille de l'artefact
+    - du -h --max-depth=1
+    - deactivate
+  artifacts:
+    untracked: true
+    expire_in: 1 day
+
+# test:
+#   stage: quality
+#   image: ${ARTIFACTORY_URL}/${TAG_IMAGE_PYTHON}
+#   needs:
+#     - build
+#   script:
+#     # Chargement du module python
+#     - source venv/bin/activate
+
+#     # Run test
+#     - make test
+#     - deactivate
+#   artifacts:
+#     untracked: true
+#     expire_in: 1 day
+
+linting:
+  stage: quality
+  image: ${ARTIFACTORY_URL}/${TAG_IMAGE_PYTHON}
+  needs:
+    - build
+  script:
+    # Chargement du module python
+    - source venv/bin/activate
+    # Run project quality code.
+    - make lint
+  artifacts:
+    untracked: true
+    expire_in: 1 day
+
+docs:
+  stage: quality
+  image: ${ARTIFACTORY_URL}/${TAG_IMAGE_PYTHON}
+  needs:
+    - build
+  script:
+    # Load virtualenv
+    - source venv/bin/activate
+    # Generate documentation
+    - make docs
+  artifacts:
+    untracked: true
+    expire_in: 1 day
