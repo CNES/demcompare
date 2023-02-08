@@ -93,6 +93,7 @@ linting:
     - source venv/bin/activate
     # Run project quality code.
     - make lint
+    - deactivate
   artifacts:
     untracked: true
     expire_in: 1 day
@@ -107,6 +108,7 @@ docs:
     - source venv/bin/activate
     # Generate documentation
     - make docs
+    - deactivate
   artifacts:
     untracked: true
     expire_in: 1 day
