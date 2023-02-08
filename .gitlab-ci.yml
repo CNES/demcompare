@@ -32,10 +32,13 @@ variables:
   # Precision des tags pour les images à utiliser
   # quid d'autres versions ou plusieurs versions dans le meme docker
   TAG_IMAGE_PYTHON: "python:3.10.8"
+  TAG_IMAGE_OPEN3D: "ubuntu:22.04"
+  TAG_IMAGE_CARS: "cnes/cars:0.5.4"
   # Variable pour deplacer le dossier de cache de pip dans le workspace
   PIP_CACHE_DIR: "${WORKSPACE}/.pip-cache/"
-  # url générique du serveur contenant les images docker
-  ARTIFACTORY_URL: "${ARTIFACTORY_HOST}/docker"
+  # Local artifactory Dockerhub URL containing copies of docker hub images
+  ARTIFACTORY_URL_DOCKERHUB: "${ARTIFACTORY_HOST}/docker"
+  ARTIFACTORY_URL_CARS: "${ARTIFACTORY_HOST}/cars-docker"
 
 # Steps:
 #    - checkout (done automatically as gitlab-ci is in the same project)
@@ -47,7 +50,7 @@ variables:
 build:
   stage: init
   image:
-    ${ARTIFACTORY_URL}/${TAG_IMAGE_PYTHON}
+    ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_PYTHON}
     #  before_script:
     # set up du proxy (pour l'instant sans ARTIFACTORY pour simplifier)
     #- export HTTP_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
@@ -67,25 +70,28 @@ build:
     untracked: true
     expire_in: 1 day
 
-# test:
-#   stage: quality
-#   image: ${ARTIFACTORY_URL}/${TAG_IMAGE_PYTHON}
-#   needs:
-#     - build
-#   script:
-#     # Chargement du module python
-#     - source venv/bin/activate
+test:
+  stage: quality
+  image: ${ARTIFACTORY_URL_CARS}/${TAG_IMAGE_CARS}
+  needs:
+    - build
+  script:
+    # reload install for open3d specific image and python
+    - make clean
+    - make install
+    # Chargement du module python
+    - source venv/bin/activate
 
-#     # Run test
-#     - make test
-#     - deactivate
-#   artifacts:
-#     untracked: true
-#     expire_in: 1 day
+    # Run test (with open3D openGL working)
+    - make test
+    - deactivate
+  artifacts:
+    untracked: true
+    expire_in: 1 day
 
 linting:
   stage: quality
-  image: ${ARTIFACTORY_URL}/${TAG_IMAGE_PYTHON}
+  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_PYTHON}
   needs:
     - build
   script:
@@ -100,7 +106,7 @@ linting:
 
 docs:
   stage: quality
-  image: ${ARTIFACTORY_URL}/${TAG_IMAGE_PYTHON}
+  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_PYTHON}
   needs:
     - build
   script:
