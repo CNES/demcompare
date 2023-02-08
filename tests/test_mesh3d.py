@@ -19,6 +19,8 @@
 #
 """Tests for `mesh3d` package."""
 
+# to check the code structure and avoid cyclic import !!
+
 # Standard imports
 import os
 from tempfile import TemporaryDirectory
@@ -56,7 +58,7 @@ def test_all_possible_combinations():
     # Load a config_tests json config containing all sub steps configuration
     # Not a mesh3d config file !
     test_cfg_path = os.path.join(test_data_path, "config_tests.json")
-    print(test_cfg_path)
+
     # open json config file to launch automatically the tests
     test_cfg = read_config(test_cfg_path)
 
