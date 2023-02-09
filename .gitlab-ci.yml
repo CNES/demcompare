@@ -31,7 +31,7 @@ variables:
   PIP_CERT: "${CNES_CERTIFICATE}"
   # TAGS for images if each stages: base python and at3d cnes3d/testall for tox
   TAG_IMAGE_PYTHON: "python:3.10.8"
-  TAG_IMAGE_CNES3D: "cnes3d/base:0.1.0"
+  TAG_IMAGE_CNES3D: "cnes3d/testall:0.1.0"
   # Can be used to move pip cache in local directory
   PIP_CACHE_DIR: "${WORKSPACE}/.pip-cache/"
   # Local artifactory Dockerhub URL containing copies of docker hub images
