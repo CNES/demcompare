@@ -80,9 +80,12 @@ test:
     - source venv/bin/activate
 
     # Run test (with open3D openGL working)
-    - make test
-    # - make test-all
+    # only with local python3
+    #- make test
+    # with tox and several python3 versions
+    - make test-all
     - deactivate
+    - make clean
   artifacts:
     untracked: true
     expire_in: 1 day
@@ -98,6 +101,7 @@ linting:
     # Run project quality code.
     - make lint
     - deactivate
+    - make clean
   artifacts:
     untracked: true
     expire_in: 1 day
@@ -113,6 +117,7 @@ docs:
     # Generate documentation
     - make docs
     - deactivate
+    - make clean
   artifacts:
     untracked: true
     expire_in: 1 day
