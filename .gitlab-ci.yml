@@ -24,21 +24,19 @@ variables:
   DEBUG:
     value: "false"
     description: "Show more logs"
-  # Permet de minimiser les logs inutiles ex : % d'avancement de l'upload ou download
+  # Allow to minimize useless logs (example downloads logs)
   CI: "true"
-  # Necessaire pour le virtual env pour ne pas partir en timeout car internet n'est pas configuré
+  # Needed to download pip through CNES internal artifactory without internet
   PIP_INDEX_URL: "https://${ARTIFACTORY_USER}:${ARTIFACTORY_TOKEN}@${ARTIFACTORY_HOST}/artifactory/api/pypi/pypi/simple"
   PIP_CERT: "${CNES_CERTIFICATE}"
-  # Precision des tags pour les images à utiliser
-  # quid d'autres versions ou plusieurs versions dans le meme docker
+  # TAGS for images if each stages: base python and at3d cnes3d/testall for tox
   TAG_IMAGE_PYTHON: "python:3.10.8"
-  TAG_IMAGE_OPEN3D: "ubuntu:22.04"
-  TAG_IMAGE_CARS: "cnes/cars:0.5.4"
-  # Variable pour deplacer le dossier de cache de pip dans le workspace
+  TAG_IMAGE_CNES3D: "cnes3d/base:0.1.0"
+  # Can be used to move pip cache in local directory
   PIP_CACHE_DIR: "${WORKSPACE}/.pip-cache/"
   # Local artifactory Dockerhub URL containing copies of docker hub images
   ARTIFACTORY_URL_DOCKERHUB: "${ARTIFACTORY_HOST}/docker"
-  ARTIFACTORY_URL_CARS: "${ARTIFACTORY_HOST}/cars-docker"
+  ARTIFACTORY_URL_CNES3D: "${ARTIFACTORY_HOST}/docker"
 
 # Steps:
 #    - checkout (done automatically as gitlab-ci is in the same project)
@@ -52,18 +50,17 @@ build:
   image:
     ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_PYTHON}
     #  before_script:
-    # set up du proxy (pour l'instant sans ARTIFACTORY pour simplifier)
+    # set up proxy
     #- export HTTP_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
     #- export HTTPS_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
   script:
-    # TODO: variable de bascule artifactory/web
-    # Installation de mesh3d + requirements depuis l'artifactory depuis le code dans un python "venv"
+    # Install mesh3d + requirements in venv
     - VENV="venv" make install
-    # Active le virtualenv
+    # Activate virtualenv
     - source venv/bin/activate
-    # Test rapidement la commande mesh3d
+    # Test quickly mesh3d
     - mesh3d -h
-    # Voir la taille de l'artefact
+    # Show artifact size
     - du -h --max-depth=1
     - deactivate
   artifacts:
@@ -72,7 +69,7 @@ build:
 
 test:
   stage: quality
-  image: ${ARTIFACTORY_URL_CARS}/${TAG_IMAGE_CARS}
+  image: ${ARTIFACTORY_URL_CNES3D}/${TAG_IMAGE_CNES3D}
   needs:
     - build
   script:
@@ -84,6 +81,7 @@ test:
 
     # Run test (with open3D openGL working)
     - make test
+    # - make test-all
     - deactivate
   artifacts:
     untracked: true
