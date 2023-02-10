@@ -70,9 +70,8 @@ build:
 test:
   stage: quality
   image: ${ARTIFACTORY_URL_CNES3D}/${TAG_IMAGE_CNES3D}
-  needs:
-    - build
   script:
+    # test in parallel of build because specific image.
     # reload install for open3d specific image and python
     - make clean
     - make install
@@ -87,7 +86,7 @@ test:
     - deactivate
     - make clean
   artifacts:
-    untracked: true
+    untracked: false
     expire_in: 1 day
 
 linting:
@@ -103,7 +102,7 @@ linting:
     - deactivate
     - make clean
   artifacts:
-    untracked: true
+    untracked: false
     expire_in: 1 day
 
 docs:
@@ -119,5 +118,5 @@ docs:
     - deactivate
     - make clean
   artifacts:
-    untracked: true
+    untracked: false
     expire_in: 1 day
