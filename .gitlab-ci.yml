@@ -1,0 +1,122 @@
+# MESH3D Gitlab-ci configuration file
+
+# Workflow to allow no duplicated pipeline between branch and MR : https://docs.gitlab.com/ee/ci/yaml/workflow.html#switch-between-branch-pipelines-and-merge-request-pipelines
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - init
+  - quality
+
+# Default configuration for all jobs
+default:
+  tags:
+    - Usine_Logicielle
+
+# Variable definition for all jobs
+variables:
+  # Variable to show more logs
+  # Allows to have predefined variables for manual pipelines: https://docs.gitlab.com/ee/ci/pipelines/index.html#prefill-variables-in-manual-pipelines
+  DEBUG:
+    value: "false"
+    description: "Show more logs"
+  # Allow to minimize useless logs (example downloads logs)
+  CI: "true"
+  # Needed to download pip through CNES internal artifactory without internet
+  PIP_INDEX_URL: "https://${ARTIFACTORY_USER}:${ARTIFACTORY_TOKEN}@${ARTIFACTORY_HOST}/artifactory/api/pypi/pypi/simple"
+  PIP_CERT: "${CNES_CERTIFICATE}"
+  # TAGS for images if each stages: base python and at3d cnes3d/testall for tox
+  TAG_IMAGE_PYTHON: "python:3.10.8"
+  TAG_IMAGE_CNES3D: "cnes3d/testall:0.1.0"
+  # Can be used to move pip cache in local directory
+  PIP_CACHE_DIR: "${WORKSPACE}/.pip-cache/"
+  # Local artifactory Dockerhub URL containing copies of docker hub images
+  ARTIFACTORY_URL_DOCKERHUB: "${ARTIFACTORY_HOST}/docker"
+  ARTIFACTORY_URL_CNES3D: "${ARTIFACTORY_HOST}/docker"
+
+# Steps:
+#    - checkout (done automatically as gitlab-ci is in the same project)
+#    - build (stage, init)
+#    - test
+#    - lint
+#    - docs
+
+build:
+  stage: init
+  image:
+    ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_PYTHON}
+    #  before_script:
+    # set up proxy
+    #- export HTTP_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
+    #- export HTTPS_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
+  script:
+    # Install mesh3d + requirements in venv
+    - VENV="venv" make install
+    # Activate virtualenv
+    - source venv/bin/activate
+    # Test quickly mesh3d
+    - mesh3d -h
+    # Show artifact size
+    - du -h --max-depth=1
+    - deactivate
+  artifacts:
+    untracked: true
+    expire_in: 1 day
+
+test:
+  stage: quality
+  image: ${ARTIFACTORY_URL_CNES3D}/${TAG_IMAGE_CNES3D}
+  script:
+    # test in parallel of build because specific image.
+    # reload install for open3d specific image and python
+    - make clean
+    - make install
+    # Chargement du module python
+    - source venv/bin/activate
+
+    # Run test (with open3D openGL working)
+    # only with local python3
+    #- make test
+    # with tox and several python3 versions
+    - make test-all
+    - deactivate
+    - make clean
+  artifacts:
+    untracked: false
+    expire_in: 1 day
+
+linting:
+  stage: quality
+  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_PYTHON}
+  needs:
+    - build
+  script:
+    # Chargement du module python
+    - source venv/bin/activate
+    # Run project quality code.
+    - make lint
+    - deactivate
+    - make clean
+  artifacts:
+    untracked: false
+    expire_in: 1 day
+
+docs:
+  stage: quality
+  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_PYTHON}
+  needs:
+    - build
+  script:
+    # Load virtualenv
+    - source venv/bin/activate
+    # Generate documentation
+    - make docs
+    - deactivate
+    - make clean
+  artifacts:
+    untracked: false
+    expire_in: 1 day

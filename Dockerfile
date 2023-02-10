@@ -1,33 +1,40 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 LABEL maintainer="CNES"
 
 ## mesh3d installation Dockerfile example
-## Hack it !
 
 # Avoid apt install interactive questions.
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Install Ubuntu python dependencies
+# Install Ubuntu python dependencies (ignore pinning versions)
+# hadolint ignore=DL3008
 RUN apt-get update \
   && apt-get install --no-install-recommends -y --quiet \
-  git=1:2.25.1-1ubuntu3 \
-  make=4.2.1-1.2 \
-  python3-pip=20.0.2-5ubuntu1.6 \
-  python3-dev=3.8.2-0ubuntu2 \
+  git \
+  make \
+  python3-pip \
+  python3-dev \
+  python3-venv \
+  libgomp1 \
+  libx11-6 \
+  libgl1 \
+  libusb-1.0-0 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 #  Install mesh3d
-# WORKDIR /mesh3d
-# COPY . /mesh3d
+WORKDIR /mesh3d
+COPY . /mesh3d
 
-# RUN python3 -m pip install -e /mesh3d/.
+RUN make clean && make install
 
-## Version will be automatic with git versioning and tags
-#RUN python3 -m pip --no-cache-dir install /mesh3d/. \
-#  # # Auto args completion
-#  && register-python-argcomplete mesh3d >> ~/.bashrc
-#
-## launch demcompare
-#ENTRYPOINT ["mesh3d"]
-#CMD ["-h"]
+# source venv/bin/activate in docker mode
+ENV VIRTUAL_ENV='/mesh3d/venv'
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Clean pip cache
+RUN python -m pip cache purge
+
+## launch mesh3d command
+ENTRYPOINT ["mesh3d"]
+CMD ["-h"]

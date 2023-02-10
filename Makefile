@@ -15,10 +15,6 @@ ifndef VENV
 	VENV = "venv"
 endif
 
-# Software version from setup.py and setuptools_scm
-VERSION = $(shell python3 -c 'from mesh3d import __version__; print(__version__)')
-VERSION_MIN = $(shell echo ${VERSION} | cut -d . -f 1,2,3)
-
 # Browser definition
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -75,7 +71,7 @@ install: venv git  ## install the package in dev mode in virtualenv
 	@test -f .git/hooks/pre-commit || ${VENV}/bin/pre-commit install -t pre-commit
 	@test -f .git/hooks/pre-push || ${VENV}/bin/pre-commit install -t pre-push
 	@chmod +x ${VENV}/bin/register-python-argcomplete
-	@echo "mesh3d ${VERSION} installed in dev mode in virtualenv ${VENV} with documentation"
+	@echo "mesh3d installed in dev mode in virtualenv ${VENV} with documentation"
 	@echo " mesh3d venv usage : source ${VENV}/bin/activate; mesh3d -h"
 
 ## Test section
@@ -159,8 +155,8 @@ docker: git ## Build docker image (and check Dockerfile)
 	@echo "Check Dockerfile with hadolint"
 	@docker pull hadolint/hadolint
 	@docker run --rm -i hadolint/hadolint < Dockerfile
-	@echo "Build Docker image mesh3d ${VERSION_MIN}"
-	@docker build -t cnes/mesh3d:${VERSION_MIN} -t cnes/mesh3d:latest .
+	@echo "Build Docker image mesh3d"
+	@docker build -t cnes/mesh3d:dev -t cnes/mesh3d:latest .
 
 ## Release section
 	
@@ -224,6 +220,6 @@ clean-docs:
 .PHONY: clean-docker
 clean-docker:
 		@echo "+ $@"
-		@echo "Clean Docker image mesh3d ${VERSION_MIN}"
-		@docker image rm chloe cnes/mesh3d:${VERSION_MIN}
+		@echo "Clean Docker image mesh3d"
+		@docker image rm cnes/mesh3d:dev
 		@docker image rm cnes/mesh3d:latest
