@@ -1,21 +1,13 @@
-.. _class_schema:
+.. _coregistration_modules:
 
 
-Demcompare's classes
-====================
+Coregistration modules
+======================
 
+This section explains coregistration modules in demcompare. 
 
-Demcompare's architecture combines simple python modules with python classes. Some of those classes have an abstract architecture whilst
-others don't.
-
-Demcompare's abstract classes are all implemented with two main python files:
-
-- The class factory, which is python file named like the class. It only handles the class object generation.
-- The abstract class template, which is a python file named like the class + "_template". This file includes all the abstract functions and attributes.
-
-With the class factory and the abstract class template, the different subclasses can be implemented:
-
-- The subclasses, which are python files implementing the subclasses derived from the abstract class.  
+TODO : introduction of the module.
+TODO: explain global functioning and link to main API load_dem() used in demcompare module
 
 
 In the following images we can find the classes that take part in demcompare's coregistration and statistics steps, along

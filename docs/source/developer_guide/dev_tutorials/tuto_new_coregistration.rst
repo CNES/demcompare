@@ -1,4 +1,4 @@
-.. _new_coregistration_new_metric:
+.. _tuto_new_coregistration:
 
 New coregistration class implementation
 =======================================

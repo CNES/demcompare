@@ -1,12 +1,13 @@
-Demcompare's modules
-====================
+.. _dem_tools_modules:
 
-The following modules are part of demcompare's architecture: 
+Dem Tools modules
+=================
 
 
-- **__init__.py**
+This section describes all dem tools modules 
 
-This module includes demcompare's run function, which performs the input cfg's steps.
+TODO: explain global functioning and link to main API load_dem() used in demcompare module
+
 
 - **dem_tools.py**
 
@@ -58,29 +59,3 @@ The **demcompare dataset** is an xarray Dataset containing:
 This module contains generic functions associated to raster images.
 It consists mainly on wrappers to rasterio functions. Like `dataset_tools.py`, this module shall not be used directly,
 as the it is the `dem_tools.py` module who handles its API.
-
-- **demcompare.py**
-
-This module includes demcompare's main and input parser.
-
-- **helpers_init.py**
-
-In this module high level parameters are checked and default options are set. Some helper functions to handle
-the output paths from the __init__ are also included here.
-
-- **log_conf.py**
-
-The logconf module in demcompare contains logging configuration functions.
-
-- **output_tree_design.py**
-
-Module containing the default output tree design architecture for demcompare's output directory.
-
-- **report.py**
-
-Module in charge of generating output demcompare's report to visualize the results (graphs, stats, ...)
-
-- **sphinx_project_generator.py**
-
-sphinx_project_generator is a module containing the helper functions for the creation of the output demcompare's report
-and ease its manipulation.
