@@ -4,9 +4,8 @@ Dem Tools modules
 =================
 
 
-This section describes all dem tools modules 
-
-TODO: explain global functioning and link to main API load_dem() used in demcompare module
+This section describes all dem tools modules: **dem_tools.py**, **dataset_tools.py** and **img_tools.py**.
+As explained below, it is the `dem_tools.py` module who handles the API.
 
 
 - **dem_tools.py**
@@ -15,6 +14,9 @@ This module contains main functions to manipulate DEM raster images.
 
 It represents the primary API to manipulate DEM as xarray dataset in demcompare.
 Dataset and associated internal functions are described in dataset_tools.py
+
+As one can see in :ref:`demcompare_module`, the main demcompare module in `__init__.py` file uses `dem_tools`'s
+functions such as `load_dem`, `reproject_dems` and `compute_alti_diff_for_stats`.
 
 - **dataset_tools.py**
 

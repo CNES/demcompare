@@ -24,7 +24,7 @@ Please add *WIP:* before your Merge Request title if your work is in progress: T
 
 The Merge Request shall have a short description of the proposed changes. If it is relative to an issue, you can signal it by adding *Closes xx* where xx is the reference number of the issue.
 
-Likewise, prefix the associated branch's name by *xx-* in order to link it to the xx issue.
+Likewise, prefix the associated branch's name by *xx-* in order to link it to the xx issue (ie. 999-name_branch_example).
 
 **Demcompare**'s Classical workflow is :
  - Check Licence and sign :ref:`contribution_license_agreement` (Individual or Corporate)
@@ -62,7 +62,7 @@ Two Merge Requests types to help the workflow :
 This mechanism is to help quick modifications and avoid long reviews on unneeded simple merge requests. The author has to be responsible in the
 need or not to be reviewed.
 
-The Advanced Merge Request will be merged into master after being reviewed by a DEMcompare steering committee (core committers) composed of: 
+The Advanced Merge Request will be merged into master after being reviewed by a demcompare steering committee (core committers) composed of:
 
 * Emmanuelle Sarrazin (CNES) 
 * Emmanuel Dubois (CNES)

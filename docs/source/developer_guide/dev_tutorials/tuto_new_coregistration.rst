@@ -16,6 +16,7 @@ The new coregistration class inherits from the **CoregistrationTemplate** class 
         CoregistrationTemplate
     ):
 
+    # The *__init__* and *fill_conf_and_schema* functions are necessary to initialize class attributes that are not present in the *CoregistrationTemplate* class.
     def __init__(self, cfg: ConfigType = None)
         """
         Return the coregistration object associated with the method_name
@@ -60,6 +61,10 @@ The new coregistration class inherits from the **CoregistrationTemplate** class 
         :rtype: ConfigType
         """
 
+
+    # The *_coregister_dems_algorithm* function takes as inputs the two reprojected input dems, meaning that they will already have the
+    # same resolution and size. Both dems are in demcompare's *xr.Dataset* format.
+    # The *_coregister_dems_algorithm* function must give as output the **Transformation**, the **coregistered sec** xr.Dataset and the **coregistered ref** xr.Dataset.
     def _coregister_dems_algorithm(
         self,
         sec: xr.Dataset,
@@ -91,6 +96,7 @@ The new coregistration class inherits from the **CoregistrationTemplate** class 
         :rtype: Tuple[Transformation, xr.Dataset, xr.Dataset]
         """
 
+    # The *compute_results* function will do a logging of the obtained results and save them on the output demcompare_results.json file
     def compute_results(self):
         """
         Save the coregistration results on a Dict
@@ -103,10 +109,6 @@ The new coregistration class inherits from the **CoregistrationTemplate** class 
 
 Other functions characteristic to the coregistration class may be implemented as well.
 
-The *_coregister_dems_algorithm* function takes as inputs the two reprojected input dems, meaning that they will already have the
-same resolution and size. Both dems are in demcompare's *xr.Dataset* format.
-
-The *_coregister_dems_algorithm* must give as output the **Transformation**, the coregistered sec xr.Dataset and the coregistered ref xr.Dataset.
 
 The **Transformation** is the object storing the coregistration offsets, and can be created the following way:
 

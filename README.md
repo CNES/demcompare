@@ -1,7 +1,7 @@
 <div align="center">
   <a href="https://github.com/CNES/demcompare"><img src="docs/source/images/demcompare_picto.png" alt="Demcompare" title="Demcompare"  width="300" align="center"></a>
 
-<h4 align="center">DEMcompare, a DEM comparison tool  </h4>
+<h4 align="center">demcompare, a DEM comparison tool  </h4>
 
 [![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](https://demcompare.readthedocs.io/en/stable/developer_guide.html)

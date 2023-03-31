@@ -5,9 +5,25 @@ Stats module
 
 This section explains details of stats module conception and organization. 
 
-TODO : introduction of the module.
-TODO: explain global functioning and link to main API functions used in demcompare module
+In the following image we can find the classes that take part in demcompare's statistics computation step, along
+with their relationship.
 
+Statistics step architecture
+----------------------------
+
+The **stats_processing.py** module handles the API for the statistics computation. The :ref:`demcompare_module`
+creates a **StatsProcessing** object when statistics are to be computed. The **StatsProcessing** object contains
+different **ClassificationLayer** objects, depending on the classification layers specified in the input configuration file.
+Moreover, each **ClassificationLayer** contains its own **Metric** classes.
+
+When statistics are computed, a **StatsDataset** object is obtained.
+
+
+.. figure:: /images/schema_statistiques_class.png
+    :width: 1100px
+    :align: center
+
+    Statistics classes relationship.
 
 
 Stats processing
@@ -17,6 +33,10 @@ Stats processing
 
 The StatsProcessing class handles the statistics computation for an input dem. It generates the different ClassificationLayer objects along
 with the StatsDataset output object. It also has the API to compute the different statistics.
+
+As one can see in `demcompare_module`, the main demcompare module in __init__.py file uses the StatsProcessing
+class to perform the stats computation.
+
 
 Classification layer
 ********************
@@ -57,8 +77,8 @@ Each scalar metric computes a scalar value based on the input data.
 
 - Metric classes implemented in `metric/vector_metrics.py`
 
-    - **Cdf**
-    - **Pdf**
+    - **Cdf (Cumulative Distribution Function)**
+    - **Pdf (Probability Density Function)**
     - **RatioAboveThreshold**
 
 Each vector metric computes two arrays of values based on the input data.

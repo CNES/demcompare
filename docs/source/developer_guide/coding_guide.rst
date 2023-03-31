@@ -28,18 +28,18 @@ Code quality
 
 Use the following command in **demcompare** `virtualenv` to check the code with these tools:
 
-.. code-block:: console
-
-    $ make lint
-
-Use the following command to automically format the code with isort and black:
+Use the following command to automatically format the code with isort and black:
 
 .. code-block:: console
 
     $ make format
 
+.. code-block:: console
+
+    $ make lint
+
 .. warning::
-  Use the auto formatting with cautious and check before committing. 
+  Use the auto formatting with caution and check before committing.
 
 Isort
 -----
@@ -180,7 +180,7 @@ Here is the way to install it manually:
 
 This installs the pre-commit hook in `.git/hooks/pre-commit` and `.git/hooks/pre-push` from `.pre-commit-config.yaml <https://raw.githubusercontent.com/CNES/demcompare/master/.pre-commit-config.yaml>`_ file configuration.
 
-It is possible to test pre-commit before commiting:
+It is possible to test pre-commit before committing:
 
 .. code-block:: console
 
