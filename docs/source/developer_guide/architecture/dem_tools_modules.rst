@@ -5,25 +5,39 @@ Dem Tools modules
 
 
 This section describes all dem tools modules: **dem_tools.py**, **dataset_tools.py** and **img_tools.py**.
-As explained below, it is the `dem_tools.py` module who handles the API.
+
+As explained below, it is the `dem_tools`_ module who handles the API.
 
 
-- **dem_tools.py**
+- **demcompare.dem_tools** modules in `dem_tools file <https://github.com/CNES/demcompare/blob/master/demcompare/dem_tools.py>`_
+
+.. _dem_tools:
 
 This module contains main functions to manipulate DEM raster images.
 
 It represents the primary API to manipulate DEM as xarray dataset in demcompare.
-Dataset and associated internal functions are described in dataset_tools.py
+Dataset and associated internal functions are described in `dataset_tools`_
 
-As one can see in :ref:`demcompare_module`, the main demcompare module in `__init__.py` file uses `dem_tools`'s
+As one can see in :ref:`demcompare_module`, the main demcompare module in `__init__.py` file uses `dem_tools`_'s
 functions such as `load_dem`, `reproject_dems` and `compute_alti_diff_for_stats`.
 
-- **dataset_tools.py**
+One can find here the full list of API functions available in the `dem_tools`_ module, as well as their description and
+input and output parameters:
+`dem_tools API <https://demcompare.readthedocs.io/en/latest/api_reference/demcompare/dem_tools/index.html>`_
+
+- **demcompare.dataset_tools** modules in `dataset_tools file <https://github.com/CNES/demcompare/blob/master/demcompare/dataset_tools.py>`_
+
+.. _dataset_tools:
 
 This module contains functions associated to demcompare's DEM dataset creation. It shall not be used directly,
-as the it is the `dem_tools.py` module who handles its API.
+as the it is the `dem_tools`_ module who handles its API.
 
-The **demcompare dataset** is an xarray Dataset containing:
+The **demcompare DEM dataset** is a xarray Dataset created by demcompare for each DEM, it contains all the necessary information
+for demcompare to perform all the different available processes on a DEM.
+
+One can see here all the information inside a demcompare dataset:
+
+.. _demcompare_dataset:
 
 .. code-block:: text
 
@@ -56,8 +70,8 @@ The **demcompare dataset** is an xarray Dataset containing:
                 - geoid_path : geoid path. str or None
                 - source_rasterio : rasterio's DatasetReader object or None.
 
-- **img_tools.py**
+- **demcompare.img_tools** modules in `img_ file <https://github.com/CNES/demcompare/blob/master/demcompare/img_tools.py>`_
 
 This module contains generic functions associated to raster images.
-It consists mainly on wrappers to rasterio functions. Like `dataset_tools.py`, this module shall not be used directly,
-as the it is the `dem_tools.py` module who handles its API.
+It consists mainly on wrappers to rasterio functions. Like `dataset_tools`_, this module shall not be used directly,
+as the it is the `dem_tools`_ module who handles its API.

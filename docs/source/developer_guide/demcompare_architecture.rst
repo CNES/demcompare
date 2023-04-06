@@ -12,6 +12,7 @@ The following sections give details for each subpart.
 .. toctree::
   :maxdepth: 2
 
+  architecture/high_level_description.rst
   architecture/demcompare_cli.rst
   architecture/demcompare_module.rst
   architecture/dem_tools_modules.rst
@@ -20,34 +21,7 @@ The following sections give details for each subpart.
   architecture/report_module.rst
 
 
-Demcompare high level description
-**********************************
-
-Demcompare can be run through :ref:`demcompare_cli` that uses :ref:`demcompare_module`. 
-
-With an input configuration file, :ref:`demcompare_module` orchestrates functions from :ref:`dem_tools_modules` for dem manipulation,
-functions from :ref:`coregistration_modules` for dem coregistration and functions from :ref:`stats_modules` to handle statistics metrics computation.
-
-A report is generated from :ref:`report_module` (Work in progress).
-
-Demcompare API is also demonstrated in more details in notebooks and autoAPI is generated in API reference section.
-
-Demcompare conception
-**********************
-
-Demcompare's architecture combines simple **python modules** with **python classes**. To generalize some parts, some of those classes have an **abstract architecture**.
-
-Demcompare's abstract classes are all implemented with two main python files:
-
-1. The **class factory**, which is python file named like the class. It only handles the class object generation.
-2. The **abstract class template**, which is a python file named like the class + "_template". This file includes all the abstract functions and attributes.
-
-With the class factory and the abstract class template, the different subclasses can be implemented:
-
-3. The **subclasses**, which are python files implementing the subclasses derived from the abstract class.
-
 
 .. note::
 
     Please contribute if elements are missing or are unclear to enter demcompare code.
-

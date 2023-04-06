@@ -11,12 +11,12 @@ with their relationship.
 Statistics step architecture
 ----------------------------
 
-The **stats_processing.py** module handles the API for the statistics computation. The :ref:`demcompare_module`
-creates a **StatsProcessing** object when statistics are to be computed. The **StatsProcessing** object contains
-different **ClassificationLayer** objects, depending on the classification layers specified in the input configuration file.
-Moreover, each **ClassificationLayer** contains its own **Metric** classes.
+The `stats_processing_class`_ module handles the API for the statistics computation. The :ref:`demcompare_module`
+creates a `stats_processing_class`_ object when statistics are to be computed. The `stats_processing_class`_ object contains
+different `classification_layer_class`_ objects, depending on the classification layers specified in the input configuration file.
+Moreover, each `classification_layer_class`_ contains its own `metric_class`_ classes.
 
-When statistics are computed, a **StatsDataset** object is obtained.
+When statistics are computed, a `stats_dataset_class`_ object is obtained.
 
 
 .. figure:: /images/schema_statistiques_class.png
@@ -29,38 +29,80 @@ When statistics are computed, a **StatsDataset** object is obtained.
 Stats processing
 ****************
 
-**StatsProcessing**: Implemented in `stats_processing.py`
+.. _stats_processing_class:
 
-The StatsProcessing class handles the statistics computation for an input dem. It generates the different ClassificationLayer objects along
-with the StatsDataset output object. It also has the API to compute the different statistics.
 
-As one can see in `demcompare_module`, the main demcompare module in __init__.py file uses the StatsProcessing
+**StatsProcessing**: Implemented in `StatsProcessing file <https://github.com/CNES/demcompare/blob/master/demcompare/stats_processing.py>`_
+
+The `stats_processing_class`_ class handles the statistics computation for an input dem. Please notice that if the statistics
+are to be computed on the difference between two dems, this difference must be given as the input dem.
+
+The `stats_processing_class`_ class generates the different `classification_layer_class`_ objects to handle the statistics computation by class, and it
+also generates the `stats_dataset_class`_ output object. It also has the API to compute the different available statistics on a chosen classification
+layer and class.
+
+As one can see in :ref:`demcompare_module`, the main demcompare module in __init__.py file uses the `stats_processing_class`_
 class to perform the stats computation.
+
+
+One can find here the full list of API functions available in the `stats_processing_class`_ module, as well as their description and
+input and output parameters:
+`StatsProcessing API <https://demcompare.readthedocs.io/en/latest/api_reference/demcompare/stats_processing/index.html>`_
 
 
 Classification layer
 ********************
 
-The classification_layer class in demcompare has the following structure:
+.. _classification_layer_class:
 
-- **ClassificationLayer**: The class Factory. Implemented in `classification_layer/classification_layer.py`
-- **ClassificationLayerTemplate**: The abstract class. Implemented in `classification_layer/classification_layer_template.py`
-- **SegmentationClassification**: Segmentation classification layer class. Implemented in `classification_layer/segmentation_classification.py`
-- **GlobalClassification**: Global classification layer class. Implemented in `classification_layer/global_classification.py`
-- **SlopeClassification**: Slope classification layer class. Implemented in `classification_layer/slope_classification.py`
-- **FusionClassification**: Fusion classification layer class. Implemented in `classification_layer/fusion_classification.py`
 
-The classification layers classify the input DEM's pixels by classes in order to obtain statistics by class.
+The **Classification Layer** class in demcompare is in charge of classifying the input DEM's pixels by classes and
+obtains statistics by class.
+
+All Classification Layer classes inherit from the **ClassificationLayerTemplate** abstract class. Currently, *segmentation*, *global*, *slope* and *fusion*
+classification layers are available. For more details on the pixel classification of each classification layer type please see :ref:`statistics` :
+
+- **SegmentationClassification**: Segmentation classification layer class. Implemented in `SegmentationClassification file <https://github.com/CNES/demcompare/blob/master/demcompare/classification_layer/segmentation_classification.py>`_
+
+- **GlobalClassification**: Global classification layer class. Implemented in `GlobalClassification file <https://github.com/CNES/demcompare/blob/master/demcompare/classification_layer/global_classification.py>`_
+
+- **SlopeClassification**: Slope classification layer class. Implemented in `SlopeClassification file <https://github.com/CNES/demcompare/blob/master/demcompare/classification_layer/slope_classification.py>`_
+
+- **FusionClassification**: Fusion classification layer class. Implemented in `FusionClassification file <https://github.com/CNES/demcompare/blob/master/demcompare/classification_layer/fusion_classification.py>`_
+
+Whereas the abstract class and the class Factory are implemented in :
+
+- **ClassificationLayer**: The class Factory. Implemented in `ClassificationLayer file <https://github.com/CNES/demcompare/blob/master/demcompare/classification_layer/classification_layer.py>`_
+
+
+- **ClassificationLayerTemplate**: The abstract class. Implemented in `ClassificationLayerTemplate file <https://github.com/CNES/demcompare/blob/master/demcompare/classification_layer/classification_layer_template.py>`_
+
+Each classification layer contains the input DEM classified according to the classification layer type and inputs (ie. a segmentation map for SegmentationClassification, a slope range for SlopeClassification), and handles the statistics computation with the *compute_classif_stats* function.
+
+To perform the metric computation, the `classification_layer_class`_ class creates each `metric_class`_ :ref:`statistics` object.
+
+The computed metrics are stored in the input `stats_dataset_class`_ object and returned to the `stats_processing_class`_ module, which handles the API for statistics computation :ref:`statistics`.
+
+One can find here the full list of API functions available in the `classification_layer_class`_ module, as well as their description and
+input and output parameters: `ClassificationLayer API <https://demcompare.readthedocs.io/en/latest/api_reference/demcompare/classification_layer/classification_layer_template/index.html>`_
+
 
 Metric
 ******
 
-The metric class in demcompare has the following structure:
+.. _metric_class:
 
-- **Metric**: The class Factory. Implemented in `metric/metric.py`
-- **MetricTemplate**: The abstract class. Implemented in `metric/metric_template.py`
 
-- Metric classes implemented in `metric/scalar_metrics.py`
+The **Metric** class in demcompare is in charge of doing a statistics computation on a given *np.ndarray*.
+All `metric_class`_ classes inherit from the **MetricTemplate** abstract class:
+
+- **Metric**: The class Factory. Implemented in `Metric file <https://github.com/CNES/demcompare/blob/master/demcompare/metric/metric.py>`_
+- **MetricTemplate**: The abstract class. Implemented in `MetricTemplate file <https://github.com/CNES/demcompare/blob/master/demcompare/metric/metric_template.py>`_
+
+To avoid too many python files creation, and given the simplicity of some of the metric classes, they have been
+grouped by type in *scalar_metrics.py* and *vector_metrics.py* :
+
+- Metric classes implemented in `Scalar metrics file <https://github.com/CNES/demcompare/blob/master/demcompare/metric/scalar_metrics.py>`_
 
     - **Mean**
     - **Max**
@@ -75,7 +117,7 @@ The metric class in demcompare has the following structure:
 
 Each scalar metric computes a scalar value based on the input data.
 
-- Metric classes implemented in `metric/vector_metrics.py`
+- Metric classes implemented in `Vector metrics file <https://github.com/CNES/demcompare/blob/master/demcompare/metric/vector_metrics.py>`_
 
     - **Cdf (Cumulative Distribution Function)**
     - **Pdf (Probability Density Function)**
@@ -83,14 +125,21 @@ Each scalar metric computes a scalar value based on the input data.
 
 Each vector metric computes two arrays of values based on the input data.
 
+For information on how to create a new metric, please see :ref:`tuto_new_metric`.
+
+One can find here the full list of API functions available in the `classification_layer_class`_ module, as well as their description and
+input and output parameters:
+`Metric API <https://demcompare.readthedocs.io/en/latest/api_reference/demcompare/classification_layer/classification_layer_template/index.html>`_
 
 Stats dataset
 *************
 
-**StatsDataset**: Implemented in `stats_dataset.py`
+.. _stats_dataset_class:
 
-The StatsDataset class stores the different statistics computed for an input DEM. It is generated by the StatsProcessing class and its architecture
-consists in a list of `xr.Dataset`, one for each classification layer that has been used to compute the stats.
+**StatsDataset**: Implemented in `StatsDataset file <https://github.com/CNES/demcompare/blob/master/demcompare/stats_dataset.py>`_
+
+The `stats_dataset_class`_ stores the different statistics computed for an input DEM. It is generated by the `stats_processing_class`_ and its architecture
+consists in a list of `xr.Dataset`, one for each `classification_layer_class`_ that has been used to compute the stats.
 It also has the API to obtain the stored statistics.
 
 
@@ -130,3 +179,8 @@ The statistics of each classification layer are stored in the `xr.Dataset` with 
 
                 - stats_by_class_exclusion : dictionary containing
                   the stats per class considering the exclusion mode
+
+
+One can find here the full list of API functions available in the `stats_dataset_class`_ module, as well as their description and
+input and output parameters:
+`StatsDataset API <https://demcompare.readthedocs.io/en/latest/api_reference/demcompare/stats_dataset/index.html>`_

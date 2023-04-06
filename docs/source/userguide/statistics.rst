@@ -199,9 +199,7 @@ The following metrics are currently available on demcompare:
     - ``squared_sum``
     - ``percentil_90``
 
-
   .. tab:: Vector metrics
-
       .. csv-table::
         :header: "Name", "Type", "Parameters", "Type", "Default value"
         :widths: auto

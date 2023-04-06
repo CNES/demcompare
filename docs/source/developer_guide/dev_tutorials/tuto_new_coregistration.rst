@@ -6,8 +6,28 @@ New coregistration class implementation
 Demcompare's architecture allows to easily implement a **new coregistration algorithm**.
 
 To do so, a new class has to be implemented within the *demcompare/coregistration* folder.
-The new coregistration class inherits from the **CoregistrationTemplate** class and must implement the following functions:
+The new coregistration class inherits from the **CoregistrationTemplate** class  (see :ref:`coregistration_modules`) and must implement the following functions:
 
+- The *__init__* and *fill_conf_and_schema* functions are necessary to initialize class attributes that are not already present in the **CoregistrationTemplate** class.
+- The *_coregister_dems_algorithm* function is the function that perfoms the coregistration algorithm. It takes the two reprojected input dems as inputs, meaning that they will already have the
+  same resolution and size. Both dems are **demcompare datasets** (see :ref:`dem_tools_modules`).
+  The *_coregister_dems_algorithm* function must have the following outputs:
+
+  1. The **Transformation** object containing the computed offsets.
+
+  2. The **coregistered sec** and **coregistered ref** **demcompare datasets**. Those are the input datasets after the shifts of the coregistration algorithm have been applied. Please notice that those DEMs have been reprojected and coregistered, so they shall be used only for statistics computations such as its difference, error pdf, etc. For other applications performing *transformation.apply_transform(sec)* to the original secondary DEM is preferable.
+
+
+
+.. note::
+      Please notice that if crop and interpolations need to be done in the input DEM, then those should also be done on the input classification layers if present
+      on the dem demcompare dataset in order to maintain the coherence between the dem and the classification.
+
+- The *compute_results* function will do a logging of the obtained results and save them on the output **demcompare_results.json** file
+- Other functions characteristic to the coregistration class may be implemented as well.
+
+
+Hence, a basic *NewCoregistrationClass* would be implemented with the following structure :
 
 .. code-block:: bash
 
@@ -16,7 +36,6 @@ The new coregistration class inherits from the **CoregistrationTemplate** class 
         CoregistrationTemplate
     ):
 
-    # The *__init__* and *fill_conf_and_schema* functions are necessary to initialize class attributes that are not present in the *CoregistrationTemplate* class.
     def __init__(self, cfg: ConfigType = None)
         """
         Return the coregistration object associated with the method_name
@@ -62,9 +81,6 @@ The new coregistration class inherits from the **CoregistrationTemplate** class 
         """
 
 
-    # The *_coregister_dems_algorithm* function takes as inputs the two reprojected input dems, meaning that they will already have the
-    # same resolution and size. Both dems are in demcompare's *xr.Dataset* format.
-    # The *_coregister_dems_algorithm* function must give as output the **Transformation**, the **coregistered sec** xr.Dataset and the **coregistered ref** xr.Dataset.
     def _coregister_dems_algorithm(
         self,
         sec: xr.Dataset,
@@ -96,7 +112,6 @@ The new coregistration class inherits from the **CoregistrationTemplate** class 
         :rtype: Tuple[Transformation, xr.Dataset, xr.Dataset]
         """
 
-    # The *compute_results* function will do a logging of the obtained results and save them on the output demcompare_results.json file
     def compute_results(self):
         """
         Save the coregistration results on a Dict
@@ -107,7 +122,6 @@ The new coregistration class inherits from the **CoregistrationTemplate** class 
         """
 
 
-Other functions characteristic to the coregistration class may be implemented as well.
 
 
 The **Transformation** is the object storing the coregistration offsets, and can be created the following way:
@@ -124,5 +138,5 @@ The **Transformation** is the object storing the coregistration offsets, and can
             )
 
 Where the *adapting_factor* is the automatically computed factor be considered if the coregistration has been performed at a resolution different from the
-original **sec** resolution (if the *sampling_source* parameter was set to *ref*).
+original **sec** resolution (if the *sampling_source* parameter was set to *ref* (see :ref:`coregistration`).
 
