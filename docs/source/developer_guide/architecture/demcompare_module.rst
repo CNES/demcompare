@@ -4,23 +4,23 @@
 Demcompare module
 =================
 
-This describes the main demcompare module in `demcompare_module file <https://github.com/CNES/demcompare/blob/master/demcompare/__init__.py>`_ which orchestrates the demcompare
+The main demcompare module in `demcompare_module file <https://github.com/CNES/demcompare/blob/master/demcompare/__init__.py>`_ orchestrates the demcompare
 API from an input configuration file, hence, from an execution using the :ref:`demcompare_cli`.
 
-
-The configuration file specifies the execution pipeline containing the optional :ref:`coregistration` and/or :ref:`statistics` steps configuration.
+The configuration file specifies digital elevation models inputs to compare and also the pipeline to execute.
+This pipeline depends on the optional :ref:`coregistration` and/or :ref:`statistics` steps configuration.
 
 If coregistration and/or statistics steps are to be computed,
-then its orchestration will be handled by demcompare module's as follows:
+then each step orchestration will be handled by demcompare module as follows:
 
-Demcompare module's orchestration for coregistration step
----------------------------------------------------------
+Coregistration step orchestration
+---------------------------------
 
 .. figure:: /images/coreg_api.png
     :width: 800px
     :align: center
 
-    Demcompare's orchestration for coregistration step.
+    Demcompare coregistration step orchestration
 
 
 To perform the dems coregistration :ref:`coregistration`, demcompare's module performs the following steps:
@@ -31,8 +31,8 @@ To perform the dems coregistration :ref:`coregistration`, demcompare's module pe
 
 For more details on the coregistration modules architecture, please see :ref:`coregistration_modules`.
 
-Demcompare module's orchestration for statistics step
------------------------------------------------------
+Statistics step orchestration
+-----------------------------
 
 .. figure:: /images/stats_api.png
     :width: 800px
@@ -58,24 +58,24 @@ For more details on the statistics modules architecture, please see :ref:`stats_
 Module files description
 ************************
 
-- **helpers_init** module in `helpers_init file <https://github.com/CNES/demcompare/blob/master/demcompare/helpers_init.py>`_
+- **helpers_init** module in `helpers_init.py file <https://github.com/CNES/demcompare/blob/master/demcompare/helpers_init.py>`_
 
 .. _helpers_init:
 
 In this module high level parameters of the input configuration are checked and default options are set when
 not already defined. Some helper functions to handle the output paths from the ` are also included here.
 
-- **log_conf** module in `log_conf file <https://github.com/CNES/demcompare/blob/master/demcompare/log_conf.py>`_
+- **log_conf** module in `log_conf.pyfile <https://github.com/CNES/demcompare/blob/master/demcompare/log_conf.py>`_
 
 .. _log_conf:
 
 The logconf module in demcompare contains logging configuration functions.
 
-- **output_tree_design** module in `output_tree_design file <https://github.com/CNES/demcompare/blob/master/demcompare/output_tree_design.py>`_
+- **output_tree_design** module in `output_tree_design.py file <https://github.com/CNES/demcompare/blob/master/demcompare/output_tree_design.py>`_
 
 .. _output_tree_design:
 
 Module containing the default output tree design architecture for demcompare's output directory.
-This module contains the functions to create the output three directory and define where each output file is to be
+This module contains the functions to create the output tree directory and defines where each output file is to be
 saved during a demcompare execution. By default, it considers that a pipeline execution with :ref:`coregistration` and
 :ref:`statistics` is run.

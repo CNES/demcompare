@@ -37,20 +37,21 @@ Likewise, prefix the associated branch's name by *xx-* in order to link it to th
  - Run the tests with pytest on your modifications (or don't forget to add ones).
  - When finished, change your Merge Request name (erase *WIP:* in title ) and ask to review the code.
 
+
 .. _contribution_license_agreement:
 
 Licensing
 *********
 
 **Demcompare** requires that contributors sign out a `Contributor License Agreement <https://en.wikipedia.org/wiki/Contributor_License_Agreement>`_.
-The purpose of this CLA is to ensure that the project has the necessary ownership or grants of rights over all contributions to allow them to distribute under the chosen license (Apache License Version 2.0)
 
 To accept your contribution, we need you to complete, sign and email to *cars@cnes.fr* an
-`Individual Contributor Licensing Agreement <https://github.com/CNES/Demcompare/blob/master/docs/source/CLA/ICLA_DEMCOMPARE.doc>`_ (ICLA) form or a `Corporate Contributor Licensing Agreement <https://github.com/CNES/Demcompare/blob/master/docs/source/CLA/CCLA_DEMCOMPARE.doc>`_ (CCLA) form if you are contributing on behalf of your company or another entity which retains copyright
-for your contribution.
+`Individual Contributor Licensing Agreement <https://raw.githubusercontent.com/CNES/demcompare/master/docs/source/CLA/ICLA-DEMCOMPARE.doc>`_ (ICLA) form 
+or a `Corporate Contributor Licensing Agreement <https://raw.githubusercontent.com/CNES/demcompare/master/docs/source/CLA/CCLA-DEMCOMPARE.doc>`_ (CCLA) form
+if you are contributing on behalf of your company or another entity which retains copyright for your contribution.
 
 The copyright owner (or owner's agent) must be mentioned in headers of all
-modified source files and also added to the `AUTHORS file <https://github.com/CNES/Demcompare/blob/master/AUTHORS.md>`_.
+modified source files and also added to the `AUTHORS file <https://github.com/CNES/demcompare/blob/master/AUTHORS.md>`_.
 
 Merge request acceptation process
 *********************************
@@ -71,7 +72,7 @@ Only the members of this committee can merge into master for advanced merge requ
 
 The checklist of an Advanced Merge Request acceptance is the following:
 
-*  At least one code review have been done by members of the group above (who check among others the correct application of the rules listed in the `Coding guide <#%20Coding%20guide>`__). 
+*  At least one code review have been done by members of the group above (who check among others the correct application of the rules listed in the :doc:`coding_guide`). 
 *  All comments of the reviewers has been dealt with and are closed 
 *  The reviewers have signaled their approbation (thumb up) 
 *  No developer is against the Merge Request (thumb down)

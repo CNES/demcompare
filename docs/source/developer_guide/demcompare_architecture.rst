@@ -10,7 +10,7 @@ developer contributions.
 The following sections give details for each subpart.
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
 
   architecture/high_level_description.rst
   architecture/demcompare_cli.rst

@@ -1,3 +1,5 @@
+.. _coding_guide:
+
 Coding guide: Quality, Tests, Documentation, Pre-commit
 =======================================================
 
@@ -24,9 +26,13 @@ Here are some rules to apply when developing a new functionality:
 Code quality
 ************
 
-**Demcompare** uses `Isort`_, `Black`_, `Flake8`_ and `Pylint`_ quality code checking.
+**Demcompare** uses `Isort`_, `Black`_, `Flake8`_, `Pylint`_ and `Mypy`_ quality code checking.
 
-Use the following command in **demcompare** `virtualenv` to check the code with these tools:
+Use the following command in **demcompare** `virtualenv`_ to check the code with these tools:
+
+.. code-block:: console
+
+    $ make lint
 
 Use the following command to automatically format the code with isort and black:
 
@@ -34,18 +40,14 @@ Use the following command to automatically format the code with isort and black:
 
     $ make format
 
-.. code-block:: console
-
-    $ make lint
-
 .. warning::
   Use the auto formatting with caution and check before committing.
 
 Isort
 -----
-`Isort`_ is a Python utility / library to sort imports alphabetically, and automatically separated into sections and by type.
+`Isort`_ is a Python utility / library to sort imports alphabetically, and automatically separates into sections and by type.
 
-**Demcompare** ``isort`` configuration is done in `.pyproject.toml <https://raw.githubusercontent.com/CNES/demcompare/master/pyproject.toml>`_
+**Demcompare** ``isort`` configuration is done in `.pyproject.toml`_.
 `Isort`_ manual usage examples:
 
 .. code-block:: console
@@ -61,7 +63,7 @@ Black
 -----
 `Black`_ is a quick and deterministic code formatter to help focus on the content.
 
-**Demcompare**'s ``black`` configuration is done in `.pyproject.toml <https://raw.githubusercontent.com/CNES/demcompare/master/pyproject.toml>`_
+**Demcompare**'s ``black`` configuration is done in `.pyproject.toml`_.
 
 If necessary, Black doesn’t reformat blocks that start with "# fmt: off" and end with # fmt: on, or lines that ends with "# fmt: skip". "# fmt: on/off" have to be on the same level of indentation.
 
@@ -114,7 +116,7 @@ Mypy
 ----
 `Mypy`_ is a static type checker for Python.
 
-**Demcompare**'s ``Mypy`` configuration is done in `.pyproject.toml <https://raw.githubusercontent.com/CNES/demcompare/master/pyproject.toml>`_ file.
+**Demcompare**'s ``Mypy`` configuration is done in `.pyproject.toml`_ file.
 
 `Mypy`_ messages can be avoided (in particular cases !) adding "# type: ignore" in the file or line.
 
@@ -131,7 +133,7 @@ Tests
 
 Demcompare includes a set of tests executed with `pytest <https://docs.pytest.org/>`_ tool.
 
-To launch tests:
+To run tests, use:
 
 .. code-block:: bash
 
@@ -163,12 +165,12 @@ It cleans documentation from *docs/build/* directory and builds the sphinx docum
     sphinx-build -M clean docs/source/ docs/build
     sphinx-build -M html docs/source/ docs/build
 
-Demcompare API Reference is generated through the autoAPI tool.
+Demcompare :doc:`/api_reference/index` is generated through the autoAPI tool.
 
 Pre-commit validation
 *********************
 
-A pre-commit validation is installed with code quality tools (see below).
+A `Pre-commit`_ validation is installed with code quality tools (see below).
 It is installed automatically by `make install` command.
 
 Here is the way to install it manually:
@@ -191,3 +193,12 @@ It is possible to test pre-commit before committing:
 
 
 
+
+.. _`virtualenv`: https://docs.python.org/fr/3/library/venv.html
+.. _`Isort`: https://pycqa.github.io/isort/
+.. _`Black`: https://black.readthedocs.io/
+.. _`Flake8`: https://flake8.pycqa.org/
+.. _`Pylint`: http://pylint.pycqa.org/
+.. _`Mypy`: https://mypy-lang.org/
+.. _`Pre-commit`: https://pre-commit.com/
+.. _`.pyproject.toml`: https://raw.githubusercontent.com/CNES/demcompare/master/pyproject.toml

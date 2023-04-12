@@ -1,5 +1,5 @@
-Welcome to demcompare's documentation!
-======================================
+Welcome to demcompare documentation!
+====================================
 
 **Demcompare** is a python software that aims at **comparing two DEMs** together.
 
