@@ -37,7 +37,7 @@ The coregistration class in demcompare has the following structure:
 
 - **NuthKaabInternal**: Nuth et kaab coregistration algorithm in `NuthKaabInternal file <https://github.com/CNES/demcompare/blob/master/demcompare/coregistration/nuth_kaab_internal.py>`_
 
-The **Coregistration** class is in charge of computing the offsets between two DEMs that have the same resolution and size, giving as an output
+A Coregistration object is in charge of computing the offsets between two DEMs that have the same resolution and size, giving as an output
 a **Transformation** object, along with the two reprojected and coregistered dems.
 
 It is to be noticed that to compute the offsets between two DEMs, they need to have the same resolution and size. For this reason, the **coregistration**

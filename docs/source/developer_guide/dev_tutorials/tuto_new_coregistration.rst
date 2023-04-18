@@ -5,7 +5,7 @@ New coregistration class implementation
 
 Demcompare's architecture allows to easily implement a **new coregistration algorithm**.
 
-To do so, a new class has to be implemented within the *demcompare/coregistration* folder.
+To do so, a new class has to be implemented within the `demcompare/coregistration <https://github.com/CNES/demcompare/tree/master/demcompare/coregistration>`_ folder.
 The new coregistration class inherits from the **CoregistrationTemplate** class  (see :ref:`coregistration_modules`) and must implement the following functions:
 
 - The *__init__* and *fill_conf_and_schema* functions are necessary to initialize class attributes that are not already present in the **CoregistrationTemplate** class.
@@ -18,14 +18,12 @@ The new coregistration class inherits from the **CoregistrationTemplate** class 
   2. The **coregistered sec** and **coregistered ref** **demcompare datasets**. Those are the input datasets after the shifts of the coregistration algorithm have been applied. Please notice that those DEMs have been reprojected and coregistered, so they shall be used only for statistics computations such as its difference, error pdf, etc. For other applications performing *transformation.apply_transform(sec)* to the original secondary DEM is preferable.
 
 
-
 .. note::
       Please notice that if crop and interpolations need to be done in the input DEM, then those should also be done on the input classification layers if present
       on the dem demcompare dataset in order to maintain the coherence between the dem and the classification.
 
 - The *compute_results* function will do a logging of the obtained results and save them on the output **demcompare_results.json** file
 - Other functions characteristic to the coregistration class may be implemented as well.
-
 
 Hence, a basic *NewCoregistrationClass* would be implemented with the following structure :
 
@@ -137,6 +135,6 @@ The **Transformation** is the object storing the coregistration offsets, and can
                 adapting_factor=self.adapting_factor,
             )
 
-Where the *adapting_factor* is the automatically computed factor be considered if the coregistration has been performed at a resolution different from the
+The *adapting_factor* shows if the coregistration has been performed at a resolution different from the
 original **sec** resolution (if the *sampling_source* parameter was set to *ref* (see :ref:`coregistration`).
 
