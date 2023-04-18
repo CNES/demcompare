@@ -199,9 +199,7 @@ The following metrics are currently available on demcompare:
     - ``squared_sum``
     - ``percentil_90``
 
-
   .. tab:: Vector metrics
-
       .. csv-table::
         :header: "Name", "Type", "Parameters", "Type", "Default value"
         :widths: auto
@@ -567,29 +565,30 @@ Statistics parameters
     .. tabs::
       .. tab:: Segmentation type
 
-          .. csv-table::
-            :header: "Name","Description","Type","Default value","Required"
-            :widths: auto
-            :align: left
-
-            ``'classes'``,Segmentation classes,Dict,``None``,Yes
+        +----------------------------+-------------------------------------------------+-------------+-------------------------------------+----------+
+        | Name                       | Description                                     | Type        | Default value                       | Required |
+        +============================+=================================================+=============+=====================================+==========+
+        | ``'classes'``              | Segmentation classes                            | Dict        |  ``None``                           | Yes      |
+        +----------------------------+-------------------------------------------------+-------------+-------------------------------------+----------+
 
       .. tab:: Slope type
-          .. csv-table::
-            :header: "Name","Description","Type","Default value","Required"
-            :widths: auto
-            :align: left
 
-            ``'ranges'``,Slope ranges,List,":math:`[0, 5, 10, 25, 45]`",No
+        +----------------------------+-------------------------------------------------+-------------+-------------------------------------+----------+
+        | Name                       | Description                                     | Type        | Default value                       | Required |
+        +============================+=================================================+=============+=====================================+==========+
+        | ``'ranges'``               | Slope ranges                                    | List        |  ":math:`[0, 5, 10, 25, 45]`"       | No       |
+        +----------------------------+-------------------------------------------------+-------------+-------------------------------------+----------+
 
       .. tab:: Fusion type
-          .. csv-table::
-            :header: "Name","Description","Type","Default value","Required"
-            :widths: auto
-            :align: left
 
-            ``'ref'``,Ref classification layers to fusion,List,``None``,No
-            ``'sec'``,Sec classification layers to fusion,List,``None``,No
+        +----------------------------+-------------------------------------------------+-------------+-------------------------------------+----------+
+        | Name                       | Description                                     | Type        | Default value                       | Required |
+        +============================+=================================================+=============+=====================================+==========+
+        | ``'ref'``                  | Ref classification layers to fusion             | List        | ``None``                            | No       |
+        +----------------------------+-------------------------------------------------+-------------+-------------------------------------+----------+
+        | ``'sec'``                  | Sec classification layers to fusion             | List        | ``None``                            | No       |
+        +----------------------------+-------------------------------------------------+-------------+-------------------------------------+----------+
+
 
 Statistics outputs
 ******************

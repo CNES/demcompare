@@ -1,12 +1,12 @@
 <div align="center">
   <a href="https://github.com/CNES/demcompare"><img src="docs/source/images/demcompare_picto.png" alt="Demcompare" title="Demcompare"  width="300" align="center"></a>
 
-<h4 align="center">DEMcompare, a DEM comparison tool  </h4>
+<h4 align="center">demcompare, a DEM comparison tool  </h4>
 
 [![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
-[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](CONTRIBUTING.md)
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](https://demcompare.readthedocs.io/en/stable/developer_guide.html)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0/)
-[![Docs](https://readthedocs.org/projects/demcompare/badge/?version=latest)]('https://demcompare.readthedocs.io/?badge=latest)
+[![Docs](https://readthedocs.org/projects/demcompare/badge/?version=latest)]('<https://demcompare.readthedocs.io/?badge=latest)>
 
 <p align="center">
   <a href="#overview">Overview</a> •
@@ -48,7 +48,6 @@ pip install demcompare
 
 Download our data sample and run the python script **demcompare**:
 
-
 ```bash
 # download data samples
 wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/images/srtm_sample.zip  # input stereo pair
@@ -72,16 +71,15 @@ The results can be observed with:
 Please consult [our online documentation](https://demcompare.readthedocs.io).
 
 You will learn:
-- Which steps you can [use and combine](https://demcompare.readthedocs.io/en/latest/userguide/step_by_step.html)
-- How to use the [command line execution](https://demcompare.readthedocs.io/en/latest/userguide/command_line_execution.html)
-- Which parameters you can set in the [input configuration](https://demcompare.readthedocs.io/en/latest/userguide/inputs.html)
-
+* Which steps you can [use and combine](https://demcompare.readthedocs.io/en/latest/userguide/step_by_step.html)
+* How to use the [command line execution](https://demcompare.readthedocs.io/en/latest/userguide/command_line_execution.html)
+* Which parameters you can set in the [input configuration](https://demcompare.readthedocs.io/en/latest/userguide/inputs.html)
 
 ## Licensing
 
 demcompare software is distributed under the Apache Software License (ASL) v2.0.
 
-See [LICENSE](./LICENSE) file or http://www.apache.org/licenses/LICENSE-2.0 for details.
+See [LICENSE](./LICENSE) file or <http://www.apache.org/licenses/LICENSE-2.0> for details.
 
 Copyrights and authoring can be found in [NOTICE](./NOTICE) file.
 

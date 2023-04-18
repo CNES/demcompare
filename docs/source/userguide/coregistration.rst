@@ -59,7 +59,10 @@ Schematic overview
 
 .. note:: Please notice that both *reproj_coreg_ref* and *reproj_coreg_sec* share the same georeference origin, **but this origin may not be the same as the origin of reference DEM**. Hence, they shall only be used for computing altitude difference for statistical purposes.
 
-.. note:: Notice that if a single DEM is given as input, the coregistration step cannot be computed for it makes no sense.
+.. note:: Notice that if a single DEM is given as input, the coregistration step cannot be computed obviously.
+
+.. warning::
+  Be careful that the coregistration altimetric ``z`` shift is given as output information but is not used for dem coregistration in demcompare. The altimetric shift can be from many sources and its correction could blur the comparison analysis.
 
 
 Detailed parameters

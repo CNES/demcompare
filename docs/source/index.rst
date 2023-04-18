@@ -1,5 +1,5 @@
-Welcome to demcompare's documentation!
-======================================
+Welcome to demcompare documentation!
+====================================
 
 **Demcompare** is a python software that aims at **comparing two DEMs** together.
 
@@ -18,6 +18,7 @@ A comparison report can be compiled as *html* or *pdf* documentation with statis
 
    getting_started
    userguide
+   developer_guide
    api_reference/index.rst
    faq
    glossary

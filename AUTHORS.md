@@ -5,7 +5,7 @@ Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 Demcompare is licensed under permissive Apache 2 license (See LICENSE file).
 The copyright is kept CNES only for long term maintenance ease.
 
-See CONTRIBUTING.md for more details on Contributor License Agreement.
+See the [developer guide](https://demcompare.readthedocs.io/en/stable/developer_guide.html) for more details on Contributor License Agreement.
 
 This file keeps track of authors contributions.
 

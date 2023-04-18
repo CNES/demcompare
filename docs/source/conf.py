@@ -1,5 +1,6 @@
 # pylint: skip-file
 # flake8: noqa
+# type: ignore
 # coding: utf8
 # Copyright (c) 2020 Centre National d'Etudes Spatiales (CNES).
 #
@@ -69,7 +70,7 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx.ext.imgmath",
     "autoapi.extension",
-    'sphinx_tabs.tabs'
+    "sphinx_tabs.tabs",
 ]
 
 autoapi_dirs = ["../../demcompare"]
