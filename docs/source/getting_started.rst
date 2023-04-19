@@ -26,10 +26,10 @@ Example of a basic DEM coregistration + statistics execution with the sample ima
 
 .. code-block:: bash
 
-    wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/images/srtm_sample.zip  # input stereo pair
-    wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/json_conf_files/nuth_kaab_config.json # configuration file
+    wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/srtm_sample.zip  # input stereo pair
+    wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/sample_config.json # configuration file
     unzip srtm_sample.zip #uncompress data
-    demcompare nuth_kaab_config.json #run demcompare
+    demcompare sample_config.json #run demcompare
 
 - For more information about **demcompare**'s command line execution, please refer to: :ref:`command_line_execution`
 - For more information about **demcompare**'s steps, please refer to: :ref:`coregistration`, :ref:`statistics`, :ref:`report`

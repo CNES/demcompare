@@ -31,3 +31,17 @@ It is also possible to change the virtualenv directory:
 .. note::
   Use **make clean** command to redo the install when environment state is undefined.
 
+
+Sample execution from source
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Getting started example from source code of a basic DEM coregistration + statistics execution with the sample images and input configuration available on **demcompare** :
+
+.. code-block:: bash
+
+    cd data_samples # considering demcompare command is available (see above)
+    demcompare sample_config.json # run demcompare example
+
+- For more information about **demcompare**'s command line execution, please refer to: :ref:`command_line_execution`
+- For more information about **demcompare**'s steps, please refer to: :ref:`coregistration`, :ref:`statistics`, :ref:`report`
+

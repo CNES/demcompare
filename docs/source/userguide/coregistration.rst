@@ -291,7 +291,7 @@ With the command line execution, the following directories that may store the re
 
     .output_dir
     +-- demcompare_results.json
-    +-- nuth_kaab_config.json
+    +-- sample_config.json
     +-- final_dem_diff.tif
     +-- initial_dem_diff.tif
     +-- snapshots
