@@ -109,7 +109,7 @@ format/black: install  ## run black formatting (depends install)
 ### Check code quality and linting : isort, black, flake8, pylint
 
 .PHONY: lint
-lint: install lint/isort lint/black lint/flake8 lint/pylint ## check code quality and linting
+lint: install lint/isort lint/black lint/flake8 lint/pylint lint/mypy ## check code quality and linting
 
 .PHONY: lint/isort
 lint/isort: ## check imports style with isort
