@@ -24,9 +24,9 @@ demcompare aims at coregistering and comparing two dsms
 """
 
 # Standard imports
-from __future__ import print_function
-
 import argparse
+import logging
+import traceback
 
 # Third party imports
 import argcomplete
@@ -80,7 +80,12 @@ def main():
     parser = get_parser()
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    demcompare.run(args.config, loglevel=args.loglevel)
+    try:
+        # use a global try/except to cath
+        demcompare.run(args.config, loglevel=args.loglevel)
+
+    except Exception:  # pylint: disable=broad-except
+        logging.error(" Demcompare %s", traceback.format_exc())
 
 
 if __name__ == "__main__":

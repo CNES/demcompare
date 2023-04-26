@@ -239,13 +239,13 @@ The images and statistics to analyze the coregistration saved with both ``coregi
 +-----------------------------------------+------------------------------------------------------------------------------------------+
 | *final_dem_diff_pdf.csv*                | Data of the probability density function of `final_dem_diff`                             |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *initial_dem_diff_cdf.png*              | Plot of the cummulative density function of `initial_dem_diff`                           |
+| *initial_dem_diff_cdf.png*              | Plot of the cumulative density function of `initial_dem_diff`                            |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *final_dem_diff_cdf.png*                | Plot of the cummulative density function of `final_dem_diff`                             |
+| *final_dem_diff_cdf.png*                | Plot of the cumulative density function of `final_dem_diff`                              |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *initial_dem_diff_cdf.csv*              | Data of the cummulative density function of `initial_dem_diff`                           |
+| *initial_dem_diff_cdf.csv*              | Data of the cumulative density function of `initial_dem_diff`                            |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *final_dem_diff_cdf.csv*                | Data of the cummulative density function of `final_dem_diff`                             |
+| *final_dem_diff_cdf.csv*                | Data of the cumulative density function of `final_dem_diff`                              |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
 
 The coregistration images saved with the ``coregistration`` ``save_optional_outputs`` option set to ``"True"``:

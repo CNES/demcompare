@@ -11,6 +11,6 @@ The test data **strm_test_data** folder contains the following elements:
   * *test_config.json* : resulting input configuration file from running demcompare (filled with the defaut parameters when not set).
   * *demcompare_results.json*: output results from coregistration and stats.
   * *final_dh.tif* and *initial_dh.tif*: initial and final altitude difference DEMs to evaluate the coregistration.
-  * **snapshots** folder: initial and final *.csv* files of the PDF (Probability Density Function) and CDF (Cummulative Density Function) to evaluate the coregistration.
+  * **snapshots** folder: initial and final *.csv* files of the PDF (Probability Density Function) and CDF (Cumulative Density Function) to evaluate the coregistration.
   * **coregistration** folder: internal DEMs of the coregistration and output coregistered dem to align (*coreg_SEC.tif*).
   * **stats**: one folder for each classification layer containing the *.csv* files of the *exclusion/intersection* segmentations and the *support_map.tif* if it is to be tested.

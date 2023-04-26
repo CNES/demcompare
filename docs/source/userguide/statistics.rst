@@ -107,7 +107,7 @@ With the coregistration step
 
 If both coregistration and statistics steps are present on the input configuration:
 
-- In order to evaluate the coregistration effect, the differences between the reprojected DEMs before and after coregistration, named **initial_dem_diff** and **final_dem_diff**, will be considered to compute the Probability Density Function and the Cummulative Density Function.
+- In order to evaluate the coregistration effect, the differences between the reprojected DEMs before and after coregistration, named **initial_dem_diff** and **final_dem_diff**, will be considered to compute the Probability Density Function and the Cumulative Density Function.
 - The difference between the reprojected DEMs after coregistration (the **final_dem_diff**) will be considered to compute the input or default metrics.
 
 
@@ -194,7 +194,7 @@ The following metrics are currently available on demcompare:
     - ``std`` (Standard Deviation)
     - ``rmse`` (Root Mean Squared Error)
     - ``median``
-    - ``nmad`` (Normalized Median Absolute Deviation)
+    - ``nmad`` (Normalized Median Absolute Deviation) = :math:`1.486*median(\lvert data - median(data)\rvert)`
     - ``sum``
     - ``squared_sum``
     - ``percentil_90``
@@ -205,7 +205,7 @@ The following metrics are currently available on demcompare:
         :widths: auto
         :align: left
 
-          ``'cdf'``\ Cummulative Density Function,vector,bin_step, "float", ``0.1``
+          ``'cdf'``\ Cumulative Density Function,vector,bin_step, "float", ``0.1``
           ,,output_csv_path, "string",``None``
           ,,output_plot_path, "string",``None``
           ``'pdf'``\ Probability Density Function,vector,bin_step, "float",``0.2``

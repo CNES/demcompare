@@ -29,5 +29,6 @@
       }
     },
     "remove_outliers": "True"
-  }
+  },
+  "report": "default"
 }

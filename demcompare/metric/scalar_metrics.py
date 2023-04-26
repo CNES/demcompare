@@ -162,6 +162,7 @@ class Median(MetricTemplate):
 class Nmad(MetricTemplate):
     """
     Normalized-median-absolute-deviation metric class
+
     """
 
     def compute_metric(

@@ -84,7 +84,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
            the coreg_sec is saved,
          "save_optional_outputs": optional. bool. Requires output_dir
            to be set. If activated, the outputs of the coregistration method
-           (such as nuth et kaab iteration plots) are saveda and the internal
+           (such as nuth et kaab iteration plots) are saved and the internal
            dems of the coregistration
            such as reproj_dem, reproj_ref, reproj_coreg_sec,
            reproj_coreg_ref are saved.
@@ -168,7 +168,6 @@ class CoregistrationTemplate(metaclass=ABCMeta):
             cfg["save_optional_outputs"] = (
                 cfg["save_optional_outputs"] == "True"
             )
-
         else:
             cfg["save_optional_outputs"] = self._SAVE_OPTIONAL_OUTPUTS
 
@@ -375,11 +374,13 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
         :return: None
         """
+
         # Saves reprojected DEM to file system
         self.reproj_sec = save_dem(
             self.reproj_sec,
             os.path.join(self.output_dir, get_out_file_path("reproj_SEC.tif")),
         )
+
         # Saves reprojected REF to file system
         self.reproj_ref = save_dem(
             self.reproj_ref,
@@ -523,8 +524,8 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         }
 
         # Logging report
-        logging.info("# Coregistration results:")
-        logging.info("Planimetry 2D shift between DEM and REF:")
+        logging.info("Coregistration results:")
+        logging.info("Planimetry 2D shift between reprojected SEC and REF:")
         logging.info(
             " -> row : %s",
             self.demcompare_results["coregistration_results"]["dy"][
@@ -547,5 +548,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
             lrx,
             lry,
         )
-        logging.info("Altimetry shift between COREG_DEM and COREG_REF:")
+        logging.info(
+            "Altimetry shift between reprojected SEC and REF (not applied):"
+        )
         logging.info(" -> alti : %s", self.transform.z_offset * unit_bias_value)
