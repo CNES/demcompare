@@ -30,24 +30,24 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Dict, Tuple
+from typing import Tuple
 
 # Third party imports
 import rasterio
 from astropy import units as u
 
+from .internal_typing import ConfigType
 from .output_tree_design import get_otd_dirs, get_out_file_path, supported_OTD
 
 # Demcompare imports
 from .stats_processing import StatsProcessing
 
-# Type for input configuration json
-ConfigType = Dict[str, Any]
-
 
 def mkdir_p(path):
     """
     Create a directory without complaining if it already exists.
+
+    :param path: path of directory to create
     """
     try:
         os.makedirs(path)
@@ -67,7 +67,7 @@ def make_relative_path_absolute(path, directory):
     :type path: string
     :param directory: The directory path should be relative to
     :type directory: string
-    :returns: os.path.join(directory,path)
+    :return: os.path.join(directory,path)
         if path is a valid relative path form directory, else path
     :rtype: string
     """
@@ -86,9 +86,8 @@ def read_config_file(config_file: str) -> ConfigType:
 
     :param config_file: Path to json file
     :type config_file: str
-
-    :returns: The json dictionary read from file
-    :rtype: Dict[str, Any]
+    :return: The json dictionary read from file
+    :rtype: ConfigType
     """
     with open(config_file, "r", encoding="utf-8") as _fstream:
         # Load json file
@@ -127,7 +126,7 @@ def save_config_file(config_file: str, config: ConfigType):
     :param config_file: path to a json file
     :type config_file: string
     :param config: configuration json dictionary
-    :type config: Dict[str, Any]
+    :type config: ConfigType
     """
     with open(config_file, "w", encoding="utf-8") as file_:
         json.dump(config, file_, indent=2)
@@ -140,7 +139,9 @@ def compute_initialization(config_json: str) -> ConfigType:
     and initial output content.
 
     :param config_json: Config json file name
+    :type config_json: str
     :return: demcompare config initialized with default values
+    :rtype: ConfigType
     """
 
     # Read the json configuration file
@@ -195,7 +196,7 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
     Checks parameters
 
     :param cfg: configuration dictionary
-    :type cfg: Dict[str, Any]
+    :type cfg: ConfigType
     """
     input_dems = []
     # If coregistration is present in cfg, boths dems
@@ -296,8 +297,11 @@ def get_output_files_paths(
     - dem_pdf.tif and dem_pdf.csv
 
     :param output_dir: output_dir
+    :type output_dir: str
     :param name: name
+    :type name: str
     :return: Output paths
+    :rtype: Tuple[str, str, str, str, str, str]
     """
     # Compute and save image tif and image plot png
     dem_path = os.path.join(output_dir, get_out_file_path(name + ".tif"))

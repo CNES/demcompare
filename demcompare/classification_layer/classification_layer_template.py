@@ -29,7 +29,7 @@ import copy
 import logging
 import os
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 # Third party imports
 import numpy as np
@@ -42,6 +42,7 @@ from demcompare.metric import Metric
 # DEMcompare imports
 from demcompare.output_tree_design import get_out_dir
 
+from ..internal_typing import ConfigType
 from ..stats_dataset import StatsDataset
 
 
@@ -84,7 +85,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
         :param cfg: layer's configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :param dem: dem
         :type dem:    xr.DataSet containing :
 
@@ -135,17 +136,15 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         # Init outliers free mask
         self.outliers_free_mask: np.ndarray = None
 
-    def fill_conf_and_schema(
-        self, cfg: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
         Add default values to the dictionary if there are missing
         elements and define the configuration schema
 
         :param cfg: coregistration configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :return cfg: coregistration configuration updated
-        :rtype: Dict[str, Any]
+        :rtype: ConfigType
         """
 
         # Give the default value if the required element
@@ -168,7 +167,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         }
         return cfg
 
-    def check_conf(self, cfg: Dict[str, Any] = None) -> Dict[str, Any]:
+    def check_conf(self, cfg: ConfigType = None) -> ConfigType:
         """
         Check if the config is correct according
         to the class configuration schema
@@ -176,9 +175,9 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         raises CheckerError if configuration invalid.
 
         :param cfg: coregistration configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :return cfg: coregistration configuration updated
-        :rtype: Dict[str, Any]
+        :rtype: ConfigType
         """
 
         checker = Checker(self.schema)

@@ -33,7 +33,7 @@ License : MIT
 # Standard imports
 import logging
 import os
-from typing import Any, Dict, Tuple, Union
+from typing import Tuple, Union
 
 # Third party imports
 import matplotlib.pyplot as pl
@@ -46,6 +46,7 @@ from scipy.optimize import leastsq
 # Demcompare imports
 from ..dem_tools import DEFAULT_NODATA, create_dem
 from ..img_tools import compute_gdal_translate_bounds
+from ..internal_typing import ConfigType
 from ..output_tree_design import get_out_dir
 from ..transformation import Transformation
 from .coregistration import Coregistration
@@ -66,7 +67,7 @@ class NuthKaabInternal(
     # Method name
     method_name = "nuth_kaab_internal"
 
-    def __init__(self, cfg: Dict[str, Any] = None):
+    def __init__(self, cfg: ConfigType = None):
         """
         Any coregistration class should have the following schema on
         its input cfg (optional parameters may be added for a
@@ -93,7 +94,7 @@ class NuthKaabInternal(
         }
 
         :param cfg: configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: Config Type
         """
         # Call generic init before supercharging
         super().__init__(cfg)
@@ -102,17 +103,15 @@ class NuthKaabInternal(
         # Aspect bounds for the Nuth et kaab internal algorithm
         self.aspect_bounds: Union[np.ndarray, None] = None
 
-    def fill_conf_and_schema(
-        self, cfg: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
         Add default values to the dictionary if there are missing
         elements and define the configuration schema
 
         :param cfg: coregistration configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :return cfg: coregistration configuration updated
-        :rtype: Dict[str, Any]
+        :rtype: ConfigType
         """
         # Call generic fill_conf_and_schema
         cfg = super().fill_conf_and_schema(cfg)

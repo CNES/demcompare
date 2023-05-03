@@ -40,7 +40,7 @@ def demcompare_test_data_path(test_name: str) -> str:
     Return full absolute path to demcompare's tests data
 
     :param test_name: name of test directory
-    :returns: full absolute path to demcompare test data.
+    :return: full absolute path to demcompare test data.
     """
     # Verify that the current path is well set
     os.chdir(os.path.dirname(__file__))
@@ -60,7 +60,7 @@ def demcompare_path(directory_name: str) -> str:
 
     :param folder_name: name of directory to be located
      inside demcompare/demcompare
-    :returns: full absolute path to demcompare directory.
+    :return: full absolute path to demcompare directory.
     """
     # Verify that the current path is well set
     os.chdir(os.path.dirname(__file__))
@@ -78,7 +78,7 @@ def notebooks_demcompare_path(notebook_name: str) -> str:
 
     :param notebook_name: name of notebook to be located
      inside demcompare/notebooks
-    :returns: full absolute path to notebooks directory.
+    :return: full absolute path to notebooks directory.
     """
     # Verify that the current path is well set
     os.chdir(os.path.dirname(__file__))
@@ -96,7 +96,7 @@ def read_csv_file(csv_file: str) -> List[np.ndarray]:
 
     :param csv_file: path to a csv file
     :type csv_file: string
-    :returns: List of floats of input csv file
+    :return: List of floats of input csv file
     :rtype: List[np.ndarray]
     """
     output_file = []
@@ -155,7 +155,7 @@ def temporary_dir() -> str:
     """
     Returns path to temporary dir from DEMCOMPARE_TMP_DIR environment
     variable. Defaults to /tmp
-    :returns: path to tmp dir
+    :return: path to tmp dir
     """
     if "DEMCOMPARE_TMP_DIR" not in os.environ:
         # return default tmp dir

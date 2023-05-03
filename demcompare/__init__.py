@@ -47,6 +47,7 @@ from .dem_tools import (
     save_dem,
     verify_fusion_layers,
 )
+from .internal_typing import ConfigType
 from .output_tree_design import get_out_file_path
 from .stats_dataset import StatsDataset
 from .stats_processing import StatsProcessing
@@ -69,7 +70,9 @@ def run(
     Demcompare RUN execution.
 
     :param json_file_path: Input Json configuration file
+    :type json_file: str
     :param loglevel: Choose Loglevel (default: WARNING)
+    :type loglevel: int
     """
 
     # Initialization
@@ -181,13 +184,19 @@ def run(
 
 
 def load_input_dems(
-    cfg: helpers_init.ConfigType,
+    cfg: ConfigType,
 ) -> Tuple[xr.Dataset, Union[None, xr.Dataset]]:
     """
     Loads the input dems according to the input cfg
 
     :param cfg: input configuration
+    :type cfg: ConfigType
     :return: input_ref and input_dem datasets or None
+    :rtype:   Tuple(xr.Dataset, xr.dataset)
+          The xr.Datasets containing :
+
+          - im : 2D (row, col) xarray.DataArray float32
+          - trans: 1D (trans_len) xarray.DataArray
     """
     # Create input datasets
     ref = load_dem(
@@ -257,15 +266,29 @@ def load_input_dems(
 
 
 def run_coregistration(
-    cfg: helpers_init.ConfigType, input_ref: xr.Dataset, input_sec: xr.Dataset
+    cfg: ConfigType, input_ref: xr.Dataset, input_sec: xr.Dataset
 ) -> Tuple[xr.Dataset, xr.Dataset, xr.Dataset, xr.Dataset]:
     """
     Runs the dems coregistration
 
     :param cfg: coregistration configuration
+    :type cfg: ConfigType
     :param input_ref: input ref
+    :type input_ref: xr.DataSet containing :
+
+                - im : 2D (row, col) xarray.DataArray float32
+                - trans: 1D (trans_len) xarray.DataArray
     :param input_sec: input dem
+    :type input_sec: xr.DataSet containing :
+
+                - im : 2D (row, col) xarray.DataArray float32
+                - trans: 1D (trans_len) xarray.DataArray
     :return: reproj_sec, reproj_ref, reproj_coreg_sec, reproj_coreg_ref
+    :rtype:   Tuple(xr.Dataset, xr.dataset, xr.Dataset, xr.dataset)
+             The xr.Datasets containing :
+
+             - im : 2D (row, col) xarray.DataArray float32
+             - trans: 1D (trans_len) xarray.DataArray
     """
     logging.info("[Coregistration]")
     # Create coregistration object
@@ -309,7 +332,7 @@ def run_coregistration(
 
 
 def compute_stats_after_coregistration(
-    cfg: helpers_init.ConfigType,
+    cfg: ConfigType,
     coreg_sec: xr.Dataset,
     coreg_ref: xr.Dataset,
     initial_sec: xr.Dataset = None,
@@ -327,18 +350,21 @@ def compute_stats_after_coregistration(
     and metrics specified in the input cfg are also computed.
 
     :param cfg: configuration dictionary
+    :type cfg: ConfigType
     :param coreg_sec: coreg dem to align xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
+    :type coreg_sec: xr.Dataset
     :param coreg_ref: coreg reference dem xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
+    :type coreg_ref: xr.Dataset
     :param initial_sec: optional initial dem
                 to align xr.DataSet containing :
 
@@ -346,13 +372,16 @@ def compute_stats_after_coregistration(
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
+    :type initial_sec: xr.Dataset
     :param initial_ref: optional initial reference dem xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
+    :type initial_ref: xr.Dataset
     :return: StatsDataset
+    :rtype: StatsDataset
     """
     logging.info("[Stats]")
     logging.info("Altimetric error stats generation")

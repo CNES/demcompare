@@ -1083,11 +1083,15 @@ def compute_and_save_image_plots(
     see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html
 
     :param dem: dem object to compute and save image plots
+    :type dem: str
     :param plot_path: path to save the plots if present
+    :type plot_path: str
     :param fig_title: optional plot figure title
+    :type fig_title: str
     :param title_colorbar: optional dem path to save the original tif file
+    :type title_colorbar: str
     :param cmap: registered colormap name used to map scalar data to colors.
-    :returns: None
+    :type cmap: str
     """
 
     # Create and save plot using the dem_plot function
@@ -1137,7 +1141,7 @@ def verify_fusion_layers(dem: xr.Dataset, classif_cfg: Dict, support: str):
     :type classif_cfg: Dict
     :param support: fusion support, ref or sec
     :type support: str
-    :returns: None
+    :return: None
     """
     classif_names = list(classif_cfg.keys())
     fusion_layers = []

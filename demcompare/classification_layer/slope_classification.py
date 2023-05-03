@@ -24,7 +24,7 @@ Mainly contains the SlopeClassification class.
 import collections
 import logging
 import sys
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import numpy as np
 import xarray as xr
@@ -32,6 +32,7 @@ import xarray as xr
 # DEMcompare imports
 from demcompare.dem_tools import create_dem
 
+from ..internal_typing import ConfigType
 from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
@@ -61,7 +62,7 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
         :param cfg: layer's configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :param dem: dem
         :type dem:    xr.DataSet containing :
 
@@ -87,17 +88,15 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
 
         logging.debug("ClassificationLayer created as: %s", self)
 
-    def fill_conf_and_schema(
-        self, cfg: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
         Add default values to the dictionary if there are missing
         elements and define the configuration schema
 
         :param cfg: coregistration configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :return cfg: coregistration configuration updated
-        :rtype: Dict[str, Any]
+        :rtype: ConfigType
         """
         # Call generic fill_conf_and_schema
         cfg = super().fill_conf_and_schema(cfg)

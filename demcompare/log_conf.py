@@ -67,7 +67,7 @@ def add_log_file(out_dir: str):
 
     :param out_dir: output directory in which the log file will be created
     :type out_dir: str
-    :returns: None
+    :return: None
     """
     # set file log handler
     now = datetime.now()

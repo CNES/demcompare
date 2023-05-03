@@ -40,7 +40,7 @@ from datetime import datetime
 from typing import List
 
 # DEMcompare imports
-from .helpers_init import ConfigType
+from .internal_typing import ConfigType
 from .output_tree_design import get_out_dir
 from .sphinx_project_generator import SphinxProjectManager
 from .stats_dataset import StatsDataset

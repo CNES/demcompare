@@ -55,7 +55,7 @@ class ClassificationLayer:
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
         :param cfg: layer's configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :param dem: ref dem
         :type dem:   xr.DataSet containing :
 
@@ -90,7 +90,7 @@ class ClassificationLayer:
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
         :param cfg: layer's configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :param dem: sec dem
         :type dem:   xr.DataSet containing :
 
