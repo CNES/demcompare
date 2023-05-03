@@ -12,11 +12,17 @@ and the output directory has been specified, a report can be generated using the
 
 For now, only a HTML and PDF report can be generated from a specific sphinx source report. 
 
-Two values are possible in configuration: 
-- "default": equal to "sphinx" as the only report generator for now
-- "sphinx": use demcompare sphinx report generator
+Report configuration: 
 
+.. csv-table::
+    :header: "Report config", "Description", "Type" 
+    :widths: auto
+    :align: left
 
+      ``'default'``,"default choice, equal to sphinx for now","string"
+      ``'sphinx'``,"demcompare sphinx report generator (only one for now)","string"
+
+Example of json syntax for configuration file: 
 
 .. code-block:: json
 
@@ -37,7 +43,7 @@ the report can be observed using a browser:
 
 .. code-block:: bash
 
-    firefox test_output/report/published_report/html/demcompare_report.html &
+    firefox test_output/report/published_report/html/index.html &
 
 Report's modular structure
 --------------------------
