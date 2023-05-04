@@ -30,12 +30,13 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Dict, Tuple
+from typing import Tuple
 
 # Third party imports
 import rasterio
 from astropy import units as u
 
+from .internal_typing import ConfigType
 from .output_tree_design import get_otd_dirs, get_out_file_path, supported_OTD
 
 # Demcompare imports
@@ -45,6 +46,8 @@ from .stats_processing import StatsProcessing
 def mkdir_p(path):
     """
     Create a directory without complaining if it already exists.
+
+    :param path: path of directory to create
     """
     try:
         os.makedirs(path)
@@ -64,7 +67,7 @@ def make_relative_path_absolute(path, directory):
     :type path: string
     :param directory: The directory path should be relative to
     :type directory: string
-    :returns: os.path.join(directory,path)
+    :return: os.path.join(directory,path)
         if path is a valid relative path form directory, else path
     :rtype: string
     """
@@ -76,16 +79,15 @@ def make_relative_path_absolute(path, directory):
     return out
 
 
-def read_config_file(config_file: str) -> Dict[str, Any]:
+def read_config_file(config_file: str) -> ConfigType:
     """
     Read a demcompare input json config file.
     Relative paths will be made absolute.
 
     :param config_file: Path to json file
     :type config_file: str
-
-    :returns: The json dictionary read from file
-    :rtype: Dict[str, Any]
+    :return: The json dictionary read from file
+    :rtype: ConfigType
     """
     with open(config_file, "r", encoding="utf-8") as _fstream:
         # Load json file
@@ -117,20 +119,20 @@ def read_config_file(config_file: str) -> Dict[str, Any]:
     return config
 
 
-def save_config_file(config_file: str, config: Dict[str, Any]):
+def save_config_file(config_file: str, config: ConfigType):
     """
     Save a json configuration file
 
     :param config_file: path to a json file
     :type config_file: string
     :param config: configuration json dictionary
-    :type config: Dict[str, Any]
+    :type config: ConfigType
     """
     with open(config_file, "w", encoding="utf-8") as file_:
         json.dump(config, file_, indent=2)
 
 
-def compute_initialization(config_json: str) -> Dict:
+def compute_initialization(config_json: str) -> ConfigType:
     """
     Compute demcompare initialization process :
     Configuration copy, checking, create output dir tree
@@ -138,8 +140,8 @@ def compute_initialization(config_json: str) -> Dict:
 
     :param config_json: Config json file name
     :type config_json: str
-    :return: cfg
-    :rtype: Dict[str, Dict]
+    :return: demcompare config initialized with default values
+    :rtype: ConfigType
     """
 
     # Read the json configuration file
@@ -166,7 +168,9 @@ def compute_initialization(config_json: str) -> Dict:
     # Create output_dir
     mkdir_p(cfg["output_dir"])
 
-    # Save initial config with inputs absolute paths into output_dir
+    # Save initial config
+    # with inputs absolute paths into output_dir
+
     save_config_file(
         os.path.join(cfg["output_dir"], os.path.basename(config_json)), cfg
     )
@@ -187,12 +191,12 @@ def compute_initialization(config_json: str) -> Dict:
     return cfg
 
 
-def check_input_parameters(cfg: Dict[str, Any]):  # noqa: C901
+def check_input_parameters(cfg: ConfigType):  # noqa: C901
     """
     Checks parameters
 
     :param cfg: configuration dictionary
-    :type cfg: Dict[str, Any]
+    :type cfg: ConfigType
     """
     input_dems = []
     # If coregistration is present in cfg, boths dems
@@ -205,18 +209,23 @@ def check_input_parameters(cfg: Dict[str, Any]):  # noqa: C901
             raise NameError("ERROR: missing input ref in cfg")
         input_dems.append("input_sec")
         input_dems.append("input_ref")
+        # Coregistration without statistics is allowed
 
-    # If only statistics step is present in cfg,
-    # only one dem has to be defined (both is optional)
+    # If only statistics step (without coreg) is present in cfg, two cases:
+    # 1. stats on one dem on input_ref only (input_sec only is not allowed)
+    # 2. stats on two dem diff (without coreg) with input_ref and input_sec
     elif "statistics" in cfg:
-        # Verify that at least one dem is defined
+        # Verify that at least one dem is defined in input_ref
         if "input_ref" not in cfg:
             raise NameError("ERROR: missing input ref in cfg")
         input_dems.append("input_ref")
-        # Input_sec is optional
+        # Input_sec is optional, case 2 if present, case 1 otherwise.
         if "input_sec" in cfg:
             input_dems.append("input_sec")
+    else:
+        raise NameError("ERROR: missing configuration steps")
 
+    # Check input_dems paths, masks, units
     for dem in input_dems:
         # Verify and make path absolute
         if "path" not in cfg[dem]:
@@ -253,6 +262,18 @@ def check_input_parameters(cfg: Dict[str, Any]):  # noqa: C901
                 raise NameError(
                     f"ERROR: input DSM zunit ({output_msg}) not a lenght unit"
                 )
+    # Check report config
+    if "report" in cfg:
+        # Supported for now: default (-> sphinx) and sphinx
+        if cfg["report"] == "default":
+            cfg["report"] = "sphinx"
+        elif cfg["report"] != "sphinx":
+            report_name = cfg["report"]
+            raise NameError(
+                f"ERROR: {report_name} is not supported,"
+                "report type must be sphinx only for now"
+            )
+
     # check output tree design
     if "otd" in cfg and cfg["otd"] not in supported_OTD:
         otd_name = cfg["otd"]
@@ -266,14 +287,14 @@ def check_input_parameters(cfg: Dict[str, Any]):  # noqa: C901
 
 
 def get_output_files_paths(
-    output_dir, name
+    output_dir: str, name: str
 ) -> Tuple[str, str, str, str, str, str]:
     """
     Return the paths of the output global files:
+    - dem.tif
     - dem.png
-    - dem.tiff
-    - dem_cdf.tiff and dem_cdf.csv
-    - dem_pdf.tiff and dem_pdf.csv
+    - dem_cdf.tif and dem_cdf.csv
+    - dem_pdf.tif and dem_pdf.csv
 
     :param output_dir: output_dir
     :type output_dir: str
@@ -282,7 +303,7 @@ def get_output_files_paths(
     :return: Output paths
     :rtype: Tuple[str, str, str, str, str, str]
     """
-    # Compute and save image tiff and image plot png
+    # Compute and save image tif and image plot png
     dem_path = os.path.join(output_dir, get_out_file_path(name + ".tif"))
     plot_file_path = os.path.join(output_dir, get_out_file_path(name + ".png"))
     plot_path_cdf = os.path.join(

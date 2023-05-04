@@ -29,7 +29,7 @@ import copy
 import logging
 import os
 import traceback
-from typing import Any, Dict, List, Union
+from typing import Dict, List, Union
 
 # Third party imports
 import xarray as xr
@@ -41,6 +41,7 @@ from demcompare.classification_layer import (
 from demcompare.metric import Metric
 from demcompare.output_tree_design import get_out_dir
 
+from .internal_typing import ConfigType
 from .stats_dataset import StatsDataset
 
 
@@ -138,13 +139,13 @@ class StatsProcessing:
             self._create_classif_layers()
 
     def fill_conf(
-        self, cfg: Dict[str, Any] = None, input_diff: bool = False
+        self, cfg: ConfigType = None, input_diff: bool = False
     ):  # pylint:disable=too-many-branches
         """
         Init Stats options from configuration
 
         :param cfg: Input demcompare configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :param input_diff: If the input parameter is an altitude difference
         :type input_diff: bool
         """

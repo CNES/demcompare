@@ -60,8 +60,8 @@ default_OTD = {
     "ref_support_classified.png": "./stats",
     "dem_for_stats.tif": "./stats",
     # doc
-    "sphinx_built_doc": "./doc/published_report",
-    "sphinx_src_doc": "./doc/src",
+    "sphinx_built_doc": "./report/published_report",
+    "sphinx_src_doc": "./report/src",
     "logs.log": ".",
 }
 

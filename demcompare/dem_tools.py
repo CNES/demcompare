@@ -1072,57 +1072,61 @@ def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
 
 
 def compute_and_save_image_plots(
-    dem: xr.Dataset, plot_path: str, title: str = None, dem_path: str = None
+    dem: xr.Dataset,
+    plot_path: str = None,
+    fig_title: str = None,
+    colorbar_title: str = None,
+    cmap: str = "terrain",
 ):
     """
-    Compute and save dem plot and optionally the original dem image tif.
-    Saves dem tif if the dem_path parameter is given.
+    Compute and optionnally save plots from a dem using pyplot img_show.
+    see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html
 
-    :param dem: name to save the plots
+    :param dem: dem object to compute and save image plots
     :type dem: str
-    :param plot_path: path to save the plots
+    :param plot_path: path to save the plots if present
     :type plot_path: str
-    :param title: optional plot title
-    :type title: str
-    :param dem_path: optional dem path
-      to save the original tif file
-    :type dem_path: str
-    :returns: None
+    :param fig_title: optional plot figure title
+    :type fig_title: str
+    :param title_colorbar: optional dem path to save the original tif file
+    :type title_colorbar: str
+    :param cmap: registered colormap name used to map scalar data to colors.
+    :type cmap: str
     """
-
-    # Save image
-    if dem_path:
-        save_dem(
-            dem,
-            dem_path,
-        )
 
     # Create and save plot using the dem_plot function
 
-    # Compute mean
+    # Compute mean of dem image data
     mu = np.nanmean(dem["image"].data)
-    # Compute std
+    # Compute std also
     sigma = np.std(dem["image"].data)
 
-    # Plot
+    # Plot with matplotlib.pyplot
     fig, fig_ax = mpl_pyplot.subplots(figsize=(7.0, 8.0))
-    if title:
-        fig_ax.set_title(title, fontsize="large")
+    # add fig title if present
+    if fig_title:
+        fig_ax.set_title(fig_title, fontsize="large")
+    #
     im1 = fig_ax.imshow(
         dem["image"].data,
-        cmap="terrain",
+        cmap=cmap,
         vmin=mu - sigma,
         vmax=mu + sigma,
+        interpolation="none",
+        aspect="equal",
     )
-    fig.colorbar(im1, label="Elevation differences (m)")
+    fig.colorbar(im1, label=colorbar_title, ax=fig_ax)
     fig.text(
         0.15,
         0.15,
-        f"Image diff view: [Min, Max]=[{mu - sigma}.2f, {mu + sigma}.2f]",
+        f"Values rescaled between mean ± std"
+        f"\n[Min, Max]=[{mu - sigma:.2f}, {mu + sigma:.2f}]",
         fontsize="medium",
     )
     # Save plot
-    mpl_pyplot.savefig(plot_path, dpi=100, bbox_inches="tight")
+    if plot_path:
+        mpl_pyplot.savefig(plot_path, dpi=100, bbox_inches="tight")
+
     mpl_pyplot.close()
 
 
@@ -1137,7 +1141,7 @@ def verify_fusion_layers(dem: xr.Dataset, classif_cfg: Dict, support: str):
     :type classif_cfg: Dict
     :param support: fusion support, ref or sec
     :type support: str
-    :returns: None
+    :return: None
     """
     classif_names = list(classif_cfg.keys())
     fusion_layers = []

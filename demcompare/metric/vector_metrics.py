@@ -152,7 +152,7 @@ class CumulativeProbabilityFunction(MetricTemplate):
             fontsize="medium",
         )
         fig_ax.set_ylabel("Cumulative Probability [0,1]", fontsize="medium")
-        fig_ax.set_title("Cummulative Probability Difference", fontsize="large")
+        fig_ax.set_title("Cumulative Probability Difference", fontsize="large")
 
         fig_ax.set_ylim(0, 1.05)
         fig_ax.grid(True)

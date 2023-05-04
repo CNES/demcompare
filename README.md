@@ -50,14 +50,14 @@ Download our data sample and run the python script **demcompare**:
 
 ```bash
 # download data samples
-wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/images/srtm_sample.zip  # input stereo pair
-wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/json_conf_files/nuth_kaab_config.json # configuration file
+wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/srtm_sample.zip  # input stereo pair
+wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/sample_config.json # configuration file
 
 # uncompress data
 unzip srtm_sample.zip
 
 #run demcompare
-demcompare nuth_kaab_config.json
+demcompare sample_config.json
 ```
 
 The results can be observed with:
@@ -71,6 +71,7 @@ The results can be observed with:
 Please consult [our online documentation](https://demcompare.readthedocs.io).
 
 You will learn:
+
 * Which steps you can [use and combine](https://demcompare.readthedocs.io/en/latest/userguide/step_by_step.html)
 * How to use the [command line execution](https://demcompare.readthedocs.io/en/latest/userguide/command_line_execution.html)
 * Which parameters you can set in the [input configuration](https://demcompare.readthedocs.io/en/latest/userguide/inputs.html)

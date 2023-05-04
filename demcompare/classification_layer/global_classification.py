@@ -23,11 +23,12 @@ Mainly contains the GlobalClassification class.
 """
 import logging
 from collections import OrderedDict
-from typing import Any, Dict
+from typing import Dict
 
 import numpy as np
 import xarray as xr
 
+from ..internal_typing import ConfigType
 from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
@@ -55,7 +56,7 @@ class GlobalClassificationLayer(ClassificationLayerTemplate):
         :param classification_layer_kind: classification layer kind
         :type classification_layer_kind: str
         :param cfg: layer's configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :param dem: dem
         :type dem:    xr.DataSet containing :
 
@@ -79,17 +80,15 @@ class GlobalClassificationLayer(ClassificationLayerTemplate):
 
         logging.debug("ClassificationLayer created as: %s", self)
 
-    def fill_conf_and_schema(
-        self, cfg: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+    def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
         Add default values to the dictionary if there are missing
         elements and define the configuration schema
 
         :param cfg: coregistration configuration
-        :type cfg: Dict[str, Any]
+        :type cfg: ConfigType
         :return cfg: coregistration configuration updated
-        :rtype: Dict[str, Any]
+        :rtype: ConfigType
         """
         # Default global class
         self.classes = OrderedDict([("global", [1])])

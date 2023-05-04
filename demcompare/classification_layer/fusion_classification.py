@@ -24,12 +24,13 @@ Mainly contains the FussionClassification class.
 import collections
 import itertools
 import logging
-from typing import Any, Dict, List
+from typing import Dict, List
 
 # Third party imports
 import numpy as np
 from json_checker import Or
 
+from ..internal_typing import ConfigType
 from .classification_layer import ClassificationLayer
 from .classification_layer_template import ClassificationLayerTemplate
 
@@ -95,14 +96,14 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
 
         logging.debug("ClassificationLayer created as: %s", self)
 
-    def fill_fusion_conf(self, metrics: List = None) -> Dict[str, Any]:
+    def fill_fusion_conf(self, metrics: List = None) -> ConfigType:
         """
         Fill the fusion layer configuration
 
         :param metrics: optinal input metrics
         :type metrics: List
         :return cfg: configuration updated
-        :rtype: Dict[str, Any]
+        :rtype: ConfigType
         """
         # Initialize cfg layer with necessary parameters
         cfg: Dict = {}

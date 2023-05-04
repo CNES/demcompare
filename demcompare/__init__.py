@@ -29,7 +29,7 @@ import logging
 import logging.config
 import os
 from importlib.metadata import version
-from typing import Dict, Tuple, Union
+from typing import Tuple, Union
 
 # Third party imports
 import xarray as xr
@@ -47,7 +47,8 @@ from .dem_tools import (
     save_dem,
     verify_fusion_layers,
 )
-from .output_tree_design import get_out_dir, get_out_file_path
+from .internal_typing import ConfigType
+from .output_tree_design import get_out_file_path
 from .stats_dataset import StatsDataset
 from .stats_processing import StatsProcessing
 
@@ -62,38 +63,41 @@ __email__ = "cars@cnes.fr"
 
 
 def run(
-    json_file: str,
-    loglevel=logging.WARNING,
+    json_file_path: str,
+    loglevel: int = logging.WARNING,
 ):
     """
     Demcompare RUN execution.
 
-    :param json_file: Input Json configuration file
+    :param json_file_path: Input Json configuration file
     :type json_file: str
     :param loglevel: Choose Loglevel (default: WARNING)
-    :type loglevel: logging.WARNING
+    :type loglevel: int
     """
 
     # Initialization
+
     # Configuration copy, checking inputs, create output dir tree
-    cfg = helpers_init.compute_initialization(json_file)
+    cfg = helpers_init.compute_initialization(json_file_path)
+
+    # Logging configuration
     log_conf.setup_logging(default_level=loglevel)
     # Add output logging file
     log_conf.add_log_file(cfg["output_dir"])
-    logging.info("Output directory: %s", cfg["output_dir"])
 
     logging.info("*** Demcompare ***")
+    logging.info("Output directory: %s", cfg["output_dir"])
     logging.debug("Demcompare configuration: %s", cfg)
 
     input_ref, input_sec = load_input_dems(cfg)
 
+    logging.info("Input Reference DEM (REF): %s", input_ref.input_img)
+    # if two references, show input secondary DEM
+    if input_sec:
+        logging.info("Input Secondary DEM (SEC): %s", input_sec.input_img)
+
     # If coregistration step is present
     if "coregistration" in cfg:
-        sec_name = input_sec.input_img
-        ref_name = input_ref.input_img
-        logging.info("Input Secondary DEM (SEC): %s", sec_name)
-        logging.info("Input Reference DEM (REF): %s", ref_name)
-
         # Do coregistration and obtain initial
         # and final intermediate dems for stats computation
         (
@@ -111,23 +115,6 @@ def run(
                 reproj_coreg_ref,
                 reproj_sec,
                 reproj_ref,
-            )
-
-            # Coreg + Stats Report
-            logging.info("[Coregistration + Stats Report]")
-            report.generate_report(
-                working_dir=cfg["output_dir"],
-                stats_dataset=stats_dataset,
-                sec_name=reproj_sec.input_img,
-                ref_name=reproj_ref.input_img,
-                coreg_sec_name=reproj_coreg_sec.input_img,
-                coreg_ref_name=reproj_coreg_ref.input_img,
-                doc_dir=os.path.join(
-                    cfg["output_dir"], get_out_dir("sphinx_built_doc")
-                ),
-                project_dir=os.path.join(
-                    cfg["output_dir"], get_out_dir("sphinx_src_doc")
-                ),
             )
 
     # If only stats is present
@@ -186,31 +173,30 @@ def run(
                 cfg["output_dir"], get_out_file_path("dem_for_stats.tif")
             ),
         )
-        logging.info("[Stats Report]")
+    # Generate report if statistics are computed (stats_dataset defined)
+    # and report configuration is set
+    if "report" in cfg and "statistics" in cfg:
+        logging.info("[Report]")
         report.generate_report(
-            working_dir=cfg["output_dir"],
+            cfg=cfg,
             stats_dataset=stats_dataset,
-            doc_dir=os.path.join(
-                cfg["output_dir"], get_out_dir("sphinx_built_doc")
-            ),
-            project_dir=os.path.join(
-                cfg["output_dir"], get_out_dir("sphinx_src_doc")
-            ),
         )
 
 
-def load_input_dems(cfg: Dict) -> Tuple[xr.Dataset, Union[None, xr.Dataset]]:
+def load_input_dems(
+    cfg: ConfigType,
+) -> Tuple[xr.Dataset, Union[None, xr.Dataset]]:
     """
     Loads the input dems according to the input cfg
 
     :param cfg: input configuration
-    :type cfg: Dict
+    :type cfg: ConfigType
     :return: input_ref and input_dem datasets or None
     :rtype:   Tuple(xr.Dataset, xr.dataset)
-              The xr.Datasets containing :
+          The xr.Datasets containing :
 
-              - im : 2D (row, col) xarray.DataArray float32
-              - trans: 1D (trans_len) xarray.DataArray
+          - im : 2D (row, col) xarray.DataArray float32
+          - trans: 1D (trans_len) xarray.DataArray
     """
     # Create input datasets
     ref = load_dem(
@@ -280,13 +266,13 @@ def load_input_dems(cfg: Dict) -> Tuple[xr.Dataset, Union[None, xr.Dataset]]:
 
 
 def run_coregistration(
-    cfg: Dict, input_ref: xr.Dataset, input_sec: xr.Dataset
+    cfg: ConfigType, input_ref: xr.Dataset, input_sec: xr.Dataset
 ) -> Tuple[xr.Dataset, xr.Dataset, xr.Dataset, xr.Dataset]:
     """
     Runs the dems coregistration
 
     :param cfg: coregistration configuration
-    :type cfg: Dict
+    :type cfg: ConfigType
     :param input_ref: input ref
     :type input_ref: xr.DataSet containing :
 
@@ -346,7 +332,7 @@ def run_coregistration(
 
 
 def compute_stats_after_coregistration(
-    cfg: Dict[str, dict],
+    cfg: ConfigType,
     coreg_sec: xr.Dataset,
     coreg_ref: xr.Dataset,
     initial_sec: xr.Dataset = None,
@@ -364,7 +350,7 @@ def compute_stats_after_coregistration(
     and metrics specified in the input cfg are also computed.
 
     :param cfg: configuration dictionary
-    :type cfg: dict
+    :type cfg: ConfigType
     :param coreg_sec: coreg dem to align xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
@@ -378,6 +364,7 @@ def compute_stats_after_coregistration(
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
+    :type coreg_ref: xr.Dataset
     :param initial_sec: optional initial dem
                 to align xr.DataSet containing :
 
@@ -397,7 +384,7 @@ def compute_stats_after_coregistration(
     :rtype: StatsDataset
     """
     logging.info("[Stats]")
-    logging.info("# Altimetric error stats generation")
+    logging.info("Altimetric error stats generation")
     # Initial stats --------------------------------------------
 
     # Compute altitude diff
@@ -414,18 +401,22 @@ def compute_stats_after_coregistration(
     ) = helpers_init.get_output_files_paths(
         cfg["output_dir"], "initial_dem_diff"
     )
+
+    # Save initial altitude diff
+    save_dem(initial_altitude_diff, dem_path)
+
     # Compute and save initial altitude diff image plots
     compute_and_save_image_plots(
         initial_altitude_diff,
         plot_file_path,
-        title="initial [REF - DEM] differences",
-        dem_path=dem_path,
+        fig_title="Initial [REF - SEC] difference",
+        colorbar_title="Elevation difference (m)",
     )
 
     # Create StatsComputation object for the initial_dh
     # We do not need any classification_layer for the initial_dh
     initial_stats_cfg = {
-        "remove_outliers": "False",
+        "remove_outliers": cfg["remove_outliers"],
         "output_dir": cfg["output_dir"],
     }
     stats_processing_initial = StatsProcessing(
@@ -433,23 +424,24 @@ def compute_stats_after_coregistration(
     )
 
     # For the initial_dh, compute cdf and pdf stats
-    # on the global classification layer (diff, pdf, cdf)
+    # on the global classification layer only (diff, pdf, cdf)
     plot_metrics = [
         {
             "cdf": {
-                "remove_outliers": "False",
+                "remove_outliers": cfg["remove_outliers"],
                 "output_plot_path": plot_path_cdf,
                 "output_csv_path": csv_path_cdf,
             }
         },
         {
             "pdf": {
-                "remove_outliers": "False",
+                "remove_outliers": cfg["remove_outliers"],
                 "output_plot_path": plot_path_pdf,
                 "output_csv_path": csv_path_pdf,
             }
         },
     ]
+    # generate intermediate stats results CDF and PDF for report
     stats_processing_initial.compute_stats(
         classification_layer=["global"],
         metrics=plot_metrics,  # type: ignore
@@ -493,31 +485,37 @@ def compute_stats_after_coregistration(
         csv_path_pdf,
     ) = helpers_init.get_output_files_paths(cfg["output_dir"], "final_dem_diff")
 
+    # Save final altitude diff
+    save_dem(final_altitude_diff, dem_path)
+
     # Compute and save final altitude diff image plots
     compute_and_save_image_plots(
-        final_altitude_diff,
-        plot_file_path,
-        title="final [REF - DEM] differences",
-        dem_path=dem_path,
+        dem=final_altitude_diff,
+        plot_path=plot_file_path,
+        fig_title="final [COREG_REF - COREG_SEC] difference",
+        colorbar_title="Elevation difference (m)",
     )
+
     # For the final_dh, first compute plot stats on the
-    # global classification layer (diff, pdf, cdf)
+    # global classification layer only (diff, pdf, cdf)
+
     plot_metrics = [
         {
             "cdf": {
-                "remove_outliers": "False",
+                "remove_outliers": cfg["remove_outliers"],
                 "output_plot_path": plot_path_cdf,
                 "output_csv_path": csv_path_cdf,
             }
         },
         {
             "pdf": {
-                "remove_outliers": "False",
+                "remove_outliers": cfg["remove_outliers"],
                 "output_plot_path": plot_path_pdf,
                 "output_csv_path": csv_path_pdf,
             }
         },
     ]
+    # Generate intermediate stats to compare pdf and cdf before and after
     stats_processing_final.compute_stats(
         classification_layer=["global"],
         metrics=plot_metrics,  # type: ignore
@@ -525,4 +523,5 @@ def compute_stats_after_coregistration(
 
     # For the final_dh, also compute all classif layer default metric stats
     stats_dataset = stats_processing_final.compute_stats()
+
     return stats_dataset
