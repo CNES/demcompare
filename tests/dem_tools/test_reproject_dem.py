@@ -414,4 +414,5 @@ def test_reproject_dems_without_intersection():
 
     with pytest.raises(NameError) as error_info:
         _, _, _ = dem_tools.reproject_dems(sec_orig, ref_orig)
-        assert error_info.value == "ERROR: ROIs do not intersect"
+
+    assert error_info.value.args[0] == "ERROR: ROIs do not intersect"
