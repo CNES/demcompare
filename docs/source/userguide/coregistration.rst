@@ -227,9 +227,9 @@ The images and statistics to analyze the coregistration saved with both ``coregi
 | *final_dem_diff.tif*                    | | Altitude differences image from the reprojected DEMs after                             |
 |                                         | | the coregistration.                                                                    |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *initial_dem_diff.png*                  | Plot of `initial_dem_diff.tif`                                                           |
+| *initial_dem_diff_snapshot.png*         | Snapshot plot of `initial_dem_diff.tif`                                                  |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *final_dem_diff.png*                    | Plot of `final_dem_diff.tif`                                                             |
+| *final_dem_diff_snapshot.png*           | Snapshot plot of `final_dem_diff.tif`                                                    |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
 | *initial_dem_diff_pdf.png*              | Plot of the probability density function of `initial_dem_diff`                           |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
@@ -292,9 +292,11 @@ With the command line execution, the following directories that may store the re
     .output_dir
     +-- demcompare_results.json
     +-- sample_config.json
-    +-- final_dem_diff.tif
     +-- initial_dem_diff.tif
-    +-- snapshots
+    +-- initial_dem_diff_snapshot.png
+    +-- final_dem_diff.tif
+    +-- final_dem_diff_snapshot.tif
+    +-- stats
     |   +-- final_dem_diff_cdf.csv
     |   +-- final_dem_diff_cdf.png
     |   +-- initial_dem_diff_cdf.csv
@@ -303,8 +305,8 @@ With the command line execution, the following directories that may store the re
     |   +-- final_dem_diff_pdf.png
     |   +-- initial_dem_diff_pdf.csv
     |   +-- initial_dem_diff_pdf.png
-    |   +-- final_dem_diff.png
-    |   +-- initial_dem_diff.png
+    |   <classification_layer_name*>
+            +-- stats for each mode
     +-- coregistration
         +-- coreg_SEC.tif
         +-- reproj_REF.tif

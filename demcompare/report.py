@@ -279,10 +279,10 @@ def fill_report_coreg(  # noqa: C901
 
     # Find DSMs differences files
     dem_diff_without_coreg = first_recursive_search(
-        working_dir, "initial_dem_diff.png"
+        working_dir, "initial_dem_diff_snapshot.png"
     )
     dem_diff_with_coreg = first_recursive_search(
-        working_dir, "final_dem_diff.png"
+        working_dir, "final_dem_diff_snapshot.png"
     )
 
     # Find DSMs CDF differences

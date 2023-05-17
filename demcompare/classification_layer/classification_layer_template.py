@@ -116,15 +116,13 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         self.remove_outliers: bool = self.cfg["remove_outliers"]
         # Output directory
         self._output_dir: Union[str, None] = self.cfg["output_dir"]
-        # Output directory for plots
-        self._plots_dir: Union[str, None] = None
         # Output directory for stats
         self._stats_dir: Union[str, None] = None
         # Create output dir (where to store classification_layer results & data)
         if self._output_dir:
             # Create stats dir
             self._stats_dir = os.path.join(
-                self._output_dir, get_out_dir("_stats_dir"), self.name
+                self._output_dir, get_out_dir("stats_dir"), self.name
             )
             os.makedirs(self._stats_dir, exist_ok=True)
 

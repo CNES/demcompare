@@ -263,7 +263,7 @@ def test_demcompare_srtm_test_data():
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # TESTS CSV SNAPSHOTS
+        # TESTS CSV STATS
 
         # Test initial_dem_diff_pdf.csv
         file = get_out_file_path("initial_dem_diff_pdf.csv")
@@ -277,13 +277,13 @@ def test_demcompare_srtm_test_data():
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test snapshots/initial_dem_diff_cdf.csv
+        # Test initial_dem_diff_cdf.csv
         file = get_out_file_path("initial_dem_diff_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test snapshots/final_dem_diff_cdf.csv
+        # Test final_dem_diff_cdf.csv
         file = get_out_file_path("final_dem_diff_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
@@ -456,7 +456,7 @@ def test_demcompare_srtm_test_data_with_roi():
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
-        # TESTS CSV SNAPSHOTS
+        # TESTS CSV STATS
 
         # Test initial_dem_diff_pdf.csv
         file = get_out_file_path("initial_dem_diff_pdf.csv")
@@ -470,13 +470,13 @@ def test_demcompare_srtm_test_data_with_roi():
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test snapshots/initial_dem_diff_cdf.csv
+        # Test initial_dem_diff_cdf.csv
         file = get_out_file_path("initial_dem_diff_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test snapshots/final_dem_diff_cdf.csv
+        # Test final_dem_diff_cdf.csv
         file = get_out_file_path("final_dem_diff_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
