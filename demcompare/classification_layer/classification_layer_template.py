@@ -491,6 +491,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 # Add the class_stats dictionary to the stats_list
                 # Need to copy, otherwise the array dz_values is overwritten
                 stats_list.append(copy.deepcopy(class_stats))
+
         # Add the obtained stats on the stats_dataset object
         stats_dataset.add_classif_layer_and_mode_stats(
             classif_name=self.name, input_stats=stats_list, mode_name=mode_name
