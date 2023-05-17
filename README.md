@@ -49,13 +49,13 @@ Download the data samples and run the python script **demcompare** with sample c
 
 ```bash
 # download data samples
-wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/srtm_sample.zip  # input stereo pair
-wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/sample_config.json # configuration file
+wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/srtm_blurred_and_shifted.tif
+wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/srtm_ref.tif
 
-# uncompress data
-unzip srtm_sample.zip
+# download demcompare predefined configuration
+wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/sample_config.json
 
-#run demcompare
+# run demcompare
 demcompare sample_config.json
 ```
 
