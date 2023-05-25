@@ -446,7 +446,7 @@ def test_statistics_output_dir():
         # Put output_dir in coregistration dict config
         demcompare.run(tmp_cfg_file)
 
-        assert os.path.isfile(tmp_dir + "/stats/dem_for_stats.tif") is True
+        assert os.path.isfile(tmp_dir + "/initial_dem_diff.tif") is True
 
         assert os.path.exists(tmp_dir + "/stats/Fusion0/") is True
         list_basename = [
