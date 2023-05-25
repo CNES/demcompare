@@ -56,7 +56,13 @@ default_OTD = {
     "ref_support-sec_support.tif": "./stats",
     "DSM_support_classified.png": "./stats",
     "ref_support_classified.png": "./stats",
-    "dem_for_stats.tif": "./stats",
+    # only one input
+    "dem_for_stats.tif": ".",
+    "dem_for_stats_snapshot.png": ".",
+    "dem_for_stats_pdf.png": "./stats",
+    "dem_for_stats_pdf.csv": "./stats",
+    "dem_for_stats_cdf.png": "./stats",
+    "dem_for_stats_cdf.csv": "./stats",
     # doc
     "sphinx_built_doc": "./report/published_report",
     "sphinx_src_doc": "./report/src",
