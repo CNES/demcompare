@@ -27,7 +27,6 @@ import copy
 
 # Standard imports
 import logging
-import os
 import traceback
 from typing import Dict, List, Union
 
@@ -39,7 +38,6 @@ from demcompare.classification_layer import (
     FusionClassificationLayer,
 )
 from demcompare.metric import Metric
-from demcompare.output_tree_design import get_out_dir
 
 from .internal_typing import ConfigType
 from .stats_dataset import StatsDataset
@@ -111,12 +109,6 @@ class StatsProcessing:
         self.cfg: Dict = cfg
         # Output directory
         self.output_dir: Union[str, None] = self.cfg["output_dir"]
-        if self.output_dir:
-            # Create plots dir
-            self._plots_dir = os.path.join(
-                self.output_dir, get_out_dir("snapshots_dir")
-            )
-            os.makedirs(self._plots_dir, exist_ok=True)
 
         # Remove outliers option
         self.remove_outliers: bool = self.cfg["remove_outliers"]

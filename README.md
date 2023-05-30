@@ -1,19 +1,18 @@
 <div align="center">
-  <a href="https://github.com/CNES/demcompare"><img src="docs/source/images/demcompare_picto.png" alt="Demcompare" title="Demcompare"  width="300" align="center"></a>
+  <a href="https://github.com/CNES/demcompare"><img src="docs/source/images/demcompare_picto.png" alt="Demcompare" title="Demcompare"  width="200" align="center"></a>
 
-<h4 align="center">demcompare, a DEM comparison tool  </h4>
+<h4 align="center">Demcompare, a DEM comparison tool  </h4>
 
 [![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
-[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](https://demcompare.readthedocs.io/en/stable/developer_guide.html)
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](https://demcompare.readthedocs.io/en/latest/developer_guide/contributing.html)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0/)
-[![Docs](https://readthedocs.org/projects/demcompare/badge/?version=latest)]('<https://demcompare.readthedocs.io/?badge=latest)>
+[![Docs](https://readthedocs.org/projects/demcompare/badge/?version=latest)](https://demcompare.readthedocs.io/)
 
 <p align="center">
   <a href="#overview">Overview</a> •
   <a href="#install">Install</a> •
   <a href="#usage">Usage</a> •
-  <a href="#outputs-processing">Outputs processing</a> •
-  <a href="#references">References</a>
+  <a href="#documentation">Documentation</a> •
 </p>
 </div>
 
@@ -46,45 +45,39 @@ pip install demcompare
 
 ## Usage
 
-Download our data sample and run the python script **demcompare**:
+Download the data samples and run the python script **demcompare** with sample configuration:
 
 ```bash
 # download data samples
-wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/srtm_sample.zip  # input stereo pair
-wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/sample_config.json # configuration file
+wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/srtm_blurred_and_shifted.tif
+wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/srtm_ref.tif
 
-# uncompress data
-unzip srtm_sample.zip
+# download demcompare predefined configuration
+wget https://raw.githubusercontent.com/CNES/demcompare/master/data_samples/sample_config.json
 
-#run demcompare
+# run demcompare
 demcompare sample_config.json
 ```
 
-The results can be observed with:
+A report can be observed with:
 
 ```
-    firefox test_output/doc/published_report/html/demcompare_report.html &
+firefox test_output/report/published_report/html/index.html
 ```
 
-## To go further
+## Documentation
 
 Please consult [our online documentation](https://demcompare.readthedocs.io).
 
-You will learn:
-
-* Which steps you can [use and combine](https://demcompare.readthedocs.io/en/latest/userguide/step_by_step.html)
-* How to use the [command line execution](https://demcompare.readthedocs.io/en/latest/userguide/command_line_execution.html)
-* Which parameters you can set in the [input configuration](https://demcompare.readthedocs.io/en/latest/userguide/inputs.html)
-
 ## Licensing
 
-demcompare software is distributed under the Apache Software License (ASL) v2.0.
+Demcompare software is distributed under the Apache Software License (ASL) v2.0.
 
 See [LICENSE](./LICENSE) file or <http://www.apache.org/licenses/LICENSE-2.0> for details.
 
 Copyrights and authoring can be found in [NOTICE](./NOTICE) file.
 
-## Related
+## Related tools
 
 [CARS](https://github.com/CNES/CARS) - CNES 3D reconstruction software
 

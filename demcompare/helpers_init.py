@@ -305,7 +305,9 @@ def get_output_files_paths(
     """
     # Compute and save image tif and image plot png
     dem_path = os.path.join(output_dir, get_out_file_path(name + ".tif"))
-    plot_file_path = os.path.join(output_dir, get_out_file_path(name + ".png"))
+    plot_file_path = os.path.join(
+        output_dir, get_out_file_path(name + "_snapshot.png")
+    )
     plot_path_cdf = os.path.join(
         output_dir, get_out_file_path(name + "_cdf.png")
     )

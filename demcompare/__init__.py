@@ -119,8 +119,25 @@ def run(
 
     # If only stats is present
     elif "statistics" in cfg:
+        logging.info("[Stats]")
         # If both dems have been defined, compute altitude difference for stats
         if input_ref and input_sec:
+            logging.info("(REF-SEC) altimetric stats generation")
+
+            # Obtain output paths for initial dem diff without coreg
+            (
+                dem_path,
+                plot_file_path,
+                plot_path_cdf,
+                csv_path_cdf,
+                plot_path_pdf,
+                csv_path_pdf,
+            ) = helpers_init.get_output_files_paths(
+                cfg["output_dir"], "initial_dem_diff"
+            )
+            fig_title = "Initial [REF - SEC] difference"
+            colorbar_title = "Elevation difference (m)"
+
             reproj_sec, reproj_ref, _ = reproject_dems(
                 input_sec,
                 input_ref,
@@ -147,7 +164,26 @@ def run(
                     )
             # Define stats_dem as the altitude difference
             stats_dem = compute_alti_diff_for_stats(reproj_ref, reproj_sec)
+
         else:
+            # only one dem
+            logging.info("(REF) altimetric stats generation")
+
+            # Obtain output paths for initial dem diff without coreg
+            (
+                dem_path,
+                plot_file_path,
+                plot_path_cdf,
+                csv_path_cdf,
+                plot_path_pdf,
+                csv_path_pdf,
+            ) = helpers_init.get_output_files_paths(
+                cfg["output_dir"], "dem_for_stats"
+            )
+            # naming for compute_and_save_image_plots
+            fig_title = "REF dem"
+            colorbar_title = "Elevation (m)"
+
             # Compute slope and add it as a classification_layer
             # in case a classification of type slope is required
             input_ref = compute_dem_slope(input_ref)
@@ -160,19 +196,47 @@ def run(
             # Define stats_dem as the input dem
             stats_dem = input_ref
 
+        # Save stats_dem for two states
+        save_dem(stats_dem, dem_path)
+
+        # Compute and save initial altitude diff image plots
+        compute_and_save_image_plots(
+            stats_dem,
+            plot_file_path,
+            fig_title=fig_title,
+            colorbar_title=colorbar_title,
+        )
+
         # Create StatsComputation object
         stats_processing = StatsProcessing(cfg["statistics"], stats_dem)
+
+        # For the initial_dh, compute cdf and pdf stats
+        # on the global classification layer only (diff, pdf, cdf)
+        plot_metrics = [
+            {
+                "cdf": {
+                    "remove_outliers": cfg["statistics"]["remove_outliers"],
+                    "output_plot_path": plot_path_cdf,
+                    "output_csv_path": csv_path_cdf,
+                }
+            },
+            {
+                "pdf": {
+                    "remove_outliers": cfg["statistics"]["remove_outliers"],
+                    "output_plot_path": plot_path_pdf,
+                    "output_csv_path": csv_path_pdf,
+                }
+            },
+        ]
+        # generate intermediate stats results CDF and PDF for report
+        stats_processing.compute_stats(
+            classification_layer=["global"],
+            metrics=plot_metrics,  # type: ignore
+        )
+
         # Compute stats according to the input stats configuration
         stats_dataset = stats_processing.compute_stats()
 
-        # Stats Report
-        # Save stats_dem
-        save_dem(
-            stats_dem,
-            os.path.join(
-                cfg["output_dir"], get_out_file_path("dem_for_stats.tif")
-            ),
-        )
     # Generate report if statistics are computed (stats_dataset defined)
     # and report configuration is set
     if "report" in cfg and "statistics" in cfg:
@@ -298,11 +362,12 @@ def run_coregistration(
         input_sec, input_ref
     )
     # Apply coregistration offsets to the original DEM and store it
+    # reprojection is also done.
     coreg_sec = transformation.apply_transform(input_sec)
     # Get demcompare_results dict
     demcompare_results = coregistration_.demcompare_results
 
-    # Save the coregistered DEM
+    # Save the coregistered DEM (even without save_optional_outputs option)
     # - coreg_SEC.tif -> coregistered sec
     save_dem(
         coreg_sec,
@@ -372,7 +437,7 @@ def compute_stats_after_coregistration(
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
-    :type initial_sec: xr.Dataset
+    :type initial_ref: xr.Dataset
     :param initial_ref: optional initial reference dem xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
@@ -384,7 +449,7 @@ def compute_stats_after_coregistration(
     :rtype: StatsDataset
     """
     logging.info("[Stats]")
-    logging.info("Altimetric error stats generation")
+    logging.info("(COREG_REF-COREG_SEC) altimetric stats generation")
     # Initial stats --------------------------------------------
 
     # Compute altitude diff

@@ -40,7 +40,6 @@ Getting started example from source code of a basic DEM coregistration + statist
 .. code-block:: bash
 
     cd data_samples # considering demcompare command is available (see above)
-    unzip srtm_sample.zip  # unzip data samples linked with sample configuration
     demcompare sample_config.json # run demcompare example
 
 - For more information about **demcompare**'s command line execution, please refer to: :ref:`command_line_execution`

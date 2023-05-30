@@ -262,12 +262,12 @@ def fill_report_stats(
     return src
 
 
-def fill_report_coreg(  # noqa: C901
+def fill_report_image_views(  # noqa: C901
     working_dir: str,
     src: str,
 ) -> str:
     """
-    Fill report with coregistration information
+    Fill report with image views: snapshots, cdf, pdf information
 
     :param working_dir: directory in which to find
          *mode*.csv files for each mode in modename
@@ -277,72 +277,115 @@ def fill_report_coreg(  # noqa: C901
 
     # TODO: replace with OTD name and not recursive search
 
-    # Find DSMs differences files
-    dem_diff_without_coreg = first_recursive_search(
-        working_dir, "initial_dem_diff.png"
+    # Find snapshot files depending on mode (one ref dem or ref-sec diff)
+    # for initial dem diff: snapshot, pdf, cdf
+    initial_dem_diff = first_recursive_search(
+        working_dir, "initial_dem_diff_snapshot.png"
     )
-    dem_diff_with_coreg = first_recursive_search(
-        working_dir, "final_dem_diff.png"
-    )
-
-    # Find DSMs CDF differences
-    dem_diff_cdf_without_coreg = first_recursive_search(
-        working_dir, "initial_dem_diff_cdf.png"
-    )
-    dem_diff_cdf_with_coreg = first_recursive_search(
-        working_dir, "final_dem_diff_cdf.png"
-    )
-
-    # Find histogram files
     initial_dem_diff_pdf = first_recursive_search(
         working_dir, "initial_dem_diff_pdf.png"
+    )
+    initial_dem_diff_cdf = first_recursive_search(
+        working_dir, "initial_dem_diff_cdf.png"
+    )
+
+    # for final (after coreg) dem diff: snapshot, pdf, cdf
+    final_dem_diff = first_recursive_search(
+        working_dir, "final_dem_diff_snapshot.png"
     )
     final_dem_diff_pdf = first_recursive_search(
         working_dir, "final_dem_diff_pdf.png"
     )
+    final_dem_diff_cdf = first_recursive_search(
+        working_dir, "final_dem_diff_cdf.png"
+    )
 
-    # -> DSM differences image, cdf, pdf without coregistration
+    # for one dem for stats: snapshot, pdf, cdf
+    dem_for_stats = first_recursive_search(
+        working_dir, "dem_for_stats_snapshot.png"
+    )
+    dem_for_stats_pdf = first_recursive_search(
+        working_dir, "dem_for_stats_pdf.png"
+    )
+    dem_for_stats_cdf = first_recursive_search(
+        working_dir, "dem_for_stats_cdf.png"
+    )
+
+    # -> show image snapshot, cdf, pdf without coregistration
     # TODO: add sampling source information
     src = "\n".join(
         [
             src,
             "",
-            "Coregistration results",
+            "Image views",
             "==========================",
-            "",
-            "",
-            "**Initial elevations**",
-            "----------------------",
-            "",
-            f".. |img| image:: /{dem_diff_without_coreg}",
-            "  :width: 100%",
-            f".. |pdf| image:: /{initial_dem_diff_pdf}",
-            "  :width: 100%",
-            f".. |cdf| image:: /{dem_diff_cdf_without_coreg}",
-            "  :width: 100%",
-            "",
-            "+--------------+-------------+-------------------------+",
-            "|   Image view | Histogram   | Cumulative distribution |",
-            "+--------------+-------------+-------------------------+",
-            "| |img|        | |pdf|       |  |cdf|                  |",
-            "+--------------+-------------+-------------------------+",
             "",
         ]
     )
-
-    # if exists : -> DSM differences with coregistration
-    if dem_diff_with_coreg:
+    # if exists : -> one dem input REF
+    if dem_for_stats:
         src = "\n".join(
             [
                 src,
-                "**Final elevations after coregistration**",
+                "",
+                "**Initial elevations on one DEM (REF)**",
+                "----------------------",
+                "",
+                f".. |img| image:: /{dem_for_stats}",
+                "  :width: 100%",
+                f".. |pdf| image:: /{dem_for_stats_pdf}",
+                "  :width: 100%",
+                f".. |cdf| image:: /{dem_for_stats_cdf}",
+                "  :width: 100%",
+                "",
+                "+--------------+-------------+-------------------------+",
+                "|   Image view | Histogram   | Cumulative distribution |",
+                "+--------------+-------------+-------------------------+",
+                "| |img|        | |pdf|       |  |cdf|                  |",
+                "+--------------+-------------+-------------------------+",
+                "",
+            ]
+        )
+
+    # if exists : -> two dem initial diff with or without coregistration
+    if initial_dem_diff:
+        src = "\n".join(
+            [
+                src,
+                "",
+                "**Initial elevations (REF-SEC)**",
+                "----------------------",
+                "",
+                f".. |img| image:: /{initial_dem_diff}",
+                "  :width: 100%",
+                f".. |pdf| image:: /{initial_dem_diff_pdf}",
+                "  :width: 100%",
+                f".. |cdf| image:: /{initial_dem_diff_cdf}",
+                "  :width: 100%",
+                "",
+                "+--------------+-------------+-------------------------+",
+                "|   Image view | Histogram   | Cumulative distribution |",
+                "+--------------+-------------+-------------------------+",
+                "| |img|        | |pdf|       |  |cdf|                  |",
+                "+--------------+-------------+-------------------------+",
+                "",
+            ]
+        )
+
+    # if exists : ->  differences with coregistration
+    if final_dem_diff:
+        src = "\n".join(
+            [
+                src,
+                "**Final elevations after coregistration"
+                " (COREG_REF-COREG_SEC)**",
                 "-----------------------------------------",
                 "",
-                f".. |img2| image:: /{dem_diff_with_coreg}",
+                f".. |img2| image:: /{final_dem_diff}",
                 "  :width: 100%",
                 f".. |pdf2| image:: /{final_dem_diff_pdf}",
                 "  :width: 100%",
-                f".. |cdf2| image:: /{dem_diff_cdf_with_coreg}",
+                f".. |cdf2| image:: /{final_dem_diff_cdf}",
                 "  :width: 100%",
                 "",
                 "+--------------+-------------+-------------------------+",
@@ -380,7 +423,7 @@ def fill_report(
         [
             "",
             "*********************",
-            " Demcompare Report ",
+            " Demcompare report   ",
             "*********************",
             "",
             f"Generated date: {date}",
@@ -397,13 +440,8 @@ def fill_report(
         ]
     )
 
-    # If coregistration step is present
-    if "coregistration" in cfg:
-        src = fill_report_coreg(working_dir, src)
-
-    # else
-    # TODO: if no coregistration but two dems
-    # TODO: if no coregistration but one dem
+    # Show image views (dependent on initial, final or dem_for_stats images)
+    src = fill_report_image_views(working_dir, src)
 
     # Fill statistics report
     if "statistics" in cfg and stats_dataset:
@@ -447,9 +485,7 @@ def generate_report(  # noqa: C901
     src_doc_dir = os.path.join(cfg["output_dir"], get_out_dir("sphinx_src_doc"))
 
     # Initialize the sphinx project source and output build config
-    spm = SphinxProjectManager(
-        src_doc_dir, output_doc_dir, "index", "Demcompare Report"
-    )
+    spm = SphinxProjectManager(src_doc_dir, output_doc_dir, "index", "")
 
     # create source
 

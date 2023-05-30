@@ -106,7 +106,7 @@ class StatsDataset:
         :return: None
         """
         # If no xr.Dataset exists for the classification layer,
-        # create it
+        # create it, otherwise overload it !
         if classif_name not in self.classif_layers_and_modes:
             # Store the classification layer name on the
             # classif_layers_and_modes dictionary
@@ -134,9 +134,15 @@ class StatsDataset:
             stats_indicator = "stats_by_class_" + mode_name
 
         # Add the mode of the corresponding classification layer on the
-        # classif_layers_and_modes dictionary
-        self.classif_layers_and_modes[classif_name]["modes"].append(mode_name)
-        # Get the corresponding dataset idx
+        # classif_layers_and_modes dictionary if doesn't exist in classif modes
+        if (
+            mode_name
+            not in self.classif_layers_and_modes[classif_name]["modes"]
+        ):
+            self.classif_layers_and_modes[classif_name]["modes"].append(
+                mode_name
+            )
+        # Get the classification corresponding dataset idx
         dataset_idx = list(self.classif_layers_and_modes.keys()).index(
             classif_name
         )
@@ -169,6 +175,7 @@ class StatsDataset:
         ):
             self.classif_layers_dataset[dataset_idx].attrs[stats_indicator] = {}
         # Iterate to obtain the stats per class
+        # overwrite if mode/stat is already present
         for class_idx, class_stats in enumerate(input_stats):
             # Fill the alti diff of the corresponding class
             # with the input dz_values
@@ -199,6 +206,7 @@ class StatsDataset:
                 ][stat_name] = stat_value
 
         # Create and add the xr.DataArray to the dataset
+        # overload if already present (through dataset_idx above)
         self.classif_layers_dataset[dataset_idx][
             image_indicator
         ] = xr.DataArray(
