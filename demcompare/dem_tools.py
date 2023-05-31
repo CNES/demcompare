@@ -1099,7 +1099,7 @@ def compute_and_save_image_plots(
     # Compute mean of dem image data
     mu = np.nanmean(dem["image"].data)
     # Compute std also
-    sigma = np.std(dem["image"].data)
+    sigma = np.nanstd(dem["image"].data)
 
     # Plot with matplotlib.pyplot
     fig, fig_ax = mpl_pyplot.subplots(figsize=(7.0, 8.0))
@@ -1119,8 +1119,8 @@ def compute_and_save_image_plots(
     fig.text(
         0.15,
         0.15,
-        f"Values rescaled between mean ± std"
-        f"\n[Min, Max]=[{mu - sigma:.2f}, {mu + sigma:.2f}]",
+        f"Values rescaled between"
+        f"\n[mean-std, mean+std]=[{mu - sigma:.2f}, {mu + sigma:.2f}]",
         fontsize="medium",
     )
     # Save plot

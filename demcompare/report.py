@@ -37,6 +37,7 @@ import json
 import logging
 import os
 from datetime import datetime
+from importlib.metadata import version
 from typing import List
 
 # DEMcompare imports
@@ -328,7 +329,7 @@ def fill_report_image_views(  # noqa: C901
             [
                 src,
                 "",
-                "**Initial elevations on one DEM (REF)**",
+                "**Initial elevation on one DEM (REF)**",
                 "----------------------",
                 "",
                 f".. |img| image:: /{dem_for_stats}",
@@ -353,7 +354,7 @@ def fill_report_image_views(  # noqa: C901
             [
                 src,
                 "",
-                "**Initial elevations (REF-SEC)**",
+                "**Initial elevation (REF-SEC)**",
                 "----------------------",
                 "",
                 f".. |img| image:: /{initial_dem_diff}",
@@ -377,7 +378,7 @@ def fill_report_image_views(  # noqa: C901
         src = "\n".join(
             [
                 src,
-                "**Final elevations after coregistration"
+                "**Final elevation after coregistration"
                 " (COREG_REF-COREG_SEC)**",
                 "-----------------------------------------",
                 "",
@@ -419,6 +420,7 @@ def fill_report(
     # -> header part
     now = datetime.now()
     date = now.strftime("%d/%m/%y %Hh%M")
+    version_ = version("demcompare")
     src = "\n".join(
         [
             "",
@@ -426,14 +428,12 @@ def fill_report(
             " Demcompare report   ",
             "*********************",
             "",
-            f"Generated date: {date}",
-            "",
-            "References:",
-            "",
-            "- Documentation:"
+            f"- *Generated date:* {date}",
+            f"- *Demcompare version:* {version_}",
+            "- *Documentation:*"
             " `https://demcompare.readthedocs.io/ "
             "<https://demcompare.readthedocs.io/>`_",
-            "- Repository:"
+            "- *Repository:*"
             " `https://github.com/CNES/demcompare "
             "<https://github.com/CNES/demcompare>`_",
             "",
