@@ -12,21 +12,39 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Fixed
 
-## 0.5.1 quick bugs, add version on cli
+## 0.5.2 Developer guide, fix bugs (June 2023)
 
 ### Added
 
-- [ ] add version in cli argument [#185]
+- add developer guide and architecture description [#146]
 
 ### Changed
 
-- [ ] update and clean version in Makefile [#184, #187]
+- adapt with coregistration and clean snapshots report outputs [#207,#209]
 
 ### Fixed
 
-- [ ] Fix python3.10 warnings [#183]
-- [ ] Bug readthedocs typo [#182]
-- [ ] pylint and black errors with upgrade [#187]
+- bug colorbar with nan [#206] 
+- bug stats_dataset duplicated mode [#193]
+- bug report not shown anymore [#192]
+- add mypy in make lint for CI [#191]
+- typos [#188, #189]
+
+## 0.5.1 quick bugs, add version on cli (March 2023)
+
+### Added
+
+- add version in cli argument [#185]
+
+### Changed
+
+- update and clean version in Makefile [#184, #187]
+
+### Fixed
+
+- Fix python3.10 warnings [#183]
+- Bug readthedocs typo [#182]
+- pylint and black errors with upgrade [#187]
 
 ## 0.5.0 Refactoring with new API (December 2022)
 
