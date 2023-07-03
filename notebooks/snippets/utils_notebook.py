@@ -25,6 +25,7 @@ utils functions for plotting in notebooks
 
 import itertools
 import random
+from typing import Any
 
 import numpy as np
 import xarray as xr
@@ -170,7 +171,7 @@ def stack_dems(
 
 def side_by_side_fig(
     input_ref: xr.Dataset, input_sec: xr.Dataset, title_ref: str, title_sec: str
-) -> row:
+) -> Any:
     """
     Show two figures side by side
     :param input_ref: DEMS
@@ -254,7 +255,7 @@ def side_by_side_fig(
     first_fig.add_layout(color_bar, "left")
     second_fig.add_layout(color_bar, "left")
 
-    layout = row([first_fig, second_fig])  # type:ignore
+    layout = row([first_fig, second_fig])
 
     return layout
 
