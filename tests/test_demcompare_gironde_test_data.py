@@ -61,7 +61,7 @@ def test_demcompare_with_gironde_test_data():
     - Runs demcompare on a temporary directory
     - Checks that the output files are the same as ground truth
     - Checked files: test_config.json, demcompare_results.json,
-      initial_dem_diff.tif, final_dem_diff.tif, coreg_SEC.tif,
+      final_dem_diff.tif, coreg_SEC.tif,
       reproj_coreg_REF.tif, reproj_coreg_SEC.tif,
       classif_layer/stats_results.csv,
       classif_layer/stats_results_intersection.csv,
@@ -180,12 +180,6 @@ def test_demcompare_with_gironde_test_data():
         )
 
         # TEST DIFF TIF
-
-        # Test initial_dem_diff.tif
-        img = get_out_file_path("initial_dem_diff.tif")
-        ref_output_data = os.path.join(test_ref_output_path, img)
-        output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test final_dem_diff.tif
         img = get_out_file_path("final_dem_diff.tif")

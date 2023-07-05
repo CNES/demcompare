@@ -42,6 +42,7 @@ from demcompare.classification_layer import (
     ClassificationLayer,
     FusionClassificationLayer,
 )
+from demcompare.dem_processing.dem_processing import DemProcessing
 from demcompare.helpers_init import mkdir_p, read_config_file, save_config_file
 from demcompare.metric import Metric
 
@@ -99,7 +100,8 @@ def test_create_classif_layers():
     ref = dem_tools.compute_dem_slope(ref)
     sec = dem_tools.compute_dem_slope(sec)
     # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
+    dem_processing_object = DemProcessing("alti-diff")
+    stats_dem = dem_processing_object.process_dem(ref, sec)
 
     # Initialize stats input configuration
     input_stats_cfg = {

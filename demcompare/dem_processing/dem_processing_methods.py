@@ -26,7 +26,7 @@ Mainly contains different DEM processing classes
 # Third party imports
 import xarray as xr
 
-from demcompare.dem_tools import compute_dems_diff
+from demcompare.dem_tools import accumulates_class_layers, compute_dems_diff
 
 from .dem_processing import DemProcessing
 from .dem_processing_template import DemProcessingTemplate
@@ -68,4 +68,6 @@ class AltiDiff(DemProcessingTemplate):
                   xr.DataArray
         :rtype: xr.Dataset
         """
-        return compute_dems_diff(dem_1, dem_2)
+        diff = compute_dems_diff(dem_1, dem_2)
+        diff = accumulates_class_layers(dem_1, dem_2, diff)
+        return diff

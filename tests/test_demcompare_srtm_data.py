@@ -63,7 +63,7 @@ def test_demcompare_srtm_test_data():
     - Runs demcompare on a temporary directory
     - Checks that the output files are the same as ground truth
     - Checked files: test_config.json, demcompare_results.json,
-      initial_dem_diff.tif, final_dem_diff.tif, coreg_SEC.tif,
+      final_dem_diff.tif, coreg_SEC.tif,
       reproj_coreg_REF.tif, reproj_coreg_SEC.tif,
       classif_layer/stats_results.csv,
       classif_layer/stats_results_intersection.csv,
@@ -233,12 +233,6 @@ def test_demcompare_srtm_test_data():
 
         # TEST DIFF TIF
 
-        # Test initial_dem_diff.tif
-        img = get_out_file_path("initial_dem_diff.tif")
-        ref_output_data = os.path.join(test_ref_output_path, img)
-        output_data = os.path.join(tmp_dir_, img)
-        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
-
         # Test final_dem_diff.tif
         img = get_out_file_path("final_dem_diff.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
@@ -265,20 +259,8 @@ def test_demcompare_srtm_test_data():
 
         # TESTS CSV STATS
 
-        # Test initial_dem_diff_pdf.csv
-        file = get_out_file_path("initial_dem_diff_pdf.csv")
-        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
-        output_csv = read_csv_file(os.path.join(tmp_dir_, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
-
         # Test final_dem_diff_pdf.csv
         file = get_out_file_path("final_dem_diff_pdf.csv")
-        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
-        output_csv = read_csv_file(os.path.join(tmp_dir_, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
-
-        # Test initial_dem_diff_cdf.csv
-        file = get_out_file_path("initial_dem_diff_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
@@ -326,7 +308,7 @@ def test_demcompare_srtm_test_data_with_roi():
     - Runs demcompare on a temporary directory
     - Checks that the output files are the same as ground truth
     - Checked files: test_config.json, demcompare_results.json,
-      initial_dem_diff.tif, final_dem_diff.tif, coreg_SEC.tif,
+      final_dem_diff.tif, coreg_SEC.tif,
       reproj_coreg_REF.tif, reproj_coreg_SEC.tif,
       classif_layer/stats_results.csv,
       classif_layer/stats_results_intersection.csv
@@ -444,12 +426,6 @@ def test_demcompare_srtm_test_data_with_roi():
 
         # TEST DIFF TIF
 
-        # Test initial_dem_diff.tif
-        img = get_out_file_path("initial_dem_diff.tif")
-        ref_output_data = os.path.join(test_ref_output_path, img)
-        output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
-
         # Test final_dem_diff.tif
         img = get_out_file_path("final_dem_diff.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
@@ -458,20 +434,8 @@ def test_demcompare_srtm_test_data_with_roi():
 
         # TESTS CSV STATS
 
-        # Test initial_dem_diff_pdf.csv
-        file = get_out_file_path("initial_dem_diff_pdf.csv")
-        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
-        output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
-
         # Test final_dem_diff_pdf.csv
         file = get_out_file_path("final_dem_diff_pdf.csv")
-        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
-        output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
-
-        # Test initial_dem_diff_cdf.csv
-        file = get_out_file_path("initial_dem_diff_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)

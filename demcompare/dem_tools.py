@@ -834,12 +834,11 @@ def compute_waveform(
     return row_waveform, col_waveform
 
 
-def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
-    ref: xr.Dataset, sec: xr.Dataset
+def accumulates_class_layers(  # pylint:disable=too-many-branches
+    ref: xr.Dataset, sec: xr.Dataset, diff: xr.Dataset
 ) -> xr.Dataset:
     """
-    Computes the difference dem between the two inputs (ref - sec)
-    and accumulates the classification layers of each dem
+    Accumulates the classification layers of each dem
 
     :param ref: ref dem
     :type ref: xr.DataSet containing :
@@ -864,8 +863,6 @@ def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
     """
-    # Compute altitude diff dataset
-    altitude_diff = compute_dems_diff(ref, sec)
     support_list = []
     # Initialize classif_layers_datarray
     classif_layers_datarray = None
@@ -877,13 +874,13 @@ def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
         )
         for _ in classif_layers_datarray.coords["indicator"].data:
             support_list.append("ref")
-    # Add the fusion information on the altitude diff dataset
+    # Add the fusion information on the diff dataset
     if "fusion_layers" in ref.attrs:
-        altitude_diff.attrs["fusion_layers"] = ref.attrs["fusion_layers"]
+        diff.attrs["fusion_layers"] = ref.attrs["fusion_layers"]
     # If slope is present, add the dataarray
     if "ref_slope" in ref:
         ref_slope = copy.deepcopy(ref["ref_slope"])
-        altitude_diff["ref_slope"] = ref_slope
+        diff["ref_slope"] = ref_slope
 
     if "classification_layer_masks" in sec:
         # If classification layers in sec,
@@ -940,21 +937,19 @@ def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
     # is always ref_slope by default, so we adapt it to sec_slope
     if "ref_slope" in sec:
         sec_slope = copy.deepcopy(sec["ref_slope"])
-        altitude_diff["sec_slope"] = sec_slope
-    # Add the fusion information on the altitude diff dataset
+        diff["sec_slope"] = sec_slope
+    # Add the fusion information on the diff dataset
     if "fusion_layers" in sec.attrs:
-        if "fusion_layers" in altitude_diff:
-            altitude_diff.attrs["fusion_layers"].append(
-                sec.attrs["fusion_layers"]
-            )
+        if "fusion_layers" in diff:
+            diff.attrs["fusion_layers"].append(sec.attrs["fusion_layers"])
         else:
-            altitude_diff.attrs["fusion_layers"] = sec.attrs["fusion_layers"]
-    # Add the dataarray on the altitude diff dataset
-    altitude_diff["classification_layer_masks"] = classif_layers_datarray
+            diff.attrs["fusion_layers"] = sec.attrs["fusion_layers"]
+    # Add the dataarray on the diff dataset
+    diff["classification_layer_masks"] = classif_layers_datarray
     # Add the support_list as an attribute
-    altitude_diff.attrs["support_list"] = support_list
+    diff.attrs["support_list"] = support_list
 
-    return altitude_diff
+    return diff
 
 
 def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
@@ -1060,7 +1055,7 @@ def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
     # Create the dataarray
     # In case there is a single dem, we name the datarray
     # as ref_slope. If there are two arrays, the sec slope
-    # will be renamed by the compute_alti_diff_for_stats function
+    # will be renamed by the accumulates_class_layers function
     # to sec_slope
     dataset["ref_slope"] = xr.DataArray(
         data=data,

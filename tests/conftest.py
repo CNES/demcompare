@@ -42,6 +42,7 @@ from demcompare.classification_layer.classification_layer import (
 from demcompare.classification_layer.fusion_classification import (
     FusionClassificationLayer,
 )
+from demcompare.dem_processing import DemProcessing
 from demcompare.helpers_init import read_config_file
 from demcompare.stats_dataset import StatsDataset
 from demcompare.stats_processing import StatsProcessing
@@ -85,7 +86,8 @@ def initialize_stats_processing():
     ref = dem_tools.compute_dem_slope(ref)
     sec = dem_tools.compute_dem_slope(sec)
     # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
+    dem_processing_object = DemProcessing("alti-diff")
+    stats_dem = dem_processing_object.process_dem(ref, sec)
     # Initialize stats input configuration
     input_stats_cfg = {
         "remove_outliers": "False",
@@ -149,7 +151,8 @@ def initialize_stats_processing_with_metrics():
     ref = dem_tools.compute_dem_slope(ref)
     sec = dem_tools.compute_dem_slope(sec)
     # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
+    dem_processing_object = DemProcessing("alti-diff")
+    stats_dem = dem_processing_object.process_dem(ref, sec)
     # Initialize stats input configuration
     input_stats_cfg = {
         "remove_outliers": "False",
@@ -656,7 +659,8 @@ def initialize_fusion_layer():
     dataset_ref = dem_tools.compute_dem_slope(dataset_ref)
     dataset_sec = dem_tools.compute_dem_slope(dataset_sec)
     # Compute altitude diff
-    final_altitude_diff = dem_tools.compute_alti_diff_for_stats(
+    dem_processing_object = DemProcessing("alti-diff")
+    final_altitude_diff = dem_processing_object.process_dem(
         dataset_ref, dataset_sec
     )
 
