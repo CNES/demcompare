@@ -44,7 +44,8 @@ class AltiDiff(DemProcessingTemplate):
         dem_2: xr.Dataset,
     ) -> xr.Dataset:
         """
-        DEM processing method
+        Compute the difference between dem_1 and dem_2.
+        Add classification layers to the difference.
 
         :param dem_1: dem_1 xr.DataSet containing :
 

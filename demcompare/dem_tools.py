@@ -835,7 +835,7 @@ def compute_waveform(
 
 
 def accumulates_class_layers(  # pylint:disable=too-many-branches
-    ref: xr.Dataset, sec: xr.Dataset, diff: xr.Dataset
+    ref: xr.Dataset, sec: xr.Dataset, diff_ref_sec: xr.Dataset
 ) -> xr.Dataset:
     """
     Accumulates the classification layers of each dem
@@ -854,8 +854,17 @@ def accumulates_class_layers(  # pylint:disable=too-many-branches
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
+    :param diff_ref_sec: difference (i.e angular, in altitude, ...)
+        dem between ref and sec
+    :type diff_ref_sec: xr.DataSet containing :
 
-    :return: the difference dem
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+
+    :return: the difference dem between ref and sec,
+        with the classification layers
     :rtype: xr.Dataset containing :
 
                 - image : 2D (row, col) xr.DataArray float32
@@ -876,11 +885,11 @@ def accumulates_class_layers(  # pylint:disable=too-many-branches
             support_list.append("ref")
     # Add the fusion information on the diff dataset
     if "fusion_layers" in ref.attrs:
-        diff.attrs["fusion_layers"] = ref.attrs["fusion_layers"]
+        diff_ref_sec.attrs["fusion_layers"] = ref.attrs["fusion_layers"]
     # If slope is present, add the dataarray
     if "ref_slope" in ref:
         ref_slope = copy.deepcopy(ref["ref_slope"])
-        diff["ref_slope"] = ref_slope
+        diff_ref_sec["ref_slope"] = ref_slope
 
     if "classification_layer_masks" in sec:
         # If classification layers in sec,
@@ -937,19 +946,21 @@ def accumulates_class_layers(  # pylint:disable=too-many-branches
     # is always ref_slope by default, so we adapt it to sec_slope
     if "ref_slope" in sec:
         sec_slope = copy.deepcopy(sec["ref_slope"])
-        diff["sec_slope"] = sec_slope
+        diff_ref_sec["sec_slope"] = sec_slope
     # Add the fusion information on the diff dataset
     if "fusion_layers" in sec.attrs:
-        if "fusion_layers" in diff:
-            diff.attrs["fusion_layers"].append(sec.attrs["fusion_layers"])
+        if "fusion_layers" in diff_ref_sec:
+            diff_ref_sec.attrs["fusion_layers"].append(
+                sec.attrs["fusion_layers"]
+            )
         else:
-            diff.attrs["fusion_layers"] = sec.attrs["fusion_layers"]
+            diff_ref_sec.attrs["fusion_layers"] = sec.attrs["fusion_layers"]
     # Add the dataarray on the diff dataset
-    diff["classification_layer_masks"] = classif_layers_datarray
+    diff_ref_sec["classification_layer_masks"] = classif_layers_datarray
     # Add the support_list as an attribute
-    diff.attrs["support_list"] = support_list
+    diff_ref_sec.attrs["support_list"] = support_list
 
-    return diff
+    return diff_ref_sec
 
 
 def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:

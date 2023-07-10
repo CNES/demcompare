@@ -345,7 +345,7 @@ def run_coregistration(
 
                 - im : 2D (row, col) xarray.DataArray float32
                 - trans: 1D (trans_len) xarray.DataArray
-    :return: reproj_sec, reproj_ref, reproj_coreg_sec, reproj_coreg_ref
+    :return: reproj_coreg_sec, reproj_coreg_ref
     :rtype:   Tuple(xr.Dataset, xr.dataset)
              The xr.Datasets containing :
 
