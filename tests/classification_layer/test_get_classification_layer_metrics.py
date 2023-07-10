@@ -32,6 +32,7 @@ import pytest
 
 import demcompare
 from demcompare import dem_tools
+from demcompare.dem_processing.dem_processing import DemProcessing
 from demcompare.helpers_init import read_config_file
 
 # Tests helpers
@@ -202,7 +203,9 @@ def test_get_classification_layer_metrics_from_stats_processing():
     sec, ref, _ = dem_tools.reproject_dems(sec, ref, sampling_source="ref")
 
     # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
+    dem_processing_object = DemProcessing("alti-diff")
+    stats_dem = dem_processing_object.process_dem(ref, sec)
+
     # Initialize stats input configuration
     input_stats_cfg = {
         "remove_outliers": "False",

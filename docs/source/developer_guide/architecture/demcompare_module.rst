@@ -44,7 +44,7 @@ To perform the dems statistics :ref:`statistics`, demcompare's module performs t
 
 1. Loads the input dems using the **dem_tools** module's *load_dem* function.
 2. Reprojects both dems to the same size and resolution using **dem_tools** module's *reproject_dems* function.
-3. Computes the altitude difference dem using the **dem_tools** module's *compute_alti_diff_for_stats* function.
+3. Computes the altitude difference dem using the **dem_processing** module's *DemProcessing* class instanciated with *alti-diff*, and then by using the *process_dem* function of this class.
 4. Creates a **Stats_processing** object and obtains the **stats_dataset** using the **stats_processing**'s *compute_stats* function.
 
 

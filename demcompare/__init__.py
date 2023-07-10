@@ -37,11 +37,10 @@ import xarray as xr
 # Demcompare imports
 from . import helpers_init, log_conf, report
 from .coregistration import Coregistration
+from .dem_processing import DemProcessing
 from .dem_tools import (
-    compute_alti_diff_for_stats,
     compute_and_save_image_plots,
     compute_dem_slope,
-    compute_dems_diff,
     load_dem,
     reproject_dems,
     save_dem,
@@ -101,8 +100,6 @@ def run(
         # Do coregistration and obtain initial
         # and final intermediate dems for stats computation
         (
-            reproj_sec,
-            reproj_ref,
             reproj_coreg_sec,
             reproj_coreg_ref,
         ) = run_coregistration(cfg["coregistration"], input_ref, input_sec)
@@ -113,8 +110,6 @@ def run(
                 cfg["statistics"],
                 reproj_coreg_sec,
                 reproj_coreg_ref,
-                reproj_sec,
-                reproj_ref,
             )
 
     # If only stats is present
@@ -163,7 +158,10 @@ def run(
                         reproj_sec, cfg["classification_layers"], support="sec"
                     )
             # Define stats_dem as the altitude difference
-            stats_dem = compute_alti_diff_for_stats(reproj_ref, reproj_sec)
+            dem_processing_object = DemProcessing("alti-diff")
+            stats_dem = dem_processing_object.process_dem(
+                reproj_ref, reproj_sec
+            )
 
         else:
             # only one dem
@@ -331,7 +329,7 @@ def load_input_dems(
 
 def run_coregistration(
     cfg: ConfigType, input_ref: xr.Dataset, input_sec: xr.Dataset
-) -> Tuple[xr.Dataset, xr.Dataset, xr.Dataset, xr.Dataset]:
+) -> Tuple[xr.Dataset, xr.Dataset]:
     """
     Runs the dems coregistration
 
@@ -347,8 +345,8 @@ def run_coregistration(
 
                 - im : 2D (row, col) xarray.DataArray float32
                 - trans: 1D (trans_len) xarray.DataArray
-    :return: reproj_sec, reproj_ref, reproj_coreg_sec, reproj_coreg_ref
-    :rtype:   Tuple(xr.Dataset, xr.dataset, xr.Dataset, xr.dataset)
+    :return: reproj_coreg_sec, reproj_coreg_ref
+    :rtype:   Tuple(xr.Dataset, xr.dataset)
              The xr.Datasets containing :
 
              - im : 2D (row, col) xarray.DataArray float32
@@ -383,14 +381,10 @@ def run_coregistration(
     )
 
     # Get internal dems
-    reproj_ref = coregistration_.reproj_ref
-    reproj_sec = coregistration_.reproj_sec
     reproj_coreg_ref = coregistration_.reproj_coreg_ref
     reproj_coreg_sec = coregistration_.reproj_coreg_sec
 
     return (
-        reproj_sec,
-        reproj_ref,
         reproj_coreg_sec,
         reproj_coreg_ref,
     )
@@ -400,8 +394,6 @@ def compute_stats_after_coregistration(
     cfg: ConfigType,
     coreg_sec: xr.Dataset,
     coreg_ref: xr.Dataset,
-    initial_sec: xr.Dataset = None,
-    initial_ref: xr.Dataset = None,
 ) -> StatsDataset:
     """
     Compute stats after coregistration
@@ -450,69 +442,6 @@ def compute_stats_after_coregistration(
     """
     logging.info("[Stats]")
     logging.info("(COREG_REF-COREG_SEC) altimetric stats generation")
-    # Initial stats --------------------------------------------
-
-    # Compute altitude diff
-    initial_altitude_diff = compute_dems_diff(initial_ref, initial_sec)
-
-    # Obtain output paths
-    (
-        dem_path,
-        plot_file_path,
-        plot_path_cdf,
-        csv_path_cdf,
-        plot_path_pdf,
-        csv_path_pdf,
-    ) = helpers_init.get_output_files_paths(
-        cfg["output_dir"], "initial_dem_diff"
-    )
-
-    # Save initial altitude diff
-    save_dem(initial_altitude_diff, dem_path)
-
-    # Compute and save initial altitude diff image plots
-    compute_and_save_image_plots(
-        initial_altitude_diff,
-        plot_file_path,
-        fig_title="Initial [REF - SEC] difference",
-        colorbar_title="Elevation difference (m)",
-    )
-
-    # Create StatsComputation object for the initial_dh
-    # We do not need any classification_layer for the initial_dh
-    initial_stats_cfg = {
-        "remove_outliers": cfg["remove_outliers"],
-        "output_dir": cfg["output_dir"],
-    }
-    stats_processing_initial = StatsProcessing(
-        initial_stats_cfg, initial_altitude_diff, input_diff=True
-    )
-
-    # For the initial_dh, compute cdf and pdf stats
-    # on the global classification layer only (diff, pdf, cdf)
-    plot_metrics = [
-        {
-            "cdf": {
-                "remove_outliers": cfg["remove_outliers"],
-                "output_plot_path": plot_path_cdf,
-                "output_csv_path": csv_path_cdf,
-            }
-        },
-        {
-            "pdf": {
-                "remove_outliers": cfg["remove_outliers"],
-                "output_plot_path": plot_path_pdf,
-                "output_csv_path": csv_path_pdf,
-            }
-        },
-    ]
-    # generate intermediate stats results CDF and PDF for report
-    stats_processing_initial.compute_stats(
-        classification_layer=["global"],
-        metrics=plot_metrics,  # type: ignore
-    )
-
-    # Final stats --------------------------------------------
 
     # Compute slope and add it as a classification_layer in case
     # a classification of type slope is required
@@ -532,7 +461,10 @@ def compute_stats_after_coregistration(
             )
 
     # Compute altitude diff
-    final_altitude_diff = compute_alti_diff_for_stats(coreg_ref, coreg_sec)
+    dem_processing_object = DemProcessing("alti-diff")
+    final_altitude_diff = dem_processing_object.process_dem(
+        coreg_ref, coreg_sec
+    )
 
     # Create StatsComputation object for the final_dh
     final_stats_cfg = copy.deepcopy(cfg)
