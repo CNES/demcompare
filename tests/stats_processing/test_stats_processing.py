@@ -448,11 +448,10 @@ def test_statistics_output_dir():
         # Put output_dir in coregistration dict config
         demcompare.run(tmp_cfg_file)
 
-        assert os.path.isfile(tmp_dir + "/initial_dem_diff.tif") is True
-
-        assert os.path.exists(tmp_dir + "/stats/Fusion0/") is True
+        assert os.path.exists(tmp_dir + "/stats/alti-diff/Fusion0/") is True
         list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Fusion0/*")
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/stats/alti-diff/Fusion0/*")
         ]
         assert (
             all(
@@ -462,9 +461,10 @@ def test_statistics_output_dir():
             is True
         )
 
-        assert os.path.exists(tmp_dir + "/stats/global/") is True
+        assert os.path.exists(tmp_dir + "/stats/alti-diff/global/") is True
         list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/global/*")
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/stats/alti-diff/global/*")
         ]
         assert (
             all(
@@ -474,18 +474,20 @@ def test_statistics_output_dir():
             is True
         )
 
-        assert os.path.exists(tmp_dir + "/stats/Slope0/") is True
+        assert os.path.exists(tmp_dir + "/stats/alti-diff/Slope0/") is True
         list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Slope0/*")
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/stats/alti-diff/Slope0/*")
         ]
         assert (
             all(file in list_basename for file in gt_truth_list_for_slope)
             is True
         )
 
-        assert os.path.exists(tmp_dir + "/stats/Status/") is True
+        assert os.path.exists(tmp_dir + "/stats/alti-diff/Status/") is True
         list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Status/*")
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/stats/alti-diff/Status/*")
         ]
         assert (
             all(

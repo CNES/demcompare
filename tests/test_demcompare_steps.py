@@ -282,7 +282,8 @@ def test_demcompare_statistics_step_input_ref_with_gironde_test_data():
     # Since we only want the input_ref, pop the input_sec
     # of the cfg
     test_cfg.pop("input_sec")
-    test_cfg["statistics"]["classification_layers"].pop("Fusion0")
+    test_cfg["statistics"]["alti-diff"]["classification_layers"].pop("Fusion0")
+    test_cfg["statistics"]["ref"] = test_cfg["statistics"].pop("alti-diff")
 
     # Input configuration is
     # "input_ref": {

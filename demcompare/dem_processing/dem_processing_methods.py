@@ -23,10 +23,12 @@
 Mainly contains different DEM processing classes
 """
 
+from typing import Dict
+
 # Third party imports
 import xarray as xr
 
-from demcompare.dem_tools import accumulates_class_layers, compute_dems_diff
+from demcompare.dem_tools import accumulates_class_layers, create_dem
 
 from .dem_processing import DemProcessing
 from .dem_processing_template import DemProcessingTemplate
@@ -38,10 +40,64 @@ class AltiDiff(DemProcessingTemplate):
     Altitude difference between two DEMs
     """
 
-    def process_dem(
+    def __init__(self, parameters: Dict = None):
+        """
+        Initialization the DEM processing object
+        :return: None
+        """
+
+        super().__init__()
+
+        self.fig_title = "[REF - SEC] difference"
+        self.colorbar_title = "Elevation difference (m)"
+
+    def compute_dems_diff(
         self,
         dem_1: xr.Dataset,
         dem_2: xr.Dataset,
+    ) -> xr.Dataset:
+        """
+        Compute altitude difference dem_1 - dem_2 and
+        return it as an xr.Dataset with the dem_2
+        georeferencing and attributes.
+
+        :param dem_1: dem_1 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_1: xr.Dataset
+         :param dem_2: dem_2 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_2: xr.Dataset
+        :return: difference xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :rtype: xr.Dataset
+        """
+        diff_raster = dem_1["image"].data - dem_2["image"].data
+
+        diff_dem = create_dem(
+            diff_raster,
+            transform=dem_2.georef_transform.data,
+            nodata=dem_1.attrs["nodata"],
+            img_crs=dem_2.crs,
+            bounds=dem_2.bounds,
+        )
+        return diff_dem
+
+    def process_dem(
+        self,
+        dem_1: xr.Dataset,
+        dem_2: xr.Dataset = None,
     ) -> xr.Dataset:
         """
         Compute the difference between dem_1 and dem_2.
@@ -69,6 +125,56 @@ class AltiDiff(DemProcessingTemplate):
                   xr.DataArray
         :rtype: xr.Dataset
         """
-        diff = compute_dems_diff(dem_1, dem_2)
+        diff = self.compute_dems_diff(dem_1, dem_2)
         diff = accumulates_class_layers(dem_1, dem_2, diff)
         return diff
+
+
+@DemProcessing.register("ref")
+class Ref(DemProcessingTemplate):
+    """
+    REF DEM
+    """
+
+    def __init__(self, parameters: Dict = None):
+        """
+        Initialization the DEM processing object
+        :return: None
+        """
+
+        super().__init__()
+
+        self.fig_title = "REF dem"
+        self.colorbar_title = "Elevation (m)"
+
+    def process_dem(
+        self,
+        dem_1: xr.Dataset,
+        dem_2: xr.Dataset = None,
+    ) -> xr.Dataset:
+        """
+        Return dem_1
+
+        :param dem_1: dem_1 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_1: xr.Dataset
+        :param dem_2: dem_2 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_2: xr.Dataset
+        :return: difference xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :rtype: xr.Dataset
+        """
+        return dem_1

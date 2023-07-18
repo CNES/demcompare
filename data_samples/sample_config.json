@@ -16,19 +16,18 @@
 		"estimated_initial_shift_y": 0
 	},
   "statistics": {
-    "classification_layers": {
-      "Slope0": {
-        "type": "slope",
-        "ranges": [
-          0,
-          5,
-          10,
-          25,
-          45
-        ]
-      }
-    },
-    "remove_outliers": "True"
+    "alti-diff": {
+      "classification_layers": {
+        "Slope0": {
+          "type": "slope",
+          "ranges": [
+            0,
+            5
+          ]
+        }
+      },
+      "remove_outliers": "True"
+    }
   },
   "report": "default"
 }

@@ -29,8 +29,9 @@
     "output_dir": "./test_classification_layer_output"
   },
   "statistics": {
-    "remove_outliers": "False",
-    "classification_layers": {
+    "alti-diff": {
+      "remove_outliers": "False",
+      "classification_layers": {
       "Status": {
         "type": "segmentation",
         "classes": {
@@ -64,6 +65,7 @@
       }
     },
     "output_dir": "./test_classification_layer_output"
+    }
   },
   "otd": "default_OTD"
 }

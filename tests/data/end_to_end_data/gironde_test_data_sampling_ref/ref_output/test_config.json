@@ -24,8 +24,9 @@
     "save_optional_outputs": "True"
   },
   "statistics": {
-    "remove_outliers": "False",
-    "classification_layers": {
+    "alti-diff": {
+      "remove_outliers": "False",
+      "classification_layers": {
       "Status": {
         "type": "segmentation",
         "ref": "ref_status.tif",
@@ -41,6 +42,7 @@
           ]
         }
       }
+    }
     }
   }
 }

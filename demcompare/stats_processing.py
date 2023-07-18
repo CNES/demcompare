@@ -86,7 +86,11 @@ class StatsProcessing:
     # Initialization
 
     def __init__(
-        self, cfg: Dict, dem: xr.Dataset = None, input_diff: bool = False
+        self,
+        cfg: Dict,
+        dem: xr.Dataset = None,
+        input_diff: bool = False,
+        dem_processing_method: str = None,
     ):
         """
         Initialization of a StatsProcessing object
@@ -102,6 +106,8 @@ class StatsProcessing:
                   xr.DataArray float32
         :param input_diff: if the input dem is an altitude difference
         :type input_diff: bool
+        :param dem_processing_method: DEM processing method
+        :type dem_processing_method: str
         :return: None
         """
         # Cfg
@@ -110,6 +116,8 @@ class StatsProcessing:
         # Output directory
         self.output_dir: Union[str, None] = self.cfg["output_dir"]
 
+        # DEM processing method
+        self.dem_processing_method = dem_processing_method
         # Remove outliers option
         self.remove_outliers: bool = self.cfg["remove_outliers"]
         # Input dem
@@ -214,6 +222,7 @@ class StatsProcessing:
                             clayer["type"],
                             clayer,
                             self.dem,
+                            self.dem_processing_method,
                         )
                     )
                     self.classification_layers_names.append(name)
@@ -253,7 +262,11 @@ class StatsProcessing:
                 # Create fusion layer
                 self.classification_layers.append(
                     FusionClassificationLayer(  # type:ignore
-                        layers_to_fusion, support, fusion_name, fusion_metrics
+                        layers_to_fusion,
+                        support,
+                        fusion_name,
+                        fusion_metrics,
+                        self.dem_processing_method,
                     )
                 )
                 # Add fusion layer name on the classif_layers_names

@@ -53,6 +53,7 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
         classification_layer_kind: str,
         cfg: Dict,
         dem: xr.Dataset = None,
+        dem_processing_method: str = None,
     ):
         """
         Init function
@@ -70,10 +71,18 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
             - georef_transform: 1D (trans_len) xr.DataArray
             - classification_layer_masks : 3D (row, col, indicator)
              xr.DataArray
+        :param dem_processing_method: DEM processing method
+        :type dem_processing_method: str
         :return: None
         """
         # Call generic init before supercharging
-        super().__init__(name, classification_layer_kind, cfg, dem)
+        super().__init__(
+            name,
+            classification_layer_kind,
+            cfg,
+            dem,
+            dem_processing_method,
+        )
 
         # Ranges
         self.ranges: List = self.cfg["ranges"]

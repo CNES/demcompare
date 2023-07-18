@@ -107,15 +107,15 @@ def test_demcompare_with_gironde_test_data():
         )
         output_cfg = read_config_file(os.path.join(tmp_dir, cfg_file))
         ref_output_cfg["coregistration"]["output_dir"] = tmp_dir
-        ref_output_cfg["statistics"]["output_dir"] = tmp_dir
+        ref_output_cfg["statistics"]["alti-diff"]["output_dir"] = tmp_dir
 
         np.testing.assert_equal(
-            ref_output_cfg["statistics"]["classification_layers"]["Status"][
-                "classes"
-            ],
-            output_cfg["statistics"]["classification_layers"]["Status"][
-                "classes"
-            ],
+            ref_output_cfg["statistics"]["alti-diff"]["classification_layers"][
+                "Status"
+            ]["classes"],
+            output_cfg["statistics"]["alti-diff"]["classification_layers"][
+                "Status"
+            ]["classes"],
         )
         np.testing.assert_equal(
             ref_output_cfg["coregistration"], output_cfg["coregistration"]
@@ -181,8 +181,8 @@ def test_demcompare_with_gironde_test_data():
 
         # TEST DIFF TIF
 
-        # Test final_dem_diff.tif
-        img = get_out_file_path("final_dem_diff.tif")
+        # Test dem_for_stats.tif
+        img = os.path.join("stats", "alti-diff", "dem_for_stats.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -208,25 +208,25 @@ def test_demcompare_with_gironde_test_data():
         # TEST SLOPE STATS
 
         # Test stats/Slope0/stats_results.csv
-        file = "stats/Slope0/stats_results.csv"
+        file = "stats/alti-diff/Slope0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test stats/Slope0/stats_results_intersection.csv
-        file = "stats/Slope0/stats_results_intersection.csv"
+        file = "stats/alti-diff/Slope0/stats_results_intersection.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test Slope0/ref_rectified_support_map.tif
-        img = "stats/Slope0/ref_rectified_support_map.tif"
+        img = "stats/alti-diff/Slope0/ref_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test Slope0/sec_rectified_support_map.tif
-        img = "stats/Slope0/sec_rectified_support_map.tif"
+        img = "stats/alti-diff/Slope0/sec_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -234,13 +234,13 @@ def test_demcompare_with_gironde_test_data():
         # TEST STATUS CLASSIFICATION LAYER STATS
 
         # Test stats/Status/stats_results.csv
-        file = "stats/Status/stats_results.csv"
+        file = "stats/alti-diff/Status/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, rtol=1e-2)
 
         # Test Status/sec_rectified_support_map.tif
-        img = "stats/Status/sec_rectified_support_map.tif"
+        img = "stats/alti-diff/Status/sec_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
@@ -248,7 +248,7 @@ def test_demcompare_with_gironde_test_data():
         # TEST GLOBAL CLASSIFICATION LAYER STATS
 
         # Test stats/global/stats_results.csv
-        file = "stats/global/stats_results.csv"
+        file = "stats/alti-diff/global/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, rtol=1e-2)
@@ -256,13 +256,13 @@ def test_demcompare_with_gironde_test_data():
         # TEST FUSION_LAYER STATS
 
         # Test stats/Fusion0/stats_results.csv
-        file = "stats/Fusion0/stats_results.csv"
+        file = "stats/alti-diff/Fusion0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test Fusion0/sec_rectified_support_map.tif
-        img = "stats/Fusion0/sec_rectified_support_map.tif"
+        img = "stats/alti-diff/Fusion0/sec_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)

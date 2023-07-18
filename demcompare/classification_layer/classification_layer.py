@@ -44,6 +44,7 @@ class ClassificationLayer:
         classification_layer_kind: str,
         cfg: Dict = None,
         dem: xr.Dataset = None,
+        dem_processing_method: str = None,
     ):
         """
         Return a ClassificationLayerTemplate child instance
@@ -63,21 +64,16 @@ class ClassificationLayer:
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
+        :param dem_processing_method: DEM processing method
+        :type dem_processing_method: str
         """
         return cls.create_classification(
-            name,
-            classification_layer_kind,
-            cfg,
-            dem,
+            name, classification_layer_kind, cfg, dem, dem_processing_method
         )
 
     @classmethod
     def create_classification(
-        cls,
-        name,
-        classification_layer_kind,
-        cfg,
-        dem,
+        cls, name, classification_layer_kind, cfg, dem, dem_processing_method
     ):
         """
         Factory command to create the classification from
@@ -98,6 +94,8 @@ class ClassificationLayer:
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
+        :param dem_processing_method: DEM processing method
+        :type dem_processing_method: str
         """
 
         try:
@@ -105,10 +103,7 @@ class ClassificationLayer:
                 classification_layer_kind
             ]
             classif = classification_class(
-                name,
-                classification_layer_kind,
-                cfg,
-                dem,
+                name, classification_layer_kind, cfg, dem, dem_processing_method
             )
             logging.debug(
                 "ClassificationLayer of type: %s and name: %s",

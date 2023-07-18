@@ -24,8 +24,9 @@
     "estimated_initial_shift_y": 0
   },
   "statistics": {
-    "remove_outliers": "False",
-    "classification_layers": {
+    "alti-diff": {
+      "remove_outliers": "False",
+      "classification_layers": {
       "Status": {
         "type": "segmentation",
         "classes": {
@@ -54,6 +55,7 @@
         "type": "fusion",
         "ref": ["Slope0", "Status"]
       }
+    }
     }
   }
 }

@@ -25,18 +25,20 @@
     "save_optional_outputs": "True"
   },
   "statistics": {
-    "classification_layers": {
-      "Slope0": {
-        "type": "slope",
-        "ranges": [
-          0,
-          5,
-          10,
-          25,
-          45
-        ]
-      }
-    },
-    "remove_outliers": "True"
+    "alti-diff": {
+      "classification_layers": {
+        "Slope0": {
+          "type": "slope",
+          "ranges": [
+            0,
+            5,
+            10,
+            25,
+            45
+          ]
+        }
+      },
+      "remove_outliers": "True"
+    }
   }
 }

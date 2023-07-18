@@ -57,7 +57,7 @@ class DemProcessingTemplate(
     def process_dem(
         self,
         dem_1: xr.Dataset,
-        dem_2: xr.Dataset,
+        dem_2: xr.Dataset = None,
     ) -> xr.Dataset:
         """
         DEM processing method

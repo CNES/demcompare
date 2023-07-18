@@ -27,13 +27,7 @@ import os
 # In what comes next : OTD stands for Output Tree Design
 default_OTD = {
     # first seen output
-    "initial_dem_diff.tif": ".",
-    "initial_dem_diff_snapshot.png": ".",
-    "final_dem_diff.tif": ".",
-    "final_dem_diff_snapshot.png": ".",
     "demcompare_results.json": ".",
-    "dh_col_wise_wave_detection.tif": "./stats",
-    "dh_row_wise_wave_detection.tif": "./stats",
     # coreg step
     "coreg_SEC.tif": "./coregistration/",
     "reproj_REF.tif": "./coregistration/",
@@ -41,28 +35,6 @@ default_OTD = {
     "reproj_coreg_REF.tif": "./coregistration/",
     "reproj_coreg_SEC.tif": "./coregistration/",
     "nuth_kaab_tmp_dir": "./coregistration/nuth_kaab_tmp_dir",
-    # stats
-    "initial_dem_diff_pdf.png": "./stats/",
-    "initial_dem_diff_pdf.csv": "./stats/",
-    "initial_dem_diff_cdf.png": "./stats/",
-    "initial_dem_diff_cdf.csv": "./stats/",
-    "final_dem_diff_pdf.png": "./stats/",
-    "final_dem_diff_pdf.csv": "./stats/",
-    "final_dem_diff_cdf.png": "./stats/",
-    "final_dem_diff_cdf.csv": "./stats/",
-    "stats_dir": "./stats",
-    "sec_support.tif": "./stats",
-    "ref_support.tif": "./stats",
-    "ref_support-sec_support.tif": "./stats",
-    "DSM_support_classified.png": "./stats",
-    "ref_support_classified.png": "./stats",
-    # only one input
-    "dem_for_stats.tif": ".",
-    "dem_for_stats_snapshot.png": ".",
-    "dem_for_stats_pdf.png": "./stats",
-    "dem_for_stats_pdf.csv": "./stats",
-    "dem_for_stats_cdf.png": "./stats",
-    "dem_for_stats_cdf.csv": "./stats",
     # doc
     "sphinx_built_doc": "./report/published_report",
     "sphinx_src_doc": "./report/src",

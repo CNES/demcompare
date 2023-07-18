@@ -19,8 +19,9 @@
     "estimated_initial_shift_y": 0
   },
   "statistics": {
-    "remove_outliers": "False",
-    "classification_layers": {
+    "alti-diff": {
+      "remove_outliers": "False",
+      "classification_layers": {
       "Status": {
         "type": "segmentation",
         "classes": {"valid": [0],"KO": [1],"Land": [2],"NoData": [3],"Outside_detector": [4]}
@@ -33,6 +34,7 @@
         "type": "fusion",
         "sec": ["Slope0", "Status"]
       }
+    }
     }
   }
 }
