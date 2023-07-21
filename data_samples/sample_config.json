@@ -22,12 +22,14 @@
           "type": "slope",
           "ranges": [
             0,
-            5
+            5,
+            10,
+            25,
+            45
           ]
         }
       },
       "remove_outliers": "True"
     }
-  },
-  "report": "default"
+  }
 }

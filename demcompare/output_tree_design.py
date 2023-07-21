@@ -28,6 +28,8 @@ import os
 default_OTD = {
     # first seen output
     "demcompare_results.json": ".",
+    # stat dir
+    "stats_dir": "stats",
     # coreg step
     "coreg_SEC.tif": "./coregistration/",
     "reproj_REF.tif": "./coregistration/",

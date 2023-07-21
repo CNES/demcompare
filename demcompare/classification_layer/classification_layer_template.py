@@ -38,6 +38,7 @@ from json_checker import Checker, Or
 
 from demcompare.dem_tools import DEFAULT_NODATA, create_dem, save_dem
 from demcompare.metric import Metric
+from demcompare.output_tree_design import get_out_dir
 
 # DEMcompare imports
 from ..internal_typing import ConfigType
@@ -123,7 +124,10 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         if self._output_dir:
             # Create stats dir
             self._stats_dir = os.path.join(
-                self._output_dir, "./stats", dem_processing_method, self.name
+                self._output_dir,
+                get_out_dir("stats_dir"),
+                dem_processing_method,
+                self.name,
             )
             os.makedirs(self._stats_dir, exist_ok=True)
 
