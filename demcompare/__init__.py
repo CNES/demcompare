@@ -281,6 +281,7 @@ def run(
                             ],
                             support="ref",
                         )
+
                 # Define stats_dem as the input dem
                 stats_dem = dem_processing_object.process_dem(input_ref)
 
