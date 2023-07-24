@@ -37,7 +37,7 @@ import rasterio
 from astropy import units as u
 
 from .internal_typing import ConfigType
-from .output_tree_design import get_otd_dirs, get_out_file_path, supported_OTD
+from .output_tree_design import get_otd_dirs, supported_OTD
 
 # Demcompare imports
 from .stats_processing import StatsProcessing
@@ -163,7 +163,8 @@ def compute_initialization(config_json: str) -> ConfigType:
     if "coregistration" in cfg:
         cfg["coregistration"]["output_dir"] = output_dir
     if "statistics" in cfg:
-        cfg["statistics"]["output_dir"] = output_dir
+        for dem_processing_method in cfg["statistics"]:
+            cfg["statistics"][dem_processing_method]["output_dir"] = output_dir
 
     # Create output_dir
     mkdir_p(cfg["output_dir"])
@@ -179,14 +180,21 @@ def compute_initialization(config_json: str) -> ConfigType:
     for directory in get_otd_dirs(cfg["otd"]):
         mkdir_p(os.path.join(cfg["output_dir"], directory))
 
+    if "statistics" in cfg:
+        for dem_processing_method in cfg["statistics"]:
+            mkdir_p(
+                os.path.join(cfg["output_dir"], "stats", dem_processing_method)
+            )
+
     # If defined, force the sampling_source of the
     # coregistration step into the stats step
     if "coregistration" in cfg:
         if "sampling_source" in cfg["coregistration"]:
             if "statistics" in cfg:
-                cfg["statistics"]["sampling_source"] = cfg["coregistration"][
-                    "sampling_source"
-                ]
+                for dem_processing_method in cfg["statistics"]:
+                    cfg["statistics"][dem_processing_method][
+                        "sampling_source"
+                    ] = cfg["coregistration"]["sampling_source"]
 
     return cfg
 
@@ -274,7 +282,6 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
                 "report type must be sphinx only for now"
             )
 
-    # check output tree design
     if "otd" in cfg and cfg["otd"] not in supported_OTD:
         otd_name = cfg["otd"]
         raise NameError(
@@ -287,7 +294,7 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
 
 
 def get_output_files_paths(
-    output_dir: str, name: str
+    output_dir: str, dir_name: str, file_name: str
 ) -> Tuple[str, str, str, str, str, str]:
     """
     Return the paths of the output global files:
@@ -298,27 +305,29 @@ def get_output_files_paths(
 
     :param output_dir: output_dir
     :type output_dir: str
-    :param name: name
-    :type name: str
+    :param dir_name: name of the subdirectory
+    :type dir_name: str
+    :param file_name: name of the files
+    :type file_name: str
     :return: Output paths
     :rtype: Tuple[str, str, str, str, str, str]
     """
     # Compute and save image tif and image plot png
-    dem_path = os.path.join(output_dir, get_out_file_path(name + ".tif"))
+    dem_path = os.path.join(output_dir, "stats", dir_name, file_name + ".tif")
     plot_file_path = os.path.join(
-        output_dir, get_out_file_path(name + "_snapshot.png")
+        output_dir, "stats", dir_name, file_name + "_snapshot.png"
     )
     plot_path_cdf = os.path.join(
-        output_dir, get_out_file_path(name + "_cdf.png")
+        output_dir, "stats", dir_name, file_name + "_cdf.png"
     )
     csv_path_cdf = os.path.join(
-        output_dir, get_out_file_path(name + "_cdf.csv")
+        output_dir, "stats", dir_name, file_name + "_cdf.csv"
     )
     plot_path_pdf = os.path.join(
-        output_dir, get_out_file_path(name + "_pdf.png")
+        output_dir, "stats", dir_name, file_name + "_pdf.png"
     )
     csv_path_pdf = os.path.join(
-        output_dir, get_out_file_path(name + "_pdf.csv")
+        output_dir, "stats", dir_name, file_name + "_pdf.csv"
     )
     return (
         dem_path,

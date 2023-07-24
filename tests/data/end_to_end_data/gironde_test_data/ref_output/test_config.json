@@ -23,8 +23,9 @@
     "save_optional_outputs": "True"
   },
   "statistics": {
-    "remove_outliers": "False",
-    "classification_layers": {
+    "alti-diff": {
+      "remove_outliers": "False",
+      "classification_layers": {
       "Status": {
         "type": "segmentation",
         "sec": "./FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF",
@@ -46,6 +47,7 @@
           ]
         }
       }
+    }
     }
   }
 }

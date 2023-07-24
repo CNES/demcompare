@@ -327,17 +327,17 @@ def test_statistics_classification_invalid_input_classes():
     test_cfg = read_config_file(test_cfg_path)
 
     # test that all inputs are list
-    test_cfg["statistics"]["classification_layers"]["Status"]["classes"][
-        "valid"
-    ] = "a"
+    test_cfg["statistics"]["alti-diff"]["classification_layers"]["Status"][
+        "classes"
+    ]["valid"] = "a"
     with pytest.raises(SystemExit):
-        _ = StatsProcessing(cfg=test_cfg["statistics"])
+        _ = StatsProcessing(cfg=test_cfg["statistics"]["alti-diff"])
     # test that all inputs are int
-    test_cfg["statistics"]["classification_layers"]["Status"]["classes"][
-        "valid"
-    ] = ["b"]
+    test_cfg["statistics"]["alti-diff"]["classification_layers"]["Status"][
+        "classes"
+    ]["valid"] = ["b"]
     with pytest.raises(SystemExit):
-        _ = StatsProcessing(cfg=test_cfg["statistics"])
+        _ = StatsProcessing(cfg=test_cfg["statistics"]["alti-diff"])
 
 
 @pytest.mark.unit_tests
@@ -362,11 +362,15 @@ def test_statistics_classification_invalid_input_ranges():
     test_cfg = read_config_file(test_cfg_path)
 
     # test that user's values ranges is a list
-    test_cfg["statistics"]["classification_layers"]["Slope0"]["ranges"] = "a"
+    test_cfg["statistics"]["alti-diff"]["classification_layers"]["Slope0"][
+        "ranges"
+    ] = "a"
     with pytest.raises(SystemExit):
-        _ = StatsProcessing(cfg=test_cfg["statistics"])
+        _ = StatsProcessing(cfg=test_cfg["statistics"]["alti-diff"])
     # test that user's values ranges is a list of int
-    test_cfg["statistics"]["classification_layers"]["Slope0"]["ranges"] = [
+    test_cfg["statistics"]["alti-diff"]["classification_layers"]["Slope0"][
+        "ranges"
+    ] = [
         0,
         "a",
         25,
@@ -374,7 +378,7 @@ def test_statistics_classification_invalid_input_ranges():
         90,
     ]
     with pytest.raises(SystemExit):
-        _ = StatsProcessing(cfg=test_cfg["statistics"])
+        _ = StatsProcessing(cfg=test_cfg["statistics"]["alti-diff"])
 
 
 @pytest.mark.unit_tests
@@ -402,10 +406,10 @@ def test_demcompare_with_wrong_fusion_cfg():
     test_cfg = read_config_file(test_cfg_path)
 
     # test that user's gave correct fusion list
-    test_cfg["statistics"]["classification_layers"]["Fusion0"]["sec"] = [
-        "Slope0"
-    ]
+    test_cfg["statistics"]["alti-diff"]["classification_layers"]["Fusion0"][
+        "sec"
+    ] = ["Slope0"]
     with pytest.raises(
         ClassificationLayerTemplate.NotEnoughDataToClassificationLayerError
     ):
-        _ = StatsProcessing(cfg=test_cfg["statistics"])
+        _ = StatsProcessing(cfg=test_cfg["statistics"]["alti-diff"])

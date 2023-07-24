@@ -36,10 +36,11 @@ import numpy as np
 import xarray as xr
 from json_checker import And, Checker, Or
 
+from ..dem_processing import DemProcessing
+
 # Demcompare imports
 from ..dem_tools import (
     SamplingSourceParameter,
-    compute_dems_diff,
     copy_dem,
     reproject_dems,
     save_dem,
@@ -379,7 +380,6 @@ class CoregistrationTemplate(metaclass=ABCMeta):
             self.reproj_sec,
             os.path.join(self.output_dir, get_out_file_path("reproj_SEC.tif")),
         )
-
         # Saves reprojected REF to file system
         self.reproj_ref = save_dem(
             self.reproj_ref,
@@ -462,7 +462,9 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
         # Altitude difference information
         # Compute final_dh to complete the alti_resuts
-        self.final_dh = compute_dems_diff(
+        # TODO: clean demprocessing dependency from coregistration, do we need this final_dh in coregistration ? # noqa: E501, B950 # pylint: disable=line-too-long,fixme
+        dem_processing_object = DemProcessing("alti-diff")
+        self.final_dh = dem_processing_object.process_dem(
             self.reproj_coreg_ref, self.reproj_coreg_sec
         )
         self.demcompare_results["alti_results"]["dz"] = {}

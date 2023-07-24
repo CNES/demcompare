@@ -42,9 +42,9 @@ def test_alti_diff():
     - Manually computed dem diff: diff_gt
     Validation process:
     - Create both dems
-    - Compute the difference dem using the compute_dems_diff function
+    - Compute the difference dem using the process_dem function
     - Check that the difference dem is the same as ground truth
-    - Checked function : dem_tools's compute_dems_diff
+    - Checked function : dem_tools's process_dem
     """
     # Create input datasets
     sec = np.array(
