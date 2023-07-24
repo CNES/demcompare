@@ -61,4 +61,29 @@ class DemProcessingTemplate(
     ) -> xr.Dataset:
         """
         DEM processing method
+
+        :param dem_1: dem_1 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_1: xr.Dataset
+        :param dem_2: optional argument.
+                      should not be given as input,
+                      when the DEM processing method takes only 1 DEM as input.
+                      xr.DataSet containing:
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_2: xr.Dataset
+        :return: xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :rtype: xr.Dataset
         """

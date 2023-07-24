@@ -23,6 +23,7 @@
 Mainly contains different DEM processing classes
 """
 
+import logging
 from typing import Dict
 
 # Third party imports
@@ -169,7 +170,7 @@ class Ref(DemProcessingTemplate):
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
         :type dem_2: xr.Dataset
-        :return: difference xr.DataSet containing :
+        :return: xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
                 - georef_transform: 1D (trans_len) xr.DataArray
@@ -177,4 +178,13 @@ class Ref(DemProcessingTemplate):
                   xr.DataArray
         :rtype: xr.Dataset
         """
+
+        if dem_2 is not None:
+            logging.error(
+                "The DEM processing method: %s,"
+                " takes only one input to the process_dem function",
+                self.type,
+            )
+            raise ValueError
+
         return dem_1
