@@ -245,20 +245,7 @@ def run(
 
             # Loop over the DEM processing methods in cfg["statistics"]
             for dem_processing_method in cfg["statistics"]:
-                # Create a DEM processing object for each DEM processing method
-                dem_processing_object = DemProcessing(dem_processing_method)
-
-                # Obtain output paths for initial dem diff without coreg
-                (
-                    dem_path,
-                    plot_file_path,
-                    plot_path_cdf,
-                    csv_path_cdf,
-                    plot_path_pdf,
-                    csv_path_pdf,
-                ) = helpers_init.get_output_files_paths(
-                    cfg["output_dir"], dem_processing_method, "dem_for_stats"
-                )
+                # Warning: "ref-curvature" does not work with "Slope0" as "classification_layers" # noqa: E501, B950 # pylint: disable=line-too-long
 
                 # Compute slope and add it as a classification_layer
                 # in case a classification of type slope is required
@@ -281,8 +268,24 @@ def run(
                             ],
                             support="ref",
                         )
+
+                # Create a DEM processing object for each DEM processing method
+                dem_processing_object = DemProcessing(dem_processing_method)
+
                 # Define stats_dem as the input dem
                 stats_dem = dem_processing_object.process_dem(input_ref)
+
+                # Obtain output paths for initial dem diff without coreg
+                (
+                    dem_path,
+                    plot_file_path,
+                    plot_path_cdf,
+                    csv_path_cdf,
+                    plot_path_pdf,
+                    csv_path_pdf,
+                ) = helpers_init.get_output_files_paths(
+                    cfg["output_dir"], dem_processing_method, "dem_for_stats"
+                )
 
                 # Save stats_dem for two states
                 save_dem(stats_dem, dem_path)

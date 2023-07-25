@@ -116,3 +116,76 @@ def test_alti_diff():
     diff_dataset = dem_processing_obj.process_dem(ref_dataset, sec_dataset)
     # Test that the output difference is the same as ground_truth
     np.testing.assert_array_equal(diff_gt, diff_dataset["image"].data)
+
+
+@pytest.mark.unit_tests
+def test_ref_curvature():
+    """
+    Test ref-curvature DEM processing class function process_dem.
+    Input data:
+    - One manually created dem with custom nodata (-37, 99, 33)
+      values
+    Validation data:
+    - Manually computed dem curvature: gt
+    Validation process:
+    - Create the dem
+    - Compute the curvature dem using the process_dem function
+    - Check that the curvature dem is the same as ground truth
+    - Checked function : dem_tools's process_dem
+    """
+    # Create input dataset
+    ref = np.array(
+        [[3, 99, 3], [99, 2, 1], [99, 0, 1], [1, 1, 0], [1, 1, 99]],
+        dtype=np.float32,
+    )
+
+    ref_dataset = dem_tools.create_dem(data=ref, nodata=99)
+
+    # Define ground truth value
+    gt = np.array(
+        [
+            [0.9398802, np.nan, 1.7072412],
+            [np.nan, 0.7338672, -1.4214045],
+            [np.nan, -2.4205306, 0.42490682],
+            [0.36860558, 0.6654598, -1.5057596],
+            [-0.0843266, 0.36212376, np.nan],
+        ],
+        dtype=np.float32,
+    )
+
+    dem_processing_obj = DemProcessing("ref-curvature")
+    dataset = dem_processing_obj.process_dem(ref_dataset)
+
+    # Test that the output difference is the same as ground_truth
+    np.testing.assert_array_almost_equal(gt, dataset["image"].data)
+
+    # Create input dataset
+    ref = np.array(
+        [
+            [3, 3, 3],
+            [1, 2, 1],
+            [dem_tools.DEFAULT_NODATA, 0, 1],
+            [1, 1, 0],
+            [1, 1, dem_tools.DEFAULT_NODATA],
+        ],
+        dtype=np.float32,
+    )
+    ref_dataset = dem_tools.create_dem(data=ref)
+
+    # Define ground truth value
+
+    gt = np.array(
+        [
+            [1.7635386, 1.500691, 1.7770832],
+            [-1.3848146, 1.3327632, -1.3950232],
+            [np.nan, -2.5563521, 0.48228034],
+            [-0.05303898, 0.64098966, -1.4813623],
+            [-0.02683339, 0.37867376, np.nan],
+        ],
+        dtype=np.float32,
+    )
+
+    dataset = dem_processing_obj.process_dem(ref_dataset)
+
+    # Test that the output curvature is the same as ground_truth
+    np.testing.assert_array_almost_equal(gt, dataset["image"].data)
