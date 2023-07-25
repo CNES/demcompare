@@ -288,7 +288,6 @@ class RefCurvature(DemProcessingTemplate):
             classification_layer_masks=dem["classification_layer_masks"]
             if hasattr(dem, "classification_layer_masks")
             else None,
-            ref_slope=dem["ref_slope"] if hasattr(dem, "ref_slope") else None,
         )
 
     def neighbour_interpol(

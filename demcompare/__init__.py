@@ -248,6 +248,9 @@ def run(
                 # Create a DEM processing object for each DEM processing method
                 dem_processing_object = DemProcessing(dem_processing_method)
 
+                # Define stats_dem as the input dem
+                stats_dem = dem_processing_object.process_dem(input_ref)
+
                 # Obtain output paths for initial dem diff without coreg
                 (
                     dem_path,
@@ -262,7 +265,7 @@ def run(
 
                 # Compute slope and add it as a classification_layer
                 # in case a classification of type slope is required
-                input_ref = compute_dem_slope(input_ref)
+                stats_dem = compute_dem_slope(stats_dem)
                 # If defined, verify fusion layers according to the cfg
                 if (
                     "classification_layer"
@@ -275,15 +278,12 @@ def run(
                         ]
                     ):
                         verify_fusion_layers(
-                            input_ref,
+                            stats_dem,
                             cfg["statistics"][dem_processing_method][
                                 "classification_layers"
                             ],
                             support="ref",
                         )
-
-                # Define stats_dem as the input dem
-                stats_dem = dem_processing_object.process_dem(input_ref)
 
                 # Save stats_dem for two states
                 save_dem(stats_dem, dem_path)

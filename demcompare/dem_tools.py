@@ -390,7 +390,6 @@ def create_dem(  # pylint: disable=too-many-arguments, too-many-branches
     geoid_path: Union[str, None] = None,
     zunit: str = "m",
     source_rasterio: Dict[str, rasterio.DatasetReader] = None,
-    ref_slope: xr.DataArray = None,
 ) -> xr.Dataset:
     """
     Creates dem from input array and transform.
@@ -423,8 +422,6 @@ def create_dem(  # pylint: disable=too-many-arguments, too-many-branches
     :type zunit: str
     :param source_rasterio: rasterio dataset reader object
     :type source_rasterio: Dict[str,rasterio.DatasetReader] or None
-    :param ref_slope: slope of the reference DEM
-    :type ref_slope: xr.DataArray
     :return: xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
@@ -520,7 +517,6 @@ def create_dem(  # pylint: disable=too-many-arguments, too-many-branches
         new_zunit,
         source_rasterio,
         classification_layer_masks,
-        ref_slope,
     )
 
     return dataset

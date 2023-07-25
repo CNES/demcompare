@@ -59,7 +59,6 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
     zunit: str = "m",
     source_rasterio: Dict[str, rasterio.DatasetReader] = None,
     classification_layer_masks: Union[Dict, xr.DataArray] = None,
-    ref_slope: xr.DataArray = None,
 ) -> xr.Dataset:
     """
     Creates dataset from input array and transform,
@@ -113,8 +112,6 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
     :type source_rasterio: Dict[str,rasterio.DatasetReader] or None
     :param classification_layer_masks: classification layers
     :type classification_layer_masks: Dict, xr.DataArray or None
-    :param ref_slope: slope of the reference DEM
-    :type ref_slope: xr.DataArray
     :return:  xr.DataSet containing :
 
                 - image : 2D (row, col) xr.DataArray float32
@@ -156,9 +153,6 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
     dataset["georef_transform"] = xr.DataArray(
         data=transform, dims=["trans_len"]
     )
-
-    if isinstance(ref_slope, xr.DataArray):
-        dataset["ref_slope"] = ref_slope
 
     # Add image attributes to the image dataset
     dataset.attrs = {
