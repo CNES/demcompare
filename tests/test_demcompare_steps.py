@@ -368,6 +368,10 @@ def test_demcompare_statistics_step_curvature_input_ref_with_gironde_test_data()
     test_cfg["statistics"]["ref-curvature"] = test_cfg["statistics"].pop(
         "alti-diff"
     )
+    # Warning: "ref-curvature" does not work with "Slope0" as "classification_layers" # noqa: E501, B950 # pylint: disable=line-too-long
+    test_cfg["statistics"]["ref-curvature"]["classification_layers"].pop(
+        "Slope0"
+    )
 
     # Input configuration is
     # "input_ref": {

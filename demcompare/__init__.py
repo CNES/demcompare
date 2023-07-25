@@ -245,6 +245,30 @@ def run(
 
             # Loop over the DEM processing methods in cfg["statistics"]
             for dem_processing_method in cfg["statistics"]:
+                # Warning: "ref-curvature" does not work with "Slope0" as "classification_layers" # noqa: E501, B950 # pylint: disable=line-too-long
+
+                # Compute slope and add it as a classification_layer
+                # in case a classification of type slope is required
+                input_ref = compute_dem_slope(input_ref)
+                # If defined, verify fusion layers according to the cfg
+                if (
+                    "classification_layer"
+                    in cfg["statistics"][dem_processing_method]
+                ):
+                    if (
+                        "fusion"
+                        in cfg["statistics"][dem_processing_method][
+                            "classification_layers"
+                        ]
+                    ):
+                        verify_fusion_layers(
+                            input_ref,
+                            cfg["statistics"][dem_processing_method][
+                                "classification_layers"
+                            ],
+                            support="ref",
+                        )
+
                 # Create a DEM processing object for each DEM processing method
                 dem_processing_object = DemProcessing(dem_processing_method)
 
@@ -262,28 +286,6 @@ def run(
                 ) = helpers_init.get_output_files_paths(
                     cfg["output_dir"], dem_processing_method, "dem_for_stats"
                 )
-
-                # Compute slope and add it as a classification_layer
-                # in case a classification of type slope is required
-                stats_dem = compute_dem_slope(stats_dem)
-                # If defined, verify fusion layers according to the cfg
-                if (
-                    "classification_layer"
-                    in cfg["statistics"][dem_processing_method]
-                ):
-                    if (
-                        "fusion"
-                        in cfg["statistics"][dem_processing_method][
-                            "classification_layers"
-                        ]
-                    ):
-                        verify_fusion_layers(
-                            stats_dem,
-                            cfg["statistics"][dem_processing_method][
-                                "classification_layers"
-                            ],
-                            support="ref",
-                        )
 
                 # Save stats_dem for two states
                 save_dem(stats_dem, dem_path)
