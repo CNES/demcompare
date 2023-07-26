@@ -119,6 +119,94 @@ def test_alti_diff():
 
 
 @pytest.mark.unit_tests
+def test_angular_diff():
+    """
+    Test angular-diff DEM processing class function process_dem.
+    Input data:
+    - Two manually created dems with custom nodata (-37, 99, 33)
+      values
+    Validation data:
+    - Manually computed dem diff: diff_gt
+    Validation process:
+    - Create both dems
+    - Compute the difference dem using the process_dem function
+    - Check that the difference dem is the same as ground truth
+    - Checked function : dem_tools's process_dem
+    """
+    # Create input datasets
+    sec = np.array(
+        [
+            [1982.0, 1967.0, 1950.0],
+            [2005.0, 1988.0, 1969.0],
+            [2012.0, 1990.0, 1967.0],
+        ],
+        dtype=np.float32,
+    )
+    ref = np.array(
+        [
+            [1913.0, 1898.0, 1879.0],
+            [1905.0, 1890.0, 1872.0],
+            [1890.0, 1876.0, 1861.0],
+        ],
+        dtype=np.float32,
+    )
+
+    sec_dataset = dem_tools.create_dem(data=sec, nodata=-37)
+    ref_dataset = dem_tools.create_dem(data=ref, nodata=99)
+
+    # Define ground truth value
+    diff_gt = np.array(
+        [
+            [1.480917, 1.357961, 1.192593],
+            [1.375154, 1.154992, 0.883184],
+            [1.126594, 0.855523, 0.545449],
+        ],
+        dtype=np.float32,
+    )
+
+    dem_processing_obj = DemProcessing("angular-diff")
+    diff_dataset = dem_processing_obj.process_dem(ref_dataset, sec_dataset)
+    # Test that the output difference is the same as ground_truth
+    np.testing.assert_array_almost_equal(diff_gt, diff_dataset["image"].data)
+
+    # Create input datasets
+    sec = np.array(
+        [[1, 1, 1], [1, 1, 1], [-1, -33, 1], [1, 2, -33], [1, 1, -33]],
+        dtype=np.float32,
+    )
+    ref = np.array(
+        [
+            [3, 3, 3],
+            [1, 2, 1],
+            [dem_tools.DEFAULT_NODATA, 0, 1],
+            [1, 1, 0],
+            [1, 1, dem_tools.DEFAULT_NODATA],
+        ],
+        dtype=np.float32,
+    )
+
+    sec_dataset = dem_tools.create_dem(data=sec, nodata=-33)
+    ref_dataset = dem_tools.create_dem(data=ref)
+
+    # Define ground truth value
+
+    diff_gt = np.array(
+        [
+            [1.107149, 0.785398, 1.107149],
+            [np.nan, np.nan, 0.955317],
+            [np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan],
+            [0.0, np.nan, np.nan],
+        ],
+        dtype=np.float32,
+    )
+    diff_dataset = dem_processing_obj.process_dem(ref_dataset, sec_dataset)
+    print(diff_dataset["image"].data)
+    # Test that the output difference is the same as ground_truth
+    np.testing.assert_array_almost_equal(diff_gt, diff_dataset["image"].data)
+
+
+@pytest.mark.unit_tests
 def test_ref_curvature():
     """
     Test ref-curvature DEM processing class function process_dem.

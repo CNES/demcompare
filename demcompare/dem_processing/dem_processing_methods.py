@@ -135,6 +135,179 @@ class AltiDiff(DemProcessingTemplate):
         return diff
 
 
+@DemProcessing.register("angular-diff")
+class AngularDiff(DemProcessingTemplate):
+    """
+    Angular difference between two DEMs
+    """
+
+    def __init__(self, parameters: Dict = None):
+        """
+        Initialization the DEM processing object
+        :return: None
+        """
+
+        super().__init__()
+
+        self.fig_title = "[REF vs SEC] angular difference"
+        self.colorbar_title = "Angular difference"
+
+    def compute_dems_angular_diff(
+        self,
+        dem_1: xr.Dataset,
+        dem_2: xr.Dataset,
+    ) -> xr.Dataset:
+        """
+        Compute angular difference dem_1 - dem_2 and
+        return it as an xr.Dataset with the dem_2
+        georeferencing and attributes.
+
+        :param dem_1: dem_1 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_1: xr.Dataset
+         :param dem_2: dem_2 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_2: xr.Dataset
+        :return: angular difference xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :rtype: xr.Dataset
+        """
+        normal_dem_1 = self.compute_surface_normal(
+            dem_1["image"].data,
+            dem_1.georef_transform.data[1],
+            dem_1.georef_transform.data[5],
+        )
+
+        normal_dem_2 = self.compute_surface_normal(
+            dem_2["image"].data,
+            dem_2.georef_transform.data[1],
+            dem_2.georef_transform.data[5],
+        )
+
+        diff_raster = self.compute_angular_similarity(
+            normal_dem_1, normal_dem_2
+        )
+
+        diff_dem = create_dem(
+            diff_raster,
+            transform=dem_2.georef_transform.data,
+            nodata=dem_1.attrs["nodata"],
+            img_crs=dem_2.crs,
+            bounds=dem_2.bounds,
+        )
+        return diff_dem
+
+    def compute_surface_normal(
+        self, data: np.ndarray, dx: np.float64, dy: np.float64
+    ) -> np.ndarray:
+        """
+        Return the surface normal vector at each pixel.
+
+        :param data: 2D (row, col) np.ndarray containing the image
+        :type data: np.ndarray
+        :param dx: DEM's resolution in the X direction
+        :type dx: np.float64
+        :param dy: DEM's resolution in the Y direction
+        :type dy: np.float64
+        :return: vector (3, row, col) normal to the surface for each pixel
+        :rtype: np.ndarray
+        """
+
+        size_x, size_y = data.shape
+
+        gx = np.gradient(data / np.abs(dx), axis=1)
+        gy = np.gradient(data / np.abs(dy), axis=0)
+
+        zer = np.zeros((size_x, size_y))
+        one = np.ones((size_x, size_y))
+
+        n_xx = one
+        n_xy = zer
+        n_xz = gx
+
+        n_yx = zer
+        n_yy = one
+        n_yz = gy
+
+        n_x = np.array([n_xx, n_xy, n_xz])
+        n_y = np.array([n_yx, n_yy, n_yz])
+
+        n = np.cross(n_x, n_y, axis=0)
+        norm = (n[0, :, :] ** 2 + n[1, :, :] ** 2 + n[2, :, :] ** 2) ** 0.5
+
+        return n / norm
+
+    def compute_angular_similarity(
+        self, n_a: np.ndarray, n_b: np.ndarray
+    ) -> np.ndarray:
+        """
+        Compute the angular difference theta (radians) between two vector maps.
+
+        :param n_a: surface normal vector to first DEM
+        :type n_a: np.ndarray
+        :param n_b: surface normal vector to second DEM
+        :type n_ab: np.ndarray
+        :return: angular difference between the two vectors
+        :rtype: np.ndarray
+        """
+
+        n_a_b = (
+            n_a[0] * n_b[0] + n_a[1] * n_b[1] + n_a[2] * n_b[2]
+        )  # Scalar product between the 2 vectors
+        n_a_b[n_a_b > 1] = 1
+        n_a_b[n_a_b < -1] = -1
+        dh_norm = np.arccos(np.abs(n_a_b))
+
+        return dh_norm
+
+    def process_dem(
+        self,
+        dem_1: xr.Dataset,
+        dem_2: xr.Dataset = None,
+    ) -> xr.Dataset:
+        """
+        Compute the angular difference between dem_1 and dem_2.
+        Add classification layers to the difference.
+
+        :param dem_1: dem_1 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_1: xr.Dataset
+        :param dem_2: dem_2 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_2: xr.Dataset
+        :return: angular difference xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :rtype: xr.Dataset
+        """
+        diff = self.compute_dems_angular_diff(dem_1, dem_2)
+        diff = accumulates_class_layers(dem_1, dem_2, diff)
+        return diff
+
+
 @DemProcessing.register("ref")
 class Ref(DemProcessingTemplate):
     """
