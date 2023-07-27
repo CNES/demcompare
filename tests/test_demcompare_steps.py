@@ -411,6 +411,82 @@ def test_demcompare_statistics_step_angular_diff_with_gironde_test_data():
 
 @pytest.mark.end2end_tests
 @pytest.mark.functional_tests
+def test_demcompare_statistics_step_alti_diff_norm_diff_with_gironde_test_data():  # noqa: E501, B950 # pylint: disable=line-too-long
+    """
+    Demcompare with altitude difference normalized by the slope config
+    Input data:
+    - Input dems and configuration present in the
+      "gironde_test_data_sampling_ref/input" test data directory
+    Validation process:
+    - Reads the input configuration file
+    - Deletes the input_sec of the configuration file
+    - Deletes the coregistration step of the configuration file
+    - Runs demcompare on a temporary directory
+    - Checks that no error is raised
+    """
+    # Get "gironde_test_data" test root
+    # data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
+
+    # Load "gironde_test_data_sampling_ref"
+    # demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    test_cfg = read_config_file(test_cfg_path)
+
+    test_cfg["statistics"]["alti-diff-norm"] = test_cfg["statistics"].pop(
+        "alti-diff"
+    )
+
+    # Input configuration is
+    # "input_ref": {
+    #     "path": "./Gironde.tif",
+    #     "zunit": "m",
+    #     "classification_layers": {
+    #        "Status": {
+    #            "map_path": "./ref_status.tif"
+    #        }
+    # },
+    # "input_sec": {
+    #     "path": "./FinalWaveBathymetry_....TIF",
+    #     "zunit": "m",
+    #     "nodata": -32768,
+    #     },
+    # "statistics": {
+    #     "remove_outliers": "False",
+    #     "classification_layers": {
+    #         "Status": {
+    #             "type": "segmentation",
+    #            "classes": {"valid": [0],
+    #                       "KO": [1],
+    #                       "Land": [2],
+    #                       "NoData": [3],
+    #                       "Outside_detector": [4]}
+    #         },
+    #         "Slope0": {
+    #              "type": "slope",
+    #             "ranges": [0, 10, 25, 50, 90]
+    #         }
+    #     }
+    # }
+
+    # Create temporary directory for test output
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+        # Modify test's output dir in configuration to tmp test dir
+        test_cfg["output_dir"] = tmp_dir
+
+        # Set a new test_config tmp file path
+        tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
+
+        # Save the new configuration inside the tmp dir
+        save_config_file(tmp_cfg_file, test_cfg)
+
+        # Run demcompare with "gironde_test_data"
+        # configuration (and replace conf file)
+        demcompare.run(tmp_cfg_file)
+
+
+@pytest.mark.end2end_tests
+@pytest.mark.functional_tests
 def test_demcompare_statistics_step_curvature_input_ref_with_gironde_test_data():  # noqa: E501, B950 # pylint: disable=line-too-long
     """
     Demcompare with only statistics step on one input dem
