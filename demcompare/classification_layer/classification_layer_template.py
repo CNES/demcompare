@@ -36,12 +36,8 @@ import numpy as np
 import xarray as xr
 from json_checker import Checker, Or
 
-from demcompare.dem_tools import (
-    DEFAULT_NODATA,
-    create_dem,
-    remove_nan,
-    save_dem,
-)
+from demcompare.dem_tools import DEFAULT_NODATA, create_dem, save_dem
+from demcompare.img_tools import remove_nan_and_flatten
 from demcompare.metric import Metric
 from demcompare.output_tree_design import get_out_dir
 
@@ -464,23 +460,26 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 self.classes.items()
             ):
                 # Class altitude values
-                class_alti_values = dz_values[
-                    np.where((class_masks[idx] * mode_mask))
-                ]
-                class_alti_values_stats_computation = np.where(
+                # class_alti_values is a 2D matrice
+                class_alti_values = np.where(
                     (class_masks[idx] * mode_mask), dz_values, np.nan
+                )
+                # flatten the data and remove NaNs values
+                class_alti_values_1d_no_nan = remove_nan_and_flatten(
+                    class_alti_values
                 )
                 # Class outliers free mask
                 class_outliers_free_mask = (
                     class_masks[idx] * mode_mask * self.outliers_free_mask
                 )
                 # Class outliers free altitude values
+                # class_outliers_free_alti_values is a 2D matrice
                 class_outliers_free_alti_values = np.where(
                     class_outliers_free_mask, dz_values, np.nan
                 )
                 # Do stats computation and obtain class_stats dictionary
                 class_stats = self.stats_computation(
-                    class_alti_values_stats_computation,
+                    class_alti_values,
                     class_outliers_free_alti_values,
                     metrics,
                 )
@@ -493,12 +492,16 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 ] = np.nan
                 class_stats["dz_values"] = class_dz_values
                 # Add nbpts value
-                class_stats["nbpts"] = class_alti_values.size
+                class_stats["nbpts"] = class_alti_values_1d_no_nan.size
                 # Add class name
                 class_stats["class_name"] = class_name + ":" + str(class_item)
                 # Add percent_valid_points value
                 class_stats["percent_valid_points"] = round(
-                    (100 * class_alti_values.size / float(nb_total_points)),
+                    (
+                        100
+                        * class_alti_values_1d_no_nan.size
+                        / float(nb_total_points)
+                    ),
                     5,
                 )
                 # Add the class_stats dictionary to the stats_list
@@ -572,7 +575,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         """
         Compute stats for a specific array
 
-        :param data: input data
+        :param data: 2D input data
         :type data: np.ndarray
         :param outliers_free_data: input outliers_free_data
         :type outliers_free_data: np.ndarray
@@ -592,12 +595,14 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 array = outliers_free_data
             else:
                 array = data
-            if remove_nan(array).size:
+            # flatten the data and remove NaNs values
+            array_1d_no_nan = remove_nan_and_flatten(array)
+            if array_1d_no_nan.size:
                 # Format output list according to the metric type
                 # Round the float results
                 if metric_object.type == "scalar":
                     computed_metric = metric_object.compute_metric(
-                        remove_nan(array)
+                        array_1d_no_nan
                     )
                     metric_results[metric_name] = round(
                         float(computed_metric), 5
@@ -607,7 +612,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 ):
                     if metric_object.input_type == "1D":
                         computed_metric = metric_object.compute_metric(
-                            remove_nan(array)
+                            array_1d_no_nan
                         )
                     elif metric_object.input_type == "2D":
                         computed_metric = metric_object.compute_metric(array)

@@ -31,7 +31,7 @@ import matplotlib.pyplot as mpl_pyplot
 import numpy as np
 from astropy import units as u
 
-from demcompare.dem_tools import compute_surface_normal, remove_nan
+from demcompare.img_tools import compute_surface_normal, remove_nan_and_flatten
 
 from .metric import Metric
 from .metric_template import MetricTemplate
@@ -559,7 +559,7 @@ class SlopeOrientationHistogram(MetricTemplate):
         :rtype: Tuple[np.ndarray, np.ndarray]
         """
 
-        data1d = remove_nan(data)
+        data1d = remove_nan_and_flatten(data)
 
         borne_min = np.min(data1d)
         borne_max = np.max(data1d)

@@ -34,12 +34,8 @@ import xarray as xr
 from numpy.fft import fft2, ifft2, ifftshift
 from scipy.interpolate import griddata
 
-from demcompare.dem_tools import (
-    accumulates_class_layers,
-    compute_surface_normal,
-    create_dem,
-    remove_nan,
-)
+from demcompare.dem_tools import accumulates_class_layers, create_dem
+from demcompare.img_tools import compute_surface_normal, remove_nan_and_flatten
 
 from .dem_processing import DemProcessing
 from .dem_processing_template import DemProcessingTemplate
@@ -278,7 +274,7 @@ class AltiDiffSlopeNorm(DemProcessingTemplate):
 
         # application of normalization factor to DEM elevation errors
         # bias subtraction before applying the factor.
-        mu = np.mean(remove_nan(diff))
+        mu = np.mean(remove_nan_and_flatten(diff))
         dh_norm = (np.copy(diff) - mu) * f_norm
 
         return dh_norm
