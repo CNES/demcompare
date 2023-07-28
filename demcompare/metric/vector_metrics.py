@@ -43,6 +43,8 @@ class CumulativeProbabilityFunction(MetricTemplate):
 
     # Default bin step for histogram computation
     _BIN_STEP = 0.1
+    # Default minimum number of bins
+    _NB_BIN_MIN = 25
 
     def __init__(self, parameters: Dict = None):
         """
@@ -96,6 +98,7 @@ class CumulativeProbabilityFunction(MetricTemplate):
         self.nb_pixels = data.shape
         # Get bins number for histogram
         self.nb_bins = int(self.max_diff / self.bin_step)
+        self.nb_bins = max(self.nb_bins, self._NB_BIN_MIN)
         # getting data of the histogram
         hist, self.bins_count = np.histogram(
             data,
@@ -170,6 +173,8 @@ class ProbabilityDensityFunction(MetricTemplate):
     # Default bin step for histogram computation
     _BIN_STEP = 0.2
     _WIDTH = 0.7
+    # Default minimum number of bins
+    _NB_BIN_MIN = 25
 
     def __init__(self, parameters: Dict = None):
         """
@@ -234,6 +239,14 @@ class ProbabilityDensityFunction(MetricTemplate):
             data[~np.isnan(data)],
             bins=np.arange(-bound, bound, self.bin_step),
         )
+
+        if len(self.bins) < self._NB_BIN_MIN:
+            hist, self.bins = np.histogram(
+                data[~np.isnan(data)],
+                bins=self._NB_BIN_MIN,
+                range=(-np.abs(bound), np.abs(bound)),
+            )
+            self.bin_step = self.bins[1] - self.bins[0]
 
         # Normalized Probability Density Function of the histogram
         self.pdf = hist / sum(hist)

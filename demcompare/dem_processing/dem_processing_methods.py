@@ -22,6 +22,7 @@
 """
 Mainly contains different DEM processing classes
 """
+# pylint:disable=too-many-lines
 
 import logging
 from typing import Dict
@@ -131,6 +132,262 @@ class AltiDiff(DemProcessingTemplate):
         :rtype: xr.Dataset
         """
         diff = self.compute_dems_diff(dem_1, dem_2)
+        diff = accumulates_class_layers(dem_1, dem_2, diff)
+        return diff
+
+
+@DemProcessing.register("alti-diff-slope-norm")
+class AltiDiffSlopeNorm(DemProcessingTemplate):
+    """
+    Altitude difference between two DEMs normalized by the slope
+    """
+
+    def __init__(self, parameters: Dict = None):
+        """
+        Initialization the DEM processing object
+        :return: None
+        """
+
+        super().__init__()
+
+        self.fig_title = "[REF - SEC] difference normalized by the slope"
+        self.colorbar_title = "Elevation difference normalized by the slope"
+
+    def compute_dems_diff_slope_norm(
+        self,
+        dem_1: xr.Dataset,
+        dem_2: xr.Dataset,
+    ) -> xr.Dataset:
+        """
+        Compute altitude difference dem_1 - dem_2,
+        normalized by the slope of the DEM and
+        return it as an xr.Dataset with the dem_2
+        georeferencing and attributes.
+
+        :param dem_1: dem_1 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_1: xr.Dataset
+         :param dem_2: dem_2 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_2: xr.Dataset
+        :return: difference normalized by the slope xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :rtype: xr.Dataset
+        """
+        diff_raster = dem_1["image"].data - dem_2["image"].data
+
+        diff_raster = self.dh_compute_normalization_factor(diff_raster, dem_2)
+
+        diff_dem = create_dem(
+            diff_raster,
+            transform=dem_2.georef_transform.data,
+            nodata=dem_1.attrs["nodata"],
+            img_crs=dem_2.crs,
+            bounds=dem_2.bounds,
+        )
+        return diff_dem
+
+    def dh_compute_normalization_factor(
+        self, diff: np.ndarray, dem: xr.Dataset, nbins: int = 100
+    ) -> np.ndarray:
+        """
+        Compute the normalization factor for several (nbins) slope classes.
+        First: compute the tangent of the slope at each pixel.
+        Then: compute the angle of the slope at each pixel.
+        Then: classification of the pixels by the angle of the slope value.
+        Then: compute the std of the error for each of the pixel classes
+        Then: perform linear regression: a,b=regLin(tan(angle),std)
+        Finally: Error normalization for each slope class:
+        dh = dh/(1+b/a*tan(angle))
+
+        :param diff: difference between the ref and sec DEMs
+        :type diff: np.ndarray
+        :param dem: dem xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem: xr.Dataset
+        :param nbins: number of bins of the histogram
+        :type nbins: int
+        :return: altitude difference normalized by the slope
+        :rtype: np.ndarray
+        """
+
+        tan_alpha = self.compute_tan_slope(
+            dem
+        )  # calculation of slope (tanAlpha) at each pixel
+
+        alpha = np.arctan(tan_alpha)
+
+        no_nan = (~np.isnan(tan_alpha)) & (~np.isnan(diff))
+        _, bin_alpha = np.histogram(alpha[no_nan], bins=nbins)
+
+        # exclude extreme slope values before performing linear regression
+        # in this case change [0, 1] -> [0.1, 0.9]
+        v_min, v_max = np.quantile(alpha[no_nan], [0, 1])
+
+        alpha_reg_lin = bin_alpha[
+            (bin_alpha <= v_max) & (bin_alpha >= v_min)
+        ]  # slope classes used for linear regression
+
+        std_alpha_reg_lin = []
+        alpha_reg_lin_for_fit = []
+        for n in range(alpha_reg_lin.size - 1):
+            mask = (
+                (alpha > alpha_reg_lin[n]) & (alpha <= alpha_reg_lin[n + 1])
+            ) & no_nan
+            if diff[mask].size > 0:
+                std_alpha_reg_lin.append(
+                    np.std(diff[mask])
+                )  # standard deviation of error for slope class
+                alpha_reg_lin_for_fit.append(alpha_reg_lin[n])
+
+        if len(std_alpha_reg_lin) <= 1:
+            logging.error("Not enough pints to fit!")
+            raise ValueError
+
+        a, b = np.polyfit(np.tan(alpha_reg_lin_for_fit), std_alpha_reg_lin, 1)
+
+        # calculation of normalization factor
+        f_norm = np.ones(diff.shape) * np.nan
+        for n in range(len(bin_alpha) - 1):
+            mask = (alpha >= bin_alpha[n]) & (alpha <= bin_alpha[n + 1])
+            y_alpha, x_alpha = np.where(mask)
+            f_norm[y_alpha, x_alpha] = (
+                1 + b / a * tan_alpha[y_alpha, x_alpha]
+            ) ** (-1)
+
+        # application of normalization factor to DEM elevation errors
+        # bias subtraction before applying the factor.
+        mu = np.mean(self.remove_nan(diff))
+        dh_norm = (np.copy(diff) - mu) * f_norm
+
+        return dh_norm
+
+    def compute_tan_slope(self, dem: xr.Dataset) -> np.ndarray:
+        """
+        Return the tangent of the slope of the input DEM:
+        tan = sqrt(nx*nx + ny*ny)/nz
+
+        :param dem: dem xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_1: xr.Dataset
+        :return: 2D (row, col) tangent of the slope of the input DEM.
+        :rtype: np.ndarray
+        """
+        normal = self.compute_surface_normal(
+            dem["image"].data,
+            dem.georef_transform.data[1],
+            dem.georef_transform.data[5],
+        )
+        tan_alpha = ((normal[0] ** 2 + normal[1] ** 2) ** 0.5) / normal[2]
+        return tan_alpha
+
+    def compute_surface_normal(
+        self, data: np.ndarray, dx: np.float64, dy: np.float64
+    ) -> np.ndarray:
+        """
+        Return the surface normal vector at each pixel.
+        First: compute the gradient in every direction at each pixel.
+        Finally: compute the cross product of the 2 gradient vectors.
+
+        This function already exists. Need to refactorize it.
+
+        :param data: 2D (row, col) np.ndarray containing the image
+        :type data: np.ndarray
+        :param dx: DEM's resolution in the X direction
+        :type dx: np.float64
+        :param dy: DEM's resolution in the Y direction
+        :type dy: np.float64
+        :return: vector (3D, row, col) normal to the surface for each pixel
+        :rtype: np.ndarray
+        """
+
+        size_x, size_y = data.shape
+
+        gx = np.gradient(data / np.abs(dx), axis=1)
+        gy = np.gradient(data / np.abs(dy), axis=0)
+
+        zer = np.zeros((size_x, size_y))
+        one = np.ones((size_x, size_y))
+
+        n_xx = one
+        n_xy = zer
+        n_xz = gx
+
+        n_yx = zer
+        n_yy = one
+        n_yz = gy
+
+        n_x = np.array([n_xx, n_xy, n_xz])
+        n_y = np.array([n_yx, n_yy, n_yz])
+
+        n = np.cross(n_x, n_y, axis=0)
+        norm = (n[0, :, :] ** 2 + n[1, :, :] ** 2 + n[2, :, :] ** 2) ** 0.5
+
+        return n / norm
+
+    def remove_nan(self, data: np.ndarray) -> np.ndarray:
+        """
+        Function for removing NaNs from a numpy array (data)
+
+        :param data: 2D (row, col) np.ndarray with possibly Nans
+        :type data: np.ndarray
+        :return: input data without NaNs
+        :rtype: np.ndarray
+        """
+        return data[~np.isnan(data)]
+
+    def process_dem(
+        self,
+        dem_1: xr.Dataset,
+        dem_2: xr.Dataset = None,
+    ) -> xr.Dataset:
+        """
+        Compute the difference between dem_1 and dem_2 normalized by the slope.
+        Add classification layers to the difference.
+
+        :param dem_1: dem_1 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_1: xr.Dataset
+        :param dem_2: dem_2 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_2: xr.Dataset
+        :return: difference normalized by the slope xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :rtype: xr.Dataset
+        """
+        diff = self.compute_dems_diff_slope_norm(dem_1, dem_2)
         diff = accumulates_class_layers(dem_1, dem_2, diff)
         return diff
 
