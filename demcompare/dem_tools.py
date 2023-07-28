@@ -1158,3 +1158,60 @@ def verify_fusion_layers(dem: xr.Dataset, classif_cfg: Dict, support: str):
                         layer_to_fusion,
                     )
                     raise ValueError
+
+
+def remove_nan(data: np.ndarray) -> np.ndarray:
+    """
+    Function for removing NaNs from a numpy array (data)
+    If data has a dimension >1, t
+    he function returns a row vector (1D) without NaNs
+
+    :param data: array of values
+    :type data: np.ndarray
+    :return: array of values without Nans
+    :rtype: np.ndarray
+    """
+    return data[~np.isnan(data)]
+
+
+def compute_surface_normal(
+    data: np.ndarray, dx: np.float64, dy: np.float64
+) -> np.ndarray:
+    """
+    Return the surface normal vector at each pixel.
+    First: compute the gradient in every direction at each pixel.
+    Finally: compute the cross product of the 2 gradient vectors.
+
+    :param data: 2D (row, col) np.ndarray containing the image
+    :type data: np.ndarray
+    :param dx: DEM's resolution in the X direction
+    :type dx: np.float64
+    :param dy: DEM's resolution in the Y direction
+    :type dy: np.float64
+    :return: vector (3D, row, col) normal to the surface for each pixel
+    :rtype: np.ndarray
+    """
+
+    size_x, size_y = data.shape
+
+    gx = np.gradient(data / np.abs(dx), axis=1)
+    gy = np.gradient(data / np.abs(dy), axis=0)
+
+    zer = np.zeros((size_x, size_y))
+    one = np.ones((size_x, size_y))
+
+    n_xx = one
+    n_xy = zer
+    n_xz = gx
+
+    n_yx = zer
+    n_yy = one
+    n_yz = gy
+
+    n_x = np.array([n_xx, n_xy, n_xz])
+    n_y = np.array([n_yx, n_yy, n_yz])
+
+    n = np.cross(n_x, n_y, axis=0)
+    norm = (n[0, :, :] ** 2 + n[1, :, :] ** 2 + n[2, :, :] ** 2) ** 0.5
+
+    return n / norm

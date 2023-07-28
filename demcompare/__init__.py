@@ -135,6 +135,7 @@ def run(
                     csv_path_cdf,
                     plot_path_pdf,
                     csv_path_pdf,
+                    plot_slope_orientation_histogram_path,
                 ) = helpers_init.get_output_files_paths(
                     cfg["output_dir"], dem_processing_method, "dem_for_stats"
                 )
@@ -228,6 +229,7 @@ def run(
                         }
                     },
                 ]
+
                 # generate intermediate stats results CDF and PDF for report
                 stats_processing.compute_stats(
                     classification_layer=["global"],
@@ -283,6 +285,7 @@ def run(
                     csv_path_cdf,
                     plot_path_pdf,
                     csv_path_pdf,
+                    plot_slope_orientation_histogram_path,
                 ) = helpers_init.get_output_files_paths(
                     cfg["output_dir"], dem_processing_method, "dem_for_stats"
                 )
@@ -326,7 +329,18 @@ def run(
                             "output_csv_path": csv_path_pdf,
                         }
                     },
+                    {
+                        "slope-orientation-histogram": {
+                            "remove_outliers": cfg["statistics"][
+                                dem_processing_method
+                            ]["remove_outliers"],
+                            "output_plot_path": plot_slope_orientation_histogram_path,  # noqa: E501, B950 # pylint: disable=line-too-long
+                            "dx": input_ref.georef_transform.data[1],
+                            "dy": input_ref.georef_transform.data[5],
+                        }
+                    },
                 ]
+
                 # generate intermediate stats results CDF and PDF for report
                 stats_processing.compute_stats(
                     classification_layer=["global"],
@@ -599,6 +613,7 @@ def compute_stats_after_coregistration(
             csv_path_cdf,
             plot_path_pdf,
             csv_path_pdf,
+            plot_slope_orientation_histogram_path,  # noqa: E501, B950 # pylint: disable=line-too-long,unused-variable
         ) = helpers_init.get_output_files_paths(
             cfg_method["output_dir"], dem_processing_method, "dem_for_stats"
         )
@@ -633,6 +648,7 @@ def compute_stats_after_coregistration(
                 }
             },
         ]
+
         # Generate intermediate stats to compare pdf and cdf before and after
         stats_processing_final.compute_stats(
             classification_layer=["global"],

@@ -36,7 +36,12 @@ import numpy as np
 import xarray as xr
 from json_checker import Checker, Or
 
-from demcompare.dem_tools import DEFAULT_NODATA, create_dem, save_dem
+from demcompare.dem_tools import (
+    DEFAULT_NODATA,
+    create_dem,
+    remove_nan,
+    save_dem,
+)
 from demcompare.metric import Metric
 from demcompare.output_tree_design import get_out_dir
 
@@ -462,17 +467,22 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 class_alti_values = dz_values[
                     np.where((class_masks[idx] * mode_mask))
                 ]
+                class_alti_values_stats_computation = np.where(
+                    (class_masks[idx] * mode_mask), dz_values, np.nan
+                )
                 # Class outliers free mask
                 class_outliers_free_mask = (
                     class_masks[idx] * mode_mask * self.outliers_free_mask
                 )
                 # Class outliers free altitude values
-                class_outliers_free_alti_values = dz_values[
-                    np.where(class_outliers_free_mask)
-                ]
+                class_outliers_free_alti_values = np.where(
+                    class_outliers_free_mask, dz_values, np.nan
+                )
                 # Do stats computation and obtain class_stats dictionary
                 class_stats = self.stats_computation(
-                    class_alti_values, class_outliers_free_alti_values, metrics
+                    class_alti_values_stats_computation,
+                    class_outliers_free_alti_values,
+                    metrics,
                 )
                 # Masks altitude values not corresponding to the
                 # class and its mode
@@ -582,18 +592,31 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 array = outliers_free_data
             else:
                 array = data
-            if array.size:
+            if remove_nan(array).size:
                 # Format output list according to the metric type
                 # Round the float results
                 if metric_object.type == "scalar":
-                    computed_metric = metric_object.compute_metric(array)
+                    computed_metric = metric_object.compute_metric(
+                        remove_nan(array)
+                    )
                     metric_results[metric_name] = round(
                         float(computed_metric), 5
                     )
                 elif metric_object.type == "vector" and not np.all(
                     np.round(array, decimals=6) == 0
                 ):
-                    computed_metric = metric_object.compute_metric(array)
+                    if metric_object.input_type == "1D":
+                        computed_metric = metric_object.compute_metric(
+                            remove_nan(array)
+                        )
+                    elif metric_object.input_type == "2D":
+                        computed_metric = metric_object.compute_metric(array)
+                    else:
+                        logging.error(
+                            "The metric input type: %s is not implemented",
+                            metric_object.input_type,
+                        )
+                        raise ValueError
                     for idx_vec, _ in enumerate(computed_metric[0]):
                         computed_metric[0][idx_vec] = round(
                             float(computed_metric[0][idx_vec]), 5

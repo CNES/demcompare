@@ -34,7 +34,12 @@ import xarray as xr
 from numpy.fft import fft2, ifft2, ifftshift
 from scipy.interpolate import griddata
 
-from demcompare.dem_tools import accumulates_class_layers, create_dem
+from demcompare.dem_tools import (
+    accumulates_class_layers,
+    compute_surface_normal,
+    create_dem,
+    remove_nan,
+)
 
 from .dem_processing import DemProcessing
 from .dem_processing_template import DemProcessingTemplate
@@ -273,7 +278,7 @@ class AltiDiffSlopeNorm(DemProcessingTemplate):
 
         # application of normalization factor to DEM elevation errors
         # bias subtraction before applying the factor.
-        mu = np.mean(self.remove_nan(diff))
+        mu = np.mean(remove_nan(diff))
         dh_norm = (np.copy(diff) - mu) * f_norm
 
         return dh_norm
@@ -293,68 +298,13 @@ class AltiDiffSlopeNorm(DemProcessingTemplate):
         :return: 2D (row, col) tangent of the slope of the input DEM.
         :rtype: np.ndarray
         """
-        normal = self.compute_surface_normal(
+        normal = compute_surface_normal(
             dem["image"].data,
             dem.georef_transform.data[1],
             dem.georef_transform.data[5],
         )
         tan_alpha = ((normal[0] ** 2 + normal[1] ** 2) ** 0.5) / normal[2]
         return tan_alpha
-
-    def compute_surface_normal(
-        self, data: np.ndarray, dx: np.float64, dy: np.float64
-    ) -> np.ndarray:
-        """
-        Return the surface normal vector at each pixel.
-        First: compute the gradient in every direction at each pixel.
-        Finally: compute the cross product of the 2 gradient vectors.
-
-        This function already exists. Need to refactorize it.
-
-        :param data: 2D (row, col) np.ndarray containing the image
-        :type data: np.ndarray
-        :param dx: DEM's resolution in the X direction
-        :type dx: np.float64
-        :param dy: DEM's resolution in the Y direction
-        :type dy: np.float64
-        :return: vector (3D, row, col) normal to the surface for each pixel
-        :rtype: np.ndarray
-        """
-
-        size_x, size_y = data.shape
-
-        gx = np.gradient(data / np.abs(dx), axis=1)
-        gy = np.gradient(data / np.abs(dy), axis=0)
-
-        zer = np.zeros((size_x, size_y))
-        one = np.ones((size_x, size_y))
-
-        n_xx = one
-        n_xy = zer
-        n_xz = gx
-
-        n_yx = zer
-        n_yy = one
-        n_yz = gy
-
-        n_x = np.array([n_xx, n_xy, n_xz])
-        n_y = np.array([n_yx, n_yy, n_yz])
-
-        n = np.cross(n_x, n_y, axis=0)
-        norm = (n[0, :, :] ** 2 + n[1, :, :] ** 2 + n[2, :, :] ** 2) ** 0.5
-
-        return n / norm
-
-    def remove_nan(self, data: np.ndarray) -> np.ndarray:
-        """
-        Function for removing NaNs from a numpy array (data)
-
-        :param data: 2D (row, col) np.ndarray with possibly Nans
-        :type data: np.ndarray
-        :return: input data without NaNs
-        :rtype: np.ndarray
-        """
-        return data[~np.isnan(data)]
 
     def process_dem(
         self,
@@ -441,13 +391,13 @@ class AngularDiff(DemProcessingTemplate):
                   xr.DataArray
         :rtype: xr.Dataset
         """
-        normal_dem_1 = self.compute_surface_normal(
+        normal_dem_1 = compute_surface_normal(
             dem_1["image"].data,
             dem_1.georef_transform.data[1],
             dem_1.georef_transform.data[5],
         )
 
-        normal_dem_2 = self.compute_surface_normal(
+        normal_dem_2 = compute_surface_normal(
             dem_2["image"].data,
             dem_2.georef_transform.data[1],
             dem_2.georef_transform.data[5],
@@ -465,46 +415,6 @@ class AngularDiff(DemProcessingTemplate):
             bounds=dem_2.bounds,
         )
         return diff_dem
-
-    def compute_surface_normal(
-        self, data: np.ndarray, dx: np.float64, dy: np.float64
-    ) -> np.ndarray:
-        """
-        Return the surface normal vector at each pixel.
-
-        :param data: 2D (row, col) np.ndarray containing the image
-        :type data: np.ndarray
-        :param dx: DEM's resolution in the X direction
-        :type dx: np.float64
-        :param dy: DEM's resolution in the Y direction
-        :type dy: np.float64
-        :return: vector (3, row, col) normal to the surface for each pixel
-        :rtype: np.ndarray
-        """
-
-        size_x, size_y = data.shape
-
-        gx = np.gradient(data / np.abs(dx), axis=1)
-        gy = np.gradient(data / np.abs(dy), axis=0)
-
-        zer = np.zeros((size_x, size_y))
-        one = np.ones((size_x, size_y))
-
-        n_xx = one
-        n_xy = zer
-        n_xz = gx
-
-        n_yx = zer
-        n_yy = one
-        n_yz = gy
-
-        n_x = np.array([n_xx, n_xy, n_xz])
-        n_y = np.array([n_yx, n_yy, n_yz])
-
-        n = np.cross(n_x, n_y, axis=0)
-        norm = (n[0, :, :] ** 2 + n[1, :, :] ** 2 + n[2, :, :] ** 2) ** 0.5
-
-        return n / norm
 
     def compute_angular_similarity(
         self, n_a: np.ndarray, n_b: np.ndarray
