@@ -209,7 +209,7 @@ def test_angular_diff():
 @pytest.mark.unit_tests
 def test_alti_diff_norm():
     """
-    Test alti-diff-norm DEM processing class function process_dem.
+    Test alti-diff-slope-norm DEM processing class function process_dem.
     Input data:
     - Two manually created dems with custom nodata (-37, 99, 33)
       values
@@ -252,7 +252,7 @@ def test_alti_diff_norm():
         dtype=np.float32,
     )
 
-    dem_processing_obj = DemProcessing("alti-diff-norm")
+    dem_processing_obj = DemProcessing("alti-diff-slope-norm")
     diff_dataset = dem_processing_obj.process_dem(ref_dataset, sec_dataset)
     # Test that the output difference is the same as ground_truth
     np.testing.assert_array_almost_equal(diff_gt, diff_dataset["image"].data)

@@ -136,8 +136,8 @@ class AltiDiff(DemProcessingTemplate):
         return diff
 
 
-@DemProcessing.register("alti-diff-norm")
-class AltiDiffNorm(DemProcessingTemplate):
+@DemProcessing.register("alti-diff-slope-norm")
+class AltiDiffSlopeNorm(DemProcessingTemplate):
     """
     Altitude difference between two DEMs normalized by the slope
     """
@@ -153,7 +153,7 @@ class AltiDiffNorm(DemProcessingTemplate):
         self.fig_title = "[REF - SEC] difference normalized by the slope"
         self.colorbar_title = "Elevation difference normalized by the slope"
 
-    def compute_dems_diff_norm(
+    def compute_dems_diff_slope_norm(
         self,
         dem_1: xr.Dataset,
         dem_2: xr.Dataset,
@@ -203,7 +203,14 @@ class AltiDiffNorm(DemProcessingTemplate):
         self, diff: np.ndarray, dem: xr.Dataset, nbins: int = 100
     ) -> np.ndarray:
         """
-        Compte the normalization factor for several (nbins) slope classes
+        Compute the normalization factor for several (nbins) slope classes.
+        First: compute the tangent of the slope at each pixel.
+        Then: compute the angle of the slope at each pixel.
+        Then: classification of the pixels by the angle of the slope value.
+        Then: compute the std of the error for each of the pixel classes
+        Then: perform linear regression: a,b=regLin(tan(angle),std)
+        Finally: Error normalization for each slope class:
+        dh = dh/(1+b/a*tan(angle))
 
         :param diff: difference between the ref and sec DEMs
         :type diff: np.ndarray
@@ -213,8 +220,8 @@ class AltiDiffNorm(DemProcessingTemplate):
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
-        :type dem_1: xr.Dataset
-        :param nbins: number of bins of the hisotgram
+        :type dem: xr.Dataset
+        :param nbins: number of bins of the histogram
         :type nbins: int
         :return: altitude difference normalized by the slope
         :rtype: np.ndarray
@@ -273,7 +280,8 @@ class AltiDiffNorm(DemProcessingTemplate):
 
     def compute_tan_slope(self, dem: xr.Dataset) -> np.ndarray:
         """
-        Return the tangent of the slope of the input DEM.
+        Return the tangent of the slope of the input DEM:
+        tan = sqrt(nx*nx + ny*ny)/nz
 
         :param dem: dem xr.DataSet containing :
 
@@ -298,6 +306,10 @@ class AltiDiffNorm(DemProcessingTemplate):
     ) -> np.ndarray:
         """
         Return the surface normal vector at each pixel.
+        First: compute the gradient in every direction at each pixel.
+        Finally: compute the cross product of the 2 gradient vectors.
+
+        This function already exists. Need to refactorize it.
 
         :param data: 2D (row, col) np.ndarray containing the image
         :type data: np.ndarray
@@ -305,7 +317,7 @@ class AltiDiffNorm(DemProcessingTemplate):
         :type dx: np.float64
         :param dy: DEM's resolution in the Y direction
         :type dy: np.float64
-        :return: vector (3, row, col) normal to the surface for each pixel
+        :return: vector (3D, row, col) normal to the surface for each pixel
         :rtype: np.ndarray
         """
 
@@ -375,7 +387,7 @@ class AltiDiffNorm(DemProcessingTemplate):
                   xr.DataArray
         :rtype: xr.Dataset
         """
-        diff = self.compute_dems_diff_norm(dem_1, dem_2)
+        diff = self.compute_dems_diff_slope_norm(dem_1, dem_2)
         diff = accumulates_class_layers(dem_1, dem_2, diff)
         return diff
 

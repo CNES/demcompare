@@ -433,7 +433,7 @@ def test_demcompare_statistics_step_alti_diff_norm_diff_with_gironde_test_data()
     test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
     test_cfg = read_config_file(test_cfg_path)
 
-    test_cfg["statistics"]["alti-diff-norm"] = test_cfg["statistics"].pop(
+    test_cfg["statistics"]["alti-diff-slope-norm"] = test_cfg["statistics"].pop(
         "alti-diff"
     )
 
