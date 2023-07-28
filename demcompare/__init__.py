@@ -228,6 +228,7 @@ def run(
                         }
                     },
                 ]
+
                 # generate intermediate stats results CDF and PDF for report
                 stats_processing.compute_stats(
                     classification_layer=["global"],
@@ -327,6 +328,7 @@ def run(
                         }
                     },
                 ]
+
                 # generate intermediate stats results CDF and PDF for report
                 stats_processing.compute_stats(
                     classification_layer=["global"],
@@ -633,6 +635,7 @@ def compute_stats_after_coregistration(
                 }
             },
         ]
+
         # Generate intermediate stats to compare pdf and cdf before and after
         stats_processing_final.compute_stats(
             classification_layer=["global"],
