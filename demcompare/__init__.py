@@ -38,8 +38,8 @@ import xarray as xr
 from . import helpers_init, log_conf, report
 from .coregistration import Coregistration
 from .dem_processing import DemProcessing
+from .dem_representation import DemRepresentation
 from .dem_tools import (
-    compute_and_save_image_plots,
     compute_dem_slope,
     load_dem,
     reproject_dems,
@@ -136,7 +136,9 @@ def run(
                     plot_path_pdf,
                     csv_path_pdf,
                 ) = helpers_init.get_output_files_paths(
-                    cfg["output_dir"], dem_processing_method, "dem_for_stats"
+                    cfg["output_dir"],
+                    dem_processing_method,
+                    file_name="dem_for_stats",
                 )
 
                 reproj_sec, reproj_ref, _ = reproject_dems(
@@ -191,8 +193,10 @@ def run(
                 # Save stats_dem for two states
                 save_dem(stats_dem, dem_path)
 
+                dem_representation_object = DemRepresentation("dem")
+
                 # Compute and save initial altitude diff image plots
-                compute_and_save_image_plots(
+                dem_representation_object.compute_and_save_image_plots(
                     stats_dem,
                     plot_file_path,
                     fig_title=dem_processing_object.fig_title,
@@ -275,29 +279,66 @@ def run(
 
                 # Define stats_dem as the input dem
                 stats_dem = dem_processing_object.process_dem(input_ref)
+                if "representation" in cfg["statistics"][dem_processing_method]:
+                    for dem_representation_method in cfg["statistics"][
+                        dem_processing_method
+                    ]["representation"]:
+                        # Obtain output paths for initial dem diff without coreg
+                        (
+                            dem_path,
+                            plot_file_path,
+                            plot_path_cdf,
+                            csv_path_cdf,
+                            plot_path_pdf,
+                            csv_path_pdf,
+                        ) = helpers_init.get_output_files_paths(
+                            cfg["output_dir"],
+                            dem_processing_method,
+                            dem_representation_method,
+                            "dem_for_stats",
+                        )
 
-                # Obtain output paths for initial dem diff without coreg
-                (
-                    dem_path,
-                    plot_file_path,
-                    plot_path_cdf,
-                    csv_path_cdf,
-                    plot_path_pdf,
-                    csv_path_pdf,
-                ) = helpers_init.get_output_files_paths(
-                    cfg["output_dir"], dem_processing_method, "dem_for_stats"
-                )
+                        dem_representation_object = DemRepresentation(
+                            dem_representation_method,
+                            cfg["statistics"][dem_processing_method][
+                                "representation"
+                            ][dem_representation_method],
+                        )
+
+                        # Compute and save initial altitude diff image plots
+                        dem_representation_object.compute_and_save_image_plots(
+                            stats_dem,
+                            plot_file_path,
+                            fig_title=dem_representation_object.fig_title,
+                            colorbar_title=dem_representation_object.colorbar_title,  # noqa: E501, B950 # pylint: disable=line-too-long
+                        )
+
+                else:
+                    dem_representation_object = DemRepresentation("dem")
+
+                    (
+                        dem_path,
+                        plot_file_path,
+                        plot_path_cdf,
+                        csv_path_cdf,
+                        plot_path_pdf,
+                        csv_path_pdf,
+                    ) = helpers_init.get_output_files_paths(
+                        cfg["output_dir"],
+                        dem_processing_method,
+                        "dem_for_stats",
+                    )
+
+                    # Compute and save initial altitude diff image plots
+                    dem_representation_object.compute_and_save_image_plots(
+                        stats_dem,
+                        plot_file_path,
+                        fig_title=dem_processing_object.fig_title,
+                        colorbar_title=dem_processing_object.colorbar_title,
+                    )
 
                 # Save stats_dem for two states
                 save_dem(stats_dem, dem_path)
-
-                # Compute and save initial altitude diff image plots
-                compute_and_save_image_plots(
-                    stats_dem,
-                    plot_file_path,
-                    fig_title=dem_processing_object.fig_title,
-                    colorbar_title=dem_processing_object.colorbar_title,
-                )
 
                 # Create StatsComputation object
                 stats_processing = StatsProcessing(
@@ -602,14 +643,18 @@ def compute_stats_after_coregistration(
             plot_path_pdf,
             csv_path_pdf,
         ) = helpers_init.get_output_files_paths(
-            cfg_method["output_dir"], dem_processing_method, "dem_for_stats"
+            cfg_method["output_dir"],
+            dem_processing_method,
+            file_name="dem_for_stats",
         )
 
         # Save final altitude diff
         save_dem(final_altitude_diff, dem_path)
 
+        dem_representation_object = DemRepresentation("dem")
+
         # Compute and save final altitude diff image plots
-        compute_and_save_image_plots(
+        dem_representation_object.compute_and_save_image_plots(
             dem=final_altitude_diff,
             plot_path=plot_file_path,
             fig_title=dem_processing_object.fig_title,
