@@ -20,9 +20,8 @@
 #
 # pylint:disable=too-few-public-methods
 """
-Mainly contains different matrice metric classes
+Mainly contains different matrix metric classes
 """
-# pylint:disable=too-many-lines
 
 from typing import Dict
 
@@ -32,7 +31,11 @@ import numpy as np
 # Third party imports
 from numpy.fft import fft2, ifft2, ifftshift
 
-from demcompare.img_tools import calc_spatial_freq_2d, neighbour_interpol
+from demcompare.img_tools import (
+    calc_spatial_freq_2d,
+    compute_hillsahde,
+    neighbour_interpol,
+)
 
 from .metric import Metric
 from .metric_template import MetricTemplate
@@ -46,20 +49,20 @@ class DemHillShade(MetricTemplate):
 
     def __init__(self, parameters: Dict = None):
         """
-        Initialization the matrice metric object
+        Initialization the matrix metric object
         :return: None
         """
 
         super().__init__()
 
-        self.type = "matrice"
+        self.type = "matrix2D"
         self.fig_title = "REF dem hill shade"
         self.colorbar_title = "Hill shade"
 
         # angular direction of the sun
-        self.azimuth: int = 315
+        self.azimuth: float = 315
         # angle of the illumination source above the horizon
-        self.angle_altitude: int = 45
+        self.angle_altitude: float = 45
         self.cmap: str = "Greys_r"
         self.plot_path: str = None
 
@@ -77,7 +80,7 @@ class DemHillShade(MetricTemplate):
             if "plot_path" in parameters:
                 self.plot_path = parameters["plot_path"]
 
-    def compute_metric(self, data: np.ndarray) -> None:
+    def compute_metric(self, data: np.ndarray) -> np.ndarray:
         """
         Compute and optionnally save plots the hillshade view
         a of a dem using pyplot img_show.
@@ -88,17 +91,9 @@ class DemHillShade(MetricTemplate):
         :return: None
         """
 
-        x, y = np.gradient(data)
-        slope = np.pi / 2.0 - np.arctan(np.sqrt(x * x + y * y))
-        aspect = np.arctan2(-x, y)
-        azimuthrad = self.azimuth * np.pi / 180.0
-        altituderad = self.angle_altitude * np.pi / 180.0
-
-        shaded = np.sin(altituderad) * np.sin(slope) + np.cos(
-            altituderad
-        ) * np.cos(slope) * np.cos(azimuthrad - aspect)
-
-        hillshade_array = 255 * (shaded + 1) / 2
+        hillshade_array = compute_hillsahde(
+            data, self.azimuth, self.angle_altitude
+        )
 
         fig, fig_ax = mpl_pyplot.subplots(figsize=(7.0, 8.0))
 
@@ -123,6 +118,8 @@ class DemHillShade(MetricTemplate):
 
         mpl_pyplot.close()
 
+        return hillshade_array
+
 
 @Metric.register("dem-sky-view-factor")
 class DemSkyViewFactor(MetricTemplate):
@@ -132,13 +129,13 @@ class DemSkyViewFactor(MetricTemplate):
 
     def __init__(self, parameters: Dict = None):
         """
-        Initialization the matrice metric object
+        Initialization the matrix metric object
         :return: None
         """
 
         super().__init__()
 
-        self.type = "matrice"
+        self.type = "matrix2D"
         self.fig_title = "REF dem sky view factor"
         self.colorbar_title = "Sky view factor"
 
@@ -217,15 +214,15 @@ class DemSkyViewFactor(MetricTemplate):
 
         return image_filtered
 
-    def compute_metric(self, data: np.ndarray) -> None:
+    def compute_metric(self, data: np.ndarray) -> np.ndarray:
         """
         Compute and optionnally save plots the sky view factor
         a of a dem using pyplot img_show.
         see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html # noqa: E501, B950 # pylint: disable=line-too-long
 
         :param data: input data to compute the metric
-        :type data: np.array
-        :return: None
+        :type data: np.ndarray
+        :return: np.ndarray
         """
 
         fig, fig_ax = mpl_pyplot.subplots(figsize=(7.0, 8.0))
@@ -264,3 +261,5 @@ class DemSkyViewFactor(MetricTemplate):
             mpl_pyplot.savefig(self.plot_path, dpi=100, bbox_inches="tight")
 
         mpl_pyplot.close()
+
+        return z

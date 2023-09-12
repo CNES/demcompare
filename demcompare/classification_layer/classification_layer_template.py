@@ -18,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# pylint:disable=too-many-branches
 """
 Mainly contains the ClassificationLayer class.
 A classification_layer defines a way to classify the DEMs alti differences.
@@ -460,7 +461,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 self.classes.items()
             ):
                 # Class altitude values
-                # class_alti_values is a 2D matrice
+                # class_alti_values is a 2D matrix
                 class_alti_values = np.where(
                     (class_masks[idx] * mode_mask), dz_values, np.nan
                 )
@@ -473,7 +474,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                     class_masks[idx] * mode_mask * self.outliers_free_mask
                 )
                 # Class outliers free altitude values
-                # class_outliers_free_alti_values is a 2D matrice
+                # class_outliers_free_alti_values is a 2D matrix
                 class_outliers_free_alti_values = np.where(
                     class_outliers_free_mask, dz_values, np.nan
                 )
@@ -641,13 +642,16 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                         "second DEMs are the same",
                         metric_name,
                     )
-                elif metric_object.type == "matrice":
+                elif metric_object.type == "matrix2D":
                     computed_metric = metric_object.compute_metric(array)
+                    metric_results[metric_name] = np.round(computed_metric, 5)
             else:
                 # If the input array is empty, the metric is np.nan
                 if metric_object.type == "scalar":
                     metric_results[metric_name] = np.nan
                 elif metric_object.type == "vector":
+                    metric_results[metric_name] = (np.nan, np.nan)
+                elif metric_object.type == "matrix2D":
                     metric_results[metric_name] = (np.nan, np.nan)
         return metric_results
 
