@@ -34,6 +34,8 @@ import sys
 from enum import Enum
 from typing import Dict, Tuple, Union
 
+import matplotlib.pyplot as mpl_pyplot
+
 # Third party imports
 import numpy as np
 import rasterio
@@ -1034,6 +1036,65 @@ def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
     )
 
     return dataset
+
+
+def compute_and_save_image_plots(
+    dem: xr.Dataset,
+    plot_path: str = None,
+    fig_title: str = None,
+    colorbar_title: str = None,
+    cmap: str = "terrain",
+):
+    """
+    Compute and optionnally save plots from a dem using pyplot img_show.
+    see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html
+
+    :param dem: dem object to compute and save image plots
+    :type dem: str
+    :param plot_path: path to save the plots if present
+    :type plot_path: str
+    :param fig_title: optional plot figure title
+    :type fig_title: str
+    :param title_colorbar: optional dem path to save the original tif file
+    :type title_colorbar: str
+    :param cmap: registered colormap name used to map scalar data to colors.
+    :type cmap: str
+    """
+
+    # Create and save plot using the dem_plot function
+
+    # Compute mean of dem image data
+    mu = np.nanmean(dem["image"].data)
+    # Compute std also
+    sigma = np.nanstd(dem["image"].data)
+
+    # Plot with matplotlib.pyplot
+    fig, fig_ax = mpl_pyplot.subplots(figsize=(7.0, 8.0))
+    # add fig title if present
+    if fig_title:
+        fig_ax.set_title(fig_title, fontsize="large")
+    #
+    im1 = fig_ax.imshow(
+        dem["image"].data,
+        cmap=cmap,
+        vmin=mu - sigma,
+        vmax=mu + sigma,
+        interpolation="none",
+        aspect="equal",
+    )
+    fig.colorbar(im1, label=colorbar_title, ax=fig_ax)
+    fig.text(
+        0.15,
+        0.15,
+        f"Values rescaled between"
+        f"\n[mean-std, mean+std]=[{mu - sigma:.2f}, {mu + sigma:.2f}]",
+        fontsize="medium",
+    )
+    # Save plot
+    if plot_path:
+        mpl_pyplot.savefig(plot_path, dpi=100, bbox_inches="tight")
+
+    mpl_pyplot.close()
 
 
 def verify_fusion_layers(dem: xr.Dataset, classif_cfg: Dict, support: str):

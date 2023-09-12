@@ -608,16 +608,18 @@ def test_demcompare_statistics_step_input_ref_representations_with_gironde_test_
     # of the cfg
     test_cfg.pop("input_sec")
     test_cfg["statistics"]["alti-diff"]["classification_layers"].pop("Fusion0")
+    test_cfg["statistics"]["alti-diff"]["classification_layers"].pop("Slope0")
     test_cfg["statistics"]["ref"] = test_cfg["statistics"].pop("alti-diff")
-    test_cfg["statistics"]["ref"]["representation"] = {
-        "dem": None,
-        "dem-hill-shade": {"azimuth": 345, "angle_altitude": 70},
-        "dem-sky-view-factor": {
-            "filter_intensity": 0.95,
-            "replication": "False",
-            "quantiles": [0.01, 0.99],
+    test_cfg["statistics"]["ref"]["metrics"] = [
+        {"dem-sky-view-factor": {"plot_path": "test"}},
+        {
+            "dem-hill-shade": {
+                "plot_path": "tmp",
+                "azimuth": 345,
+                "angle_altitude": 70,
+            }
         },
-    }
+    ]
 
     # Input configuration is
     # "input_ref": {

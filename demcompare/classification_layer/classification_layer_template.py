@@ -641,13 +641,14 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                         "second DEMs are the same",
                         metric_name,
                     )
+                elif metric_object.type == "matrice":
+                    computed_metric = metric_object.compute_metric(array)
             else:
                 # If the input array is empty, the metric is np.nan
                 if metric_object.type == "scalar":
                     metric_results[metric_name] = np.nan
                 elif metric_object.type == "vector":
                     metric_results[metric_name] = (np.nan, np.nan)
-
         return metric_results
 
     def save_map_img(self, map_img: np.ndarray, map_support: str):

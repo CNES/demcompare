@@ -24,7 +24,12 @@ Imports are used to simplify calls to module API Metrics.
 """
 
 # Demcompare imports
-from . import scalar_metrics, vector_metrics
+from . import matrice_metrics, scalar_metrics, vector_metrics
 from .metric import Metric
 
-__all__ = ["scalar_metrics", "vector_metrics", "Metric"]  # To avoid flake8 F401
+__all__ = [
+    "scalar_metrics",
+    "vector_metrics",
+    "matrice_metrics",
+    "Metric",
+]  # To avoid flake8 F401
