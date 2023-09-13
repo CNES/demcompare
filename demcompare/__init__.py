@@ -130,14 +130,14 @@ def run(
 
                 # Obtain output paths for initial dem diff without coreg
                 (
-                    dem_path,
-                    plot_file_path,
-                    plot_path_cdf,
-                    csv_path_cdf,
-                    plot_path_pdf,
-                    csv_path_pdf,
-                    plot_path_svf,
-                    plot_path_hillshade,
+                    dem_path,  # pylint:disable=duplicate-code
+                    plot_file_path,  # pylint:disable=duplicate-code
+                    plot_path_cdf,  # pylint:disable=duplicate-code
+                    csv_path_cdf,  # pylint:disable=duplicate-code
+                    plot_path_pdf,  # pylint:disable=duplicate-code
+                    csv_path_pdf,  # pylint:disable=duplicate-code
+                    plot_path_svf,  # pylint:disable=duplicate-code
+                    plot_path_hillshade,  # pylint:disable=duplicate-code
                 ) = helpers_init.get_output_files_paths(
                     cfg["output_dir"], dem_processing_method, "dem_for_stats"
                 )
@@ -297,14 +297,14 @@ def run(
 
                 # Obtain output paths for initial dem diff without coreg
                 (
-                    dem_path,
-                    plot_file_path,
-                    plot_path_cdf,
-                    csv_path_cdf,
-                    plot_path_pdf,
-                    csv_path_pdf,
-                    plot_path_svf,
-                    plot_path_hillshade,
+                    dem_path,  # pylint:disable=duplicate-code
+                    plot_file_path,  # pylint:disable=duplicate-code
+                    plot_path_cdf,  # pylint:disable=duplicate-code
+                    csv_path_cdf,  # pylint:disable=duplicate-code
+                    plot_path_pdf,  # pylint:disable=duplicate-code
+                    csv_path_pdf,  # pylint:disable=duplicate-code
+                    plot_path_svf,  # pylint:disable=duplicate-code
+                    plot_path_hillshade,  # pylint:disable=duplicate-code
                 ) = helpers_init.get_output_files_paths(
                     cfg["output_dir"], dem_processing_method, "dem_for_stats"
                 )
@@ -632,14 +632,14 @@ def compute_stats_after_coregistration(
 
         # Obtain output paths
         (
-            dem_path,
-            plot_file_path,
-            plot_path_cdf,
-            csv_path_cdf,
-            plot_path_pdf,
-            csv_path_pdf,
-            plot_path_svf,
-            plot_path_hillshade,
+            dem_path,  # pylint:disable=duplicate-code
+            plot_file_path,  # pylint:disable=duplicate-code
+            plot_path_cdf,  # pylint:disable=duplicate-code
+            csv_path_cdf,  # pylint:disable=duplicate-code
+            plot_path_pdf,  # pylint:disable=duplicate-code
+            csv_path_pdf,  # pylint:disable=duplicate-code
+            plot_path_svf,  # pylint:disable=duplicate-code
+            plot_path_hillshade,  # pylint:disable=duplicate-code
         ) = helpers_init.get_output_files_paths(
             cfg_method["output_dir"], dem_processing_method, "dem_for_stats"
         )

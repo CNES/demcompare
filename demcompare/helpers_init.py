@@ -336,12 +336,12 @@ def get_output_files_paths(
         output_dir, "stats", dir_name, file_name + "_hillshade.png"
     )
     return (
-        dem_path,
-        plot_file_path,
-        plot_path_cdf,
-        csv_path_cdf,
-        plot_path_pdf,
-        csv_path_pdf,
-        plot_path_svf,
-        plot_path_hillshade,
+        dem_path,  # pylint:disable=duplicate-code
+        plot_file_path,  # pylint:disable=duplicate-code
+        plot_path_cdf,  # pylint:disable=duplicate-code
+        csv_path_cdf,  # pylint:disable=duplicate-code
+        plot_path_pdf,  # pylint:disable=duplicate-code
+        csv_path_pdf,  # pylint:disable=duplicate-code
+        plot_path_svf,  # pylint:disable=duplicate-code
+        plot_path_hillshade,  # pylint:disable=duplicate-code
     )

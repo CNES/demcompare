@@ -18,8 +18,6 @@
 # limitations under the License.
 #
 # pylint:disable=duplicate-code
-# pylint:disable=too-many-lines
-
 """
 This module contains functions to test Demcompare coregistration
 and statistics steps independently with
