@@ -22,7 +22,6 @@
 """
 Mainly contains different matrix metric classes
 """
-
 from typing import Dict
 
 import matplotlib.pyplot as mpl_pyplot
@@ -31,17 +30,13 @@ import numpy as np
 # Third party imports
 from numpy.fft import fft2, ifft2, ifftshift
 
-from demcompare.img_tools import (
-    calc_spatial_freq_2d,
-    compute_hillsahde,
-    neighbour_interpol,
-)
+from demcompare.img_tools import calc_spatial_freq_2d, neighbour_interpol
 
 from .metric import Metric
 from .metric_template import MetricTemplate
 
 
-@Metric.register("dem-hill-shade")
+@Metric.register("hillshade")
 class DemHillShade(MetricTemplate):
     """
     Compute the hill shade and optionnally save plots from a dem
@@ -80,6 +75,35 @@ class DemHillShade(MetricTemplate):
             if "plot_path" in parameters:
                 self.plot_path = parameters["plot_path"]
 
+    def compute_hillshade(
+        self, data: np.ndarray, azimuth: float, angle_altitude: float
+    ) -> np.ndarray:
+        """
+        Compute the hillshade view a of a dem.
+
+        :param data: input data to compute the metric
+        :type data: np.array
+        :param azimuth: angular direction of the sun
+        :type azimuth: float
+        :param angle_altitude: angle of the illumination source above the horizon # noqa: E501, B950 # pylint: disable=line-too-long
+        :type angle_altitude: float
+        :return: np.ndarray
+        """
+
+        x, y = np.gradient(data)
+        slope = np.pi / 2.0 - np.arctan(np.sqrt(x * x + y * y))
+        aspect = np.arctan2(-x, y)
+        azimuthrad = azimuth * np.pi / 180.0
+        altituderad = angle_altitude * np.pi / 180.0
+
+        shaded = np.sin(altituderad) * np.sin(slope) + np.cos(
+            altituderad
+        ) * np.cos(slope) * np.cos(azimuthrad - aspect)
+
+        hillshade_array = 255 * (shaded + 1) / 2
+
+        return hillshade_array
+
     def compute_metric(self, data: np.ndarray) -> np.ndarray:
         """
         Compute and optionnally save plots the hillshade view
@@ -91,7 +115,7 @@ class DemHillShade(MetricTemplate):
         :return: None
         """
 
-        hillshade_array = compute_hillsahde(
+        hillshade_array = self.compute_hillshade(
             data, self.azimuth, self.angle_altitude
         )
 
@@ -121,7 +145,7 @@ class DemHillShade(MetricTemplate):
         return hillshade_array
 
 
-@Metric.register("dem-sky-view-factor")
+@Metric.register("svf")
 class DemSkyViewFactor(MetricTemplate):
     """
     Compute the sky vuew factor and optionnally save plots from a dem

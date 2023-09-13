@@ -295,7 +295,7 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
 
 def get_output_files_paths(
     output_dir: str, dir_name: str, file_name: str
-) -> Tuple[str, str, str, str, str, str]:
+) -> Tuple[str, str, str, str, str, str, str, str]:
     """
     Return the paths of the output global files:
     - dem.tif
@@ -310,7 +310,7 @@ def get_output_files_paths(
     :param file_name: name of the files
     :type file_name: str
     :return: Output paths
-    :rtype: Tuple[str, str, str, str, str, str]
+    :rtype: Tuple[str, str, str, str, str, str, str, str]
     """
     # Compute and save image tif and image plot png
     dem_path = os.path.join(output_dir, "stats", dir_name, file_name + ".tif")
@@ -329,6 +329,12 @@ def get_output_files_paths(
     csv_path_pdf = os.path.join(
         output_dir, "stats", dir_name, file_name + "_pdf.csv"
     )
+    plot_path_svf = os.path.join(
+        output_dir, "stats", dir_name, file_name + "_svf.png"
+    )
+    plot_path_hillshade = os.path.join(
+        output_dir, "stats", dir_name, file_name + "_hillshade.png"
+    )
     return (
         dem_path,
         plot_file_path,
@@ -336,4 +342,6 @@ def get_output_files_paths(
         csv_path_cdf,
         plot_path_pdf,
         csv_path_pdf,
+        plot_path_svf,
+        plot_path_hillshade,
     )

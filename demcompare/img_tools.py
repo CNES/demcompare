@@ -293,33 +293,3 @@ def calc_spatial_freq_1d(n: int, edge: float = np.pi) -> np.ndarray:
         freq_pos = +np.arange(0, n // 2 + 1)  # type: ignore
 
     return np.concatenate((freq_neg, freq_pos)) * 2 * edge / n
-
-
-def compute_hillsahde(
-    data: np.ndarray, azimuth: float, angle_altitude: float
-) -> np.ndarray:
-    """
-    Compute the hillshade view a of a dem.
-
-    :param data: input data to compute the metric
-    :type data: np.array
-    :param azimuth: angular direction of the sun
-    :type azimuth: float
-    :param angle_altitude: angle of the illumination source above the horizon
-    :type angle_altitude: float
-    :return: np.ndarray
-    """
-
-    x, y = np.gradient(data)
-    slope = np.pi / 2.0 - np.arctan(np.sqrt(x * x + y * y))
-    aspect = np.arctan2(-x, y)
-    azimuthrad = azimuth * np.pi / 180.0
-    altituderad = angle_altitude * np.pi / 180.0
-
-    shaded = np.sin(altituderad) * np.sin(slope) + np.cos(altituderad) * np.cos(
-        slope
-    ) * np.cos(azimuthrad - aspect)
-
-    hillshade_array = 255 * (shaded + 1) / 2
-
-    return hillshade_array
