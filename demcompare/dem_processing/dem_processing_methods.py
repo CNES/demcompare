@@ -32,10 +32,14 @@ import numpy as np
 # Third party imports
 import xarray as xr
 from numpy.fft import fft2, ifft2, ifftshift
-from scipy.interpolate import griddata
 
 from demcompare.dem_tools import accumulates_class_layers, create_dem
-from demcompare.img_tools import compute_surface_normal, remove_nan_and_flatten
+from demcompare.img_tools import (
+    calc_spatial_freq_2d,
+    compute_surface_normal,
+    neighbour_interpol,
+    remove_nan_and_flatten,
+)
 
 from .dem_processing import DemProcessing
 from .dem_processing_template import DemProcessingTemplate
@@ -589,17 +593,17 @@ class RefCurvature(DemProcessingTemplate):
         )
 
         # no data pixel interpolation
-        data_all = self.neighbour_interpol(dem["image"].data, no_data_location)
+        data_all = neighbour_interpol(dem["image"].data, no_data_location)
 
         high, wide = dem["image"].data.shape
 
         if replication:
             data_all = np.hstack([data_all, np.flip(data_all, axis=1)])
             data_all = np.vstack([data_all, np.flip(data_all, axis=0)])
-            f_y, f_x = self.calc_spatial_freq_2d(2 * high, 2 * wide, edge=np.pi)
+            f_y, f_x = calc_spatial_freq_2d(2 * high, 2 * wide, edge=np.pi)
 
         else:
-            f_y, f_x = self.calc_spatial_freq_2d(high, wide, edge=np.pi)
+            f_y, f_x = calc_spatial_freq_2d(high, wide, edge=np.pi)
 
         # spatial frequency (module)
         spatial_freq = (f_x**2 + f_y**2) ** (filter_intensity / 2)
@@ -625,90 +629,6 @@ class RefCurvature(DemProcessingTemplate):
             if hasattr(dem, "classification_layer_masks")
             else None,
         )
-
-    def neighbour_interpol(
-        self, data2d: np.ndarray, no_values_location: np.ndarray
-    ) -> np.ndarray:
-        """
-        Nearest neighbor interpolation function.
-        Applied to DEM containing no data values for calculating curvature.
-
-        :param data2d: 2D (row, col) np.ndarray containing the image
-        :type data2d: np.ndarray
-        :param no_values_location: 2D (row, col) np.ndarray
-                                   containing the no data values
-        :type no_values_location: np.ndarray
-        :return: 2D interpolated np.ndarray
-        :rtype: np.ndarray
-        """
-
-        if np.any(no_values_location):
-            size_y, size_x = data2d.shape
-
-            values_location = np.logical_not(no_values_location)
-
-            x, y = np.meshgrid(range(size_x), range(size_y))
-
-            data_holes = griddata(
-                (y[values_location][:], x[values_location][:]),
-                data2d[values_location][:],
-                (y[no_values_location], x[no_values_location]),
-                method="nearest",
-            )
-
-            data2d[
-                y[no_values_location][:], x[no_values_location][:]
-            ] = data_holes[:]
-
-        return data2d
-
-    def calc_spatial_freq_2d(self, s_y: int, s_x: int, edge: float = np.pi):
-        """
-        Calculation of normalized spatial frequencies
-        for a 2D image/matrix of size s_y * s_x.
-
-        :param s_y: number of rows of the image
-        :type s_y: int
-        :param s_x: number of columns of the image
-        :type s_x: int
-        :return: normalized spatial frequencies
-        :rtype: (np.ndarray, np.ndarray)
-        """
-
-        f_x = self.calc_spatial_freq_1d(s_x, edge)
-        f_y = self.calc_spatial_freq_1d(s_y, edge)
-
-        f_x, f_y = np.meshgrid(f_x, f_y)
-
-        return f_y, f_x
-
-    def calc_spatial_freq_1d(self, n: int, edge: float = np.pi) -> np.ndarray:
-        """
-        Calculation of normalized frequencies
-        between [-edge, +edge] of a vector of n samples.
-        n is even or odd.
-        In both cases, the vector contains the zero frequency at the center.
-
-        :param n: frequency vector size
-        :type n: int
-        :param edge: maximum frequency
-        :type edge: float
-        :return: frequencies between -edge and +edge
-        :rtype: np.ndarray
-        """
-
-        # if size is even: f_x is defined on [-edge, +edge[.
-        if np.mod(n, 2) == 0:
-            freq_neg = -np.arange(1, n / 2 + 1)[::-1]
-            freq_pos = +np.arange(0, n / 2)
-
-        # if size is odd: f_x is defined on [-edge, +edge].
-        else:
-            # use Euclidean division //
-            freq_neg = -np.arange(1, n // 2 + 1)[::-1]  # type: ignore
-            freq_pos = +np.arange(0, n // 2 + 1)  # type: ignore
-
-        return np.concatenate((freq_neg, freq_pos)) * 2 * edge / n
 
     def process_dem(
         self,

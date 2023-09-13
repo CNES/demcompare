@@ -18,6 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# pylint:disable=too-many-lines
 """
 Demcompare init module file.
 Demcompare aims at coregistering and comparing two Digital Elevation Models(DEM)
@@ -129,12 +130,14 @@ def run(
 
                 # Obtain output paths for initial dem diff without coreg
                 (
-                    dem_path,
-                    plot_file_path,
-                    plot_path_cdf,
-                    csv_path_cdf,
-                    plot_path_pdf,
-                    csv_path_pdf,
+                    dem_path,  # pylint:disable=duplicate-code
+                    plot_file_path,  # pylint:disable=duplicate-code
+                    plot_path_cdf,  # pylint:disable=duplicate-code
+                    csv_path_cdf,  # pylint:disable=duplicate-code
+                    plot_path_pdf,  # pylint:disable=duplicate-code
+                    csv_path_pdf,  # pylint:disable=duplicate-code
+                    plot_path_svf,  # pylint:disable=duplicate-code
+                    plot_path_hillshade,  # pylint:disable=duplicate-code
                 ) = helpers_init.get_output_files_paths(
                     cfg["output_dir"], dem_processing_method, "dem_for_stats"
                 )
@@ -227,6 +230,22 @@ def run(
                             "output_csv_path": csv_path_pdf,
                         }
                     },
+                    {
+                        "svf": {
+                            "remove_outliers": cfg["statistics"][
+                                dem_processing_method
+                            ]["remove_outliers"],
+                            "plot_path": plot_path_svf,
+                        }
+                    },
+                    {
+                        "hillshade": {
+                            "remove_outliers": cfg["statistics"][
+                                dem_processing_method
+                            ]["remove_outliers"],
+                            "plot_path": plot_path_hillshade,
+                        }
+                    },
                 ]
 
                 # generate intermediate stats results CDF and PDF for report
@@ -278,12 +297,14 @@ def run(
 
                 # Obtain output paths for initial dem diff without coreg
                 (
-                    dem_path,
-                    plot_file_path,
-                    plot_path_cdf,
-                    csv_path_cdf,
-                    plot_path_pdf,
-                    csv_path_pdf,
+                    dem_path,  # pylint:disable=duplicate-code
+                    plot_file_path,  # pylint:disable=duplicate-code
+                    plot_path_cdf,  # pylint:disable=duplicate-code
+                    csv_path_cdf,  # pylint:disable=duplicate-code
+                    plot_path_pdf,  # pylint:disable=duplicate-code
+                    csv_path_pdf,  # pylint:disable=duplicate-code
+                    plot_path_svf,  # pylint:disable=duplicate-code
+                    plot_path_hillshade,  # pylint:disable=duplicate-code
                 ) = helpers_init.get_output_files_paths(
                     cfg["output_dir"], dem_processing_method, "dem_for_stats"
                 )
@@ -325,6 +346,22 @@ def run(
                             ]["remove_outliers"],
                             "output_plot_path": plot_path_pdf,
                             "output_csv_path": csv_path_pdf,
+                        }
+                    },
+                    {
+                        "svf": {
+                            "remove_outliers": cfg["statistics"][
+                                dem_processing_method
+                            ]["remove_outliers"],
+                            "plot_path": plot_path_svf,
+                        }
+                    },
+                    {
+                        "hillshade": {
+                            "remove_outliers": cfg["statistics"][
+                                dem_processing_method
+                            ]["remove_outliers"],
+                            "plot_path": plot_path_hillshade,
                         }
                     },
                 ]
@@ -595,12 +632,14 @@ def compute_stats_after_coregistration(
 
         # Obtain output paths
         (
-            dem_path,
-            plot_file_path,
-            plot_path_cdf,
-            csv_path_cdf,
-            plot_path_pdf,
-            csv_path_pdf,
+            dem_path,  # pylint:disable=duplicate-code
+            plot_file_path,  # pylint:disable=duplicate-code
+            plot_path_cdf,  # pylint:disable=duplicate-code
+            csv_path_cdf,  # pylint:disable=duplicate-code
+            plot_path_pdf,  # pylint:disable=duplicate-code
+            csv_path_pdf,  # pylint:disable=duplicate-code
+            plot_path_svf,  # pylint:disable=duplicate-code
+            plot_path_hillshade,  # pylint:disable=duplicate-code
         ) = helpers_init.get_output_files_paths(
             cfg_method["output_dir"], dem_processing_method, "dem_for_stats"
         )
@@ -632,6 +671,18 @@ def compute_stats_after_coregistration(
                     "remove_outliers": cfg_method["remove_outliers"],
                     "output_plot_path": plot_path_pdf,
                     "output_csv_path": csv_path_pdf,
+                }
+            },
+            {
+                "svf": {
+                    "remove_outliers": cfg_method["remove_outliers"],
+                    "plot_path": plot_path_svf,
+                }
+            },
+            {
+                "hillshade": {
+                    "remove_outliers": cfg_method["remove_outliers"],
+                    "plot_path": plot_path_hillshade,
                 }
             },
         ]
