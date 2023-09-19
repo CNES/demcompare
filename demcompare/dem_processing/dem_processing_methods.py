@@ -33,7 +33,11 @@ import numpy as np
 import xarray as xr
 from numpy.fft import fft2, ifft2, ifftshift
 
-from demcompare.dem_tools import accumulates_class_layers, create_dem
+from demcompare.dem_tools import (
+    accumulates_class_layers,
+    compute_dem_slope,
+    create_dem,
+)
 from demcompare.img_tools import (
     calc_spatial_freq_2d,
     compute_surface_normal,
@@ -232,11 +236,13 @@ class AltiDiffSlopeNorm(DemProcessingTemplate):
         :rtype: np.ndarray
         """
 
-        tan_alpha = self.compute_tan_slope(
-            dem
-        )  # calculation of slope (tanAlpha) at each pixel
+        if hasattr(dem, "ref_slope"):
+            alpha = dem["ref_slope"].data
+        else:
+            dem = compute_dem_slope(dem)
+            alpha = dem["ref_slope"].data
 
-        alpha = np.arctan(tan_alpha)
+        tan_alpha = np.tan(alpha)
 
         no_nan = (~np.isnan(tan_alpha)) & (~np.isnan(diff))
         _, bin_alpha = np.histogram(alpha[no_nan], bins=nbins)
@@ -255,7 +261,7 @@ class AltiDiffSlopeNorm(DemProcessingTemplate):
             mask = (
                 (alpha > alpha_reg_lin[n]) & (alpha <= alpha_reg_lin[n + 1])
             ) & no_nan
-            if diff[mask].size > 0:
+            if diff[mask].size > 1:
                 std_alpha_reg_lin.append(
                     np.std(diff[mask])
                 )  # standard deviation of error for slope class
@@ -282,29 +288,6 @@ class AltiDiffSlopeNorm(DemProcessingTemplate):
         dh_norm = (np.copy(diff) - mu) * f_norm
 
         return dh_norm
-
-    def compute_tan_slope(self, dem: xr.Dataset) -> np.ndarray:
-        """
-        Return the tangent of the slope of the input DEM:
-        tan = sqrt(nx*nx + ny*ny)/nz
-
-        :param dem: dem xr.DataSet containing :
-
-                - image : 2D (row, col) xr.DataArray float32
-                - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-        :type dem_1: xr.Dataset
-        :return: 2D (row, col) tangent of the slope of the input DEM.
-        :rtype: np.ndarray
-        """
-        normal = compute_surface_normal(
-            dem["image"].data,
-            dem.georef_transform.data[1],
-            dem.georef_transform.data[5],
-        )
-        tan_alpha = ((normal[0] ** 2 + normal[1] ** 2) ** 0.5) / normal[2]
-        return tan_alpha
 
     def process_dem(
         self,
