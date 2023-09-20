@@ -505,15 +505,6 @@ class Ref(DemProcessingTemplate):
                   xr.DataArray
         :rtype: xr.Dataset
         """
-
-        if dem_2 is not None:
-            logging.error(
-                "The DEM processing method: %s,"
-                " takes only one input to the process_dem function",
-                self.type,
-            )
-            raise ValueError
-
         return dem_1
 
 
@@ -643,13 +634,4 @@ class RefCurvature(DemProcessingTemplate):
                   xr.DataArray
         :rtype: xr.Dataset
         """
-
-        if dem_2 is not None:
-            logging.error(
-                "The DEM processing method: %s,"
-                " takes only one input to the process_dem function",
-                self.type,
-            )
-            raise ValueError
-
         return self.compute_curvature_filtering(dem_1)
