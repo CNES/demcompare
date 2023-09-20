@@ -24,6 +24,7 @@ Mainly contains different 2D metric classes
 """
 
 import csv
+import logging
 import os
 from typing import Dict, List, Tuple, Union
 
@@ -430,8 +431,6 @@ class SlopeOrientationHistogram(MetricTemplate):
         # Plot attributes
         self.nb_bins: int = 100
         self.output_plot_path: str = None
-        self.dx: np.float64 = None
-        self.dy: np.float64 = None
         self.orientation: np.ndarray = None
         self.hist: np.ndarray = None
         self.angles: np.ndarray = None
@@ -440,10 +439,6 @@ class SlopeOrientationHistogram(MetricTemplate):
         if parameters:
             if "output_plot_path" in parameters:
                 self.output_plot_path = parameters["output_plot_path"]
-            if "dx" in parameters:
-                self.dx = parameters["dx"]
-            if "dy" in parameters:
-                self.dy = parameters["dy"]
 
     def compute_orientation_slope(
         self,
@@ -457,6 +452,10 @@ class SlopeOrientationHistogram(MetricTemplate):
         :return: slope orientation
         :rtype: np.ndarray
         """
+
+        if self.dx is None or self.dy is None:
+            logging.error("dx and dy must be specified")
+            raise ValueError
 
         normal = compute_surface_normal(
             dem,

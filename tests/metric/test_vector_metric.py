@@ -224,10 +224,10 @@ def test_slope_orientation_histogram():
     )
 
     # Create metric object
-    metric_obj = Metric(
-        "slope-orientation-histogram",
-        params={"dx": -0.0008333333333333334, "dy": -0.0008333333333333334},
-    )
+    metric_obj = Metric("slope-orientation-histogram")
+
+    metric_obj.dx = -0.0008333333333333334
+    metric_obj.dy = -0.0008333333333333334
 
     # Compute metric from metric class
     output, output_bins = metric_obj.compute_metric(data)
