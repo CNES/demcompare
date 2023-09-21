@@ -597,8 +597,9 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         metric_results: Dict = {}
         # Iterate over each metrics
         for idx, (metric_name, metric_object) in enumerate(metrics.items()):
-            metric_object.dx = self.dx
-            metric_object.dy = self.dy
+            if metric_name == "slope-orientation-histogram":
+                metric_object.dx = self.dx
+                metric_object.dy = self.dy
             # Choose array according to outliers configuration of the metric
             if remove_outliers_list[idx]:
                 array = outliers_free_data

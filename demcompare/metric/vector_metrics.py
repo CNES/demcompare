@@ -434,6 +434,8 @@ class SlopeOrientationHistogram(MetricTemplate):
         self.orientation: np.ndarray = None
         self.hist: np.ndarray = None
         self.angles: np.ndarray = None
+        self.dx: np.float64 = None
+        self.dy: np.float64 = None
 
         # Bin step
         if parameters:

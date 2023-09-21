@@ -52,8 +52,6 @@ class MetricTemplate(
 
         # Metric type
         self.type = self.DEFAULT_TYPE
-        self.dx: np.float64 = None
-        self.dy: np.float64 = None
 
     @abstractmethod
     def compute_metric(
