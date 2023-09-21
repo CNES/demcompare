@@ -103,28 +103,26 @@ def run(
         # Do coregistration and obtain initial
         # and final intermediate dems for stats computation
         (
-            coreg_sec,
-            coreg_ref,
+            input_stats_sec,
+            input_stats_ref,
         ) = run_coregistration(cfg["coregistration"], input_ref, input_sec)
 
     else:
-        coreg_sec, coreg_ref = input_sec, input_ref
+        if input_sec:
+            input_stats_sec, input_stats_ref, _ = reproject_dems(
+                input_sec,
+                input_ref,
+                sampling_source=cfg["sampling_source"]
+                if "sampling_source" in cfg
+                else None,
+            )
+        else:
+            input_stats_sec, input_stats_ref = input_sec, input_ref
 
     # If only stats is present
     if "statistics" in cfg:
         logging.info("[Stats]")
-
-        # If both dems have been defined, compute altitude difference for stats
-        if coreg_sec and coreg_ref:
-            if "coregistration" in cfg:
-                logging.info(
-                    "(COREG_REF-COREG_SEC) altimetric stats generation"
-                )
-            else:
-                logging.info("(REF-SEC) altimetric stats generation")
-        else:
-            # only one dem
-            logging.info("(REF) altimetric stats generation")
+        logging.info("Altimetric stats generation")
 
         # Loop over the DEM processing methods in cfg["statistics"]
         for dem_processing_method in cfg["statistics"]:
@@ -133,40 +131,26 @@ def run(
 
             # Obtain output paths for initial dem diff without coreg
             (
-                dem_path,  # pylint:disable=duplicate-code
-                plot_file_path,  # pylint:disable=duplicate-code
-                plot_path_cdf,  # pylint:disable=duplicate-code
-                csv_path_cdf,  # pylint:disable=duplicate-code
-                plot_path_pdf,  # pylint:disable=duplicate-code
-                csv_path_pdf,  # pylint:disable=duplicate-code
-                plot_path_svf,  # pylint:disable=duplicate-code
-                plot_path_hillshade,  # pylint:disable=duplicate-code
+                dem_path,
+                plot_file_path,
+                plot_path_cdf,
+                csv_path_cdf,
+                plot_path_pdf,
+                csv_path_pdf,
+                plot_path_svf,
+                plot_path_hillshade,
             ) = helpers_init.get_output_files_paths(
                 cfg["output_dir"], dem_processing_method, "dem_for_stats"
             )
-
-            if coreg_sec and "coregistration" not in cfg:
-                reproj_sec, reproj_ref, _ = reproject_dems(
-                    coreg_sec,
-                    coreg_ref,
-                    sampling_source=cfg["statistics"][dem_processing_method][
-                        "sampling_source"
-                    ]
-                    if "sampling_source"
-                    in cfg["statistics"][dem_processing_method]
-                    else None,
-                )
-            else:
-                reproj_sec, reproj_ref = coreg_sec, coreg_ref
 
             # Compute slope and add it as a classification_layer
             # in case a classification of type slope is required
             # The ref is considered the main classification,
             # the slope of the sec dem will be used for the
             # intersection-exclusion
-            reproj_ref = compute_dem_slope(reproj_ref)
-            if reproj_sec:
-                reproj_sec = compute_dem_slope(reproj_sec)
+            input_stats_ref = compute_dem_slope(input_stats_ref)
+            if input_stats_sec:
+                input_stats_sec = compute_dem_slope(input_stats_sec)
 
             # If defined, verify fusion layers according to the cfg
             if (
@@ -180,15 +164,15 @@ def run(
                     ]
                 ):
                     verify_fusion_layers(
-                        reproj_ref,
+                        input_stats_ref,
                         cfg["statistics"][dem_processing_method][
                             "classification_layers"
                         ],
                         support="ref",
                     )
-                    if reproj_sec:
+                    if input_stats_sec:
                         verify_fusion_layers(
-                            reproj_sec,
+                            input_stats_sec,
                             cfg["statistics"][dem_processing_method][
                                 "classification_layers"
                             ],
@@ -196,7 +180,7 @@ def run(
                         )
 
             stats_dem = dem_processing_object.process_dem(
-                reproj_ref, reproj_sec
+                input_stats_ref, input_stats_sec
             )
 
             # Save stats_dem for two states
