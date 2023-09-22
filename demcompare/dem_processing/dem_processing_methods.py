@@ -65,6 +65,7 @@ class AltiDiff(DemProcessingTemplate):
 
         self.fig_title = "[REF - SEC] difference"
         self.colorbar_title = "Elevation difference (m)"
+        self.cmap = "bwr"
 
     def compute_dems_diff(
         self,
@@ -161,6 +162,7 @@ class AltiDiffSlopeNorm(DemProcessingTemplate):
 
         self.fig_title = "[REF - SEC] difference normalized by the slope"
         self.colorbar_title = "Elevation difference normalized by the slope"
+        self.cmap = "bwr"
 
     def compute_dems_diff_slope_norm(
         self,
@@ -341,6 +343,7 @@ class AngularDiff(DemProcessingTemplate):
 
         self.fig_title = "[REF vs SEC] angular difference"
         self.colorbar_title = "Angular difference"
+        self.cmap = "twilight"
 
     def compute_dems_angular_diff(
         self,
@@ -474,6 +477,7 @@ class Ref(DemProcessingTemplate):
 
         self.fig_title = "REF dem"
         self.colorbar_title = "Elevation (m)"
+        self.cmap = "terrain"
 
     def process_dem(
         self,
@@ -524,6 +528,7 @@ class RefCurvature(DemProcessingTemplate):
 
         self.fig_title = "REF dem curvature"
         self.colorbar_title = "Curvature"
+        self.cmap = "bwr"
 
     def compute_curvature_filtering(
         self,

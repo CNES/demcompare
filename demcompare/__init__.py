@@ -194,6 +194,13 @@ def run(
                 plot_file_path,
                 fig_title=dem_processing_object.fig_title,
                 colorbar_title=dem_processing_object.colorbar_title,
+                cmap=dem_processing_object.cmap,
+                vmin_plot=cfg["statistics"][dem_processing_method]["vmin_plot"]
+                if "vmin_plot" in cfg["statistics"][dem_processing_method]
+                else None,
+                vmax_plot=cfg["statistics"][dem_processing_method]["vmax_plot"]
+                if "vmax_plot" in cfg["statistics"][dem_processing_method]
+                else None,
             )
 
             # Create StatsComputation object
