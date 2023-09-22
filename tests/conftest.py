@@ -552,6 +552,13 @@ def initialize_segmentation_classification():
             "col": np.arange(data.shape[1]),
         },
     )
+
+    # Add a dummy "georef_transform" attribut to the xr.Dataset,
+    # because it should have one
+    dataset["georef_transform"] = np.array(
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32
+    )
+
     # Initialize the data of the classification layers
     classif_data = np.full((data.shape[0], data.shape[1], 2), np.nan)
     classif_data[:, :, 0] = np.array(

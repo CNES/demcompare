@@ -116,6 +116,11 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 self.dx: float = dem.georef_transform.data[1]
                 # dy
                 self.dy: float = dem.georef_transform.data[5]
+            else:
+                logging.error(
+                    "Input DEM doesn't have a 'georef_transform' attribute"
+                )
+                raise ValueError
         # Fill configuration file
         self.cfg: Dict = self.fill_conf_and_schema(cfg)
         # Check and update configuration file
