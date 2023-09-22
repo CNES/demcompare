@@ -108,6 +108,7 @@ def run(
         ) = run_coregistration(cfg["coregistration"], input_ref, input_sec)
 
     else:
+        # If input_sec is not None, reproject DEMs
         if input_sec:
             input_stats_sec, input_stats_ref, _ = reproject_dems(
                 input_sec,
@@ -116,8 +117,9 @@ def run(
                 if "sampling_source" in cfg
                 else None,
             )
+        # If input_sec is None, input_stats_sec=None
         else:
-            input_stats_sec, input_stats_ref = input_sec, input_ref
+            input_stats_ref, input_stats_sec = input_ref, None
 
     # If only stats is present
     if "statistics" in cfg:

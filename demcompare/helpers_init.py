@@ -300,7 +300,7 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
                 not in DemProcessing.available_dem_processing_methods
             ):
                 raise NameError(
-                    f"DEM processing method: {dem_processing_method} is not not correct"  # noqa: E501, B950 # pylint: disable=line-too-long
+                    f"DEM processing method: {dem_processing_method} is not correct"  # noqa: E501, B950 # pylint: disable=line-too-long
                 )
 
     if "statistics" in cfg:
