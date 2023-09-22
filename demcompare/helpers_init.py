@@ -36,6 +36,7 @@ from typing import Tuple
 import rasterio
 from astropy import units as u
 
+from .dem_processing import DemProcessing
 from .internal_typing import ConfigType
 from .output_tree_design import get_otd_dirs, supported_OTD
 
@@ -291,6 +292,30 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
         )
     # else
     cfg["otd"] = "default_OTD"
+
+    if "statistics" in cfg:
+        for dem_processing_method in cfg["statistics"]:
+            if (
+                dem_processing_method
+                not in DemProcessing.available_dem_processing_methods
+            ):
+                raise NameError(
+                    f"DEM processing method: {dem_processing_method} is not correct"  # noqa: E501, B950 # pylint: disable=line-too-long
+                )
+
+    if "statistics" in cfg:
+        if "ref-curvature" in cfg["statistics"]:
+            if "classification_layers" in cfg["statistics"]["ref-curvature"]:
+                if (
+                    "Slope0"
+                    in cfg["statistics"]["ref-curvature"][
+                        "classification_layers"
+                    ]
+                ):
+                    raise NameError(
+                        "The DEM processing method: 'ref-curvature'",
+                        "cannot have 'Slope0' as 'classification_layers'",
+                    )
 
 
 def get_output_files_paths(

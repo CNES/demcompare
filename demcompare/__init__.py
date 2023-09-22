@@ -18,12 +18,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# pylint:disable=too-many-lines
+# pylint:disable=too-many-branches
 """
 Demcompare init module file.
 Demcompare aims at coregistering and comparing two Digital Elevation Models(DEM)
 """
-import copy
 
 # Standard imports
 import logging
@@ -104,278 +103,164 @@ def run(
         # Do coregistration and obtain initial
         # and final intermediate dems for stats computation
         (
-            reproj_coreg_sec,
-            reproj_coreg_ref,
+            input_stats_sec,
+            input_stats_ref,
         ) = run_coregistration(cfg["coregistration"], input_ref, input_sec)
 
-        if "statistics" in cfg:
-            # Compute stats after coregistration
-            stats_datasets = compute_stats_after_coregistration(
-                cfg["statistics"],
-                reproj_coreg_sec,
-                reproj_coreg_ref,
+    else:
+        # If input_sec is not None, reproject DEMs
+        if input_sec:
+            input_stats_sec, input_stats_ref, _ = reproject_dems(
+                input_sec,
+                input_ref,
+                sampling_source=cfg["sampling_source"]
+                if "sampling_source" in cfg
+                else None,
             )
+        # If input_sec is None, input_stats_sec=None
+        else:
+            input_stats_ref, input_stats_sec = input_ref, None
 
     # If only stats is present
-    elif "statistics" in cfg:
+    if "statistics" in cfg:
         logging.info("[Stats]")
-        # If both dems have been defined, compute altitude difference for stats
-        if input_ref and input_sec:
-            logging.info("(REF-SEC) altimetric stats generation")
+        logging.info("Altimetric stats generation")
 
-            # Loop over the DEM processing methods in cfg["statistics"]
-            for dem_processing_method in cfg["statistics"]:
-                # Create a DEM processing object for each DEM processing method
-                dem_processing_object = DemProcessing(dem_processing_method)
+        # Loop over the DEM processing methods in cfg["statistics"]
+        for dem_processing_method in cfg["statistics"]:
+            # Create a DEM processing object for each DEM processing method
+            dem_processing_object = DemProcessing(dem_processing_method)
 
-                # Obtain output paths for initial dem diff without coreg
-                (
-                    dem_path,  # pylint:disable=duplicate-code
-                    plot_file_path,  # pylint:disable=duplicate-code
-                    plot_path_cdf,  # pylint:disable=duplicate-code
-                    csv_path_cdf,  # pylint:disable=duplicate-code
-                    plot_path_pdf,  # pylint:disable=duplicate-code
-                    csv_path_pdf,  # pylint:disable=duplicate-code
-                    plot_path_svf,  # pylint:disable=duplicate-code
-                    plot_path_hillshade,  # pylint:disable=duplicate-code
-                ) = helpers_init.get_output_files_paths(
-                    cfg["output_dir"], dem_processing_method, "dem_for_stats"
-                )
+            # Obtain output paths for initial dem diff without coreg
+            (
+                dem_path,
+                plot_file_path,
+                plot_path_cdf,
+                csv_path_cdf,
+                plot_path_pdf,
+                csv_path_pdf,
+                plot_path_svf,
+                plot_path_hillshade,
+            ) = helpers_init.get_output_files_paths(
+                cfg["output_dir"], dem_processing_method, "dem_for_stats"
+            )
 
-                reproj_sec, reproj_ref, _ = reproject_dems(
-                    input_sec,
-                    input_ref,
-                    sampling_source=cfg["statistics"][dem_processing_method][
-                        "sampling_source"
-                    ]
-                    if "sampling_source"
-                    in cfg["statistics"][dem_processing_method]
-                    else None,
-                )
+            # Compute slope and add it as a classification_layer
+            # in case a classification of type slope is required
+            # The ref is considered the main classification,
+            # the slope of the sec dem will be used for the
+            # intersection-exclusion
+            input_stats_ref = compute_dem_slope(input_stats_ref)
+            if input_stats_sec:
+                input_stats_sec = compute_dem_slope(input_stats_sec)
 
-                # Compute slope and add it as a classification_layer
-                # in case a classification of type slope is required
-                # The ref is considered the main classification,
-                # the slope of the sec dem will be used for the
-                # intersection-exclusion
-                reproj_ref = compute_dem_slope(reproj_ref)
-                reproj_sec = compute_dem_slope(reproj_sec)
-
-                # If defined, verify fusion layers according to the cfg
+            # If defined, verify fusion layers according to the cfg
+            if (
+                "classification_layer"
+                in cfg["statistics"][dem_processing_method]
+            ):
                 if (
-                    "classification_layer"
-                    in cfg["statistics"][dem_processing_method]
+                    "fusion"
+                    in cfg["statistics"][dem_processing_method][
+                        "classification_layers"
+                    ]
                 ):
-                    if (
-                        "fusion"
-                        in cfg["statistics"][dem_processing_method][
+                    verify_fusion_layers(
+                        input_stats_ref,
+                        cfg["statistics"][dem_processing_method][
                             "classification_layers"
-                        ]
-                    ):
+                        ],
+                        support="ref",
+                    )
+                    if input_stats_sec:
                         verify_fusion_layers(
-                            reproj_ref,
-                            cfg["statistics"][dem_processing_method][
-                                "classification_layers"
-                            ],
-                            support="ref",
-                        )
-                        verify_fusion_layers(
-                            reproj_sec,
+                            input_stats_sec,
                             cfg["statistics"][dem_processing_method][
                                 "classification_layers"
                             ],
                             support="sec",
                         )
 
-                stats_dem = dem_processing_object.process_dem(
-                    reproj_ref, reproj_sec
-                )
+            stats_dem = dem_processing_object.process_dem(
+                input_stats_ref, input_stats_sec
+            )
 
-                # Save stats_dem for two states
-                save_dem(stats_dem, dem_path)
+            # Save stats_dem for two states
+            save_dem(stats_dem, dem_path)
 
-                # Compute and save initial altitude diff image plots
-                compute_and_save_image_plots(
-                    stats_dem,
-                    plot_file_path,
-                    fig_title=dem_processing_object.fig_title,
-                    colorbar_title=dem_processing_object.colorbar_title,
-                )
+            # Compute and save initial altitude diff image plots
+            compute_and_save_image_plots(
+                stats_dem,
+                plot_file_path,
+                fig_title=dem_processing_object.fig_title,
+                colorbar_title=dem_processing_object.colorbar_title,
+            )
 
-                # Create StatsComputation object
-                stats_processing = StatsProcessing(
-                    cfg["statistics"][dem_processing_method],
-                    stats_dem,
-                    dem_processing_method=dem_processing_method,
-                )
+            # Create StatsComputation object
+            stats_processing = StatsProcessing(
+                cfg["statistics"][dem_processing_method],
+                stats_dem,
+                input_diff="coregistration" in cfg,
+                dem_processing_method=dem_processing_method,
+            )
 
-                # For the initial_dh, compute cdf and pdf stats
-                # on the global classification layer only (diff, pdf, cdf)
-                plot_metrics = [
-                    {
-                        "cdf": {
-                            "remove_outliers": cfg["statistics"][
-                                dem_processing_method
-                            ]["remove_outliers"],
-                            "output_plot_path": plot_path_cdf,
-                            "output_csv_path": csv_path_cdf,
-                        }
-                    },
-                    {
-                        "pdf": {
-                            "remove_outliers": cfg["statistics"][
-                                dem_processing_method
-                            ]["remove_outliers"],
-                            "output_plot_path": plot_path_pdf,
-                            "output_csv_path": csv_path_pdf,
-                        }
-                    },
-                    {
-                        "svf": {
-                            "remove_outliers": cfg["statistics"][
-                                dem_processing_method
-                            ]["remove_outliers"],
-                            "plot_path": plot_path_svf,
-                        }
-                    },
-                    {
-                        "hillshade": {
-                            "remove_outliers": cfg["statistics"][
-                                dem_processing_method
-                            ]["remove_outliers"],
-                            "plot_path": plot_path_hillshade,
-                        }
-                    },
-                ]
-
-                # generate intermediate stats results CDF and PDF for report
-                stats_processing.compute_stats(
-                    classification_layer=["global"],
-                    metrics=plot_metrics,  # type: ignore
-                )
-
-                # Compute stats according to the input stats configuration
-                stats_dataset = stats_processing.compute_stats()
-
-                stats_datasets.append(stats_dataset)
-
-        else:
-            # only one dem
-            logging.info("(REF) altimetric stats generation")
-
-            # Loop over the DEM processing methods in cfg["statistics"]
-            for dem_processing_method in cfg["statistics"]:
-                # Warning: "ref-curvature" does not work with "Slope0" as "classification_layers" # noqa: E501, B950 # pylint: disable=line-too-long
-
-                # Compute slope and add it as a classification_layer
-                # in case a classification of type slope is required
-                input_ref = compute_dem_slope(input_ref)
-                # If defined, verify fusion layers according to the cfg
-                if (
-                    "classification_layer"
-                    in cfg["statistics"][dem_processing_method]
-                ):
-                    if (
-                        "fusion"
-                        in cfg["statistics"][dem_processing_method][
-                            "classification_layers"
-                        ]
-                    ):
-                        verify_fusion_layers(
-                            input_ref,
+            # For the initial_dh, compute cdf and pdf stats
+            # on the global classification layer only (diff, pdf, cdf)
+            plot_metrics = [
+                {
+                    "cdf": {
+                        "remove_outliers": str(
                             cfg["statistics"][dem_processing_method][
-                                "classification_layers"
-                            ],
-                            support="ref",
-                        )
+                                "remove_outliers"
+                            ]
+                        ),
+                        "output_plot_path": plot_path_cdf,
+                        "output_csv_path": csv_path_cdf,
+                    }
+                },
+                {
+                    "pdf": {
+                        "remove_outliers": str(
+                            cfg["statistics"][dem_processing_method][
+                                "remove_outliers"
+                            ]
+                        ),
+                        "output_plot_path": plot_path_pdf,
+                        "output_csv_path": csv_path_pdf,
+                    }
+                },
+                {
+                    "svf": {
+                        "remove_outliers": str(
+                            cfg["statistics"][dem_processing_method][
+                                "remove_outliers"
+                            ]
+                        ),
+                        "plot_path": plot_path_svf,
+                    }
+                },
+                {
+                    "hillshade": {
+                        "remove_outliers": str(
+                            cfg["statistics"][dem_processing_method][
+                                "remove_outliers"
+                            ]
+                        ),
+                        "plot_path": plot_path_hillshade,
+                    }
+                },
+            ]
 
-                # Create a DEM processing object for each DEM processing method
-                dem_processing_object = DemProcessing(dem_processing_method)
+            # generate intermediate stats results CDF and PDF for report
+            stats_processing.compute_stats(
+                classification_layer=["global"],
+                metrics=plot_metrics,  # type: ignore
+            )
 
-                # Define stats_dem as the input dem
-                stats_dem = dem_processing_object.process_dem(input_ref)
+            # Compute stats according to the input stats configuration
+            stats_dataset = stats_processing.compute_stats()
 
-                # Obtain output paths for initial dem diff without coreg
-                (
-                    dem_path,  # pylint:disable=duplicate-code
-                    plot_file_path,  # pylint:disable=duplicate-code
-                    plot_path_cdf,  # pylint:disable=duplicate-code
-                    csv_path_cdf,  # pylint:disable=duplicate-code
-                    plot_path_pdf,  # pylint:disable=duplicate-code
-                    csv_path_pdf,  # pylint:disable=duplicate-code
-                    plot_path_svf,  # pylint:disable=duplicate-code
-                    plot_path_hillshade,  # pylint:disable=duplicate-code
-                ) = helpers_init.get_output_files_paths(
-                    cfg["output_dir"], dem_processing_method, "dem_for_stats"
-                )
-
-                # Save stats_dem for two states
-                save_dem(stats_dem, dem_path)
-
-                # Compute and save initial altitude diff image plots
-                compute_and_save_image_plots(
-                    stats_dem,
-                    plot_file_path,
-                    fig_title=dem_processing_object.fig_title,
-                    colorbar_title=dem_processing_object.colorbar_title,
-                )
-
-                # Create StatsComputation object
-                stats_processing = StatsProcessing(
-                    cfg["statistics"][dem_processing_method],
-                    stats_dem,
-                    dem_processing_method=dem_processing_method,
-                )
-
-                # For the initial_dh, compute cdf and pdf stats
-                # on the global classification layer only (diff, pdf, cdf)
-                plot_metrics = [
-                    {
-                        "cdf": {
-                            "remove_outliers": cfg["statistics"][
-                                dem_processing_method
-                            ]["remove_outliers"],
-                            "output_plot_path": plot_path_cdf,
-                            "output_csv_path": csv_path_cdf,
-                        }
-                    },
-                    {
-                        "pdf": {
-                            "remove_outliers": cfg["statistics"][
-                                dem_processing_method
-                            ]["remove_outliers"],
-                            "output_plot_path": plot_path_pdf,
-                            "output_csv_path": csv_path_pdf,
-                        }
-                    },
-                    {
-                        "svf": {
-                            "remove_outliers": cfg["statistics"][
-                                dem_processing_method
-                            ]["remove_outliers"],
-                            "plot_path": plot_path_svf,
-                        }
-                    },
-                    {
-                        "hillshade": {
-                            "remove_outliers": cfg["statistics"][
-                                dem_processing_method
-                            ]["remove_outliers"],
-                            "plot_path": plot_path_hillshade,
-                        }
-                    },
-                ]
-
-                # generate intermediate stats results CDF and PDF for report
-                stats_processing.compute_stats(
-                    classification_layer=["global"],
-                    metrics=plot_metrics,  # type: ignore
-                )
-
-                # Compute stats according to the input stats configuration
-                stats_dataset = stats_processing.compute_stats()
-
-                stats_datasets.append(stats_dataset)
+            stats_datasets.append(stats_dataset)
 
     # Generate report if statistics are computed (stats_dataset defined)
     # and report configuration is set
@@ -530,172 +415,3 @@ def run_coregistration(
         reproj_coreg_sec,
         reproj_coreg_ref,
     )
-
-
-def compute_stats_after_coregistration(
-    cfg: ConfigType,
-    coreg_sec: xr.Dataset,
-    coreg_ref: xr.Dataset,
-) -> List[StatsDataset]:
-    """
-    Compute stats after coregistration
-
-    For the initial_dh and final_dh the alti_diff plot, the
-    cdf and the pdf are computed if the output_dir has
-    been specified in order to evaluate the
-    coregistration effect.
-
-    For the final_dh, the different classification layers
-    and metrics specified in the input cfg are also computed.
-
-    :param cfg: configuration dictionary
-    :type cfg: ConfigType
-    :param coreg_sec: coreg dem to align xr.DataSet containing :
-
-                - image : 2D (row, col) xr.DataArray float32
-                - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-    :type coreg_sec: xr.Dataset
-    :param coreg_ref: coreg reference dem xr.DataSet containing :
-
-                - image : 2D (row, col) xr.DataArray float32
-                - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-    :type coreg_ref: xr.Dataset
-    :param initial_sec: optional initial dem
-                to align xr.DataSet containing :
-
-                - image : 2D (row, col) xr.DataArray float32
-                - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-    :type initial_ref: xr.Dataset
-    :param initial_ref: optional initial reference dem xr.DataSet containing :
-
-                - image : 2D (row, col) xr.DataArray float32
-                - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-    :type initial_ref: xr.Dataset
-    :return: List[StatsDataset]
-    :rtype: List[StatsDataset]
-    """
-    logging.info("[Stats]")
-    logging.info("(COREG_REF-COREG_SEC) altimetric stats generation")
-
-    # Compute slope and add it as a classification_layer in case
-    # a classification of type slope is required
-    # The ref is considered the main classification,
-    # the slope of the sec dem will be used for the intersection-exclusion
-    coreg_ref = compute_dem_slope(coreg_ref)
-    coreg_sec = compute_dem_slope(coreg_sec)
-
-    stats_datasets: List[StatsDataset] = []
-
-    # Loop over the DEM processing methods in cfg
-    for dem_processing_method in cfg:
-        # Create a DEM processing object for each DEM processing method
-        dem_processing_object = DemProcessing(dem_processing_method)
-
-        # Take the part of the config associated with the DEM processing method
-        cfg_method = cfg[dem_processing_method]
-
-        # If defined, verify fusion layers according to the cfg
-        if "classification_layer_masks" in cfg_method:
-            if "fusion" in cfg_method["classification_layers"]:
-                verify_fusion_layers(
-                    coreg_ref,
-                    cfg_method["classification_layers"],
-                    support="ref",
-                )
-                verify_fusion_layers(
-                    coreg_sec,
-                    cfg_method["classification_layers"],
-                    support="sec",
-                )
-
-        # Compute altitude diff
-        final_altitude_diff = dem_processing_object.process_dem(
-            coreg_ref, coreg_sec
-        )
-
-        # Create StatsComputation object for the final_dh
-        final_stats_cfg = copy.deepcopy(cfg_method)
-        stats_processing_final = StatsProcessing(
-            final_stats_cfg,
-            final_altitude_diff,
-            input_diff=True,
-            dem_processing_method=dem_processing_method,
-        )
-
-        # Obtain output paths
-        (
-            dem_path,  # pylint:disable=duplicate-code
-            plot_file_path,  # pylint:disable=duplicate-code
-            plot_path_cdf,  # pylint:disable=duplicate-code
-            csv_path_cdf,  # pylint:disable=duplicate-code
-            plot_path_pdf,  # pylint:disable=duplicate-code
-            csv_path_pdf,  # pylint:disable=duplicate-code
-            plot_path_svf,  # pylint:disable=duplicate-code
-            plot_path_hillshade,  # pylint:disable=duplicate-code
-        ) = helpers_init.get_output_files_paths(
-            cfg_method["output_dir"], dem_processing_method, "dem_for_stats"
-        )
-
-        # Save final altitude diff
-        save_dem(final_altitude_diff, dem_path)
-
-        # Compute and save final altitude diff image plots
-        compute_and_save_image_plots(
-            dem=final_altitude_diff,
-            plot_path=plot_file_path,
-            fig_title=dem_processing_object.fig_title,
-            colorbar_title=dem_processing_object.colorbar_title,
-        )
-
-        # For the final_dh, first compute plot stats on the
-        # global classification layer only (diff, pdf, cdf)
-
-        plot_metrics = [
-            {
-                "cdf": {
-                    "remove_outliers": cfg_method["remove_outliers"],
-                    "output_plot_path": plot_path_cdf,
-                    "output_csv_path": csv_path_cdf,
-                }
-            },
-            {
-                "pdf": {
-                    "remove_outliers": cfg_method["remove_outliers"],
-                    "output_plot_path": plot_path_pdf,
-                    "output_csv_path": csv_path_pdf,
-                }
-            },
-            {
-                "svf": {
-                    "remove_outliers": cfg_method["remove_outliers"],
-                    "plot_path": plot_path_svf,
-                }
-            },
-            {
-                "hillshade": {
-                    "remove_outliers": cfg_method["remove_outliers"],
-                    "plot_path": plot_path_hillshade,
-                }
-            },
-        ]
-
-        # Generate intermediate stats to compare pdf and cdf before and after
-        stats_processing_final.compute_stats(
-            classification_layer=["global"],
-            metrics=plot_metrics,  # type: ignore
-        )
-
-        # For the final_dh, also compute all classif layer default metric stats
-        stats_dataset = stats_processing_final.compute_stats()
-
-        stats_datasets.append(stats_dataset)
-
-    return stats_datasets
