@@ -1044,6 +1044,8 @@ def compute_and_save_image_plots(
     fig_title: str = None,
     colorbar_title: str = None,
     cmap: str = "terrain",
+    vmin_plot: float = None,
+    vmax_plot: float = None,
 ):
     """
     Compute and optionnally save plots from a dem using pyplot img_show.
@@ -1059,6 +1061,10 @@ def compute_and_save_image_plots(
     :type title_colorbar: str
     :param cmap: registered colormap name used to map scalar data to colors.
     :type cmap: str
+    :param vmin_plot: minimum value of the z axis when plotting
+    :type vmin_plot: float
+    :param vmax_plot: maximum value of the z axis when plotting
+    :type vmax_plot: float
     """
 
     # Create and save plot using the dem_plot function
@@ -1074,22 +1080,35 @@ def compute_and_save_image_plots(
     if fig_title:
         fig_ax.set_title(fig_title, fontsize="large")
     #
+
+    if vmin_plot is None:
+        vmin = mu - sigma
+    else:
+        vmin = vmin_plot
+    if vmax_plot is None:
+        vmax = mu + sigma
+    else:
+        vmax = vmax_plot
+
     im1 = fig_ax.imshow(
         dem["image"].data,
         cmap=cmap,
-        vmin=mu - sigma,
-        vmax=mu + sigma,
+        vmin=vmin,
+        vmax=vmax,
         interpolation="none",
         aspect="equal",
     )
     fig.colorbar(im1, label=colorbar_title, ax=fig_ax)
-    fig.text(
-        0.15,
-        0.15,
-        f"Values rescaled between"
-        f"\n[mean-std, mean+std]=[{mu - sigma:.2f}, {mu + sigma:.2f}]",
-        fontsize="medium",
-    )
+
+    if vmax_plot is not None and vmin_plot is not None:
+        fig.text(
+            0.15,
+            0.15,
+            f"Values rescaled between"
+            f"\n[mean-std, mean+std]=[{mu - sigma:.2f}, {mu + sigma:.2f}]",
+            fontsize="medium",
+        )
+
     # Save plot
     if plot_path:
         mpl_pyplot.savefig(plot_path, dpi=100, bbox_inches="tight")
