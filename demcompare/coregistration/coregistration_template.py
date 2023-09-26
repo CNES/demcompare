@@ -462,7 +462,8 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
         # Altitude difference information
         # Compute final_dh to complete the alti_resuts
-        # TODO: clean demprocessing dependency from coregistration, do we need this final_dh in coregistration ? # noqa: E501, B950 # pylint: disable=line-too-long,fixme
+        # TODO: clean demprocessing dependency # pylint:disable=fixme
+        # from coregistration
         dem_processing_object = DemProcessing("alti-diff")
         self.final_dh = dem_processing_object.process_dem(
             self.reproj_coreg_ref, self.reproj_coreg_sec

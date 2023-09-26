@@ -85,7 +85,8 @@ class DemHillShade(MetricTemplate):
         :type data: np.array
         :param azimuth: angular direction of the sun
         :type azimuth: float
-        :param angle_altitude: angle of the illumination source above the horizon # noqa: E501, B950 # pylint: disable=line-too-long
+        :param angle_altitude: angle of the illumination source
+         above the horizon
         :type angle_altitude: float
         :return: np.ndarray
         """
@@ -108,7 +109,6 @@ class DemHillShade(MetricTemplate):
         """
         Compute and optionnally save plots the hillshade view
         a of a dem using pyplot img_show.
-        see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html # noqa: E501, B950 # pylint: disable=line-too-long
 
         :param data: input data to compute the metric
         :type data: np.array
@@ -166,7 +166,8 @@ class DemSkyViewFactor(MetricTemplate):
         # parameter of the DEM's FFT filter intensity.
         # Should be close to 1.
         self.filter_intensity: float = 0.9
-        # if true, the image is replicated by x4 in order to improve resolution. # noqa: E501, B950 # pylint: disable=line-too-long
+        # if true, the image is replicated by x4
+        # in order to improve resolution.
         self.replication: bool = True
         # quantiles
         self.quantiles = [0.09, 0.91]
@@ -196,7 +197,8 @@ class DemSkyViewFactor(MetricTemplate):
         """
         Return the sky view factor of the input DEM.
         First, compute the FFT of the input dem: F(y) = FFT(DEM).
-        Then, apply a filter y^filter_intensity with s=0.9: F(y) = F(y)* y^filter_intensity. # noqa: E501, B950 # pylint: disable=line-too-long
+        Then, apply a filter y^filter_intensity
+        with s=0.9: F(y) = F(y)* y^filter_intensity.
         Finally, apply the inverse FFT: IFFT(F(y)).
         We keep the real part (imaginary part = digital noise).
 
@@ -242,7 +244,6 @@ class DemSkyViewFactor(MetricTemplate):
         """
         Compute and optionnally save plots the sky view factor
         a of a dem using pyplot img_show.
-        see https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.imshow.html # noqa: E501, B950 # pylint: disable=line-too-long
 
         :param data: input data to compute the metric
         :type data: np.ndarray
@@ -274,7 +275,9 @@ class DemSkyViewFactor(MetricTemplate):
         fig.text(
             0.15,
             0.15,
-            f"Filter intensity = {self.filter_intensity}\nReplication={self.replication}\nQuantiles={self.quantiles}",  # noqa: E501, B950 # pylint: disable=line-too-long
+            f"Filter intensity = {self.filter_intensity}"
+            f"\nReplication={self.replication}"
+            f"\nQuantiles={self.quantiles}",
             fontsize="medium",
         )
 
