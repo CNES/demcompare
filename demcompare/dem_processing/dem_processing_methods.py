@@ -539,7 +539,8 @@ class RefCurvature(DemProcessingTemplate):
         """
         Return the curvature of the input dem.
         First, compute the FFT of the input dem: F(y) = FFT(DEM).
-        Then, apply a filter y^filter_intensity with s=0.9: F(y) = F(y)* y^filter_intensity. # noqa: E501, B950 # pylint: disable=line-too-long
+        Then, apply a filter y^filter_intensity
+        with s=0.9: F(y) = F(y)* y^filter_intensity.
         Finally, apply the inverse FFT: IFFT(F(y)).
         We keep the real part (imaginary part = digital noise).
 
@@ -554,7 +555,8 @@ class RefCurvature(DemProcessingTemplate):
                                  Should be close to 1.
                                  Default = 0.9.
         :type filter_intensity: float
-        :param replication: if true, the image is replicated by x4 in order to improve resolution. # noqa: E501, B950 # pylint: disable=line-too-long
+        :param replication: if true, the image is replicated
+                            by x4 in order to improve resolution.
                             Default = True.
         :type replication: bool
         :return: curvature xr.DataSet containing :
