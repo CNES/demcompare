@@ -127,6 +127,8 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         self.cfg = self.check_conf(self.cfg)
         # Nodata value
         self.nodata: Union[float, int] = self.cfg["nodata"]
+        # Nodata array
+        self.no_data_location: np.ndarray = None
         # Remove outliers
         self.remove_outliers: bool = self.cfg["remove_outliers"]
         # Output directory
@@ -324,6 +326,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         """
         # Get nonan and nodata mask
         nodata_free_mask = self._get_nonan_mask(array, nodata_value)
+        self.no_data_location = ~nodata_free_mask
         # Apply the nonan and nodata mask to the input array
         array_without_nan = array[np.where(nodata_free_mask)]
         # Compute mean and std of the input array
@@ -657,6 +660,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                         metric_name,
                     )
                 elif metric_object.type == "matrix2D":
+                    metric_object.no_data_location = self.no_data_location
                     computed_metric = metric_object.compute_metric(array)
                     metric_results[metric_name] = np.round(computed_metric, 5)
             else:
