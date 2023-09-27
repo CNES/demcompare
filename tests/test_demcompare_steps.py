@@ -335,6 +335,53 @@ def test_demcompare_statistics_step_input_ref_with_gironde_test_data():
 
 @pytest.mark.end2end_tests
 @pytest.mark.functional_tests
+def test_demcompare_statistics_step_input_sec_with_gironde_test_data():
+    """
+    Demcompare with only statistics step on one input dem
+    end2end test.
+    Input data:
+    - Input dems and configuration present in the
+      "gironde_test_data_sampling_sec/input" test data directory
+    Validation process:
+    - Reads the input configuration file
+    - Deletes the coregistration step of the configuration file
+    - Runs demcompare on a temporary directory
+    - Checks that no error is raised
+    """
+    # Get "gironde_test_data" test root
+    # data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
+
+    # Load "gironde_test_data_sampling_sec"
+    # demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    test_cfg = read_config_file(test_cfg_path)
+
+    # Since we only want the statistics step to be run,
+    # Pop the coregistration step of the cfg
+    test_cfg["statistics"]["alti-diff"]["classification_layers"].pop("Fusion0")
+    test_cfg["statistics"]["sec"] = test_cfg["statistics"].pop("alti-diff")
+
+    print(test_cfg)
+
+    # Create temporary directory for test output
+    with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
+        # Modify test's output dir in configuration to tmp test dir
+        test_cfg["output_dir"] = tmp_dir
+
+        # Set a new test_config tmp file path
+        tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
+
+        # Save the new configuration inside the tmp dir
+        save_config_file(tmp_cfg_file, test_cfg)
+
+        # Run demcompare with "gironde_test_data"
+        # configuration (and replace conf file)
+        demcompare.run(tmp_cfg_file)
+
+
+@pytest.mark.end2end_tests
+@pytest.mark.functional_tests
 def test_demcompare_statistics_step_angular_diff_with_gironde_test_data():
     """
     Demcompare with angular difference config
