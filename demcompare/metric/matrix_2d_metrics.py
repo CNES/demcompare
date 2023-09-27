@@ -26,6 +26,7 @@ from typing import Dict
 
 import matplotlib.pyplot as mpl_pyplot
 import numpy as np
+from matplotlib.colors import ListedColormap
 
 # Third party imports
 from numpy.fft import fft2, ifft2, ifftshift
@@ -59,7 +60,9 @@ class DemHillShade(MetricTemplate):
         # angle of the illumination source above the horizon
         self.angle_altitude: float = 45
         self.cmap: str = "Greys_r"
+        self.cmap_nodata: str = "royalblue"
         self.plot_path: str = None
+        self.no_data_location: np.ndarray = None
 
         if parameters:
             if "azimuth" in parameters:
@@ -68,6 +71,8 @@ class DemHillShade(MetricTemplate):
                 self.angle_altitude = parameters["angle_altitude"]
             if "cmap" in parameters:
                 self.cmap = parameters["cmap"]
+            if "cmap_nodata" in parameters:
+                self.cmap_nodata = parameters["cmap_nodata"]
             if "colorbar_title" in parameters:
                 self.colorbar_title = parameters["colorbar_title"]
             if "fig_title" in parameters:
@@ -121,8 +126,21 @@ class DemHillShade(MetricTemplate):
 
         fig, fig_ax = mpl_pyplot.subplots(figsize=(7.0, 8.0))
 
+        no_data_location = self.no_data_location
+
+        if no_data_location is not None:
+            mpl_pyplot.imshow(
+                no_data_location,
+                cmap=ListedColormap([self.cmap_nodata]),
+                interpolation="none",
+                aspect="equal",
+            )
+
+            hillshade_array[no_data_location] = np.nan
+
         image = mpl_pyplot.imshow(
-            hillshade_array, cmap=mpl_pyplot.colormaps.get_cmap(self.cmap)
+            hillshade_array,
+            cmap=mpl_pyplot.colormaps.get_cmap(self.cmap),
         )
 
         fig.colorbar(image, label=self.colorbar_title, ax=fig_ax)
@@ -172,7 +190,9 @@ class DemSkyViewFactor(MetricTemplate):
         # quantiles
         self.quantiles = [0.09, 0.91]
         self.cmap: str = "Greys_r"
+        self.cmap_nodata: str = "royalblue"
         self.plot_path: str = None
+        self.no_data_location: np.ndarray = None
 
         if parameters:
             if "filter_intensity" in parameters:
@@ -183,6 +203,8 @@ class DemSkyViewFactor(MetricTemplate):
                 self.quantiles = parameters["quantiles"]
             if "cmap" in parameters:
                 self.cmap = parameters["cmap"]
+            if "cmap_nodata" in parameters:
+                self.cmap_nodata = parameters["cmap_nodata"]
             if "colorbar_title" in parameters:
                 self.colorbar_title = parameters["colorbar_title"]
             if "fig_title" in parameters:
@@ -265,6 +287,17 @@ class DemSkyViewFactor(MetricTemplate):
 
         # clip between 0 and 1 + rescale to 255
         z = np.clip(z, 0, 1) * 255
+
+        no_data_location = self.no_data_location
+
+        if no_data_location is not None:
+            mpl_pyplot.imshow(
+                no_data_location,
+                cmap=ListedColormap([self.cmap_nodata]),
+                interpolation="none",
+                aspect="equal",
+            )
+            z[no_data_location] = np.nan
 
         image = mpl_pyplot.imshow(
             z, cmap=mpl_pyplot.colormaps.get_cmap(self.cmap)
