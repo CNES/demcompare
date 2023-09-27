@@ -52,7 +52,7 @@ class DemHillShade(MetricTemplate):
         super().__init__()
 
         self.type = "matrix2D"
-        self.fig_title = "REF dem hill shade"
+        self.fig_title = "DEM hill shade"
         self.colorbar_title = "Hill shade"
 
         # angular direction of the sun
@@ -178,7 +178,7 @@ class DemSkyViewFactor(MetricTemplate):
         super().__init__()
 
         self.type = "matrix2D"
-        self.fig_title = "REF dem sky view factor"
+        self.fig_title = "DEM sky view factor"
         self.colorbar_title = "Sky view factor"
 
         # parameter of the DEM's FFT filter intensity.

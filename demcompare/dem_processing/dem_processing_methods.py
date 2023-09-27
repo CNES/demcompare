@@ -113,7 +113,7 @@ class AltiDiff(DemProcessingTemplate):
     def process_dem(
         self,
         dem_1: xr.Dataset,
-        dem_2: xr.Dataset = None,
+        dem_2: xr.Dataset,
     ) -> xr.Dataset:
         """
         Compute the difference between dem_1 and dem_2.
@@ -294,7 +294,7 @@ class AltiDiffSlopeNorm(DemProcessingTemplate):
     def process_dem(
         self,
         dem_1: xr.Dataset,
-        dem_2: xr.Dataset = None,
+        dem_2: xr.Dataset,
     ) -> xr.Dataset:
         """
         Compute the difference between dem_1 and dem_2 normalized by the slope.
@@ -428,7 +428,7 @@ class AngularDiff(DemProcessingTemplate):
     def process_dem(
         self,
         dem_1: xr.Dataset,
-        dem_2: xr.Dataset = None,
+        dem_2: xr.Dataset,
     ) -> xr.Dataset:
         """
         Compute the angular difference between dem_1 and dem_2.
@@ -510,6 +510,62 @@ class Ref(DemProcessingTemplate):
         :rtype: xr.Dataset
         """
         return dem_1
+
+
+@DemProcessing.register("sec")
+class Sec(DemProcessingTemplate):
+    """
+    SEC DEM
+    """
+
+    def __init__(self, parameters: Dict = None):
+        """
+        Initialization the DEM processing object
+        :return: None
+        """
+
+        super().__init__()
+
+        self.fig_title = "SEC dem"
+        self.colorbar_title = "Elevation (m)"
+        self.cmap = "terrain"
+
+    def process_dem(
+        self,
+        dem_1: xr.Dataset,
+        dem_2: xr.Dataset,
+    ) -> xr.Dataset:
+        """
+        Return dem_1
+
+        :param dem_1: dem_1 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_1: xr.Dataset
+        :param dem_2: dem_2 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_2: xr.Dataset
+        :return: xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :rtype: xr.Dataset
+        """
+        dem_2["classification_layer_masks"] = (
+            dem_1["classification_layer_masks"]
+            if hasattr(dem_1, "classification_layer_masks")
+            else None
+        )
+        return dem_2
 
 
 @DemProcessing.register("ref-curvature")
