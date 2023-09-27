@@ -317,6 +317,18 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
                         "The DEM processing method: 'ref-curvature'",
                         "cannot have 'Slope0' as 'classification_layers'",
                     )
+        if "sec-curvature" in cfg["statistics"]:
+            if "classification_layers" in cfg["statistics"]["sec-curvature"]:
+                if (
+                    "Slope0"
+                    in cfg["statistics"]["sec-curvature"][
+                        "classification_layers"
+                    ]
+                ):
+                    raise NameError(
+                        "The DEM processing method: 'sec-curvature'",
+                        "cannot have 'Slope0' as 'classification_layers'",
+                    )
 
 
 def get_output_files_paths(

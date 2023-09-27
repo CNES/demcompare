@@ -31,19 +31,14 @@ import numpy as np
 
 # Third party imports
 import xarray as xr
-from numpy.fft import fft2, ifft2, ifftshift
 
 from demcompare.dem_tools import (
     accumulates_class_layers,
+    compute_curvature_filtering,
     compute_dem_slope,
     create_dem,
 )
-from demcompare.img_tools import (
-    calc_spatial_freq_2d,
-    compute_surface_normal,
-    neighbour_interpol,
-    remove_nan_and_flatten,
-)
+from demcompare.img_tools import compute_surface_normal, remove_nan_and_flatten
 
 from .dem_processing import DemProcessing
 from .dem_processing_template import DemProcessingTemplate
@@ -586,87 +581,6 @@ class RefCurvature(DemProcessingTemplate):
         self.colorbar_title = "Curvature"
         self.cmap = "bwr"
 
-    def compute_curvature_filtering(
-        self,
-        dem: xr.Dataset,
-        filter_intensity: float = 0.9,
-        replication: bool = True,
-    ) -> xr.Dataset:
-        """
-        Return the curvature of the input dem.
-        First, compute the FFT of the input dem: F(y) = FFT(DEM).
-        Then, apply a filter y^filter_intensity
-        with s=0.9: F(y) = F(y)* y^filter_intensity.
-        Finally, apply the inverse FFT: IFFT(F(y)).
-        We keep the real part (imaginary part = digital noise).
-
-        :param dem: dem xr.DataSet containing :
-
-                - image : 2D (row, col) xr.DataArray float32
-                - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-        :type dem: xr.Dataset
-        :param filter_intensity: parameter of the DEM's FFT filter intensity.
-                                 Should be close to 1.
-                                 Default = 0.9.
-        :type filter_intensity: float
-        :param replication: if true, the image is replicated
-                            by x4 in order to improve resolution.
-                            Default = True.
-        :type replication: bool
-        :return: curvature xr.DataSet containing :
-
-                - image : 2D (row, col) xr.DataArray float32
-                - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-        :rtype: xr.Dataset
-        """
-
-        no_data_location = np.logical_or(
-            dem["image"].data == dem.attrs["nodata"],
-            np.isnan(dem["image"].data),
-        )
-
-        # no data pixel interpolation
-        data_all = neighbour_interpol(dem["image"].data, no_data_location)
-
-        high, wide = dem["image"].data.shape
-
-        if replication:
-            data_all = np.hstack([data_all, np.flip(data_all, axis=1)])
-            data_all = np.vstack([data_all, np.flip(data_all, axis=0)])
-            f_y, f_x = calc_spatial_freq_2d(2 * high, 2 * wide, edge=np.pi)
-
-        else:
-            f_y, f_x = calc_spatial_freq_2d(high, wide, edge=np.pi)
-
-        # spatial frequency (module)
-        spatial_freq = (f_x**2 + f_y**2) ** (filter_intensity / 2)
-        spatial_freq = ifftshift(spatial_freq)
-
-        image = fft2(data_all)
-        image_filtered = image * spatial_freq
-
-        image_filtered = ifft2(image_filtered)
-
-        if replication:
-            image_filtered = image_filtered[:high, :wide]
-
-        image_filtered[no_data_location] = dem.attrs["nodata"]
-
-        return create_dem(
-            image_filtered.real,
-            transform=dem.georef_transform.data,
-            nodata=dem.attrs["nodata"],
-            img_crs=dem.crs,
-            bounds=dem.bounds,
-            classification_layer_masks=dem["classification_layer_masks"]
-            if hasattr(dem, "classification_layer_masks")
-            else None,
-        )
-
     def process_dem(
         self,
         dem_1: xr.Dataset,
@@ -697,4 +611,60 @@ class RefCurvature(DemProcessingTemplate):
                   xr.DataArray
         :rtype: xr.Dataset
         """
-        return self.compute_curvature_filtering(dem_1)
+        return compute_curvature_filtering(dem_1)
+
+
+@DemProcessing.register("sec-curvature")
+class SecCurvature(DemProcessingTemplate):
+    """
+    Curvature of the SEC DEM
+    """
+
+    def __init__(self, parameters: Dict = None):
+        """
+        Initialization the DEM processing object
+        :return: None
+        """
+
+        super().__init__()
+
+        self.fig_title = "SEC dem curvature"
+        self.colorbar_title = "Curvature"
+        self.cmap = "bwr"
+
+    def process_dem(
+        self,
+        dem_1: xr.Dataset,
+        dem_2: xr.Dataset,
+    ) -> xr.Dataset:
+        """
+        Return the curvature of dem_1
+
+        :param dem_1: dem_1 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_1: xr.Dataset
+        :param dem_2: dem_2 xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :type dem_2: xr.Dataset
+        :return: curvature xr.DataSet containing :
+
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+        :rtype: xr.Dataset
+        """
+        dem_2["classification_layer_masks"] = (
+            dem_1["classification_layer_masks"]
+            if hasattr(dem_1, "classification_layer_masks")
+            else None
+        )
+        return compute_curvature_filtering(dem_2)
