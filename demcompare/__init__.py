@@ -275,7 +275,7 @@ def run(
         logging.info("[Report]")
         report.generate_report(
             cfg=cfg,
-            stats_dataset=stats_dataset,
+            stats_datasets=stats_datasets,
         )
 
 

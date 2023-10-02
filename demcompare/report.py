@@ -142,14 +142,24 @@ def fill_report_stats(
             # find csv stats associated with the mode
             # - csv
             if mode == "standard":
-                result = recursive_search(
-                    os.path.join(working_dir, "*", classification_layer_name),
-                    "*.csv",
+                result = (
+                    os.path.join(
+                        working_dir,
+                        get_out_dir("stats_dir"),
+                        stats_dataset.dem_processing.type,
+                        classification_layer_name,
+                        "stats_results.csv",
+                    ),
                 )
             else:
-                result = recursive_search(
-                    os.path.join(working_dir, "*", classification_layer_name),
-                    f"*_{mode}*.csv",
+                result = (
+                    os.path.join(
+                        working_dir,
+                        get_out_dir("stats_dir"),
+                        stats_dataset.dem_processing.type,
+                        classification_layer_name,
+                        f"*stats_results_{mode}*.csv",
+                    ),
                 )
             if len(result) > 0:
                 if os.path.exists(result[0]):
@@ -199,19 +209,6 @@ def fill_report_stats(
             "<https://demcompare.readthedocs.io/"
             "en/stable/userguide/statistics.html#classification-layers>`_.",
             "",
-        ]
-    )
-
-    src = "\n".join(
-        [
-            src,
-            "Stats are generated from:",
-            "",
-            "- **input_ref** when one input dem and statistics only",
-            "- reprojected **input_ref - input_sec**"
-            " difference when statistics only",
-            "- reprojected and coregistered **input_ref - input_sec**"
-            " difference with coregistration and statistics",
         ]
     )
 
@@ -265,6 +262,7 @@ def fill_report_stats(
 
 def fill_report_image_views(  # noqa: C901
     working_dir: str,
+    stats_dataset: StatsDataset,
     src: str,
 ) -> str:
     """
@@ -278,38 +276,29 @@ def fill_report_image_views(  # noqa: C901
 
     # TODO: replace with OTD name and not recursive search
 
-    # Find snapshot files depending on mode (one ref dem or ref-sec diff)
-    # for initial dem diff: snapshot, pdf, cdf
-    initial_dem_diff = first_recursive_search(
-        working_dir, "initial_dem_diff_snapshot.png"
-    )
-    initial_dem_diff_pdf = first_recursive_search(
-        working_dir, "initial_dem_diff_pdf.png"
-    )
-    initial_dem_diff_cdf = first_recursive_search(
-        working_dir, "initial_dem_diff_cdf.png"
-    )
-
-    # for final (after coreg) dem diff: snapshot, pdf, cdf
-    final_dem_diff = first_recursive_search(
-        working_dir, "final_dem_diff_snapshot.png"
-    )
-    final_dem_diff_pdf = first_recursive_search(
-        working_dir, "final_dem_diff_pdf.png"
-    )
-    final_dem_diff_cdf = first_recursive_search(
-        working_dir, "final_dem_diff_cdf.png"
-    )
+    dem_type = stats_dataset.dem_processing.type
 
     # for one dem for stats: snapshot, pdf, cdf
-    dem_for_stats = first_recursive_search(
-        working_dir, "dem_for_stats_snapshot.png"
+    dem_for_stats = os.path.join(
+        working_dir,
+        get_out_dir("stats_dir"),
+        dem_type,
+        "dem_for_stats_snapshot.png",
     )
-    dem_for_stats_pdf = first_recursive_search(
-        working_dir, "dem_for_stats_pdf.png"
+    dem_for_stats_pdf = os.path.join(
+        working_dir, get_out_dir("stats_dir"), dem_type, "dem_for_stats_pdf.png"
     )
-    dem_for_stats_cdf = first_recursive_search(
-        working_dir, "dem_for_stats_cdf.png"
+    dem_for_stats_cdf = os.path.join(
+        working_dir, get_out_dir("stats_dir"), dem_type, "dem_for_stats_cdf.png"
+    )
+    dem_for_stats_svf = os.path.join(
+        working_dir, get_out_dir("stats_dir"), dem_type, "dem_for_stats_svf.png"
+    )
+    dem_for_stats_hillshade = os.path.join(
+        working_dir,
+        get_out_dir("stats_dir"),
+        dem_type,
+        "dem_for_stats_hillshade.png",
     )
 
     # -> show image snapshot, cdf, pdf without coregistration
@@ -318,83 +307,37 @@ def fill_report_image_views(  # noqa: C901
         [
             src,
             "",
-            "Image views",
+            f"**{stats_dataset.dem_processing.fig_title}**",
             "==========================",
             "",
         ]
     )
+
     # if exists : -> one dem input REF
     if dem_for_stats:
         src = "\n".join(
             [
                 src,
                 "",
-                "**Initial elevation on one DEM (REF)**",
-                "----------------------",
+                "Image views",
+                "===============",
                 "",
-                f".. |img| image:: /{dem_for_stats}",
-                "  :width: 100%",
-                f".. |pdf| image:: /{dem_for_stats_pdf}",
-                "  :width: 100%",
-                f".. |cdf| image:: /{dem_for_stats_cdf}",
-                "  :width: 100%",
+                f".. |img_{dem_type}| image:: /{dem_for_stats}",
+                "  :width: 50%",
+                f".. |pdf_{dem_type}| image:: /{dem_for_stats_pdf}",
+                "  :width: 50%",
+                f".. |cdf_{dem_type}| image:: /{dem_for_stats_cdf}",
+                "  :width: 50%",
+                f".. |svf_{dem_type}| image:: /{dem_for_stats_svf}",
+                "  :width: 50%",
+                f".. |hillshade_{dem_type}| image:: /{dem_for_stats_hillshade}",
+                "  :width: 50%",
                 "",
-                "+--------------+-------------+-------------------------+",
-                "|   Image view | Histogram   | Cumulative distribution |",
-                "+--------------+-------------+-------------------------+",
-                "| |img|        | |pdf|       |  |cdf|                  |",
-                "+--------------+-------------+-------------------------+",
-                "",
-            ]
-        )
-
-    # if exists : -> two dem initial diff with or without coregistration
-    if initial_dem_diff:
-        src = "\n".join(
-            [
-                src,
-                "",
-                "**Initial elevation (REF-SEC)**",
-                "----------------------",
-                "",
-                f".. |img| image:: /{initial_dem_diff}",
-                "  :width: 100%",
-                f".. |pdf| image:: /{initial_dem_diff_pdf}",
-                "  :width: 100%",
-                f".. |cdf| image:: /{initial_dem_diff_cdf}",
-                "  :width: 100%",
-                "",
-                "+--------------+-------------+-------------------------+",
-                "|   Image view | Histogram   | Cumulative distribution |",
-                "+--------------+-------------+-------------------------+",
-                "| |img|        | |pdf|       |  |cdf|                  |",
-                "+--------------+-------------+-------------------------+",
-                "",
-            ]
-        )
-
-    # if exists : ->  differences with coregistration
-    if final_dem_diff:
-        src = "\n".join(
-            [
-                src,
-                "**Final elevation after coregistration"
-                " (COREG_REF-COREG_SEC)**",
-                "-----------------------------------------",
-                "",
-                f".. |img2| image:: /{final_dem_diff}",
-                "  :width: 100%",
-                f".. |pdf2| image:: /{final_dem_diff_pdf}",
-                "  :width: 100%",
-                f".. |cdf2| image:: /{final_dem_diff_cdf}",
-                "  :width: 100%",
-                "",
-                "+--------------+-------------+-------------------------+",
-                "|   Image view | Histogram   | Cumulative distribution |",
-                "+--------------+-------------+-------------------------+",
-                "| |img2|       | |pdf2|      |  |cdf2|                 |",
-                "+--------------+-------------+-------------------------+",
-                "",
+                f"|img_{dem_type}|",
+                f"|pdf_{dem_type}|",
+                f"|cdf_{dem_type}|",
+                f"|svf_{dem_type}|",
+                f"|hillshade_{dem_type}|",
                 "",
             ]
         )
@@ -404,7 +347,7 @@ def fill_report_image_views(  # noqa: C901
 
 def fill_report(
     cfg: ConfigType,
-    stats_dataset: StatsDataset = None,
+    stats_datasets: List[StatsDataset] = None,
 ) -> str:
     """
     Fill sphinx demcompare report into a string from cfg and stats_dataset
@@ -440,12 +383,13 @@ def fill_report(
         ]
     )
 
-    # Show image views (dependent on initial, final or dem_for_stats images)
-    src = fill_report_image_views(working_dir, src)
-
-    # Fill statistics report
-    if "statistics" in cfg and stats_dataset:
-        src = fill_report_stats(working_dir, stats_dataset, src)
+    if stats_datasets:
+        for stats_dataset in stats_datasets:
+            # Show image views
+            src = fill_report_image_views(working_dir, stats_dataset, src)
+            # Fill statistics report
+            if "statistics" in cfg:
+                src = fill_report_stats(working_dir, stats_dataset, src)
 
     # Show full input configuration with indent last line manually (bug)
     show_cfg = json.dumps(cfg, indent=2)
@@ -468,7 +412,7 @@ def fill_report(
 
 def generate_report(  # noqa: C901
     cfg: ConfigType,
-    stats_dataset: StatsDataset = None,
+    stats_datasets: List[StatsDataset] = None,
 ):
     """
     Generate demcompare report
@@ -489,7 +433,7 @@ def generate_report(  # noqa: C901
 
     # create source
 
-    src = fill_report(cfg=cfg, stats_dataset=stats_dataset)
+    src = fill_report(cfg=cfg, stats_datasets=stats_datasets)
 
     # Add source to the project
     spm.write_body(src)

@@ -133,7 +133,7 @@ class StatsProcessing:
         else:
             # Initialize StatsDataset object
             self.stats_dataset: StatsDataset = StatsDataset(
-                self.dem["image"].data
+                self.dem["image"].data, self.dem_processing_method
             )
             # Create classification layers
             self._create_classif_layers()

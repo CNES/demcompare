@@ -1106,7 +1106,7 @@ def compute_and_save_image_plots(
     )
     fig.colorbar(im1, label=colorbar_title, ax=fig_ax)
 
-    if vmax_plot is not None and vmin_plot is not None:
+    if vmax_plot is None and vmin_plot is None:
         fig.text(
             0.15,
             0.15,
