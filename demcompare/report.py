@@ -158,7 +158,7 @@ def fill_report_stats(
                         get_out_dir("stats_dir"),
                         stats_dataset.dem_processing.type,
                         classification_layer_name,
-                        f"*stats_results_{mode}*.csv",
+                        f"stats_results_{mode}.csv",
                     ),
                 )
             if len(result) > 0:
@@ -313,6 +313,8 @@ def fill_report_image_views(  # noqa: C901
         ]
     )
 
+    tmp = dem_type + "|"
+
     # if exists : -> one dem input REF
     if dem_for_stats:
         src = "\n".join(
@@ -323,21 +325,37 @@ def fill_report_image_views(  # noqa: C901
                 "===============",
                 "",
                 f".. |img_{dem_type}| image:: /{dem_for_stats}",
-                "  :width: 50%",
+                "  :width: 100%",
                 f".. |pdf_{dem_type}| image:: /{dem_for_stats_pdf}",
-                "  :width: 50%",
+                "  :width: 100%",
                 f".. |cdf_{dem_type}| image:: /{dem_for_stats_cdf}",
-                "  :width: 50%",
+                "  :width: 100%",
                 f".. |svf_{dem_type}| image:: /{dem_for_stats_svf}",
-                "  :width: 50%",
+                "  :width: 100%",
                 f".. |hillshade_{dem_type}| image:: /{dem_for_stats_hillshade}",
-                "  :width: 50%",
+                "  :width: 100%",
                 "",
-                f"|img_{dem_type}|",
-                f"|pdf_{dem_type}|",
-                f"|cdf_{dem_type}|",
-                f"|svf_{dem_type}|",
-                f"|hillshade_{dem_type}|",
+                "+-------------------------"
+                + "+-------------------------"
+                + "+-------------------------+",
+                "|   Image view            "
+                + "| Sky-view factor         "
+                + "| Hill shade              |",
+                "+-------------------------"
+                + "+-------------------------"
+                + "+-------------------------+",
+                f"| |img_{tmp.ljust(13)}      "
+                + f"| |svf_{tmp.ljust(12)}       "
+                + f"|  |hillshade_{tmp.ljust(12)}|",
+                "+-------------------------"
+                + "+-------------------------"
+                + "+-------------------------+",
+                "",
+                "+-------------------------" + "+-------------------------+",
+                "| Histogram               " + "| Cumulative distribution |",
+                "+-------------------------" + "+-------------------------+",
+                f"| |pdf_{tmp.ljust(13)}      " + f"|  |cdf_{tmp.ljust(18)}|",
+                "+-------------------------" + "+-------------------------+",
                 "",
             ]
         )
