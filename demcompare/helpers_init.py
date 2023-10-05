@@ -293,6 +293,20 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
     # else
     cfg["otd"] = "default_OTD"
 
+    check_dem_processing_methods(cfg)
+
+    check_curvature_slope(cfg)
+
+
+def check_dem_processing_methods(cfg: ConfigType):
+    """
+    Checks that the DEM processing methods
+    in the config are correct.
+
+    :param cfg: configuration dictionary
+    :type cfg: ConfigType
+    """
+
     if "statistics" in cfg:
         for dem_processing_method in cfg["statistics"]:
             if (
@@ -303,6 +317,17 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
                     f"DEM processing method: {dem_processing_method}"
                     "is not correct"
                 )
+
+
+def check_curvature_slope(cfg: ConfigType):
+    """
+    Checks that there is no
+    DEM processing method '..-curvature'
+    with 'Slope0' as 'classification_layers'
+
+    :param cfg: configuration dictionary
+    :type cfg: ConfigType
+    """
 
     if "statistics" in cfg:
         if "ref-curvature" in cfg["statistics"]:

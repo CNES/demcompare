@@ -58,6 +58,7 @@ class AltiDiff(DemProcessingTemplate):
 
         super().__init__()
 
+        self.type = "alti-diff"
         self.fig_title = "[REF - SEC] difference"
         self.colorbar_title = "Elevation difference (m)"
         self.cmap = "bwr"
@@ -155,6 +156,7 @@ class AltiDiffSlopeNorm(DemProcessingTemplate):
 
         super().__init__()
 
+        self.type = "alti-diff-slope-norm"
         self.fig_title = "[REF - SEC] difference normalized by the slope"
         self.colorbar_title = "Elevation difference normalized by the slope"
         self.cmap = "bwr"
@@ -336,6 +338,7 @@ class AngularDiff(DemProcessingTemplate):
 
         super().__init__()
 
+        self.type = "angular-diff"
         self.fig_title = "[REF vs SEC] angular difference"
         self.colorbar_title = "Angular difference"
         self.cmap = "twilight"
@@ -470,6 +473,7 @@ class Ref(DemProcessingTemplate):
 
         super().__init__()
 
+        self.type = "ref"
         self.fig_title = "REF dem"
         self.colorbar_title = "Elevation (m)"
         self.cmap = "terrain"
@@ -521,6 +525,7 @@ class Sec(DemProcessingTemplate):
 
         super().__init__()
 
+        self.type = "sec"
         self.fig_title = "SEC dem"
         self.colorbar_title = "Elevation (m)"
         self.cmap = "terrain"
@@ -577,6 +582,7 @@ class RefCurvature(DemProcessingTemplate):
 
         super().__init__()
 
+        self.type = "ref-curvature"
         self.fig_title = "REF dem curvature"
         self.colorbar_title = "Curvature"
         self.cmap = "bwr"
@@ -628,6 +634,7 @@ class SecCurvature(DemProcessingTemplate):
 
         super().__init__()
 
+        self.type = "sec-curvature"
         self.fig_title = "SEC dem curvature"
         self.colorbar_title = "Curvature"
         self.cmap = "bwr"
