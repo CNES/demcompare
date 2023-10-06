@@ -17,6 +17,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+from pkg_resources import get_distribution
 import os
 import sys
 
@@ -26,18 +27,17 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 # General information about the project.
-project = "mesh3d"
-copyright = "2022, CNES"
-author = "Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium)"
+project = "cars-mesh"
+copyright = "2023, CNES"
+author = "Chloe Thenoz (Magellium), Lisa Vo Thanh (Magellium), Emmanuel Dubois (CNES)"
 
 # The full version, including alpha/beta/rc tags
-from pkg_resources import get_distribution
 
 try:
-    version = get_distribution("mesh3d").version
+    version = get_distribution("cars_mesh").version
     release = version
 except Exception as error:
-    print("WARNING: cannot find mesh3d version")
+    print("WARNING: cannot find cars_mesh version")
     version = "Unknown"
     release = version
 
@@ -68,7 +68,7 @@ extensions = [
     "autoapi.extension",  # autoapi automatic generation
 ]
 
-autoapi_dirs = ["../../mesh3d"]
+autoapi_dirs = ["../../cars_mesh"]
 autoapi_root = "api_reference"
 autoapi_keep_files = True
 autoapi_options = [
@@ -99,8 +99,8 @@ pygments_style = "sphinx"
 html_theme = "sphinx_rtd_theme"
 
 # Title
-html_title = "Mesh 3D Documentation"
-html_short_title = "Mesh 3D Documentation"
+html_title = "CARS-MESH Documentation"
+html_short_title = "CARS-MESH Documentation"
 
 # Logo
 # html_logo = "images/picto_transparent_mini.png"
@@ -144,8 +144,8 @@ numfig = True
 latex_documents = [
     (
         master_doc,
-        "mesh3d.tex",
-        "Mesh 3D documentation",
+        "cars-mesh.tex",
+        "CARS-MESH documentation",
         "TODO",
         "manual",
     ),

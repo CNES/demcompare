@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 CNES.
+# Copyright (C) 2023 CNES.
 #
-# This file is part of mesh3d
+# This file is part of cars-mesh
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Tests for `mesh3d` package."""
+"""Tests for `cars_mesh` package."""
 
 # to check the code structure and avoid cyclic import !!
 
@@ -28,10 +28,10 @@ from tempfile import TemporaryDirectory
 # Third party imports
 import pytest
 
-# mesh3d imports
-from mesh3d import param
-from mesh3d.config import read_config
-from mesh3d.tools.handlers import read_input_path
+# cars_mesh imports
+from cars_mesh import param
+from cars_mesh.config import read_config
+from cars_mesh.tools.handlers import read_input_path
 
 # Tests helpers
 from .helpers import get_temporary_dir, get_test_data_path
@@ -56,7 +56,7 @@ def test_all_possible_combinations():
     test_data_path = get_test_data_path("toulouse_test_data")
 
     # Load a config_tests json config containing all sub steps configuration
-    # Not a mesh3d config file !
+    # Not a cars config file !
     test_cfg_path = os.path.join(test_data_path, "config_tests.json")
 
     # open json config file to launch automatically the tests

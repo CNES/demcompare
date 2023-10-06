@@ -1,5 +1,5 @@
 [run]
-source = mesh3d
+source = cars_mesh
 omit =
     # Omit tests
     /tests/*

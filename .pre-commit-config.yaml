@@ -35,5 +35,5 @@ repos:
     stages: [push]
     entry: make docs
     language: system
-    files: ^(docs/.*|mesh3d/.*)$
+    files: ^(docs/.*|cars-mesh/.*)$
     pass_filenames: False

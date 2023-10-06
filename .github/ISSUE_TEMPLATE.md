@@ -1,4 +1,4 @@
-* Mesh 3D version:
+* CARS-MESH version:
 * Python version:
 * Operating System:
 

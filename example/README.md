@@ -11,7 +11,7 @@ This folder provides small data to test the pipeline extracted from Toulouse Ple
 To launch the code, please follow the guidelines below:
 
 ```bash
-# Install Mesh3D library
+# Install CARS-MESH library
 cd path/to/dir/mesh_3d
 make install
 
@@ -22,10 +22,10 @@ source venv/bin/activate
 cd example/
 
 # Launch reconstruction
-mesh3d reconstruct config_reconstruct.json
+cars-mesh reconstruct config_reconstruct.json
 
 # Launch evaluation between the input point cloud and the vertices of the reconstructed mesh
-mesh3d evaluate config_evaluate.json
+cars-mesh evaluate config_evaluate.json
 ```
 
 For more information, please check the documentation.

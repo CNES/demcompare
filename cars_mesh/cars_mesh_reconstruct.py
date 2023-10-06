@@ -3,7 +3,8 @@
 #
 # Copyright (C) 2023 CNES.
 #
-# This file is part of mesh3d
+# This file is part of cars-mesh
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +19,7 @@
 # limitations under the License.
 #
 """
-Main Reconstruct module of mesh3d tool.
+Main Reconstruct module of cars-mesh tool.
 """
 
 import logging
@@ -27,18 +28,18 @@ import os
 from loguru import logger
 
 from .config import check_config, save_config_file
-from .state_machine import Mesh3DMachine
+from .state_machine import CarsMeshMachine
 from .tools.handlers import Mesh, read_input_path
 
 
-def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
+def run(cars_mesh_machine: CarsMeshMachine, cfg: dict) -> Mesh:
     """
     Run the state machine
 
     Parameters
     ----------
-    mesh3d_machine: Mesh3DMachine
-        Mesh 3D state machine model
+    cars_mesh_machine: CarsMeshMachine
+        CARS-MESH state machine model
     cfg: dict
         Configuration dictionary
 
@@ -53,10 +54,10 @@ def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
         logger.warning("State machine is empty. Returning the initial data.")
 
     else:
-        logger.debug(f"Initial state: {mesh3d_machine.initial_state}")
+        logger.debug(f"Initial state: {cars_mesh_machine.initial_state}")
 
         # Check transitions' validity
-        mesh3d_machine.check_transitions(cfg)
+        cars_mesh_machine.check_transitions(cfg)
 
         # Browse user defined steps and execute them
         for k, step in enumerate(cfg["state_machine"]):
@@ -66,7 +67,7 @@ def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
             )
 
             # Run action
-            mesh3d_machine.run(step, cfg)
+            cars_mesh_machine.run(step, cfg)
 
             # (Optional) Save intermediate results to disk if asked
             if "save_output" in step:
@@ -89,17 +90,17 @@ def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
                         f"_{step['action']}"
                         f"_{step['method']}",
                     )
-                    if mesh3d_machine.mesh_data.df is not None:
+                    if cars_mesh_machine.mesh_data.df is not None:
                         # Mesh serialisation
                         extension = "ply"
-                        mesh3d_machine.mesh_data.serialize(
+                        cars_mesh_machine.mesh_data.serialize(
                             filepath=intermediate_filepath + "." + extension,
                             extension=extension,
                         )
                     else:
                         # Point cloud serialisation
                         extension = "laz"
-                        mesh3d_machine.mesh_data.pcd.serialize(
+                        cars_mesh_machine.mesh_data.pcd.serialize(
                             filepath=intermediate_filepath + "." + extension,
                             extension=extension,
                         )
@@ -110,12 +111,12 @@ def run(mesh3d_machine: Mesh3DMachine, cfg: dict) -> Mesh:
                         f"'{intermediate_filepath  + '.' + extension}'."
                     )
 
-    return mesh3d_machine.mesh_data
+    return cars_mesh_machine.mesh_data
 
 
 def main(cfg_path: str) -> None:
     """
-    Main function to apply mesh 3d pipeline
+    Main function to apply cars-mesh pipeline
 
     Parameters
     ----------
@@ -149,18 +150,18 @@ def main(cfg_path: str) -> None:
     mesh = read_input_path(cfg["input_path"])
 
     # Init state machine model
-    mesh3d_machine = Mesh3DMachine(
+    cars_mesh_machine = CarsMeshMachine(
         mesh_data=mesh, initial_state=cfg["initial_state"]
     )
 
     # Run the pipeline according to the user configuration
-    out_mesh = run(mesh3d_machine, cfg)
+    out_mesh = run(cars_mesh_machine, cfg)
 
     # Serialize data
     # Check if user specified an output name
     # otherwise assign a default one
     if "output_name" not in cfg:
-        cfg["output_name"] = "output_mesh3d"  # default output name
+        cfg["output_name"] = "output_cars-mesh"  # default output name
     # If data is only a point cloud, prefer output extension 'laz'
     # otherwise use 'ply'
     extension = "ply" if out_mesh.df is not None else "laz"

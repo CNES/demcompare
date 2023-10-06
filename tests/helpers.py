@@ -3,8 +3,8 @@
 #
 # Copyright (c) 2023 Centre National d'Etudes Spatiales (CNES).
 #
-# This file is part of mesh3d
-# (see https://github.com/CNES/mesh3d).
+# This file is part of cars-mesh
+# (see https://github.com/CNES/cars-mesh).
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ def get_test_data_path(test_name: str) -> str:
     os.chdir(os.path.dirname(__file__))
 
     # Get absolute path from this file (which is in "tests" directory)
-    # in root_src_mesh3d/tests/ + data/end_to_end_data
+    # in root_src_cars-mesh/tests/ + data/end_to_end_data
 
     test_data_folder = os.path.join(
         os.path.dirname(__file__), os.path.join("data")
@@ -59,7 +59,7 @@ def get_module_path(directory_name: str) -> str:
     dir_path = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
     # Get absolute path from this file in
     # root_src/ + module directory_name
-    test_data_folder = os.path.join(dir_path, "mesh3d")
+    test_data_folder = os.path.join(dir_path, "cars_mesh")
 
     return os.path.join(test_data_folder, directory_name)
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 CNES.
+# Copyright (C) 2023 CNES.
 #
-# This file is part of mesh3d
+# This file is part of cars-mesh
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +19,7 @@
 # limitations under the License.
 #
 """
-Class associated to Mesh 3D state machine
+Class associated to CARS-MESH state machine
 """
 
 from loguru import logger
@@ -28,8 +29,8 @@ from . import param
 from .tools.handlers import Mesh
 
 
-class Mesh3DMachine(Machine):
-    """Mesh 3D state machine"""
+class CarsMeshMachine(Machine):
+    """CARS-MESH state machine"""
 
     def __init__(
         self, mesh_data: Mesh, initial_state: str = "initial_pcd"
@@ -144,7 +145,7 @@ class Mesh3DMachine(Machine):
 
     def run(self, step: dict, cfg: dict) -> None:
         """
-        Run mesh 3d step by triggering the corresponding machine transition
+        Run CARS-MESH step by triggering the corresponding machine transition
 
         Parameters
         ----------
@@ -159,7 +160,7 @@ class Mesh3DMachine(Machine):
 
         except (MachineError, KeyError, AttributeError):
             logger.error(
-                f"A problem occurs during Mesh 3D running {step['action']} "
+                f"A problem occurs during CARS-MESH running {step['action']} "
                 f"step. Be sure of your sequencing."
             )
             raise
@@ -345,7 +346,7 @@ class Mesh3DMachine(Machine):
 
         except (MachineError, KeyError, AttributeError):
             logger.error(
-                "A problem occurs during Mesh 3D transition check. "
+                "A problem occurs during CARS-MESH transition check. "
                 "Be sure of your sequencing."
             )
             raise

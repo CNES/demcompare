@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 LABEL maintainer="CNES"
 
-## mesh3d installation Dockerfile example
+## cars-mesh installation Dockerfile example
 
 # Avoid apt install interactive questions.
 ARG DEBIAN_FRONTEND=noninteractive
@@ -22,19 +22,19 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-#  Install mesh3d
-WORKDIR /mesh3d
-COPY . /mesh3d
+#  Install cars-mesh
+WORKDIR /cars-mesh
+COPY . /cars-mesh
 
 RUN make clean && make install
 
 # source venv/bin/activate in docker mode
-ENV VIRTUAL_ENV='/mesh3d/venv'
+ENV VIRTUAL_ENV='/cars-mesh/venv'
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Clean pip cache
 RUN python -m pip cache purge
 
-## launch mesh3d command
-ENTRYPOINT ["mesh3d"]
+## launch cars-mesh command
+ENTRYPOINT ["cars-mesh"]
 CMD ["-h"]

@@ -1,4 +1,4 @@
-Welcome to Mesh 3D's documentation!
+Welcome to CARS-MESH's documentation!
 =============================================================================
 
 This library was created by Lisa Vo Thanh (Magellium) and Chloé Thenoz (Magellium) during a CNES R&T

@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 CNES.
+# Copyright (C) 2023 CNES.
 #
-# This file is part of mesh3d
+# This file is part of cars-mesh
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,17 +19,17 @@
 # limitations under the License.
 #
 """
-Console script for mesh3d.
+Console script for cars-mesh.
 """
 
 import argparse
 
-from mesh3d import __version__
+from cars_mesh import __version__
 
 
 def get_parser() -> argparse.ArgumentParser:
     """
-    ArgumentParser for Mesh 3D
+    ArgumentParser for CARS-MESH
 
     Returns
     parser
@@ -77,24 +78,24 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    """Console script for mesh3d."""
+    """Console script for cars-mesh."""
 
     # get parser
     parser = get_parser()
     args = parser.parse_args()
 
-    # run mesh 3d pipeline
+    # run cars-mesh pipeline
     if args.command == "reconstruct":
         # Reconstruction pipeline
-        from . import mesh3d_reconstruct
+        from . import cars_mesh_reconstruct
 
-        mesh3d_reconstruct.main(args.config)
+        cars_mesh_reconstruct.main(args.config)
 
     elif args.command == "evaluate":
         # Evaluation pipeline
-        from . import mesh3d_evaluate
+        from . import cars_mesh_evaluate
 
-        mesh3d_evaluate.main(args.config)
+        cars_mesh_evaluate.main(args.config)
 
     else:
         # Print the help message

@@ -1,4 +1,5 @@
 Préconisations générales:
+
 1. Pensez à bien mettre un **titre** d'issue explicite par rapport au bug
 2. Pensez à essayer au maximum d'aider le support (best effort) avec des informations les plus claires et précises
 3. Mettre le bon label
@@ -7,12 +8,14 @@ Préconisations générales:
 /label ~"Kind - Bug"
 
 ### Constat
+
 (ce qui permet de dire qu'il y a un bug)
 
 ### Contexte
+
 (ce qui permet de rejouer le bug)
 
-- Version utilisée ( Mesh 3D --version): 
+- Version utilisée ( CARS-MESH --version):
 
 - Contexte d'utilisation :
 
@@ -25,18 +28,19 @@ Préconisations générales:
 *Pensez à vérifier l'accès par les autres à la donnée en entrée ou copiez dans*
 
 #### Environnement
+
 *Copier l'environnement python*
 
 ```
 pip freeze
 ```
+
 *Lister l'environnement modules*
+
 ```
 module list
 ```
 
-
 ### Pistes potentielles pouvant expliquer l'origine du bug
-
 
 ### Pistes potentielles pouvant corriger le bug

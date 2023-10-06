@@ -16,10 +16,7 @@ Git clone the repository, open a terminal and launch the following commands:
     cd /path/to/desired/folder
 
     # Clone repository
-    # Make sure to check the right way to do it, whether you are internal or external to CNES
-    # Internal: https://confluence.cnes.fr/pages/viewpage.action?pageId=26166114
-    # External: https://confluence.cnes.fr/pages/viewpage.action?pageId=26159013
-    git clone git@gitlab.cnes.fr:3d/tools/mesh3d.git .
+    git clone https://github.com/CNES/cars-mesh.git
 
     # Install
     make install
@@ -29,7 +26,7 @@ Git clone the repository, open a terminal and launch the following commands:
     source /path/to/desired/folder/NAME_OF_VENV/bin/activate
 
     # Test if it works
-    mesh3d -h
+    cars-mesh -h
 
 It will install the virtual environment and all necessary to run the code.
 
@@ -56,13 +53,10 @@ it dynamically).
     python -m pip install --upgrade pip setuptools
 
     # Clone library repository
-    # Make sure to check the right way to do it, whether you are internal or external to CNES
-    # Internal: https://confluence.cnes.fr/pages/viewpage.action?pageId=26166114
-    # External: https://confluence.cnes.fr/pages/viewpage.action?pageId=26159013
-    git clone git@gitlab.cnes.fr:3d/tools/mesh3d.git .
+    git clone https://github.com/CNES/cars-mesh.git
 
-    # Install the mesh3d lib in dev mode with the dev and doc tools
+    # Install the cars-mesh lib in dev mode with the dev and doc tools
     python -m pip install -e .[dev,docs]
 
     # Test if it works
-    mesh3d -h
+    cars-mesh -h

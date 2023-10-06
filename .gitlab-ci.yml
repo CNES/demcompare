@@ -1,4 +1,4 @@
-# MESH3D Gitlab-ci configuration file
+# CARS-MESH Gitlab-ci configuration file
 
 # Workflow to allow no duplicated pipeline between branch and MR : https://docs.gitlab.com/ee/ci/yaml/workflow.html#switch-between-branch-pipelines-and-merge-request-pipelines
 workflow:
@@ -54,12 +54,12 @@ build:
     #- export HTTP_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
     #- export HTTPS_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
   script:
-    # Install mesh3d + requirements in venv
+    # Install cars-mesh + requirements in venv
     - VENV="venv" make install
     # Activate virtualenv
     - source venv/bin/activate
-    # Test quickly mesh3d
-    - mesh3d -h
+    # Test quickly cars-mesh
+    - cars-mesh -h
     # Show artifact size
     - du -h --max-depth=1
     - deactivate

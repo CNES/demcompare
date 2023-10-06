@@ -3,7 +3,8 @@
 #
 # Copyright (C) 2023 CNES.
 #
-# This file is part of mesh3d
+# This file is part of cars-mesh
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +19,7 @@
 # limitations under the License.
 #
 """
-Main configuration module of mesh3d tool.
+Main configuration module of cars-mesh tool.
 """
 
 import json

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf8
 #
-# Copyright (C) 2022 CNES.
+# Copyright (C) 2023 CNES.
 #
-# This file is part of mesh3d
+# This file is part of cars-mesh
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,4 +18,4 @@
 # limitations under the License.
 #
 
-"""Unit test package for mesh3d."""
+"""Unit test package for cars_mesh."""
