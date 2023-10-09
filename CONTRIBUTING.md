@@ -43,7 +43,7 @@ Classical workflow is :
 * Git add, commit and push from local working clone directory or from the forge directly
 * Install pre-commit validation process (using black, isort, flake8 and pylint) and check errors
 * Follow [Conventional commits](https://www.conventionalcommits.org/) specifications for commit messages
-* Launch the [test](README.md) on your modifications.
+* Run the [test](README.md) on your modifications.
 * When finished, change your Merge Request name (erase "WIP:" in title ) and ask to review the code (see below Merge request acceptation process)
 
 # Contribution license agreement

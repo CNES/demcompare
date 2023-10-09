@@ -19,14 +19,13 @@
 # limitations under the License.
 #
 """
-Main Reconstruct module of cars-mesh tool.
+Main Reconstruct pipeline module of cars-mesh tool.
 """
 
 import logging
 import os
 
-from loguru import logger
-
+from . import setup_logging
 from .config import check_config, save_config_file
 from .state_machine import CarsMeshMachine
 from .tools.handlers import Mesh, read_input_path
@@ -51,10 +50,10 @@ def run(cars_mesh_machine: CarsMeshMachine, cfg: dict) -> Mesh:
 
     if not cfg["state_machine"]:
         # There is no step given to the state machine
-        logger.warning("State machine is empty. Returning the initial data.")
+        logging.warning("State machine is empty. Returning the initial data.")
 
     else:
-        logger.debug(f"Initial state: {cars_mesh_machine.initial_state}")
+        logging.debug(f"Initial state: {cars_mesh_machine.initial_state}")
 
         # Check transitions' validity
         cars_mesh_machine.check_transitions(cfg)
@@ -62,7 +61,7 @@ def run(cars_mesh_machine: CarsMeshMachine, cfg: dict) -> Mesh:
         # Browse user defined steps and execute them
         for k, step in enumerate(cfg["state_machine"]):
             # Logger
-            logger.info(
+            logging.info(
                 f"Step #{k + 1}: {step['action']} with {step['method']} method"
             )
 
@@ -78,7 +77,7 @@ def run(cars_mesh_machine: CarsMeshMachine, cfg: dict) -> Mesh:
                     )
                     os.makedirs(intermediate_folder, exist_ok=True)
                     if k == 0 and os.listdir(intermediate_folder):
-                        logger.warning(
+                        logging.warning(
                             f"Directory '{intermediate_folder}' is not empty. "
                             f"Some files might be overwritten."
                         )
@@ -106,7 +105,7 @@ def run(cars_mesh_machine: CarsMeshMachine, cfg: dict) -> Mesh:
                         )
 
                     # Logger debug
-                    logger.debug(
+                    logging.debug(
                         f"Step #{k + 1}: Results saved in "
                         f"'{intermediate_filepath  + '.' + extension}'."
                     )
@@ -123,6 +122,7 @@ def main(cfg_path: str) -> None:
     cfg_path: str
         Path to the JSON configuration file
     """
+
     # To avoid having a logger INFO for each state machine step
     logging.getLogger("transitions").setLevel(logging.WARNING)
 
@@ -143,8 +143,8 @@ def main(cfg_path: str) -> None:
     )
 
     # Write logs to disk
-    logger.add(sink=os.path.join(cfg["output_dir"], "{time}_logs.txt"))
-    logger.info("Configuration file checked.")
+    setup_logging.add_log_file(cfg["output_dir"], "cars_mesh")
+    logging.info("Configuration file checked.")
 
     # Read input data
     mesh = read_input_path(cfg["input_path"])
@@ -173,11 +173,11 @@ def main(cfg_path: str) -> None:
             filepath=os.path.join(cfg["output_dir"], out_filename),
             extension=extension,
         )
-        logger.info(f"Mesh serialized as a '{extension}' file")
+        logging.info(f"Mesh serialized as a '{extension}' file")
     else:
         # Point Cloud Serialisation
         out_mesh.pcd.serialize(
             filepath=os.path.join(cfg["output_dir"], out_filename),
             extension=extension,
         )
-        logger.info(f"Point cloud serialized as a '{extension}' file")
+        logging.info(f"Point cloud serialized as a '{extension}' file")

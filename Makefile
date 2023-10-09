@@ -30,15 +30,22 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 # Python global variables definition
 PYTHON_VERSION_MIN = 3.8
 
-PYTHON=$(shell command -v python3)
+# Set PYTHON if not defined in command line
+# Example: PYTHON="python3.10" make venv to use python 3.10 for the venv
+# By default the default python3 of the system.
+ifndef PYTHON
+	PYTHON = "python3"
+endif
 
-PYTHON_VERSION_CUR=$(shell $(PYTHON) -c 'import sys; print("%d.%d"% sys.version_info[0:2])')
-PYTHON_VERSION_OK=$(shell $(PYTHON) -c 'import sys; cur_ver = sys.version_info[0:2]; min_ver = tuple(map(int, "$(PYTHON_VERSION_MIN)".split("."))); print(int(cur_ver >= min_ver))')
+PYTHON_CMD=$(shell command -v $(PYTHON))
+
+PYTHON_VERSION_CUR=$(shell $(PYTHON_CMD) -c 'import sys; print("%d.%d"% sys.version_info[0:2])')
+PYTHON_VERSION_OK=$(shell $(PYTHON_CMD) -c 'import sys; cur_ver = sys.version_info[0:2]; min_ver = tuple(map(int, "$(PYTHON_VERSION_MIN)".split("."))); print(int(cur_ver >= min_ver))')
 
 ############### Check python version supported ############
 
-ifeq (, $(PYTHON))
-    $(error "PYTHON=$(PYTHON) not found in $(PATH)")
+ifeq (, $(PYTHON_CMD))
+    $(error "$(PYTHON_CMD) not found in $(PATH)")
 endif
 
 ifeq ($(PYTHON_VERSION_OK), 0)
@@ -49,43 +56,39 @@ endif
 
 .PHONY: help
 help: ## this help
+	@echo "CARS-MESH MAKE HELP"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 ## Install section
 
-.PHONY: git
-git: ## init local git repository if not present
-	@test -d .git/ || git init .
-
 .PHONY: venv
 venv: ## create virtualenv in "venv" dir if not exists
-	@test -d ${VENV} || python3 -m venv ${VENV}
+	@test -d ${VENV} || $(PYTHON_CMD) -m venv ${VENV}
 	@${VENV}/bin/python -m pip install --upgrade pip setuptools # no check to upgrade each time
 	@touch ${VENV}/bin/activate
 
 .PHONY: install
-install: venv git  ## install the package in dev mode in virtualenv
+install: venv  ## install the package in dev mode in virtualenv
 	@test -f ${VENV}/bin/cars-mesh || echo "Install cars-mesh package from local directory"
 	@test -f ${VENV}/bin/cars-mesh || ${VENV}/bin/python -m pip install -e .[dev,docs]
 	@test -f .git/hooks/pre-commit || echo "Install pre-commit"
 	@test -f .git/hooks/pre-commit || ${VENV}/bin/pre-commit install -t pre-commit
 	@test -f .git/hooks/pre-push || ${VENV}/bin/pre-commit install -t pre-push
-	@chmod +x ${VENV}/bin/register-python-argcomplete
 	@echo "cars-mesh installed in dev mode in virtualenv ${VENV} with documentation"
 	@echo " cars-mesh venv usage : source ${VENV}/bin/activate; cars-mesh -h"
 
 ## Test section
 	
 .PHONY: test
-test: install ## run tests and coverage quickly with the default Python
+test: ## run tests and coverage quickly with the default Python
 	@${VENV}/bin/pytest -o log_cli=true --cov-config=.coveragerc --cov --cov-report=term-missing
 
 .PHONY: test-all
-test-all: install ## run tests on every Python version with tox
+test-all: ## run tests on every Python version with tox
 	@${VENV}/bin/tox -r -p auto  ## recreate venv (-r) and parallel mode (-p auto)
 	
 .PHONY: coverage
-coverage: install ## check code coverage quickly with the default Python
+coverage: ## check code coverage quickly with the default Python
 	@${VENV}/bin/coverage run --source cars_mesh -m pytest
 	@${VENV}/bin/coverage report -m
 	@${VENV}/bin/coverage html
@@ -96,7 +99,7 @@ coverage: install ## check code coverage quickly with the default Python
 ### Format with isort and black
 
 .PHONY: format
-format: install format/isort format/black  ## run black and isort formatting (depends install)
+format: format/isort format/black  ## run black and isort formatting (depends install)
 
 .PHONY: format/isort
 format/isort: install  ## run isort formatting (depends install)
@@ -111,7 +114,7 @@ format/black: install  ## run black formatting (depends install)
 ### Check code quality and linting : isort, black, flake8, pylint
 
 .PHONY: lint
-lint: install lint/isort lint/black lint/flake8 lint/pylint ## check code quality and linting
+lint: lint/isort lint/black lint/flake8 lint/pylint ## check code quality and linting
 
 .PHONY: lint/isort
 lint/isort: ## check imports style with isort
@@ -136,17 +139,17 @@ lint/pylint: ## check linting with pylint
 ## Documentation section
 
 .PHONY: docs
-docs: install ## generate Sphinx HTML documentation, including API docs
+docs: ## generate Sphinx HTML documentation, including API docs
 	@${VENV}/bin/sphinx-build -M clean docs/source/ docs/build
 	@${VENV}/bin/sphinx-build -M html docs/source/ docs/build -W --keep-going
 	$(BROWSER) docs/build/html/index.html
 
 ## Notebook section
 
-notebook: install ## Install Jupyter notebook kernel with venv
-	@echo "\nInstall Jupyter Kernel and launch Jupyter notebooks environment"
+notebook: ## Install Jupyter notebook kernel with venv
+	@echo "Install Jupyter Kernel and run Jupyter notebooks environment"
 	@${VENV}/bin/python -m ipykernel install --sys-prefix --name=cars-mesh$(VENV) --display-name=cars-mesh$(VERSION)
-	@echo "\n --> After virtualenv activation, please use following command to launch local jupyter notebook to open Notebooks:"
+	@echo " --> After virtualenv activation, please use following command to run local jupyter notebook to open Notebooks:"
 	@echo "jupyter notebook"
 
 ## Docker section

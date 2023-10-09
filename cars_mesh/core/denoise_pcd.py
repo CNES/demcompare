@@ -24,11 +24,14 @@ high-frequency information.
 """
 # pylint: disable=unsubscriptable-object
 
+
+# Third party imports
 import numpy as np
 import open3d as o3d
 from scipy.spatial import KDTree
 from tqdm import tqdm
 
+# Cars-mesh imports
 from ..tools.handlers import PointCloud
 
 

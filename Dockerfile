@@ -35,6 +35,6 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Clean pip cache
 RUN python -m pip cache purge
 
-## launch cars-mesh command
+## run cars-mesh command
 ENTRYPOINT ["cars-mesh"]
 CMD ["-h"]

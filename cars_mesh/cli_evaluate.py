@@ -19,9 +19,8 @@
 # limitations under the License.
 #
 """
-Console script for cars-mesh, main reconstruct tool.
+Console script for cars-mesh-evaluate.
 """
-# pylint: disable=duplicate-code
 
 # Standard imports
 import argparse
@@ -30,7 +29,7 @@ import sys
 import traceback
 
 # Cars-mesh imports
-from cars_mesh import __version__, reconstruct_pipeline, setup_logging
+from cars_mesh import __version__, evaluate_pipeline, setup_logging
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -41,22 +40,20 @@ def get_parser() -> argparse.ArgumentParser:
     parser
     """
 
-    # Main parser
-    parser = argparse.ArgumentParser(
-        description="3D textured mesh reconstruction"
-    )
+    # Evaluate parser
+    parser = argparse.ArgumentParser(description="Evaluate mesh or point cloud")
 
     parser.add_argument(
         "config",
-        help="Path to a json file containing the input files paths and "
-        "algorithm parameters",
+        help="Path to a json file containing the input mesh or point cloud "
+        "paths to compare and the metrics to compute",
     )
 
     parser.add_argument(
         "--loglevel",
-        default="INFO",
         choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
-        help="Logger level (default: INFO. Should be one of "
+        default="INFO",
+        help="Logger level cars-mesh evaluate (default: INFO. Should be one of "
         "(DEBUG, INFO, INFO, WARNING, ERROR, CRITICAL)",
     )
 
@@ -72,22 +69,22 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    """Console script for cars-mesh."""
+    """Console script for cars-mesh-evaluate."""
 
-    # get parser
+    # get parser of cars-mesh-evaluate
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ["--help"])
 
-    # set logging
+    # set logging for cars-mesh-evaluate
     setup_logging.setup_logging(default_level=args.loglevel)
     logging.debug("Show argparse arguments: %s", args)
 
     try:
         # use a global try/except to cath
-        # run cars-mesh main reconstruct pipeline
-        reconstruct_pipeline.main(args.config)
+        # run cars-mesh main evaluate pipeline
+        evaluate_pipeline.main(args.config)
     except Exception:  # pylint: disable=broad-except
-        logging.error(" Cars-mesh %s", traceback.format_exc())
+        logging.error(" cars-mesh-evaluate %s", traceback.format_exc())
 
 
 if __name__ == "__main__":

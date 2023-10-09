@@ -17,8 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Tests for `cars_mesh` package."""
-
+"""Tests for cars_mesh package."""
 # to check the code structure and avoid cyclic import !!
 
 # Standard imports
@@ -59,7 +58,7 @@ def test_all_possible_combinations():
     # Not a cars config file !
     test_cfg_path = os.path.join(test_data_path, "config_tests.json")
 
-    # open json config file to launch automatically the tests
+    # open json config file to run automatically the tests
     test_cfg = read_config(test_cfg_path)
 
     # Create temporary directory for test output

@@ -23,9 +23,11 @@
 Rational Polynomial Coefficients (RPC) tools
 """
 
+# Standard imports
 import xml.etree.ElementTree as ET
 from typing import Union
 
+# Third party imports
 import numpy as np
 from PIL import Image
 

@@ -8,7 +8,7 @@ Install
 Quick installation via Make
 -----------------------------
 
-Git clone the repository, open a terminal and launch the following commands:
+Git clone the repository, open a terminal and run the following commands:
 
 .. code-block:: bash
 

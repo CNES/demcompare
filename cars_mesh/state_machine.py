@@ -22,9 +22,13 @@
 Class associated to CARS-MESH state machine
 """
 
-from loguru import logger
+# Standard imports
+import logging
+
+# Third party imports
 from transitions import Machine, MachineError
 
+# Cars-mesh imports
 from . import param
 from .tools.handlers import Mesh
 
@@ -159,7 +163,7 @@ class CarsMeshMachine(Machine):
             self.trigger(step["action"], step, cfg)
 
         except (MachineError, KeyError, AttributeError):
-            logger.error(
+            logging.error(
                 f"A problem occurs during CARS-MESH running {step['action']} "
                 f"step. Be sure of your sequencing."
             )
@@ -337,7 +341,7 @@ class CarsMeshMachine(Machine):
             Configuration dictionary
         """
 
-        logger.debug("Check state machine transitions' validity.")
+        logging.debug("Check state machine transitions' validity.")
 
         try:
             # Check if the sequencing asked by the user is valid
@@ -345,7 +349,7 @@ class CarsMeshMachine(Machine):
                 self.trigger(step["action"], step, cfg, check_mode=True)
 
         except (MachineError, KeyError, AttributeError):
-            logger.error(
+            logging.error(
                 "A problem occurs during CARS-MESH transition check. "
                 "Be sure of your sequencing."
             )

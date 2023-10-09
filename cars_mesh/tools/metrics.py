@@ -22,13 +22,16 @@
 Evaluation metrics
 """
 
+# Standard imports
+import logging
 import os
 
+# Third party imports
 import numpy as np
 import plyfile
-from loguru import logger
 from scipy.spatial import KDTree
 
+# Cars-mesh imports
 from ..core.denoise_pcd import compute_pcd_normals
 from ..tools.handlers import PointCloud
 
@@ -166,7 +169,7 @@ class PointCloudMetrics:
                 self.pcd_ref.o3d_pcd
             )
         )
-        logger.debug(
+        logging.debug(
             "Point to point in -> ref distance was computed successfully."
         )
 
@@ -176,7 +179,7 @@ class PointCloudMetrics:
                 self.pcd_in.o3d_pcd
             )
         )
-        logger.debug(
+        logging.debug(
             "Point to point ref -> in distance was computed successfully."
         )
 
@@ -185,7 +188,7 @@ class PointCloudMetrics:
         self.dist_p2s_in_ref = point_to_plane_distance(
             self.pcd_ref, self.pcd_in, **kwargs
         )
-        logger.debug(
+        logging.debug(
             "Point to surface in -> ref distance was computed successfully."
         )
 
@@ -193,7 +196,7 @@ class PointCloudMetrics:
         self.dist_p2s_ref_in = point_to_plane_distance(
             self.pcd_in, self.pcd_ref, **kwargs
         )
-        logger.debug(
+        logging.debug(
             "Point to surface ref -> in distance was computed successfully."
         )
 

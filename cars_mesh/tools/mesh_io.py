@@ -25,6 +25,7 @@ Tools to manipulate meshes
 import os.path
 from typing import Union
 
+# Third party imports
 import numpy as np
 import open3d as o3d
 import pandas as pd

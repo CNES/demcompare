@@ -23,17 +23,20 @@ Texturing methods to project radiometric information over surfaces to
 provide a realistic rendering.
 """
 
+# Standard imports
+import logging
 import os
 import warnings
 from typing import Union
 
+# Third party imports
 import numpy as np
 import pandas as pd
 import rasterio
-from loguru import logger
 from PIL import Image
 from rasterio.windows import Window
 
+# Cars-mesh imports
 from ..tools.handlers import Mesh
 from ..tools.point_cloud_io import change_frame
 from ..tools.rpc import PleiadesRPC, apply_rpc_list
@@ -192,7 +195,7 @@ def preprocess_image_texture(
     with rasterio.open(img_path) as infile:
         # Bands handling
         if infile.count > 3:
-            logger.debug(
+            logging.debug(
                 f"Texture image has more than three bands ({infile.count}). "
                 f"Output texture image will be "
                 f"generated with the first three bands."

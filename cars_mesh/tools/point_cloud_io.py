@@ -22,15 +22,17 @@
 Tools to manipulate point clouds
 """
 
+# Standard imports
+import logging
 from typing import Union
 
+# Third party imports
 import laspy
 import numpy as np
 import open3d as o3d
 import pandas as pd
 import plyfile
 import pyproj
-from loguru import logger
 
 # LAS tools
 
@@ -205,7 +207,7 @@ def df2las(
             try:
                 las.points.array[c] = df_pcd[c]
             except ValueError:
-                logger.warning(
+                logging.warning(
                     f"Field '{c}' is not supported by the point format "
                     f"specified ({point_format}). "
                     f"It will be ignored."

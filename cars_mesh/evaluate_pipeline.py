@@ -19,18 +19,21 @@
 # limitations under the License.
 #
 """
-Main module for evaluation.
+Main pipeline module for evaluation.
 """
 
+# Standard imports
 import json
+import logging
 import os
 import shutil
 
+# Third party imports
 import pandas as pd
-from loguru import logger
 from tqdm import tqdm
 
-from . import param
+# Cars-mesh imports
+from . import param, setup_logging
 from .tools.handlers import Mesh, read_input_path
 from .tools.metrics import PointCloudMetrics
 
@@ -138,7 +141,7 @@ def run(cfg: dict, mesh_data_1: Mesh, mesh_data_2: Mesh) -> pd.DataFrame:
 
     # Serialize visu
     metrics.visualize_distances(cfg["output_dir"])
-    logger.info(
+    logging.info(
         f"Point cloud distances were written to disk in '{cfg['output_dir']}'."
     )
 
@@ -167,8 +170,8 @@ def main(cfg_path: str) -> None:
     )
 
     # Write logs to disk
-    logger.add(sink=os.path.join(cfg["output_dir"], "{time}_logs.txt"))
-    logger.info("Configuration file checked.")
+    setup_logging.add_log_file(cfg["output_dir"], "evaluate_logs")
+    logging.info("Configuration file checked.")
 
     # Read input data
     mesh_data_1 = read_input_path(cfg["input_path_1"])
@@ -180,4 +183,4 @@ def main(cfg_path: str) -> None:
     # Serialize metrics
     filename = os.path.join(cfg["output_dir"], "metrics.csv")
     df_metrics.to_csv(filename, index=False)
-    logger.info(f"Metrics serialized in '{filename}'")
+    logging.info(f"Metrics serialized in '{filename}'")

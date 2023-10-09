@@ -22,13 +22,15 @@
 Define classes for handling common objects
 """
 
+# Standard imports
+import logging
 import os
 from typing import Union
 
+# Third party imports
 import numpy as np
 import open3d as o3d
 import pandas as pd
-from loguru import logger
 
 COLORS = ["red", "green", "blue", "nir"]
 NORMALS = ["n_x", "n_y", "n_z"]
@@ -291,7 +293,7 @@ class Mesh:
         # Mesh
         if self.o3d_mesh.has_textures():
             if self.image_texture_path is None:
-                logger.warning(
+                logging.warning(
                     "No image texture path is given to the Mesh object. "
                     "Texture will remain incomplete."
                 )
@@ -573,13 +575,13 @@ def read_input_path(input_path: str) -> Mesh:
         # Try reading input data as a mesh if the extension is valid
         mesh = Mesh()
         mesh.deserialize(input_path)
-        logger.debug("Input data read as a mesh format.")
+        logging.debug("Input data read as a mesh format.")
 
     else:
         # If the extension is not a mesh extension, read the data as a
         # point cloud and put it in a dict in Mesh structure
         mesh = Mesh()
         mesh.pcd.deserialize(input_path)
-        logger.debug("Input data read as a point cloud format.")
+        logging.debug("Input data read as a point cloud format.")
 
     return mesh

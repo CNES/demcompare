@@ -22,13 +22,14 @@
 Simplifying methods for the mesh to decrease the number of faces
 """
 
+# Standard imports
 from typing import Union
 
+# Third party imports
 import numpy as np
-
-# import open3d as o3d
 import open3d as o3d
 
+# Cars-mesh imports
 from ..tools.handlers import Mesh
 
 

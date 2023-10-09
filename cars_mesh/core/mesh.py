@@ -22,11 +22,13 @@
 Meshing methods to create a surface from the point cloud.
 """
 
+# Standard imports
+import logging
 from typing import Union
 
+# Third party imports
 import matplotlib.tri as mtri
 import open3d as o3d
-from loguru import logger
 from scipy.spatial import Delaunay
 
 from ..core.denoise_pcd import compute_pcd_normals_o3d
@@ -84,10 +86,10 @@ def ball_pivoting_reconstruction(
 
     # add normals
     if not pcd.has_normals:
-        logger.warning(
+        logging.warning(
             "Some normal components are not included in the df point cloud "
             "(either 'n_x', or 'n_y', or 'n_z'). The normal computation "
-            "will be launched with open3d."
+            "will be run with open3d."
         )
 
         pcd = compute_pcd_normals_o3d(
@@ -186,10 +188,10 @@ def poisson_reconstruction(
 
     # add normals
     if not pcd.has_normals:
-        logger.warning(
+        logging.warning(
             "Some normal components are not included in the df point cloud "
             "(either 'n_x', or 'n_y', or 'n_z'). The normal computation "
-            "will be launched with open3d."
+            "will be run with open3d."
         )
 
         pcd = compute_pcd_normals_o3d(

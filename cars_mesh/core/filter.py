@@ -23,12 +23,15 @@ Filtering methods aiming at removing outliers or groups of outliers from the
 point cloud.
 """
 
+# Standard imports
+import logging
 from typing import Union
 
+# Third party imports
 import numpy as np
-from loguru import logger
 from scipy.spatial import KDTree
 
+# cars-mesh imports
 from ..tools.handlers import PointCloud
 
 # cars v3
@@ -83,11 +86,11 @@ def statistical_filtering_outliers_o3d(
     # Check if output point cloud is empty (and thus cannot suffer other
     # processing)
     if pcd.df.empty:
-        logger.error(
+        logging.error(
             "Point cloud output by the outlier filtering step is empty."
         )
 
-    logger.info(
+    logging.info(
         f"{num_points_before - pcd.df.shape[0]} points "
         f"over {num_points_before} points were flagged as outliers "
         f"and removed."
@@ -141,11 +144,11 @@ def radius_filtering_outliers_o3(
     # Check if output point cloud is empty (and thus cannot suffer
     # other processing)
     if pcd.df.empty:
-        logger.error(
+        logging.error(
             "Point cloud output by the outlier filtering step is empty."
         )
 
-    logger.info(
+    logging.info(
         f"{num_points_before - pcd.df.shape[0]} points over "
         f"{num_points_before} points were flagged as outliers and removed."
     )
@@ -232,7 +235,7 @@ def local_density_analysis(
     # Check if output point cloud is empty (and thus cannot suffer other
     # processing)
     if pcd.df.empty:
-        logger.error(
+        logging.error(
             "Point cloud output by the outlier filtering step is empty."
         )
 
@@ -240,7 +243,7 @@ def local_density_analysis(
     if pcd.o3d_pcd is not None:
         pcd.set_o3d_pcd_from_df()
 
-    logger.info(
+    logging.info(
         f"{num_points_before - pcd.df.shape[0]} points over "
         f"{num_points_before} points were flagged as "
         f"outliers and removed."

@@ -4,15 +4,13 @@
 Command line
 ============
 
-You can run too functions with the ``cars-mesh`` cli:
 
-* ``cars-mesh reconstruct`` launches the 3D reconstruction pipeline according to the user specifications
-* ``cars-mesh evaluate`` computes metrics between two point clouds and saves visuals for qualitative analysis (If an input is a mesh, its vertices will be used for comparison)
-
-Reconstruct
+CARS-MESH 
 ===========
 
-To launch the 3D reconstruction pipeline, you first need to configure it in a JSON file like the following:
+``cars-mesh `` runs the 3D reconstruction pipeline according to the user specifications
+
+To run the 3D reconstruction pipeline, you first need to configure it in a JSON file like the following:
 
 .. code-block:: JSON
 
@@ -110,20 +108,18 @@ It is a tuple or a list of two elements (col, row) corresponding to the top left
 It will change the normalisation offset of the RPC data to make the texture fit to the point cloud.
 If the image is only cropped on the bottom right side of the image, no offset information is needed.
 
-Finally, you can launch the following commands to activate the virtual environment and run the pipeline:
+Finally, you can run the following commands to activate the virtual environment and run the pipeline:
 
 .. code-block:: bash
 
     source /venv/bin/activate
-    cars-mesh reconstruct /path/to/config_reconstruct.json
+    cars-mesh /path/to/config_reconstruct.json
 
 
-Evaluate
-========
+CARS-MESH Evaluate
+==================
 
-
-The evaluation function computes a range of metrics between two point clouds and outputs visuals for
-qualitative analysis. If an input is a mesh, its vertices will be used for comparison.
+``cars-mesh-evaluate`` tool computes metrics between two point clouds and saves visuals for qualitative analysis (If an input is a mesh, its vertices will be used for comparison)
 
 Configure the pipeline in a JSON file `/path/to/config_evaluate.json`:
 
@@ -141,12 +137,12 @@ Where:
 * ``input_path_2``: Filepath to the second input. Should either be a point cloud or a mesh.
 * ``output_dir``: Directory path to the output folder where to save results.
 
-Finally, you can launch the following commands to activate the virtual environment and run the evaluation:
+Finally, you can run the following commands to activate the virtual environment and run the evaluation:
 
 .. code-block:: bash
 
     source venv/bin/activate
-    cars-mesh evaluate /path/to/config_evaluate.json
+    cars-mesh-evaluate /path/to/config_evaluate.json
 
 
 *N.B.: To run the example above, you need to run the example reconstruction pipeline first (cf previous section)*
