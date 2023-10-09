@@ -20,32 +20,19 @@
 
 ## Overview
 
-CARS-MESH is a library allow to do 3D Surface reconstruction with texture and classification from remote sensing photogrammetric point cloud.
+CARS-MESH is a library to do 3D Surface reconstruction with texture and classification from remote sensing photogrammetric point cloud.
+
+This tool is part of 3D CNES tools around [CARS](https://github.com/cnes/cars) but can be run independently. CARS can be used to generate input point clouds from stereo images to be "meshed" by cars-mesh.
+
+CARS-MESH depends heavily on [open3D](http://www.open3d.org/) toolbox.
 
 * Free software: Apache Software License 2.0
 
 [//]: # (* Documentation: https://cars-mesh.readthedocs.io.)
 
-## Requirements
-
-    importlib           ; python_version>"3.8"
-    argparse                      # Python Argument Parser
-    argcomplete                   # Autocompletion Argparse
-    numpy                         # array manipulation
-    laspy                         # las file manipulation
-    open3d                        # 3D library open source
-    pandas                        # data with many attributes manipulation
-    scipy                         # scientific library
-    plyfile                       # ply file manipulation
-    matplotlib                    # visualisation and meshing
-    loguru                        # logs handler
-    pyproj                        # coordinates conversion
-    transitions                   # state machine
-    rasterio                      # georeferenced data handler
-
 ## Features
 
-CARS-MESH allows to output a textured 3D mesh from a point cloud. The main steps currently implemented
+CARS-MESH outputs a textured 3D mesh from a point cloud. The main steps currently implemented
 are respectively:
 
 * point cloud outlier filtering
@@ -55,23 +42,43 @@ are respectively:
 * mesh simplification
 * texturing
 
-It can be run on a point cloud or directly on a mesh if only the last steps are to be passed.
+It can be run on a point cloud or directly on a mesh if only the last steps are chosen.
 
 In the meantime, CARS-MESH provides a point clouds comparison and evaluation tool.
-It computes a bunch of metrics between two point clouds (if a mesh is input, its vertices are used
-for the comparison) and gives a visual glimpse of the local distances from one point cloud to the other.
+It computes a bunch of metrics between two point clouds or meshes (vertices are used
+for the comparison for mesh) and gives a visual glimpse of the local distances from one point cloud to the other.
 
 ## Quick Start
 
-### Installation
+## Installation
 
-#### Quick installation via Make
+### From Pypi
 
-Git clone the repository, open a terminal and launch the following commands:
+Create a Python virtual environment, git clone the repository and install the lib in dev mode (so to be able to modify
+it dynamically).
 
 ```bash
-# Go to the desired folder
-cd /path/to/desired/folder
+# Create your virtual environment "venv"
+python -m venv venv
+
+# Activate your venv (on UNIX)
+source venv/bin/activate
+
+# Update pip and setuptools package
+python -m pip --upgrade pip setuptools
+
+# Install the cars-mesh tool
+python -m pip install cars-mesh
+
+# Test if it works
+cars-mesh -h
+```
+
+### From source
+
+Git clone the repository, open a terminal and run the following commands:
+
+```bash
 
 # Clone repository
 git clone https://github.com/CNES/cars-mesh.git
@@ -80,52 +87,15 @@ git clone https://github.com/CNES/cars-mesh.git
 make install
 
 # Activate your venv (on UNIX)
-# A flag "(NAME_OF_VENV)" should appear before your command line from now on
-source /path/to/desired/folder/NAME_OF_VENV/bin/activate
+source venv/bin/activate
 
 # Test if it works
 cars-mesh -h
 ```
 
-It will install the virtual environment and all necessary to run the code.
+## CARS-MESH usage
 
-#### Quick manual installation
-
-Create a Python virtual environment, git clone the repository and install the lib in dev mode (so to be able to modify
-it dynamically).
-
-```bash
-# Go to the desired folder where to save your virtual environment
-cd /path/to/desired/folder
-
-# Create your virtual environment and name it by replacing "NAME_OF_VIRTUALENV" with whatever you like
-python -m venv NAME_OF_VENV
-
-# Activate your venv (on UNIX)
-# A flag "(NAME_OF_VENV)" should appear before your command line from now on
-source /path/to/desired/folder/NAME_OF_VENV/bin/activate
-
-# Update pip and setuptools package
-python -m pip --upgrade pip setuptools
-
-# Clone library repository
-git clone https://github.com/CNES/cars-mesh.git
-
-# Install the cars-mesh lib in dev mode with the dev and doc tools
-python -m pip install -e .[dev,docs]
-
-# Test if it works
-cars-mesh -h
-```
-
-### Execute
-
-You can run two functions with the `cars-mesh` cli:
-
-* `cars-mesh reconstruct` launches the 3D reconstruction pipeline according to the user specifications
-* `cars-mesh evaluate` computes metrics between two point clouds and saves visuals for qualitative analysis (If an input is a mesh, its vertices will be used for comparison)
-
-#### Reconstruct
+`cars-mesh` command runs a 3D reconstruction pipeline according to the user specifications
 
 Configure the pipeline in a JSON file `/path/to/config_reconstruct.json`:
 
@@ -226,19 +196,18 @@ It is a tuple or a list of two elements (col, row) corresponding to the top left
 It will change the normalisation offset of the RPC data to make the texture fit to the point cloud.
 If the image is only cropped on the bottom right side of the image, no offset information is needed.
 
-Finally, you can launch the following commands to activate the virtual environment and run the pipeline:
+Finally, you can run the following commands to activate the virtual environment and run the pipeline:
 
 ```bash
-source /venv/bin/activate
-cars-mesh reconstruct /path/to/config_reconstruct.json
+source venv/bin/activate
+cars-mesh config_reconstruct.json
 ```
 
-#### Evaluate
+## CARS-MESH Evaluate
 
-The evaluation function computes a range of metrics between two point clouds and outputs visuals for
-qualitative analysis. If an input is a mesh, its vertices will be used for comparison.
+`cars-mesh-evaluate` tool computes metrics between two point clouds and saves visuals for qualitative analysis (If an input is a mesh, its vertices will be used for comparison)
 
-Configure the pipeline in a JSON file `/path/to/config_evaluate.json`:
+Configure the evaluate pipeline in a JSON file `config_evaluate.json`:
 
 ```json
 {
@@ -254,31 +223,31 @@ Where:
 * `input_path_2`: Filepath to the second input. Should either be a point cloud or a mesh.
 * `output_dir`: Directory path to the output folder where to save results.
 
-Finally, you can launch the following commands to activate the virtual environment and run the evaluation:
+Finally, you can run the following commands to activate the virtual environment and run the evaluation:
 
 ```bash
 source venv/bin/activate
-cars-mesh evaluate /path/to/config_evaluate.json
+cars-mesh-evaluate /path/to/config_evaluate.json
 ```
 
 *N.B.: To run the example above, you need to run the example reconstruction pipeline first (cf previous section)*
 
 ## Example
 
-Please find data example to launch the pipeline in [here](example) and guidelines [over here](example/README.md).
+Please find data example to run the pipeline in [here](example) and guidelines [over here](example/README.md).
 
 ## Documentation
 
 Run the following commands to build the doc:
 
 ```bash
-source /venv/bin/activate
+source venv/bin/activate
 make docs
 ```
 
 The Sphinx documentation should pop in a new tab of your browser.
 
-[//]: # (Documentation: https://mesh-3d.readthedocs.io)
+[//]: # (Documentation: https://cars-mesh.readthedocs.io)
 
 ## Tests
 
@@ -325,4 +294,3 @@ See [Contribution](CONTRIBUTING.md) manual
 This package was created with cars-cookiecutter project template.
 
 Inspired by [main cookiecutter template](https://github.com/audreyfeldroy/cookiecutter-pypackage) and
-[AI4GEO cookiecutter template](https://gitlab.cnes.fr/ai4geo/lot2/cookiecutter-python)
