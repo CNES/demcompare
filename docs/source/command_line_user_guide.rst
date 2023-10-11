@@ -8,7 +8,7 @@ Command line
 CARS-MESH 
 ===========
 
-``cars-mesh `` runs the 3D reconstruction pipeline according to the user specifications
+``cars-mesh`` runs the 3D reconstruction pipeline according to the user specifications
 
 To run the 3D reconstruction pipeline, you first need to configure it in a JSON file like the following:
 
