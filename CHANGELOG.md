@@ -12,15 +12,26 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Fixed
 
-## 0.1.1 Public version (2023-10-06)
+## 0.1.1 Public version (2023-10-11)
 
 ### Added
 
+- tox testing
+- continuous integration
+
 ### Changed
+
+- add used configuration file in output directory
 
 ### Fixed
 
-## 0.1.0 First Official Release (2022-11-29)
+- clean packaging
+- clean pytest warnings
+- clean code
+- clean documentation
+- bug reader potree
+
+## 0.1.0 First internal Release (2022-11-29)
 
 ### Added
 
