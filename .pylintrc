@@ -44,7 +44,9 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=cyclic-import
+disable=cyclic-import,
+    consider-using-f-string,
+    logging-fstring-interpolation
   #	fixme,
 
 # Enable the message, report, category or checker with the given id(s). You can
@@ -418,7 +420,7 @@ variable-naming-style=snake_case
 
 # List of modules that can be imported at any level, not just the top level
 # one.
-allow-any-import-level=.mesh3d_reconstruct, .mesh3d_evaluate, mesh_io.deserialize_mesh, mesh_io.serialize_mesh, tools.handlers.PointCloud, handlers.COLORS, point_cloud_io.serialize_point_cloud, point_cloud_io.deserialize_point_cloud, param.MESH_FILE_EXTENSIONS
+allow-any-import-level=.reconstruct_pipeline, .evaluate_pipeline, mesh_io.deserialize_mesh, mesh_io.serialize_mesh, tools.handlers.PointCloud, handlers.COLORS, point_cloud_io.serialize_point_cloud, point_cloud_io.deserialize_point_cloud, param.MESH_FILE_EXTENSIONS
 
 # Allow wildcard imports from modules that define __all__.
 allow-wildcard-with-all=no

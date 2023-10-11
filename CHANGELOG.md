@@ -12,10 +12,19 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Fixed
 
+## 0.1.1 Public version (2023-10-06)
+
+### Added
+
+### Changed
+
+### Fixed
+
 ## 0.1.0 First Official Release (2022-11-29)
 
 ### Added
-- Add mesh3d first features to generate mesh from point clouds
+
+- Add cars-mesh first features to generate mesh from point clouds
 - User guide and features documentation
 - Simple installation
 - First end to end test

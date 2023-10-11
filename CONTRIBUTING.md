@@ -1,4 +1,4 @@
-# **Mesh 3D** **Contributing guide**.
+# **CARS-MESH** **Contributing guide**
 
 Contributions are welcome, and they are greatly appreciated! Every little bit
 helps, and credit will always be given.
@@ -12,12 +12,13 @@ helps, and credit will always be given.
 
 # Bug report
 
-Any proven or suspected malfunction should be traced in a bug report, the latter being an issue in the Mesh 3D repository.
+Any proven or suspected malfunction should be traced in a bug report, the latter being an issue in the CARS-MESH repository.
 
 **Don't hesitate to do so: It is best to open a bug report and quickly resolve it than to let a problem remains in the project.**
 **Notifying the potential bugs is the first way for contributing to a software.**
 
 In the problem description, be as accurate as possible. Include:
+
 * The procedure used to initialize the environment
 * The incriminated command line or python function
 * The content of the input and output configuration files
@@ -34,6 +35,7 @@ The Merge Request shall have a short description of the proposed changes. If it 
 Likewise, if you work on a branch (which is recommended), prefix the branch's name by `xx-` in order to link it to the xx issue.
 
 Classical workflow is :
+
 * Check Licence and sign [Contributor Licence Agrement](#contribution-license-agreement) (Individual or Corporate)
 * Create an issue (or begin from an existing one)
 * Create a Merge Request from the issue: a MR is created accordingly with "WIP:", "Closes xx" and associated "xx-name-issue" branch
@@ -41,13 +43,12 @@ Classical workflow is :
 * Git add, commit and push from local working clone directory or from the forge directly
 * Install pre-commit validation process (using black, isort, flake8 and pylint) and check errors
 * Follow [Conventional commits](https://www.conventionalcommits.org/) specifications for commit messages
-* Launch the [test](README.md) on your modifications.
+* Run the [test](README.md) on your modifications.
 * When finished, change your Merge Request name (erase "WIP:" in title ) and ask to review the code (see below Merge request acceptation process)
-
 
 # Contribution license agreement
 
-Mesh 3D requires that contributors sign out a [Contributor License
+CARS-MESH requires that contributors sign out a [Contributor License
 Agreement](https://en.wikipedia.org/wiki/Contributor_License_Agreement). The
 purpose of this CLA is to ensure that the project has the necessary ownership or
 grants of rights over all contributions to allow them to distribute under the
@@ -63,10 +64,10 @@ for your contribution.
 
 The copyright owner (or owner's agent) must be mentioned in headers of all modified source files and also added to the [AUTHORS file](AUTHORS.md).
 
-
 # Coding guide
 
 Here are some rules to apply when developing a new functionality:
+
 * Include a comments ratio high enough and use explicit variables names. A comment by code block of several lines is necessary to explain a new functionality.
 * The usage of the `print()` function is forbidden: use the `logging` python standard module instead.
 * If possible, limit the use of classes as much as possible and opt for a functional approach. The classes are reserved for data modelling if it is impossible to do so using `xarray`.
@@ -87,8 +88,10 @@ Here is the way to install it:
 ```
 pre-commit install
 ```
+
 This installs the pre-commit hook in `.git/hooks/pre-commit` and `.git/hooks/pre-push`  from `.pre-commit-config.yaml` file configuration.
 The pre-commit checks different validation process: isort
+
 ```
 It is possible to test pre-commit before commiting:
 * pre-commit run --all-files                      # Run all hooks on all files
@@ -97,16 +100,19 @@ It is possible to test pre-commit before commiting:
 ```
 
 # Isort
+
 [Isort](https://pypi.org/project/isort/) checks python imports validity in source code.
 The configuration is in isort section [pyproject.toml](pyproject.toml) file.
 It is configured with black profile.
 
 # Black
+
 [Black](https://pypi.org/project/black/) is the uncompromising Python code formatter.
 The configuration is in a black section in [pyproject.toml](pyproject.toml) file.
 The default configuration is used.
 
 # Flake8
+
 [Flake8](https://pypi.org/project/flake8/) is a wrapper around PyFlakes, pycodestyle,  Ned Batchelder’s McCabe script.
 The configuration is put in a flake8 section in [setup.cfg](setup.cfg)
 
@@ -117,19 +123,20 @@ Flake8 messages can be avoided (if necessary !) adding "# noqa error-number"
 
 [flake8-comprehensions](https://pypi.org/project/flake8-comprehensions/) is set for checking dict, set, list structures usage.
 
-
 # Pylint
+
 [pylint](https://pypi.org/project/pylint/) is well known global rules checker, complementary with flake8.
 The configuration is set in [.pylintrc](.pylintrc) file.
 It is possible to run only pylint tool to check code modifications:
+
 ```
 * cd HOME
 * pylint                                  # Run all pylint tests
 * pylint --list-msgs                      # Get pylint detailed errors informations
 ```
+
 Pylint messages can be avoided (in particular cases !) adding "#pylint: disable=error-message-name" in the file or line.
 Look at examples in code.
-
 
 # Merge request acceptation process
 
@@ -138,14 +145,17 @@ TO UPDATE, depending on the project
 Here is a cars exemple:
 
 Two Merge Requests types to help the workflow :
-- Simple merge requests (bugs, documentation) can be merged directly by the author with rights on master.
-- Advanced merge requests (typically a big change in code) are flagged with "To be Reviewed" by the author
+
+* Simple merge requests (bugs, documentation) can be merged directly by the author with rights on master.
+* Advanced merge requests (typically a big change in code) are flagged with "To be Reviewed" by the author
 
 This mechanism is to help quick modifications and avoid long reviews on unneeded simple merge requests.
 The author has to be responsible in the need or  not to be reviewed.
 
 ## Advanced Merge Request
+
 The Advanced Merge Request will be merged into master after being reviewed by a project steering committee (core committers) composed of:
+
 * Name1
 * Name2
 * ...
@@ -153,6 +163,7 @@ The Advanced Merge Request will be merged into master after being reviewed by a 
 Only the members of this committee can merge into master.
 
 The checklist of a Advanced Merge Request acceptance is the following:
+
 * [ ] At least one code review have been done by members of the group above (who check among others the correct application of the rules listed in the [Coding guide](# Coding guide)).
 * [ ] All comments of the reviewers has been dealt with and are closed
 * [ ] The reviewers have signaled their approbation (thumb up)

@@ -1,4 +1,4 @@
-# MESH3D Gitlab-ci configuration file
+# CARS-MESH Gitlab-ci configuration file
 
 # Workflow to allow no duplicated pipeline between branch and MR : https://docs.gitlab.com/ee/ci/yaml/workflow.html#switch-between-branch-pipelines-and-merge-request-pipelines
 workflow:
@@ -48,18 +48,18 @@ variables:
 build:
   stage: init
   image:
-    ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_PYTHON}
+    ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}
     #  before_script:
     # set up proxy
     #- export HTTP_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
     #- export HTTPS_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
   script:
-    # Install mesh3d + requirements in venv
+    # Install cars-mesh + requirements in venv
     - VENV="venv" make install
     # Activate virtualenv
     - source venv/bin/activate
-    # Test quickly mesh3d
-    - mesh3d -h
+    # Test quickly cars-mesh
+    - cars-mesh -h
     # Show artifact size
     - du -h --max-depth=1
     - deactivate
@@ -70,12 +70,10 @@ build:
 test:
   stage: quality
   image: ${ARTIFACTORY_URL_CNES3D}/${TAG_IMAGE_CNES3D}
+  needs:
+    - build
   script:
-    # test in parallel of build because specific image.
-    # reload install for open3d specific image and python
-    - make clean
-    - make install
-    # Chargement du module python
+    # Load previous python venv
     - source venv/bin/activate
 
     # Run test (with open3D openGL working)
@@ -91,11 +89,11 @@ test:
 
 linting:
   stage: quality
-  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_PYTHON}
+  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}
   needs:
     - build
   script:
-    # Chargement du module python
+    # Load previous python venv
     - source venv/bin/activate
     # Run project quality code.
     - make lint
@@ -107,11 +105,11 @@ linting:
 
 docs:
   stage: quality
-  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_PYTHON}
+  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}
   needs:
     - build
   script:
-    # Load virtualenv
+    # Load previous python venv
     - source venv/bin/activate
     # Generate documentation
     - make docs

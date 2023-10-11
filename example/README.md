@@ -5,14 +5,14 @@ This folder provides small data to test the pipeline extracted from Toulouse Ple
 * `point_cloud.laz`: a point cloud generated with CARS with panchromatic images P01 and P02,
 * `rpc.XML`: a RPC file of panchromatic P01,
 * `texture_image.tif`: a texture image extracted from panchromatic P01 (top left point at (col, row) = (15029, 17016)),
-* `config_reconstruct.json`: an example of configuration to launch the reconstruction pipeline.
-* `config_evaluate.json`: an example of configuration to launch the evaluation pipeline between the input point cloud and the output of the reconstruction pipeline.
+* `config_reconstruct.json`: an example of configuration to run the reconstruction pipeline.
+* `config_evaluate.json`: an example of configuration to run the evaluation pipeline between the input point cloud and the output of the reconstruction pipeline.
 
-To launch the code, please follow the guidelines below:
+To run the code, please follow the guidelines below:
 
 ```bash
-# Install Mesh3D library
-cd path/to/dir/mesh_3d
+# Install CARS-MESH library
+cd path/to/dir/cars-mesh
 make install
 
 # Activate virtual environment
@@ -21,19 +21,11 @@ source venv/bin/activate
 # Go to example directory
 cd example/
 
-# Launch reconstruction
-mesh3d reconstruct config_reconstruct.json
+# Run reconstruction
+cars-mesh config_reconstruct.json
 
-# Launch evaluation between the input point cloud and the vertices of the reconstructed mesh
-mesh3d evaluate config_evaluate.json
+# Run evaluation between the input point cloud and the vertices of the reconstructed mesh
+cars-mesh-evaluate config_evaluate.json
 ```
 
-For more information, please check the documentation.
-Run the following commands to build the doc:
-
-```bash
-source venv/bin/activate
-make docs
-```
-
-The Sphinx documentation should pop in a new tab of your browser.
+For more information, please check the [cars-mesh documentation](https://github.com/cnes/cars-mesh).

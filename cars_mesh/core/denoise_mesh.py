@@ -4,6 +4,7 @@
 # Copyright (C) 2023 CNES.
 #
 # This file is part of cars-mesh
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,21 +18,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """
-Packaging setup.py for compatibility
-All packaging in setup.cfg
+Denoising methods applied to the mesh
 """
-
-from setuptools import setup
-
-try:
-    setup()
-except Exception:
-    print(
-        "\n\nAn error occurred while building the project, "
-        "please ensure you have the most updated version of pip, setuptools, "
-        "setuptools_scm and wheel with:\n"
-        "   pip install -U pip setuptools setuptools_scm wheel\n\n"
-    )
-    raise
