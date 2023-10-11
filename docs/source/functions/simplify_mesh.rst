@@ -31,4 +31,4 @@ The vertex clustering method pools all vertices that fall into a voxel of a give
 .. warning::
 
     It does not seem to give any result (either good or bad). There might be an issue in the open3d code.
-    Further study should be conducted, or the method reimplemented or abandoned.
+    Further studies should be conducted, or the method reimplemented or abandoned.

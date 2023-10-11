@@ -22,7 +22,7 @@
 
 CARS-MESH is a library to do 3D Surface reconstruction with texture and classification from remote sensing photogrammetric point cloud.
 
-This tool is part of 3D CNES tools around [CARS](https://github.com/cnes/cars) but can be run independently. CARS can be used to generate input point clouds from stereo images to be "meshed" by cars-mesh.
+This tool is part of 3D CNES tools around [CARS](https://github.com/cnes/cars) but can be run independently. CARS can be used to generate input point clouds from stereo images.
 
 CARS-MESH depends heavily on [open3D](http://www.open3d.org/) toolbox.
 
@@ -48,14 +48,11 @@ In the meantime, CARS-MESH provides a point clouds comparison and evaluation too
 It computes a bunch of metrics between two point clouds or meshes (vertices are used
 for the comparison for mesh) and gives a visual glimpse of the local distances from one point cloud to the other.
 
-## Quick Start
-
-## Installation
+## Install
 
 ### From Pypi
 
-Create a Python virtual environment, git clone the repository and install the lib in dev mode (so to be able to modify
-it dynamically).
+Create a Python virtual environment, git clone the repository and install the library.
 
 ```bash
 # Create your virtual environment "venv"

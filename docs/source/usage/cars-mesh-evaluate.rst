@@ -1,6 +1,37 @@
-.. _metrics:
+.. _usage_cars-mesh-evaluate:
 
-=======
+=======================
+Use CARS-MESH Evaluate 
+=======================
+
+``cars-mesh-evaluate`` tool computes metrics between two point clouds and saves visuals for qualitative analysis (If an input is a mesh, its vertices will be used for comparison)
+
+Configure the pipeline in a JSON file `/path/to/config_evaluate.json`:
+
+.. code-block:: JSON
+
+    {
+      "input_path_1": "example/point_cloud.laz",
+      "input_path_2": "example/output/textured_mesh.ply",
+      "output_dir": "example/output_evaluate"
+    }
+
+
+Where:
+* ``input_path_1``: Filepath to the first input. Should either be a point cloud or a mesh.
+* ``input_path_2``: Filepath to the second input. Should either be a point cloud or a mesh.
+* ``output_dir``: Directory path to the output folder where to save results.
+
+Finally, you can run the following commands to activate the virtual environment and run the evaluation:
+
+.. code-block:: bash
+
+    source venv/bin/activate
+    cars-mesh-evaluate /path/to/config_evaluate.json
+
+
+*N.B.: To run the example above, you need to run the example reconstruction pipeline first (cf previous section)*
+
 Metrics
 =======
 
@@ -12,7 +43,7 @@ Faces comparison is not implemented for now. `Metro <http://vcg.isti.cnr.it/vcgl
 in a github issue).
 
 Point Cloud Quantification
-==========================
+---------------------------
 
 Quantify the contribution of processings is an important subject. However, the right way to compare two point clouds
 or meshes is not obvious. To our knowledge, no simple metric allows to capture all the complexity of 3D information.
@@ -49,7 +80,7 @@ learning-based approaches, Graphical Models, Volume 121, 2022, 101140, ISSN 1524
 https://doi.org/10.1016/j.gmod.2022.101140.
 
 Point Cloud Qualification
-==========================
+-------------------------
 
 Since quantitative metrics cannot capture all the information needed to evaluate a point cloud, we propose qualitative
 analysis by providing visuals. In the same fashion as paper authors do, we save two point clouds (one for A > B

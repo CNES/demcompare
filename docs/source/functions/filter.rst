@@ -102,20 +102,4 @@ user. Let :math:`N` be the number of neighbours of point :math:`P` defined in a 
     A version is available in CARS code (but not used here.
 
 
-Radius filtering by cluster
-===========================
 
-    | *Not implemented anymore*
-
-This approach is implemented in CARS. Briefly, it is the same idea as the radius filtering method.
-However, points are first gathered in clusters that are flagged as outliers if they do not have enough points.
-
-.. note::
-
-    This method can hardly be parallelized because lists of points are updated during the neighbours' search making
-    the approach dynamic.
-
-.. warning::
-
-    It is now deprecated in the code since CARS v4. It is given here as an information notice.
-    It should be re-interfaced to be used.

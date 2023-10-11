@@ -1,8 +1,17 @@
-Welcome to CARS-MESH's documentation!
-=============================================================================
+CARS-MESH, 3D surface reconstruction
+====================================
 
-This library was created by Lisa Vo Thanh (Magellium) and Chloé Thenoz (Magellium) during a CNES R&T
-(Research & Technology) project for surface reconstruction from a photogrammetric point cloud.
+CARS-MESH is a library to do 3D Surface reconstruction with texture and classification from remote sensing photogrammetric point cloud.
+
+This tool is part of 3D CNES satellite tools around `CARS <https://github.com/cnes/cars>`_  but can be run independently. CARS can be used to generate input point clouds from stereo images.
+
+This library was created during a CNES R&T (Research & Technology) project.
+
+Authors:
+
+* Lisa Vo Thanh (Magellium) 
+* Chloé Thenoz (Magellium) 
+* Emmanuel Dubois (CNES)
 
 Copyright: CNES
 
@@ -13,17 +22,17 @@ Copyright: CNES
    :caption: User Guide
 
    installation
-   prerequisites
-   command_line_user_guide
-   core/index.rst
-   tools/index.rst
+   inputs_outputs
+   usage/cars-mesh.rst
+   usage/cars-mesh-evaluate.rst
+   functions/index.rst
+   design/index.rst
 
 .. toctree::
   :maxdepth: 2
   :caption: API Reference
 
   api_reference/index.rst
-
 
 Indices and tables
 ==================
