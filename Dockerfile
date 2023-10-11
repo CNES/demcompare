@@ -18,6 +18,7 @@ RUN apt-get update \
   libgomp1 \
   libx11-6 \
   libgl1 \
+  libegl1 \
   libusb-1.0-0 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
