@@ -48,7 +48,7 @@ variables:
 build:
   stage: init
   image:
-    ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}}
+    ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}
     #  before_script:
     # set up proxy
     #- export HTTP_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
@@ -69,7 +69,7 @@ build:
 
 test:
   stage: quality
-  image: ${ARTIFACTORY_URL_CNES3D}/${TAG_IMAGE_CNES3D}}
+  image: ${ARTIFACTORY_URL_CNES3D}/${TAG_IMAGE_CNES3D}
   needs:
     - build
   script:
@@ -89,7 +89,7 @@ test:
 
 linting:
   stage: quality
-  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}}
+  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}
   needs:
     - build
   script:
@@ -105,7 +105,7 @@ linting:
 
 docs:
   stage: quality
-  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}}
+  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}
   needs:
     - build
   script:
