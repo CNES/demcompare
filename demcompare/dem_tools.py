@@ -930,7 +930,12 @@ def accumulates_class_layers(  # pylint:disable=too-many-branches
     return diff_ref_sec
 
 
-def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
+def compute_dem_slope(
+    dataset: xr.Dataset,
+    degree: bool = False,
+    add_attribute: bool = True,
+    unit_change: bool = True,
+) -> xr.Dataset:
     """
     Computes DEM's slope
     Slope is presented here :
@@ -946,6 +951,12 @@ def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
                   xr.DataArray
     :param degree:  True if is in degree
     :type degree: bool
+    :param add_attribute: if True, add attribute to the input dataset
+      if False, return the slope
+    :type add_attribute: bool
+    :param unit_change: if True change units of the slope
+      if False, no units change
+    :type unit_change: bool
     :return: slope
     :rtype: np.ndarray
     """
@@ -1019,10 +1030,11 @@ def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
     slope = np.arctan(tan_slope)
 
     # Just simple unit change as required
-    if degree is False:
-        slope *= 100
-    else:
-        slope = (slope * 180) / np.pi
+    if unit_change:
+        if degree is False:
+            slope *= 100
+        else:
+            slope = (slope * 180) / np.pi
 
     # Add slope as a DataArray
     # Slope
@@ -1035,13 +1047,15 @@ def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
     # as ref_slope. If there are two arrays, the sec slope
     # will be renamed by the accumulates_class_layers function
     # to sec_slope
-    dataset["ref_slope"] = xr.DataArray(
-        data=data,
-        coords=coords_slope,
-        dims=["row", "col"],
-    )
+    if add_attribute:
+        dataset["ref_slope"] = xr.DataArray(
+            data=data,
+            coords=coords_slope,
+            dims=["row", "col"],
+        )
 
-    return dataset
+        return dataset
+    return slope
 
 
 def compute_and_save_image_plots(

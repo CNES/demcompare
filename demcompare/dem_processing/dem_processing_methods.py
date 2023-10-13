@@ -235,11 +235,7 @@ class AltiDiffSlopeNorm(DemProcessingTemplate):
         :rtype: np.ndarray
         """
 
-        if hasattr(dem, "ref_slope"):
-            alpha = dem["ref_slope"].data
-        else:
-            dem = compute_dem_slope(dem)
-            alpha = dem["ref_slope"].data
+        alpha = compute_dem_slope(dem, add_attribute=False, unit_change=False)
 
         tan_alpha = np.tan(alpha)
 
