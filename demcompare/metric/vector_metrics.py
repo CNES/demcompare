@@ -153,13 +153,13 @@ class CumulativeProbabilityFunction(MetricTemplate):
         fig_ax.plot(self.bins_count[1:], self.cdf, label="CDF")
         # tidy up the figure and add axes titles
         fig_ax.set_xlabel(
-            "Full absolute elevation differences (m) "
+            "Pixel values"
             f"\nmax_diff={round(self.max_diff, 3)} nb_bins={self.nb_bins}"
             f"\nnb_pixels={self.nb_pixels} nb_nans={self.nb_nans}",
             fontsize="medium",
         )
         fig_ax.set_ylabel("Cumulative Probability [0,1]", fontsize="medium")
-        fig_ax.set_title("Cumulative Probability Difference", fontsize="large")
+        fig_ax.set_title("Cumulative Probability", fontsize="large")
 
         fig_ax.set_ylim(0, 1.05)
         fig_ax.grid(True)
@@ -295,10 +295,8 @@ class ProbabilityDensityFunction(MetricTemplate):
         fig0 = mpl_pyplot.figure()
         # Define axes labels and title
         fig0_ax = fig0.add_subplot(111)
-        fig0_ax.set_xlabel(
-            "Elevation difference (m) from - |p98| to |p98|", fontsize=12
-        )
-        fig0_ax.set_title("Elevation difference Histogram", fontsize="large")
+        fig0_ax.set_xlabel("Pixel values from - |p98| to |p98|", fontsize=12)
+        fig0_ax.set_title("Histogram", fontsize="large")
         fig0_ax.set_ylabel("Normalized frequency", fontsize=12)
         mpl_pyplot.grid(True)
         mpl_pyplot.bar(center, self.pdf, align="center", width=width)
