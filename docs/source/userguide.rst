@@ -13,6 +13,7 @@ User guide
    userguide/statistics.rst
    userguide/report.rst
    userguide/notebook_execution.rst
+   userguide/scientific_guide.rst
 
 
 

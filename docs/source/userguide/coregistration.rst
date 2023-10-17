@@ -120,8 +120,13 @@ A possible coregistration configuration would be the following:
 Coregistration analysis
 -----------------------
 
-The coregistration may be analyzed by computing the **altitude difference before and after the coregistration** along with its histogram. To do so,
-the user needs to specify the **statistics** step in the input configuration as follows:
+The coregistration may be analyzed by computing the **altitude difference with and without the coregistration** along with its histogram. 
+
+To do so, the user needs to have two configuration files: one **with coregistration** and one **without coregistration**. 
+
+The two configuration files should specify the **statistics** step including an **alti-diff** step in the input configuration.
+
+The two configuration files should look like:
 
 .. code-block:: json
 
@@ -129,10 +134,22 @@ the user needs to specify the **statistics** step in the input configuration as 
         "method_name": "nuth_kaab_internal"
     },
     "statistics": {
+        "alti-diff": {
+        }
     }
 
+and 
 
-If the **statistics** step is specified in the input configuration file, **demcompare** will
+.. code-block:: json
+
+    "statistics": {
+        "alti-diff": {
+        }
+    }
+
+Several other metrics, other than the altitude difference can be used, as described in :ref:`statistics`.
+
+If the **statistics** step with an **alti-diff** step is specified in the input configuration file, **demcompare** will
 compute the altitude differences.
 
 .. figure:: /images/doc_ref.gif
@@ -158,8 +175,7 @@ After Nuth et Kaab coregistration, the final altitude difference between both co
 
     Final altitude difference between the two coregistered DSMs.
 
-**The altitude differences are computed with the reprojected DEMs** before (*dem_reproj_ref* and *dem_reproj_sec* on the schema) and after the coregistration
-(*dem_reproj_coreg_ref* and *dem_reproj_coreg_sec* on the schema).
+**The altitude differences are computed with the reprojected DEMs** with and without the coregistration.
 
 Full list of parameters
 ***********************
@@ -216,36 +232,23 @@ The coregistration images and files saved to disk :
     ``demcompare_results.json``,Output json file containing coregistration offsets
     ``logs.log``,Logging file
 
-The images and statistics to analyze the coregistration saved with both ``coregistration`` and ``statistics`` options activated on the configuration :
+The images and statistics are saved in the `stats/alti-diff` directory if both ``coregistration`` and ``statistics`` options activated on the configuration :
 
 +-----------------------------------------+------------------------------------------------------------------------------------------+
 | Name                                    | Description                                                                              |
 +=========================================+==========================================================================================+
-| *initial_dem_diff.tif*                  | | Altitude differences image when both DEMs have been reprojected                        |
-|                                         | | to the same grid and no coregistration has been performed                              |
+| *dem_for_stats.tif*                     | Altitude differences image when both DEMs have been reprojected                          |
+|                                         | to the same grid.                                                                        |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *final_dem_diff.tif*                    | | Altitude differences image from the reprojected DEMs after                             |
-|                                         | | the coregistration.                                                                    |
+| *dem_for_stats_snapshot.png*            | Snapshot plot of the altitude difference.                                                |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *initial_dem_diff_snapshot.png*         | Snapshot plot of `initial_dem_diff.tif`                                                  |
+| *dem_for_stats_pdf.png*                 | Plot of the probability density function of the altitude difference.                     |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *final_dem_diff_snapshot.png*           | Snapshot plot of `final_dem_diff.tif`                                                    |
+| *dem_for_stats_pdf.csv*                 | Data of the probability density function of the altitude difference.                     |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *initial_dem_diff_pdf.png*              | Plot of the probability density function of `initial_dem_diff`                           |
+| *dem_for_stats_cdf.png*                 | Plot of the cumulative density function of the altitude difference.                      |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
-| *final_dem_diff_pdf.png*                | Plot of the probability density function of `final_dem_diff`                             |
-+-----------------------------------------+------------------------------------------------------------------------------------------+
-| *initial_dem_diff_pdf.csv*              | Data of the probability density function of `initial_dem_diff`                           |
-+-----------------------------------------+------------------------------------------------------------------------------------------+
-| *final_dem_diff_pdf.csv*                | Data of the probability density function of `final_dem_diff`                             |
-+-----------------------------------------+------------------------------------------------------------------------------------------+
-| *initial_dem_diff_cdf.png*              | Plot of the cumulative density function of `initial_dem_diff`                            |
-+-----------------------------------------+------------------------------------------------------------------------------------------+
-| *final_dem_diff_cdf.png*                | Plot of the cumulative density function of `final_dem_diff`                              |
-+-----------------------------------------+------------------------------------------------------------------------------------------+
-| *initial_dem_diff_cdf.csv*              | Data of the cumulative density function of `initial_dem_diff`                            |
-+-----------------------------------------+------------------------------------------------------------------------------------------+
-| *final_dem_diff_cdf.csv*                | Data of the cumulative density function of `final_dem_diff`                              |
+| *dem_for_stats_cdf.csv*                 | Data of the cumulative density function of the altitude difference.                      |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
 
 The coregistration images saved with the ``coregistration`` ``save_optional_outputs`` option set to ``"True"``:
@@ -292,21 +295,16 @@ With the command line execution, the following directories that may store the re
     .output_dir
     +-- demcompare_results.json
     +-- sample_config.json
-    +-- initial_dem_diff.tif
-    +-- initial_dem_diff_snapshot.png
-    +-- final_dem_diff.tif
-    +-- final_dem_diff_snapshot.tif
     +-- stats
-    |   +-- final_dem_diff_cdf.csv
-    |   +-- final_dem_diff_cdf.png
-    |   +-- initial_dem_diff_cdf.csv
-    |   +-- initial_dem_diff_cdf.png
-    |   +-- final_dem_diff_pdf.csv
-    |   +-- final_dem_diff_pdf.png
-    |   +-- initial_dem_diff_pdf.csv
-    |   +-- initial_dem_diff_pdf.png
-    |   <classification_layer_name*>
-            +-- stats for each mode
+        +-- alti-diff
+            +-- dem_for_stats.tif
+            +-- dem_for_stats_snapshot.png
+            +-- dem_for_stats_cdf.csv
+            +-- dem_for_stats_cdf.png
+            +-- dem_for_stats_pdf.csv
+            +-- dem_for_stats_pdf.png
+            <classification_layer_name*>
+                +-- stats for each mode
     +-- coregistration
         +-- coreg_SEC.tif
         +-- reproj_REF.tif

@@ -6,178 +6,145 @@ Statistics
 
 .. note::
 
-    In this chapter we use *ref* and *sec* abbreviations when refering to the reference input DEM (``input_ref``) and the secondary input DEM (``ìnput_sec``) respectively.
-
+    In this chapter we use *ref* and *sec* abbreviations when refering to the reference input DEM (``input_ref``) and the secondary input DEM (``ìnput_sec``) respectively **after coregistration or reprojection, if specified in the configuration file**.
 
 **Demcompare** can compute a wide variety of **statistics** on either an input DEM, or the difference between two input DEMs.
-The statistics module can consider different number of inputs:
+
+Before the **statistics** computation, the input DEM or the difference between two input DEMs is processed by a **DEM processing method**.
+
+Several DEM processing methods are available.
+
+The DEM processing methods can be split in two categories: DEM processing methods applied on one DEM, and DEM processing methods applied on two DEMs:
 
 .. tabs::
 
-    .. tab:: One input dem
+  .. tab:: Applied on one DEM
 
-        .. code-block:: json
+    - ``ref``: returns the reference DEM
+    - ``sec``: returns the secondary DEM
+    - ``ref-curvature``: computes and returns the curvature of the reference DEM
+    - ``sec-curvature``: computes and returns the curvature of the secondary DEM
 
-            "output_dir": "./test_output/",
-            "input_ref": {
-                "path": "./Gironde.tif",
-                "nodata": -9999.0,
-            },
-            "statistics": {
-                "remove_outliers": "True",
-            }
+  .. tab:: Applied on two DEMs
+      
+    - ``alti-diff``: computes and returns the difference in altitude between the two input DEMs
+    - ``alti-diff-slope-norm``: computes and returns the difference in altitude between the two input DEMs, and normalizes it by the slope
+    - ``angular-diff``: computes and returns the angular difference between the two input DEMs
 
-        If **one single DEM** is specified in the configuration, the input or default metrics will be directly computed on the input DEM.
+.. note::
 
-        .. figure:: /images/stats_input_one_dem.png
-            :width: 300px
+   More informations about the curvature, the difference in altitude between the two input DEMs normalized by the slope and the angular difference can be found in :ref:`curvature`, :ref:`slope_normalized_elevation_difference` and :ref:`angular_difference` respectively.
+
+After the DEM processing methods, statistics can be computed on the resulting DEM.
+
+In summary, the workflow can be represented by the figure below:
+
+.. figure:: /images/workflow.png
+            :width: 700px
             :align: center
 
-            Statistics computation with one input DEM.
-
-
-
-        By default, the following metrics will be computed:  ``mean``, ``median``, ``max``, ``min``, ``sum``, ``squared_sum``, ``std``.
-
-        The user may specify the required metrics as follows:
-
-
-        .. code-block:: json
-
-            "output_dir": "./test_output/",
-            "input_ref": {
-                "path": "./Gironde.tif",
-                "nodata": -9999.0,
-            },
-            "statistics": {
-                "remove_outliers": "True",
-                "metrics": ["mean", {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}}]
-            }
-
-    .. tab:: Two input dems
-
-        .. code-block:: json
-
-            "output_dir": "./test_output/",
-            "input_ref": {
-                "path": "./Gironde.tif",
-                "nodata": -9999.0,
-            },
-            "input_sec": {
-                "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
-                "nodata": -32768,
-            }
-            "statistics": {
-                "remove_outliers": "True",
-            }
-
-        If **two DEMs** are specified in the configuration, demcompare will do the reprojection of both DEMs to have the same resolution
-        and size, and the difference between both reprojected DEMs will be considered to compute the input or default metrics.
-
-        .. figure:: /images/stats_input_two_dems.png
-            :width: 800px
-            :align: center
-
-            Statistics computation with two input DEMs.
-
-        By default, the following metrics will be computed:  ``mean``, ``median``, ``max``, ``min``, ``sum``, ``squared_sum``, ``std``,
-        ``percentil_90``, ``nmad``, ``rmse``.
-
-        The user may specify the required metrics as follows:
-
-        .. code-block:: json
-
-            "output_dir": "./test_output/",
-            "input_ref": {
-                "path": "./Gironde.tif",
-                "nodata": -9999.0,
-            },
-            "input_sec": {
-                "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
-                "nodata": -32768,
-            }
-            "statistics": {
-                "remove_outliers": "True",
-                "metrics": ["mean", {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}}]
-            }
-
-
-With the coregistration step
-*****************************
-
-If both coregistration and statistics steps are present on the input configuration:
-
-- In order to evaluate the coregistration effect, the differences between the reprojected DEMs before and after coregistration, named **initial_dem_diff** and **final_dem_diff**, will be considered to compute the Probability Density Function and the Cumulative Density Function.
-- The difference between the reprojected DEMs after coregistration (the **final_dem_diff**) will be considered to compute the input or default metrics.
-
+All the different DEM processing methods can be used within a single configuration file as below (a **coregistration** can be added):
 
 .. code-block:: json
 
-    "output_dir": "./test_output/",
-    "input_ref": {
-        "path": "./Gironde.tif",
-        "nodata": -9999.0,
-    },
-    "input_sec": {
-        "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
-        "nodata": -32768,
-    },
-    "coregistration": {
-        "coregistration_method": "nuth_kaab_internal",
-    }
-    "statistics": {
-        "remove_outliers": "True",
-    }
+        {
+            "output_dir": "./test_output/",
+            "input_ref": {
+                "path": "./Gironde.tif",
+                "nodata": -9999.0
+            },
+            "input_sec": {
+                "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
+                "nodata": -32768
+            }
+            "statistics": {
+                "alti-diff": {
+                    "remove_outliers": "True"
+                },
+                "alti-diff-slope-norm": {
+                    "remove_outliers": "True"
+                },
+                "angular-diff": {
+                    "remove_outliers": "True"
+                },
+                "ref": {
+                    "remove_outliers": "True"
+                },
+                "sec": {
+                    "remove_outliers": "True"
+                },
+                "ref-curvature": {
+                    "remove_outliers": "True"
+                },
+                "sec-curvature": {
+                    "remove_outliers": "True"
+                }
+            }
+        }
 
-.. figure:: /images/stats_input_after_coreg.png
-    :width: 800px
-    :align: center
+By default, the following metrics will be computed: ``mean``, ``median``, ``max``, ``min``, ``sum``, ``squared_sum``, ``std``, ``percentil_90``, ``nmad``, ``rmse``, ``pdf``, ``cdf``, ``hillshade``, ``svf``.
 
-    Statistics computation after the coregistration step.
-
-The following metrics will be computed:
-
-
-.. tabs::
-
-  .. tab:: Metrics **to evaluate the coregistration effect**
-      On **initial_dem_diff** and on **final_dem_diff**: ``cdf``, ``pdf``.
-
-    .. note::
-        No classification is considered for the metrics to evaluate the coregistration effect.
-        If classification layers are specified on the input configuration, those will be only be considered for the
-        ''Other default metrics'' computation.
-
-  .. tab:: Default metrics
-      On **final_dem_diff**: ``mean``, ``median``, ``max``, ``min``, ``sum``, ``squared_sum``, ``std``, ``percentil_90``, ``nmad``, ``rmse``.
-
-    .. note::
-        If the user specifies the required metrics to be computed, those will substitute the default metrics. However,
-        the ''metrics to evaluate the coregistration effect'' will still be computed.
-
-
-The user may specify the required metrics as follows :
+The user may specify the required metrics as follows:
 
 .. code-block:: json
 
-    "output_dir": "./test_output/",
-    "input_ref": {
-        "path": "./Gironde.tif",
-        "nodata": -9999.0,
-    },
-    "input_sec": {
-        "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
-        "nodata": -32768,
-    },
-    "coregistration": {
-        "coregistration_method": "nuth_kaab_internal",
-    }
-    "statistics": {
-        "remove_outliers": "True",
-        "metrics": ["mean", {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}}]
-    }
+        {
+            "output_dir": "./test_output/",
+            "input_ref": {
+                "path": "./Gironde.tif",
+                "nodata": -9999.0
+            },
+            "input_sec": {
+                "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
+                "nodata": -32768
+            }
+            "statistics": {
+                "alti-diff": {
+                    "remove_outliers": "True",
+                    "metrics": ["mean", {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}}]
+                }
+            }
+        }
 
+The DEM processing methods applied on one DEM can also be used with a single DEM as input, as below:
 
+.. code-block:: json
+
+        {
+            "output_dir": "./test_output/",
+            "input_ref": {
+                "path": "./Gironde.tif",
+                "nodata": -9999.0
+            },
+            "statistics": {
+                "ref": {
+                    "remove_outliers": "True"
+                },
+                "ref-curvature": {
+                    "remove_outliers": "True"
+                }
+            }
+        }
+
+By default, the following metrics will be computed: ``mean``, ``median``, ``max``, ``min``, ``sum``, ``squared_sum``, ``std``.
+
+The user may specify the required metrics as follows:
+
+.. code-block:: json
+
+        {
+            "output_dir": "./test_output/",
+            "input_ref": {
+                "path": "./Gironde.tif",
+                "nodata": -9999.0
+            },
+            "statistics": {
+                "ref": {
+                    "remove_outliers": "True",
+                    "metrics": ["mean", {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}}]
+                }
+            }
+        }
 
 Metrics
 *******
@@ -216,6 +183,29 @@ The following metrics are currently available on demcompare:
           ``'ratio_above_threshold'``,vector,elevation_threshold, "List[float, int]", ":math:`[0.5, 1, 3]`"
           ,,original_unit, "string",``"m"``
           ,,output_csv_path, "string",``None``
+          ``'slope-orientation-histogram'``,vector,output_plot_path, "string",``None``
+
+  .. tab:: Matrix 2D metrics
+      .. csv-table::
+        :header: "Name", "Type", "Parameters", "Type", "Default value"
+        :widths: auto
+        :align: left
+
+        ``'hillshade'``\ Hill shade,matrix,azimuth, "float", ``0.9``
+        ,,angle_altitude, "float", ``45``
+        ,,cmap, "str", ``Greys_r``
+        ,,cmap_nodata, "str", ``royalblue``
+        ,,colorbar_title, "str", ``Hill shade``
+        ,,fig_title, "str", ``DEM hill shade``
+        ,,plot_path, "str", ``None``
+        ``'svf'``\ SkyViewFactor,matrix,filter_intensity, "float", ``315``
+        ,,replication, "bool", ``True``
+        ,,quantiles, "List[float]", ":math:`[0.09, 0.91]`"
+        ,,cmap, "str", ``Greys_r``
+        ,,cmap_nodata, "str", ``royalblue``
+        ,,colorbar_title, "str", ``Sky view factor``
+        ,,fig_title, "str", ``DEM sky view factor``
+        ,,plot_path, "str", ``None``
 
 .. note::
 
@@ -226,6 +216,53 @@ The following metrics are currently available on demcompare:
     Apart from only considering the valid pixels, the user may also specify the ``remove_outliers`` option
     in the input configuration. This option will also **filter all DEM pixels outside (mu + 3 sigma) and (mu - 3 sigma)**,
     being *mu* the *mean* and *sigma* the *standard deviation* of all valid pixels in the DEM.
+
+.. note::
+    ``'ratio_above_threshold'`` and ``'slope-orientation-histogram'`` are not computed by default. They must be indicated in the configuration file in order to be used. An example on how to include them in the configuration is shown below.
+
+.. note::
+    ``'slope-orientation-histogram'`` should have the ``'output_plot_path'`` parameter specified, otherwise the plot will not be saved. An example on how to include it in the configuration is shown below.
+
+.. note::
+
+   More informations about the hillshade and the sky-view factor can be found in :ref:`hillshade_sky_view`.
+
+.. code-block:: json
+
+        {
+            "output_dir": "./test_output/",
+            "input_ref": {
+                "path": "./Gironde.tif",
+                "nodata": -9999.0
+            },
+            "input_sec": {
+                "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
+                "nodata": -32768
+            }
+            "statistics": {
+                "alti-diff": {
+                    "remove_outliers": "True",
+                    "metrics": ["mean", {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}}]
+                },
+                "ref": {
+                    "remove_outliers": "True",
+                    "metrics": [
+                        {
+                            "slope-orientation-histogram": {
+                                "output_plot_path": "path_to_plot"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+
+.. note::
+    ``'slope-orientation-histogram'``'s plots are not saved in the report.
+
+.. warning::
+   The combination of **DEM processing method** and **metric** may not be meaningful! For example, if the **DEM processing method** is **angular-diff** and the **metric** is **svf**,
+   it means that you are computing the sky-view factor of the difference in altitude normalized by the slope! 
 
 Classification layers
 *********************
@@ -266,11 +303,13 @@ Four types of classification layers exist:
                 }
             }
             "statistics": {
-                "remove_outliers": "False",
-                "classification_layers": {
-                    "Status": {
-                        "type": "segmentation",
-                        "classes": {"valid": [0],"KO": [1],"Land": [2],"NoData": [3],"Outside_detector": [4]}
+                "alti-diff": {
+                    "remove_outliers": "False",
+                    "classification_layers": {
+                        "Status": {
+                            "type": "segmentation",
+                            "classes": {"valid": [0],"KO": [1],"Land": [2],"NoData": [3],"Outside_detector": [4]}
+                        }
                     }
                 }
             }
@@ -286,11 +325,13 @@ Four types of classification layers exist:
         .. code-block:: json
 
                 "statistics": {
-                    "remove_outliers": "False",
-                    "classification_layers": {
-                        "Status": {
-                            "type": "segmentation",
-                            "classes": {"valid": [0, 1], "Land": [2, 3], "NoData": [4, 5]}
+                    "alti-diff": {
+                        "remove_outliers": "False",
+                        "classification_layers": {
+                            "Status": {
+                                "type": "segmentation",
+                                "classes": {"valid": [0, 1], "Land": [2, 3], "NoData": [4, 5]}
+                            }
                         }
                     }
                 }
@@ -401,18 +442,20 @@ Four types of classification layers exist:
                     }
                 },
                 "statistics": {
-                    "classification_layers": {
-                        "Status": {
-                            "type": "segmentation",
-                            "classes": {"valid": [0], "KO": [1], "Land": [2], "NoData": [3], "Outside_detector": [4],
-                        },
-                        "Slope0": {
-                            "type": "slope",
-                            "ranges": [0, 10, 25, 50, 90],
-                        },
-                        "Fusion0": {
-                            "type": "fusion",
-                            "sec": ["Slope0", "Status"]
+                    "alti-diff": {
+                        "classification_layers": {
+                            "Status": {
+                                "type": "segmentation",
+                                "classes": {"valid": [0], "KO": [1], "Land": [2], "NoData": [3], "Outside_detector": [4],
+                            },
+                            "Slope0": {
+                                "type": "slope",
+                                "ranges": [0, 10, 25, 50, 90],
+                            },
+                            "Fusion0": {
+                                "type": "fusion",
+                                "sec": ["Slope0", "Status"]
+                            }
                         }
                     }
                 }
@@ -496,26 +539,28 @@ Metric selection
     .. code-block:: json
 
           "statistics": {
-            "classification_layers": {
-                "Status": {
-                    "type": "segmentation",
-                    "classes": {
-                        "valid": [0],
-                        "KO": [1],
-                        "Land": [2],
-                        "NoData": [3],
-                        "Outside_detector": [4],
+            "alti-diff": {
+                "classification_layers": {
+                    "Status": {
+                        "type": "segmentation",
+                        "classes": {
+                            "valid": [0],
+                            "KO": [1],
+                            "Land": [2],
+                            "NoData": [3],
+                            "Outside_detector": [4],
+                        },
                     },
-                },
-                "Slope0": {
-                    "type": "slope",
-                    "ranges": [0, 10, 25, 50, 90],
-                    "metrics": ["nmad"],
-                },
-                "Fusion0": {
-                    "type": "fusion",
-                    "sec": ["Slope0", "Status"]
-                },
+                    "Slope0": {
+                        "type": "slope",
+                        "ranges": [0, 10, 25, 50, 90],
+                        "metrics": ["nmad"],
+                    },
+                    "Fusion0": {
+                        "type": "fusion",
+                        "sec": ["Slope0", "Status"]
+                    },
+                }
             },
             "metrics": [
                 "mean",
@@ -622,18 +667,20 @@ Output directories
 
 With the command line execution, the following statistics directories that may store the respective files will be automatically generated.
 
+One output directory per **DEM processing method** is created:
 
 .. code-block:: bash
 
     .output_dir
     +-- stats
-        +-- dem_for_stats.tif
-        +-- *classification_layer_name*
-            +-- stats_results.json/csv
-            +-- stats_results_intersection.json/csv
-            +-- stats_results_exclusion.json/csv
-            +-- ref_rectified_support_map.tif
-            +-- sec_rectified_support_map.tif
+        +-- *dem_processing_method*
+            +-- dem_for_stats.tif
+            +-- *classification_layer_name*
+                +-- stats_results.json/csv
+                +-- stats_results_intersection.json/csv
+                +-- stats_results_exclusion.json/csv
+                +-- ref_rectified_support_map.tif
+                +-- sec_rectified_support_map.tif
 
 .. note::
     Please notice that even if no classification layer has been specified, the results will be stored in a folder called ``global``, as it
