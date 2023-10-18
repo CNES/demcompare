@@ -942,6 +942,8 @@ def compute_dem_slope(
     http://pro.arcgis.com/ \
             fr/pro-app/tool-reference/spatial-analyst/how-aspect-works.htm
 
+    TODO: modify code such as to remove double return at the end
+
     :param dataset: dataset
     :type dataset: xr.DataSet containing :
 
@@ -1047,6 +1049,7 @@ def compute_dem_slope(
     # as ref_slope. If there are two arrays, the sec slope
     # will be renamed by the accumulates_class_layers function
     # to sec_slope
+    # TODO: remove double output # pylint:disable=fixme
     if add_attribute:
         dataset["ref_slope"] = xr.DataArray(
             data=data,
