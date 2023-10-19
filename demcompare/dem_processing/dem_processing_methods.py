@@ -337,7 +337,7 @@ class AngularDiff(DemProcessingTemplate):
         self.type = "angular-diff"
         self.fig_title = "[REF vs SEC] angular difference"
         self.colorbar_title = "Angular difference"
-        self.cmap = "twilight"
+        self.cmap = "Reds"
 
     def compute_dems_angular_diff(
         self,
