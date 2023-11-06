@@ -5,7 +5,7 @@ Coregistration
 
 .. note::
 
-    In this chapter we use *ref* and *sec* abbreviations when refering to the reference input DEM (``input_ref``) and the secondary input DEM (``ìnput_sec``) respectively.
+    In this chapter, we use *ref* and *sec* abbreviations when refering to the reference input DEM (``input_ref``) and the secondary input DEM (``ìnput_sec``) respectively.
 
 
 Introduction
@@ -232,7 +232,7 @@ The coregistration images and files saved to disk :
     ``demcompare_results.json``,Output json file containing coregistration offsets
     ``logs.log``,Logging file
 
-The images and statistics are saved in the `stats/alti-diff` directory if both ``coregistration`` and ``statistics`` options activated on the configuration :
+The images and statistics are saved in the `stats/alti-diff` (since `alti-diff` is specified in the configuration) directory if both ``coregistration`` and ``statistics`` options activated on the configuration :
 
 +-----------------------------------------+------------------------------------------------------------------------------------------+
 | Name                                    | Description                                                                              |

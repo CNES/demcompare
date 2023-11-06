@@ -13,7 +13,7 @@ Statistics step architecture
 
 The `stats_processing_class`_ module handles the API for the statistics computation. 
 
-The :ref:`demcompare_module` creates a `dem_processing`_ object and a `stats_processing_class`_ object when statistics are to be computed. 
+The :ref:`demcompare_module` creates a :ref:`dem_processing` object and a `stats_processing_class`_ object when statistics are to be computed. 
 
 The `dem_processing` object creates the input to the `stats_processing_class`_.
 
@@ -29,44 +29,14 @@ When statistics are computed, a `stats_dataset_class`_ object is obtained.
 
     Statistics classes relationship.
 
-DEM processing
-****************
-
-.. _dem_processing:
-
-
-**DemProcessing**: Implemented in `DemProcessing file <https://github.com/CNES/demcompare/blob/master/demcompare/dem_processing/dem_processing.py>`_
-
-The `dem_processing`_ class creates the input needed to the `stats_processing_class`_.
-
-Several **DEM processing methods** can be used:
-
-- DEM processing methods using only one DEM:
-
-    - **ref**
-    - **sec**
-    - **ref-curvature**
-    - **sec-curvature**
-
-- DEM processing methods using two DEMs:
-
-    - **alti-diff**
-    - **alti-diff-slope-norm**
-    - **angular-diff**
-
-One can find here the full list of API functions available in the `dem_processing`_ module, as well as their description and
-input and output parameters:
-`DemProcessing API <https://demcompare.readthedocs.io/en/latest/api_reference/demcompare/dem_processing/index.html>`_
+.. _stats_processing_class:
 
 Stats processing
 ****************
 
-.. _stats_processing_class:
-
-
 **StatsProcessing**: Implemented in `StatsProcessing file <https://github.com/CNES/demcompare/blob/master/demcompare/stats_processing.py>`_
 
-The `stats_processing_class`_ class handles the statistics computation for the ouput DEM of the `dem_processing`_ class.
+The `stats_processing_class`_ class handles the statistics computation for the ouput DEM of the :ref:`dem_processing` class.
 
 The `stats_processing_class`_ class generates the different `classification_layer_class`_ objects to handle the statistics computation by class, and it
 also generates the `stats_dataset_class`_ output object. It also has the API to compute the different available statistics on a chosen classification

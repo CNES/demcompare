@@ -44,7 +44,7 @@ To perform the dems statistics :ref:`statistics`, demcompare's module performs t
 
 1. Loads the input dems using the **dem_tools** module's *load_dem* function.
 2. Reprojects both dems to the same size and resolution using **dem_tools** module's *reproject_dems* function.
-3. Process the two DEMs by using the **dem_processing** module.
+3. Process the two DEMs by using the **dem_processing** module (see :ref:`dem_processing`).
 4. Creates a **Stats_processing** object and obtains the **stats_dataset** using the **stats_processing**'s *compute_stats* function.
 
 .. note::

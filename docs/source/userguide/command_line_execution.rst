@@ -18,8 +18,9 @@ Remove one of them from the config file to prevent demcompare from running it.
 
 The **statistics** steps includes an **alti-diff** step.
 This configuration allows to compute the difference in altitude between the two input DEMs.
-**alti-diff** is an example of `dem_processing_methods`.
+**alti-diff** is an example of `dem_processing_methods` (see :ref:`DEM_processing_methods`).
 Several other `dem_processing_methods` are also available. 
+The list of all `dem_processing_methods` can be found in :ref:`List of DEM processing methods <list_DEM_processing_methods>`.
 They can be used one after the other.
 
 An optional **report** step is included to generate a report if statistics are computed. 
