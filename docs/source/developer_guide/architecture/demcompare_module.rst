@@ -44,14 +44,16 @@ To perform the dems statistics :ref:`statistics`, demcompare's module performs t
 
 1. Loads the input dems using the **dem_tools** module's *load_dem* function.
 2. Reprojects both dems to the same size and resolution using **dem_tools** module's *reproject_dems* function.
-3. Computes the altitude difference dem using the **dem_processing** module's *DemProcessing* class instanciated with *alti-diff*, and then by using the *process_dem* function of this class.
+3. Process the two DEMs by using the **dem_processing** module (see :ref:`dem_processing`).
 4. Creates a **Stats_processing** object and obtains the **stats_dataset** using the **stats_processing**'s *compute_stats* function.
-
 
 .. note::
 
     If coregistration has previously been done, the **coregistration**'s objects internal dems called **reproj_coreg_ref** and **reproj_coreg_sec** are used for the altitude difference computation, so that no manual reprojection needs to be done. Please see :ref:`statistics` "With coregistration step" section for more details.
 
+.. note::
+
+    If only one input is provided to demcompare, this input is directly used by the **dem_processing** module (there is no reprojection).
 
 For more details on the statistics modules architecture, please see :ref:`stats_modules`.
 

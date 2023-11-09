@@ -13,7 +13,7 @@ Demcompare has several benefits:
 A comparison report can be compiled as *html* or *pdf* documentation with statistics printed as tables and plots.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
 
    getting_started
@@ -25,7 +25,7 @@ A comparison report can be compiled as *html* or *pdf* documentation with statis
 
 .. toctree::
    :caption: Related:
-   :maxdepth: 1
+   :maxdepth: 4
 
    CARS, CNES 3D reconstruction software <https://github.com/CNES/CARS>
 

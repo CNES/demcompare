@@ -12,11 +12,11 @@ With an input configuration file, :ref:`demcompare_module` orchestrates :
 
 * functions from :ref:`coregistration_modules` for DEM coregistration
 
+* functions from :ref:`dem_processing` to handle DEM processing methods computation
+
 * functions from :ref:`stats_modules` to handle statistics metrics computation
 
 * functions from :ref:`report_module` to create the output report (Work in progress)
-
-
 
 .. figure:: /images/modules_schema.png
     :width: 800px

@@ -11,9 +11,13 @@ with their relationship.
 Statistics step architecture
 ----------------------------
 
-The `stats_processing_class`_ module handles the API for the statistics computation. The :ref:`demcompare_module`
-creates a `stats_processing_class`_ object when statistics are to be computed. The `stats_processing_class`_ object contains
-different `classification_layer_class`_ objects, depending on the classification layers specified in the input configuration file.
+The `stats_processing_class`_ module handles the API for the statistics computation. 
+
+The :ref:`demcompare_module` creates a :ref:`dem_processing` object and a `stats_processing_class`_ object when statistics are to be computed. 
+
+The `dem_processing` object creates the input to the `stats_processing_class`_.
+
+The `stats_processing_class`_ object contains different `classification_layer_class`_ objects, depending on the classification layers specified in the input configuration file.
 Moreover, each `classification_layer_class`_ contains its own `metric_class`_ classes.
 
 When statistics are computed, a `stats_dataset_class`_ object is obtained.
@@ -25,17 +29,14 @@ When statistics are computed, a `stats_dataset_class`_ object is obtained.
 
     Statistics classes relationship.
 
+.. _stats_processing_class:
 
 Stats processing
 ****************
 
-.. _stats_processing_class:
-
-
 **StatsProcessing**: Implemented in `StatsProcessing file <https://github.com/CNES/demcompare/blob/master/demcompare/stats_processing.py>`_
 
-The `stats_processing_class`_ class handles the statistics computation for an input dem. Please notice that if the statistics
-are to be computed on the difference between two dems, this difference must be given as the input dem.
+The `stats_processing_class`_ class handles the statistics computation for the ouput DEM of the :ref:`dem_processing` class.
 
 The `stats_processing_class`_ class generates the different `classification_layer_class`_ objects to handle the statistics computation by class, and it
 also generates the `stats_dataset_class`_ output object. It also has the API to compute the different available statistics on a chosen classification
@@ -100,7 +101,7 @@ All `metric_class`_ classes inherit from the **MetricTemplate** abstract class:
 - **MetricTemplate**: The abstract class. Implemented in `MetricTemplate file <https://github.com/CNES/demcompare/blob/master/demcompare/metric/metric_template.py>`_
 
 To avoid too many python files creation, and given the simplicity of some of the metric classes, they have been
-grouped by type in *scalar_metrics.py* and *vector_metrics.py* :
+grouped by type in *scalar_metrics.py*, *vector_metrics.py* and *matrix_2d_metrics.py*:
 
 - Metric classes implemented in `Scalar metrics file <https://github.com/CNES/demcompare/blob/master/demcompare/metric/scalar_metrics.py>`_
 
@@ -122,8 +123,16 @@ Each scalar metric computes a scalar value based on the input data.
     - **Cdf (Cumulative Distribution Function)**
     - **Pdf (Probability Density Function)**
     - **RatioAboveThreshold**
+    - **SlopeOrientationHistogram**
 
 Each vector metric computes two arrays of values based on the input data.
+
+- Metric classes implemented in `Matrix 2D metrics file <https://github.com/CNES/demcompare/blob/master/demcompare/metric/matrix_2d_metrics.py>`_
+
+    - **Hillshade**
+    - **Svf (Sky view factor)**
+
+Each matrix 2D metric computes 2D matrix of values based on the input data.
 
 For information on how to create a new metric, please see :ref:`tuto_new_metric`.
 

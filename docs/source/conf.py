@@ -2,7 +2,7 @@
 # flake8: noqa
 # type: ignore
 # coding: utf8
-# Copyright (c) 2020 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2023 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of demcompare
 #
@@ -42,7 +42,7 @@ sys.path.insert(0, os.path.abspath(""))
 # -- Project information -----------------------------------------------------
 
 project = "Demcompare"
-copyright = "2020, CNES"
+copyright = "2023, CNES"
 author = "CNES"
 # The full version, including alpha/beta/rc tags
 

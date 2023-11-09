@@ -5,7 +5,7 @@ New metric implementation
 
 Demcompare's architecture allows to easily implement a **new metric computation**.
 
-To do so, a new class has to be implemented within `demcompare/scalar_metrics.py <https://github.com/CNES/demcompare/blob/master/demcompare/metric/scalar_metrics.py>`_ or `demcompare/vector_metrics.py <https://github.com/CNES/demcompare/blob/master/demcompare/metric/vector_metrics.py>`_ file, according to
+To do so, a new class has to be implemented within `demcompare/scalar_metrics.py <https://github.com/CNES/demcompare/blob/master/demcompare/metric/scalar_metrics.py>`_, `demcompare/vector_metrics.py <https://github.com/CNES/demcompare/blob/master/demcompare/metric/vector_metrics.py>`_ or `demcompare/matrix_2d_metrics.py <https://github.com/CNES/demcompare/blob/master/demcompare/metric/matrix_2d_metrics.py>`_ file, according to
 the new metric's structure (see :ref:`stats_modules`).
 
 
@@ -14,8 +14,7 @@ Basic metric structure and functions
 
 The new metric class inherits from the **MetricTemplate** class and must implement the **compute_metric** function. This
 function takes a *np.array* as an entry and performs the corresponding metric computation on the input array. The computed metric can be
-a float (that would be a scalar metric), a *Tuple[np.array, np.array]* (vector metric), or a *np.ndarray* (pixellic metric, none
-implemented yet).
+a float (that would be a scalar metric), a *Tuple[np.array, np.array]* (vector metric), or a *np.ndarray* (maxtrix 2D metric).
 
 One may also implement the **__init__** function of the new metric class, mostly if this metric contains class attributes (ie. the RatioAboveThreshold
 metric contains the *elevation_thresholds* attribute).
