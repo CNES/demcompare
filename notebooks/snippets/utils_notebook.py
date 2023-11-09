@@ -25,7 +25,7 @@ utils functions for plotting in notebooks
 
 import itertools
 import random
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 import xarray as xr
@@ -162,7 +162,6 @@ def stack_dems(
         label_standoff=12,
         border_line_color=None,
         location=(0, 0),
-        title="Altitudes (m)",
     )
     fig.add_layout(color_bar, "left")
 
@@ -250,7 +249,6 @@ def side_by_side_fig(
         label_standoff=12,
         border_line_color=None,
         location=(0, 0),
-        title="Altitudes (m)",
     )
     first_fig.add_layout(color_bar, "left")
     second_fig.add_layout(color_bar, "left")
@@ -311,7 +309,6 @@ def show_dem(
         label_standoff=12,
         border_line_color=None,
         location=(0, 0),
-        title="Altitudes (m)",
     )
     first_fig.add_layout(color_bar, "left")
 
@@ -461,3 +458,129 @@ def plot_layers(
     fig.add_layout(legend, "right")
 
     show(fig)
+
+
+def plot_slope_orientation_histogram(
+    datas1: Tuple[np.ndarray, np.ndarray],
+    datas2: Tuple[np.ndarray, np.ndarray],
+    title_fig1: str,
+    title_fig2: str,
+):
+    """
+    Plot slope orientation histogram
+
+    :param datas1: Tuple where the data is stored
+    :type datas1: Tuple[np.ndarray]
+    :param title_fig1: title of the figure 1
+    :type title_fig1: str
+    :param datas2: Tuple where the data is stored
+    :type datas2: Tuple[np.ndarray]
+    :param title_fig2: title of the figure 2
+    :type title_fig2: str
+    :return: None
+    """
+
+    output_notebook()
+
+    plot = figure(
+        title="Slope orientation histogram",
+        tools=["reset", "pan", "box_zoom", "save"],
+    )
+
+    plot.axis.visible = False
+
+    plot.xgrid.grid_line_color = None
+    plot.ygrid.grid_line_color = None
+
+    max_val = max(np.max(datas1[0]), np.max(datas2[0]))
+
+    plot.annulus(
+        x=0.0,
+        y=0.0,
+        inner_radius=max_val / 2.0,
+        outer_radius=max_val,
+        fill_alpha=0.0,
+        alpha=0.5,
+        line_color="black",
+    )
+    plot.annulus(
+        x=0.0,
+        y=0.0,
+        inner_radius=max_val / 4.0,
+        outer_radius=3 * max_val / 4.0,
+        fill_alpha=0.0,
+        alpha=0.5,
+        line_color="black",
+    )
+
+    angles1 = datas1[1][:-1]
+    x_1 = datas1[0] * np.cos(angles1)
+    y_1 = datas1[0] * np.sin(angles1)
+    plot.circle(x_1, y_1, line_width=2, legend_label=title_fig1)
+
+    angles2 = datas2[1][:-1]
+    x_2 = datas2[0] * np.cos(angles2)
+    y_2 = datas2[0] * np.sin(angles2)
+    plot.circle(x_2, y_2, line_width=2, color="red", legend_label=title_fig2)
+
+    linspace_max_val = np.linspace(-max_val, max_val)
+
+    linspace_max_val_diag = np.linspace(
+        -max_val / np.sqrt(2), max_val // np.sqrt(2)
+    )
+
+    plot.line(
+        linspace_max_val,
+        np.zeros(linspace_max_val.shape[0]),
+        line_width=2,
+        line_color="black",
+        alpha=0.25,
+    )
+    plot.line(
+        np.zeros(linspace_max_val.shape[0]),
+        linspace_max_val,
+        line_width=2,
+        line_color="black",
+        alpha=0.25,
+    )
+    plot.line(
+        linspace_max_val_diag,
+        linspace_max_val_diag,
+        line_width=2,
+        line_color="black",
+        alpha=0.25,
+    )
+    plot.line(
+        linspace_max_val_diag,
+        -linspace_max_val_diag,
+        line_width=2,
+        line_color="black",
+        alpha=0.25,
+    )
+
+    # Add circles and labels at specific angles
+    angles = (
+        np.array(
+            [
+                0,
+                np.pi / 4,
+                np.pi / 2,
+                3 * np.pi / 4,
+                np.pi,
+                5 * np.pi / 4,
+                3 * np.pi / 2,
+                7 * np.pi / 4,
+            ]
+        )
+        + 3 * np.pi / 4.0
+    )
+    labels = ["0°", "45°", "90°", "135°", "180°", "225°", "270°", "315°"][::-1]
+
+    for angle, label in zip(angles, labels):  # noqa: B905
+        c_x = 1.1 * max_val * np.cos(angle)
+        c_y = 1.1 * max_val * np.sin(angle)
+        plot.text(
+            c_x, c_y, text=[label], text_baseline="middle", text_align="center"
+        )
+
+    show(plot)

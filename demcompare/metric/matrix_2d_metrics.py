@@ -26,11 +26,14 @@ from typing import Dict
 
 import matplotlib.pyplot as mpl_pyplot
 import numpy as np
+import rasterio
+import xarray as xr
 from matplotlib.colors import ListedColormap
 
 # Third party imports
 from numpy.fft import fft2, ifft2, ifftshift
 
+from demcompare.dem_tools import create_dem
 from demcompare.img_tools import calc_spatial_freq_2d, neighbour_interpol
 
 from .metric import Metric
@@ -63,6 +66,7 @@ class DemHillShade(MetricTemplate):
         self.cmap_nodata: str = "royalblue"
         self.plot_path: str = None
         self.no_data_location: np.ndarray = None
+        self.bounds: rasterio.coords.BoundingBox = None
 
         if parameters:
             if "azimuth" in parameters:
@@ -110,13 +114,13 @@ class DemHillShade(MetricTemplate):
 
         return hillshade_array
 
-    def compute_metric(self, data: np.ndarray) -> np.ndarray:
+    def compute_metric(self, data: np.ndarray) -> xr.Dataset:
         """
         Compute and optionnally save plots the hillshade view
         a of a dem using pyplot img_show.
 
         :param data: input data to compute the metric
-        :type data: np.array
+        :type data: xr.Dataset
         :return: None
         """
 
@@ -160,7 +164,9 @@ class DemHillShade(MetricTemplate):
 
         mpl_pyplot.close()
 
-        return hillshade_array
+        if self.bounds is not None:
+            return create_dem(hillshade_array, bounds=self.bounds)
+        return create_dem(hillshade_array)
 
 
 @Metric.register("svf")
@@ -193,6 +199,7 @@ class DemSkyViewFactor(MetricTemplate):
         self.cmap_nodata: str = "royalblue"
         self.plot_path: str = None
         self.no_data_location: np.ndarray = None
+        self.bounds: rasterio.coords.BoundingBox = None
 
         if parameters:
             if "filter_intensity" in parameters:
@@ -227,7 +234,7 @@ class DemSkyViewFactor(MetricTemplate):
         :param data: input data to compute the metric
         :type data: np.array
         :return: curvature np.array containing :
-        :rtype: np.array
+        :rtype: np.ndarray
         """
 
         high, wide = data.shape
@@ -262,14 +269,14 @@ class DemSkyViewFactor(MetricTemplate):
 
         return image_filtered
 
-    def compute_metric(self, data: np.ndarray) -> np.ndarray:
+    def compute_metric(self, data: np.ndarray) -> xr.Dataset:
         """
         Compute and optionnally save plots the sky view factor
         a of a dem using pyplot img_show.
 
         :param data: input data to compute the metric
         :type data: np.ndarray
-        :return: np.ndarray
+        :return: xr.Dataset
         """
 
         fig, fig_ax = mpl_pyplot.subplots(figsize=(7.0, 8.0))
@@ -322,4 +329,6 @@ class DemSkyViewFactor(MetricTemplate):
 
         mpl_pyplot.close()
 
-        return z
+        if self.bounds is not None:
+            return create_dem(z, bounds=self.bounds)
+        return create_dem(z)

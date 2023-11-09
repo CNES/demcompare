@@ -61,8 +61,6 @@ def test_svf():
     # Compute metric from metric class
     output = metric_obj.compute_metric(data)
 
-    print(output)
-
     gt = np.array(
         [
             [223.102478, 72.567892, 0.0],
@@ -71,7 +69,7 @@ def test_svf():
         ]
     )
 
-    np.testing.assert_allclose(output, gt, rtol=1e-02)
+    np.testing.assert_allclose(output["image"].data, gt, rtol=1e-02)
 
 
 @pytest.mark.unit_tests
@@ -105,8 +103,6 @@ def test_hillshade():
     # Compute metric from metric class
     output = metric_obj.compute_metric(data)
 
-    print(output)
-
     gt = np.array(
         [
             [149.34193, 142.97736, 136.03064],
@@ -115,4 +111,4 @@ def test_hillshade():
         ]
     )
 
-    np.testing.assert_allclose(output, gt, rtol=1e-02)
+    np.testing.assert_allclose(output["image"].data, gt, rtol=1e-02)
