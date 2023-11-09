@@ -18,7 +18,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# pylint:disable=too-many-branches
+# pylint:disable=too-many-branches, too-many-lines
 """
 Mainly contains the ClassificationLayer class.
 A classification_layer defines a way to classify the DEMs alti differences.
@@ -34,6 +34,7 @@ from typing import Dict, List, Tuple, Union
 
 # Third party imports
 import numpy as np
+import rasterio
 import xarray as xr
 from json_checker import Checker, Or
 
@@ -129,6 +130,11 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         self.nodata: Union[float, int] = self.cfg["nodata"]
         # Nodata array
         self.no_data_location: np.ndarray = None
+        # Bounds
+        self.bounds: rasterio.coords.BoundingBox = None
+        if self.dem:
+            if hasattr(dem, "bounds"):
+                self.bounds = dem.bounds
         # Remove outliers
         self.remove_outliers: bool = self.cfg["remove_outliers"]
         # Output directory
@@ -661,8 +667,9 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                     )
                 elif metric_object.type == "matrix2D":
                     metric_object.no_data_location = self.no_data_location
+                    metric_object.bounds = self.bounds
                     computed_metric = metric_object.compute_metric(array)
-                    metric_results[metric_name] = np.round(computed_metric, 5)
+                    metric_results[metric_name] = computed_metric
             else:
                 # If the input array is empty, the metric is np.nan
                 if metric_object.type == "scalar":
@@ -670,7 +677,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 elif metric_object.type == "vector":
                     metric_results[metric_name] = (np.nan, np.nan)
                 elif metric_object.type == "matrix2D":
-                    metric_results[metric_name] = (np.nan, np.nan)
+                    metric_results[metric_name] = None
         return metric_results
 
     def save_map_img(self, map_img: np.ndarray, map_support: str):

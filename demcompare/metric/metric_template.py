@@ -27,6 +27,7 @@ from typing import Dict, Tuple, Union
 
 # Third party imports
 import numpy as np
+import xarray as xr
 
 
 class MetricTemplate(
@@ -56,7 +57,7 @@ class MetricTemplate(
     @abstractmethod
     def compute_metric(
         self, data: np.ndarray
-    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float]:
+    ) -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray, float, xr.Dataset]:
         """
         Metric computation method
         """
