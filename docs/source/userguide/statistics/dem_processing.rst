@@ -28,6 +28,9 @@ The DEM processing methods can be split in two categories: DEM processing method
     - ``alti-diff-slope-norm``: computes and returns the difference in altitude between the two input DEMs, and normalizes it by the slope
     - ``angular-diff``: computes and returns the angular difference between the two input DEMs
 
+.. warning::
+    For ``sec`` and ``sec-curvature`` DEM processing methods, the classification layers are taken from the reference DEM.
+
 .. note::
 
    More informations about the curvature, the difference in altitude between the two input DEMs normalized by the slope and the angular difference can be found in :ref:`curvature`, :ref:`slope_normalized_elevation_difference` and :ref:`angular_difference` respectively.
