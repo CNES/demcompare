@@ -556,11 +556,12 @@ class Sec(DemProcessingTemplate):
                   xr.DataArray
         :rtype: xr.Dataset
         """
-        dem_2["classification_layer_masks"] = (
-            dem_1["classification_layer_masks"]
-            if hasattr(dem_1, "classification_layer_masks")
-            else None
-        )
+
+        if hasattr(dem_1, "classification_layer_masks"):
+            dem_2["classification_layer_masks"] = dem_1[
+                "classification_layer_masks"
+            ]
+
         return dem_2
 
 
@@ -665,9 +666,10 @@ class SecCurvature(DemProcessingTemplate):
                   xr.DataArray
         :rtype: xr.Dataset
         """
-        dem_2["classification_layer_masks"] = (
-            dem_1["classification_layer_masks"]
-            if hasattr(dem_1, "classification_layer_masks")
-            else None
-        )
+
+        if hasattr(dem_1, "classification_layer_masks"):
+            dem_2["classification_layer_masks"] = dem_1[
+                "classification_layer_masks"
+            ]
+
         return compute_curvature_filtering(dem_2)
