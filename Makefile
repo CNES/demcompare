@@ -71,10 +71,11 @@ install: venv  ## install environment for development target (depends venv)
 ## Test section
 
 .PHONY: test
-test: install ## run tests and coverage quickly with the default Python
+test: ## run tests and coverage quickly with the default Python
 	@${VENV}/bin/pytest -o log_cli=true --cov-config=.coveragerc --cov --cov-report=term-missing
 
-test-notebook: install ## run notebook tests only with the default Python
+.PHONY: test-notebook
+test-notebook: ## run notebook tests only with the default Python
 	@echo "Please source ${VENV}/bin/activate before launching tests\n"
 	@${VENV}/bin/pytest -m "notebook_tests" -o log_cli=true -o log_cli_level=${LOGLEVEL}
 
@@ -83,7 +84,7 @@ test-all: install ## run tests on every Python version with tox
 	@${VENV}/bin/tox -r -p auto  ## recreate venv (-r) and parallel mode (-p auto)
 
 .PHONY: coverage
-coverage: install ## check code coverage quickly with the default Python
+coverage: ## check code coverage quickly with the default Python
 	@${VENV}/bin/coverage run --source demcompare -m pytest
 	@${VENV}/bin/coverage report -m
 	@${VENV}/bin/coverage html
@@ -94,7 +95,7 @@ coverage: install ## check code coverage quickly with the default Python
 ### Format with isort and black
 
 .PHONY: format
-format: install format/isort format/black  ## run black and isort formatting (depends install)
+format: format/isort format/black  ## run black and isort formatting (depends install)
 
 .PHONY: format/isort
 format/isort: install  ## run isort formatting (depends install)
@@ -147,7 +148,7 @@ docs: install ## generate Sphinx HTML documentation, including API docs
 ## Notebook section
 
 .PHONY: notebook
-notebook: install ## install Jupyter notebook kernel with venv and demcompare install
+notebook: ## install Jupyter notebook kernel with venv and demcompare install
 	@echo "Install Jupyter Kernel and run Jupyter notebooks environment"
 	@${VENV}/bin/python -m ipykernel install --sys-prefix --name=demcompare-${VENV} --display-name=demcompare-${VERSION}
 	@echo "Use jupyter kernelspec list to know where is the kernel"
@@ -192,7 +193,7 @@ clean-venv: ## clean venv
 	@rm -rf ${VENV}
 
 .PHONY: clean-build
-clean-build: ## remove build artifacts
+clean-build: ## clean build artifacts
 	@echo "+ $@"
 	@rm -fr build/
 	@rm -fr dist/
@@ -206,14 +207,14 @@ clean-precommit: ## clean precommit hooks in .git/hooks
 	@rm -f .git/hooks/pre-push
 
 .PHONY: clean-pyc
-clean-pyc: ## remove Python file artifacts
+clean-pyc: ## clean Python file artifacts
 	@echo "+ $@"
 	@find . -type f -name "*.py[co]" -exec rm -fr {} +
 	@find . -type d -name "__pycache__" -exec rm -fr {} +
 	@find . -name '*~' -exec rm -fr {} +
 
 .PHONY: clean-test
-clean-test: ## remove test and coverage artifacts
+clean-test: ## clean test and coverage artifacts
 	@echo "+ $@"
 	@rm -fr .tox/
 	@rm -f .coverage
@@ -225,7 +226,7 @@ clean-test: ## remove test and coverage artifacts
 	@find . -type f -name "debug.log" -exec rm -fr {} +
 
 .PHONY: clean-lint
-clean-lint: ## remove linting artifacts
+clean-lint: ## clean linting artifacts
 	@echo "+ $@"
 	@rm -f pylint-report.txt
 	@rm -f pylint-report.xml
