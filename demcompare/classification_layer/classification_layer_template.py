@@ -138,14 +138,14 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         # Remove outliers
         self.remove_outliers: bool = self.cfg["remove_outliers"]
         # Output directory
-        self._output_dir: Union[str, None] = self.cfg["output_dir"]
+        self.output_dir: Union[str, None] = self.cfg["output_dir"]
         # Output directory for stats
         self._stats_dir: Union[str, None] = None
         # Create output dir (where to store classification_layer results & data)
-        if self._output_dir:
+        if self.output_dir:
             # Create stats dir
             self._stats_dir = os.path.join(
-                self._output_dir,
+                self.output_dir,
                 get_out_dir("stats_dir"),
                 dem_processing_method,
                 self.name,
@@ -263,7 +263,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
             )
 
         # Save stats as plots, csv and json and do so for each mode
-        if self._output_dir:
+        if self.output_dir:
             stats_dataset.save_as_csv_and_json(self.name, self._stats_dir)
 
     def create_metrics(

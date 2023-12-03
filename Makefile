@@ -29,15 +29,21 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 # Python global variables definition
 PYTHON_VERSION_MIN = 3.8
 
-PYTHON=$(shell command -v python3)
+# Set PYTHON if not defined in command line
+# Example: PYTHON="python3.10" make venv to use python 3.10 for the venv
+# By default the default python3 of the system.
+ifndef PYTHON
+	PYTHON = "python3"
+endif
+PYTHON_CMD=$(shell command -v $(PYTHON))
 
-PYTHON_VERSION_CUR=$(shell $(PYTHON) -c 'import sys; print("%d.%d"% sys.version_info[0:2])')
-PYTHON_VERSION_OK=$(shell $(PYTHON) -c 'import sys; cur_ver = sys.version_info[0:2]; min_ver = tuple(map(int, "$(PYTHON_VERSION_MIN)".split("."))); print(int(cur_ver >= min_ver))')
+PYTHON_VERSION_CUR=$(shell $(PYTHON_CMD) -c 'import sys; print("%d.%d"% sys.version_info[0:2])')
+PYTHON_VERSION_OK=$(shell $(PYTHON_CMD) -c 'import sys; cur_ver = sys.version_info[0:2]; min_ver = tuple(map(int, "$(PYTHON_VERSION_MIN)".split("."))); print(int(cur_ver >= min_ver))')
 
 ############### Check python version supported ############
 
-ifeq (, $(PYTHON))
-    $(error "PYTHON=$(PYTHON) not found in $(PATH)")
+ifeq (, $(PYTHON_CMD))
+    $(error "PYTHON_CMD=$(PYTHON_CMD) not found in $(PATH)")
 endif
 
 ifeq ($(PYTHON_VERSION_OK), 0)
@@ -52,7 +58,7 @@ help: ## this help
 
 .PHONY: venv
 venv: ## create virtualenv in "venv" dir if not exists
-	@test -d ${VENV} || python3 -m venv ${VENV}
+	@test -d ${VENV} || $(PYTHON_CMD) -m venv ${VENV}
 	@touch ${VENV}/bin/activate
 	@${VENV}/bin/python -m pip install --upgrade wheel setuptools pip # no check to upgrade each time
 
@@ -76,7 +82,6 @@ test: ## run tests and coverage quickly with the default Python
 
 .PHONY: test-notebook
 test-notebook: ## run notebook tests only with the default Python
-	@echo "Please source ${VENV}/bin/activate before launching tests\n"
 	@${VENV}/bin/pytest -m "notebook_tests" -o log_cli=true -o log_cli_level=${LOGLEVEL}
 
 .PHONY: test-all

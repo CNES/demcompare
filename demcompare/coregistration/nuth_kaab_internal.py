@@ -54,9 +54,7 @@ from .coregistration_template import CoregistrationTemplate
 
 
 @Coregistration.register("nuth_kaab_internal")
-class NuthKaabInternal(
-    CoregistrationTemplate
-):  # pylint:disable=abstract-method
+class NuthKaabInternal(CoregistrationTemplate):
     """
     NuthKaab class, allows to perform a Nuth & Kaab coregistration
     from authors above and adapted in demcompare
@@ -730,7 +728,7 @@ class NuthKaabInternal(
         axes = pl.gca()
         ax_min = np.min([np.nanmin(slice_filt_median) * 2, -2])
         ax_max = np.max([np.nanmax(slice_filt_median) * 2, 2])
-        axes.set_ylim([ax_min, ax_max])
+        axes.set_ylim((ax_min, ax_max))
         pl.legend(loc="upper left")
         pl.savefig(plot_file, dpi=100, bbox_inches="tight")
         pl.close()

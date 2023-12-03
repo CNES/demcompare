@@ -145,6 +145,6 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
                     support = "ref"
                 # Store map_image
                 self.map_image[support] = map_img
-                # If _output_dir is set, create map_dataset and save
-                if self._output_dir:
+                # If output_dir is set, create map_dataset and save
+                if self.output_dir:
                     self.save_map_img(map_img, support)

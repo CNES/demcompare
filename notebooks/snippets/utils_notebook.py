@@ -2,6 +2,7 @@
 # coding: utf8
 # Disable the protected-access to test the functions
 # pylint:disable=protected-access
+# type: ignore
 #
 # Copyright (c) 2022 Centre National d'Etudes Spatiales (CNES).
 #
@@ -38,25 +39,20 @@ from bokeh.plotting import figure
 from matplotlib.colors import LinearSegmentedColormap
 
 
-def demcompare_cmap(
-    color: int = None,
-) -> LinearSegmentedColormap:
+def demcompare_cmap() -> LinearSegmentedColormap:
     """
-    Create a LinearSegmentedColormap from a list of colors.
-    :param color: List of 4 colors
-    :type color: list
+    Create a LinearSegmentedColormap from a predefined list of colors.
+
     :return: LinearSegmentedColormap
     """
-    colors = ["palegreen", "green", "lightcoral", "darkred"]
-    nodes = [0.0, 0.4, 0.5, 1.0]
-    cmap_shift = LinearSegmentedColormap.from_list(
-        "mycmap", list(zip(nodes, colors))  # noqa: B905
-    )
+    nodes_colors = [
+        (0.0, "palegreen"),
+        (0.4, "green"),
+        (0.5, "lightcoral"),
+        (1.0, "darkred"),
+    ]
 
-    if color is not None:
-        return cmap_shift(color)
-
-    return cmap_shift
+    return LinearSegmentedColormap.from_list("mycmap", nodes_colors)
 
 
 def cmap_to_palette(cmap: LinearSegmentedColormap) -> list:

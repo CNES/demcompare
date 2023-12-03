@@ -44,8 +44,6 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
 
     """
 
-    # pylint: disable=protected-access
-
     def __init__(
         self,
         classification_layers: List[ClassificationLayer],
@@ -114,7 +112,7 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         cfg["remove_outliers"] = str(
             self.classification_layers[0].remove_outliers
         )
-        cfg["output_dir"] = self.classification_layers[0]._output_dir
+        cfg["output_dir"] = self.classification_layers[0].output_dir
         cfg["type"] = "fusion"
         cfg["nodata"] = self.classification_layers[0].nodata
         # If metrics have been defined, add them
@@ -148,7 +146,7 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         # Add map_fusion on the map_image
         self.map_image[self.support] = map_fusion
         # Save results
-        if self._output_dir:
+        if self.output_dir:
             self.save_map_img(map_fusion, self.support)
 
     def _merge_classes_and_create_classes_masks(self):
