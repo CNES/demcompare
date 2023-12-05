@@ -61,7 +61,7 @@ def test_demcompare_with_gironde_test_data():
     - Runs demcompare on a temporary directory
     - Checks that the output files are the same as ground truth
     - Checked files: test_config.json, coregistration_results.json,
-      final_dem_diff.tif, coreg_SEC.tif,
+      dem_for_stats.tif, coreg_SEC.tif,
       reproj_coreg_REF.tif, reproj_coreg_SEC.tif,
       classif_layer/stats_results.csv,
       classif_layer/stats_results_intersection.csv,
