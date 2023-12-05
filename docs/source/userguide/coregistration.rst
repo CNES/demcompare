@@ -35,7 +35,7 @@ The output of this step are two DEMs intuitively called ``reproj_REF.tif`` and `
 ii) Offsets estimation
 ----------------------
 
-This is the actual coregistration part. Demcompare will use one implemetation of [NuthKaab]_ algorithm to estimate the ``x``, ``y``, and ``z`` shifts between reprojected DEMs (namely ``reproj_REF`` and ``reproj_SEC``).
+This is the actual coregistration part. Demcompare will use one implementation of [NuthKaab]_ algorithm to estimate the ``x``, ``y``, and ``z`` shifts between reprojected DEMs (namely ``reproj_REF`` and ``reproj_SEC``).
 
 The output of this step are two DEMs intuitively called ``reproj_coreg_REF.tif`` and ``reproj_coreg_SEC.tif``.
 
