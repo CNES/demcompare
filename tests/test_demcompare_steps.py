@@ -62,7 +62,7 @@ def test_demcompare_coregistration_step_with_gironde_test_data():
     - Deletes the statistics step of the configuration file
     - Runs demcompare on a temporary directory
     - Checks that the output files are the same as ground truth
-    - Checked files: demcompare_results.json
+    - Checked files: coregistration_results.json
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data")
@@ -115,61 +115,75 @@ def test_demcompare_coregistration_step_with_gironde_test_data():
 
         # Now test demcompare output with test ref_output:
 
-        # Test demcompare_results.json
-        cfg_file = get_out_file_path("demcompare_results.json")
-        ref_demcompare_results = read_config_file(
+        # Test coregistration_results.json
+        cfg_file = get_out_file_path("coregistration_results.json")
+        ref_coregistration_results = read_config_file(
             os.path.join(test_ref_output_path, cfg_file)
         )
-        demcompare_results = read_config_file(os.path.join(tmp_dir, cfg_file))
+        coregistration_results = read_config_file(
+            os.path.join(tmp_dir, cfg_file)
+        )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "total_bias_value"
             ],
-            demcompare_results["coregistration_results"]["dx"][
+            coregistration_results["coregistration_results"]["dx"][
                 "total_bias_value"
             ],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            ref_coregistration_results["coregistration_results"]["dy"][
                 "total_bias_value"
             ],
-            demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dy"][
                 "total_bias_value"
             ],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "nuth_offset"
             ],
-            demcompare_results["coregistration_results"]["dx"]["nuth_offset"],
-            atol=TEST_TOL,
-        )
-        np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dx"][
                 "nuth_offset"
             ],
-            demcompare_results["coregistration_results"]["dy"]["nuth_offset"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dy"][
+                "nuth_offset"
+            ],
+            coregistration_results["coregistration_results"]["dy"][
+                "nuth_offset"
+            ],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "total_offset"
             ],
-            demcompare_results["coregistration_results"]["dx"]["total_offset"],
-            atol=TEST_TOL,
-        )
-        np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dx"][
                 "total_offset"
             ],
-            demcompare_results["coregistration_results"]["dy"]["total_offset"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["alti_results"]["dz"]["total_bias_value"],
-            demcompare_results["alti_results"]["dz"]["total_bias_value"],
+            ref_coregistration_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
+            coregistration_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_coregistration_results["coregistration_results"]["dz"][
+                "total_bias_value"
+            ],
+            coregistration_results["coregistration_results"]["dz"][
+                "total_bias_value"
+            ],
             atol=TEST_TOL,
         )
 

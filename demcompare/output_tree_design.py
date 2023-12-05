@@ -26,11 +26,10 @@ import os
 
 # In what comes next : OTD stands for Output Tree Design
 default_OTD = {
-    # first seen output
-    "demcompare_results.json": ".",
     # stat dir
     "stats_dir": "stats",
     # coreg step
+    "coregistration_results.json": "./coregistration",
     "coreg_SEC.tif": "./coregistration/",
     "reproj_REF.tif": "./coregistration/",
     "reproj_SEC.tif": "./coregistration/",

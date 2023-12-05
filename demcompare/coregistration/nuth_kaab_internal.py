@@ -743,10 +743,13 @@ class NuthKaabInternal(CoregistrationTemplate):
         """
         # Call generic save_results_dict before supercharging
         super().save_results_dict()
-        # Add Nuth offsets to demcompare_results
-        self.demcompare_results["coregistration_results"]["dx"][
+        # Add Nuth offsets to coregistration_results
+        self.coregistration_results["coregistration_results"]["dx"][
             "nuth_offset"
         ] = round(self.transform.x_offset, 5)
-        self.demcompare_results["coregistration_results"]["dy"][
+        self.coregistration_results["coregistration_results"]["dy"][
             "nuth_offset"
         ] = round(self.transform.y_offset, 5)
+        self.coregistration_results["coregistration_results"]["dz"][
+            "nuth_offset"
+        ] = round(self.transform.z_offset, 5)

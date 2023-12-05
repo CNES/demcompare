@@ -396,8 +396,8 @@ def run_coregistration(
     # Apply coregistration offsets to the original DEM and store it
     # reprojection is also done.
     coreg_sec = transformation.apply_transform(input_sec)
-    # Get demcompare_results dict
-    demcompare_results = coregistration_.demcompare_results
+    # Get coregistration_results dict
+    coregistration_results = coregistration_.coregistration_results
 
     # Save the coregistered DEM (even without save_optional_outputs option)
     # - coreg_SEC.tif -> coregistered sec
@@ -405,13 +405,13 @@ def run_coregistration(
         coreg_sec,
         os.path.join(cfg["output_dir"], get_out_file_path("coreg_SEC.tif")),
     )
-    # Save demcompare_results
+    # Save coregistration_results
     helpers_init.save_config_file(
         os.path.join(
             cfg["output_dir"],
-            get_out_file_path("demcompare_results.json"),
+            get_out_file_path("coregistration_results.json"),
         ),
-        demcompare_results,
+        coregistration_results,
     )
 
     # Get internal dems
