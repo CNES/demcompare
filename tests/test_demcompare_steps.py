@@ -376,8 +376,6 @@ def test_demcompare_statistics_step_input_sec_with_gironde_test_data():
     test_cfg["statistics"]["alti-diff"]["classification_layers"].pop("Fusion0")
     test_cfg["statistics"]["sec"] = test_cfg["statistics"].pop("alti-diff")
 
-    print(test_cfg)
-
     # Create temporary directory for test output
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
         # Modify test's output dir in configuration to tmp test dir

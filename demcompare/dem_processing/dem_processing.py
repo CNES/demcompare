@@ -79,8 +79,8 @@ class DemProcessing:
         """
         Print all registered DEM processing methods
         """
-        for dem_processing_memthod in cls.available_dem_processing_methods:
-            print(dem_processing_memthod)
+        for dem_processing_method in cls.available_dem_processing_methods:
+            print(dem_processing_method)
 
     @classmethod
     def register(cls, dem_processing_method: str):

@@ -219,7 +219,7 @@ class StatsProcessing:
                             error,
                         )
                     )
-        # Compute fusion layer it specified in the conf
+        # Compute fusion layer if specified in the conf
         # Fusion layers specify its support on the input cfg
         for fusion_name in fusion_layers:
             # Copy to suppress the metrics information
@@ -255,9 +255,9 @@ class StatsProcessing:
                 self.classification_layers_names.append(
                     self.classification_layers[-1].name
                 )
-
+        logging.debug("List of classification layers:")
         for classif in self.classification_layers:
-            logging.debug("List of classification layers: %s", classif)
+            logging.debug(" - %s", classif.name)
 
     def compute_stats(
         self,

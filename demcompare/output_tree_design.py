@@ -24,8 +24,8 @@ Output tree design architecture for demcompare
 # Standard imports
 import os
 
-# In what comes next : OTD stands for Output Tree Design
-default_OTD = {
+# OTD stands for Output Tree Design
+OTD = {
     # stat dir
     "stats_dir": "stats",
     # coreg step
@@ -42,19 +42,17 @@ default_OTD = {
     "logs.log": ".",
 }
 
-supported_OTD = {"default_OTD": default_OTD}
 
-
-def get_otd_dirs(design="default_OTD"):
+def get_otd_dirs():
     """Get All Output Tree Design directories"""
-    return list(set(supported_OTD[design].values()))
+    return list(OTD.values())
 
 
-def get_out_dir(key, design="default_OTD"):
+def get_out_dir(key):
     """Get key chosen Output Tree Design directory"""
-    return supported_OTD[design][key]
+    return OTD[key]
 
 
-def get_out_file_path(key, design="default_OTD"):
+def get_out_file_path(key):
     """Get full path of get_out_dir from key in OTD"""
-    return os.path.join(get_out_dir(key, design), key)
+    return os.path.join(get_out_dir(key), key)

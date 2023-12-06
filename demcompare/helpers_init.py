@@ -38,7 +38,7 @@ from astropy import units as u
 
 from .dem_processing import DemProcessing
 from .internal_typing import ConfigType
-from .output_tree_design import get_otd_dirs, supported_OTD
+from .output_tree_design import get_otd_dirs
 
 # Demcompare imports
 from .stats_processing import StatsProcessing
@@ -178,7 +178,7 @@ def compute_initialization(config_json: str) -> ConfigType:
     )
 
     # create output tree dirs for each directory
-    for directory in get_otd_dirs(cfg["otd"]):
+    for directory in get_otd_dirs():
         mkdir_p(os.path.join(cfg["output_dir"], directory))
 
     if "statistics" in cfg:
@@ -282,16 +282,6 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
                 f"ERROR: {report_name} is not supported,"
                 "report type must be sphinx only for now"
             )
-
-    if "otd" in cfg and cfg["otd"] not in supported_OTD:
-        otd_name = cfg["otd"]
-        raise NameError(
-            "ERROR: output tree design set by user"
-            f" ({otd_name}) is not supported"
-            f" (available options are {supported_OTD})"
-        )
-    # else
-    cfg["otd"] = "default_OTD"
 
     check_dem_processing_methods(cfg)
 
