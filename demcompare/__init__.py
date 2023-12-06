@@ -180,7 +180,7 @@ def run(
                             ],
                             support="sec",
                         )
-
+            logging.info(" Dem processing: %s ", dem_processing_object.type)
             stats_dem = dem_processing_object.process_dem(
                 input_stats_ref, input_stats_sec
             )
@@ -207,7 +207,6 @@ def run(
             stats_processing = StatsProcessing(
                 cfg["statistics"][dem_processing_method],
                 stats_dem,
-                input_diff="coregistration" in cfg,
                 dem_processing_method=dem_processing_method,
             )
 

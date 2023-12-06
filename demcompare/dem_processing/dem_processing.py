@@ -75,7 +75,7 @@ class DemProcessing:
         return dem_processing
 
     @classmethod
-    def print_available_dem_processing_methods(cls):
+    def print_dem_processing_methods(cls):
         """
         Print all registered DEM processing methods
         """

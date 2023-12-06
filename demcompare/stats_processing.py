@@ -56,8 +56,9 @@ class StatsProcessing:
     }
     # Remove outliers option
     _REMOVE_OUTLIERS = False
-    # Default metrics for input alti_diff
-    _DEFAULT_METRICS_ALTI_DIFF = {
+
+    # Default metrics if none in cfg are specified
+    _DEFAULT_METRICS = {
         "metrics": [
             "mean",
             "median",
@@ -71,25 +72,12 @@ class StatsProcessing:
             "std",
         ]
     }
-    # Default metrics for a single input dem
-    _DEFAULT_METRICS = {
-        "metrics": [
-            "mean",
-            "median",
-            "max",
-            "min",
-            "sum",
-            "squared_sum",
-            "std",
-        ]
-    }
-    # Initialization
 
+    # Initialization
     def __init__(
         self,
         cfg: Dict,
         dem: xr.Dataset = None,
-        input_diff: bool = False,
         dem_processing_method: str = None,
     ):
         """
@@ -104,14 +92,12 @@ class StatsProcessing:
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, nb_classif)
                   xr.DataArray float32
-        :param input_diff: if the input dem is an altitude difference
-        :type input_diff: bool
         :param dem_processing_method: DEM processing method
         :type dem_processing_method: str
         :return: None
         """
         # Cfg
-        cfg = self.fill_conf(cfg, input_diff)
+        cfg = self.fill_conf(cfg)
         self.cfg: Dict = cfg
         # Output directory
         self.output_dir: Union[str, None] = self.cfg["output_dir"]
@@ -139,15 +125,14 @@ class StatsProcessing:
             self._create_classif_layers()
 
     def fill_conf(
-        self, cfg: ConfigType = None, input_diff: bool = False
+        self,
+        cfg: ConfigType = None,
     ):  # pylint:disable=too-many-branches
         """
         Init Stats options from configuration
 
         :param cfg: Input demcompare configuration
         :type cfg: ConfigType
-        :param input_diff: If the input parameter is an altitude difference
-        :type input_diff: bool
         """
 
         # Initialize if cfg is not defined
@@ -177,10 +162,7 @@ class StatsProcessing:
         else:
             for _, classif_cfg in cfg["classification_layers"].items():
                 if "metrics" not in classif_cfg:
-                    if input_diff:
-                        classif_cfg.update(self._DEFAULT_METRICS_ALTI_DIFF)
-                    else:
-                        classif_cfg.update(self._DEFAULT_METRICS)
+                    classif_cfg.update(self._DEFAULT_METRICS)
 
         # Give the default value if the required element
         # is not in the configuration

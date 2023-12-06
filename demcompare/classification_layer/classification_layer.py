@@ -121,7 +121,7 @@ class ClassificationLayer:
         return classif
 
     @classmethod
-    def print_avalaible_classification_layer_type(cls):
+    def print_classification_layer_type(cls):
         """
         Print all registered classification layer type
         """
