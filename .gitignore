@@ -115,5 +115,3 @@ ENV/
 # Swap file
 *.swp
 
-# Demcompare sample output
-data_samples/test_output/

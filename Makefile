@@ -100,22 +100,22 @@ coverage: ## check code coverage quickly with the default Python
 ### Format with isort and black
 
 .PHONY: format
-format: format/isort format/black  ## run black and isort formatting (depends install)
+format: format/isort format/black  ## run black and isort formatting
 
 .PHONY: format/isort
-format/isort: install  ## run isort formatting (depends install)
+format/isort: ## run isort formatting 
 	@echo "+ $@"
 	@${VENV}/bin/isort demcompare tests notebooks/snippets/utils_notebook.py
 
 .PHONY: format/black
-format/black: install  ## run black formatting (depends install)
+format/black: ## run black formatting
 	@echo "+ $@"
 	@${VENV}/bin/black demcompare tests notebooks/snippets/utils_notebook.py
 
 ### Check code quality and linting : isort, black, flake8, pylint
 
 .PHONY: lint
-lint: install lint/isort lint/black lint/flake8 lint/pylint lint/mypy ## check code quality and linting
+lint: lint/isort lint/black lint/flake8 lint/pylint lint/mypy ## check code quality and linting
 
 .PHONY: lint/isort
 lint/isort: ## check imports style with isort
