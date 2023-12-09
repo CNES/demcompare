@@ -45,7 +45,6 @@ from scipy.optimize import leastsq
 
 # Demcompare imports
 from ..dem_tools import DEFAULT_NODATA, create_dem
-from ..helpers_init import mkdir_p
 from ..img_tools import compute_gdal_translate_bounds
 from ..internal_typing import ConfigType
 from ..transformation import Transformation
@@ -163,7 +162,10 @@ class NuthKaabInternal(CoregistrationTemplate):
         """
         # create nuth and kaab optional output for algorithm detailed options
         if self.save_optional_outputs and self.output_dir:
-            mkdir_p(os.path.join(self.output_dir, "nuth_kaab_tmp_dir"))
+            os.makedirs(
+                os.path.join(self.output_dir, "nuth_kaab_tmp_dir"),
+                exist_ok=True,
+            )
 
         # Copy dataset and extract image array
         sec_im = sec["image"].data

@@ -42,7 +42,6 @@ from ..dem_tools import (
     reproject_dems,
     save_dem,
 )
-from ..helpers_init import mkdir_p
 from ..img_tools import compute_gdal_translate_bounds
 from ..internal_typing import ConfigType
 from ..transformation import Transformation
@@ -137,7 +136,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         if self.output_dir is not None:
             # create coreg module output directory if given in configuration
             # if used in standalone, be sure that the path is absolute
-            mkdir_p(cfg["output_dir"])
+            os.makedirs(cfg["output_dir"], exist_ok=True)
 
     @abstractmethod
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:

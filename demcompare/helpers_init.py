@@ -25,7 +25,6 @@ This is where high level parameters are checked and default options are set
 import copy
 
 # Standard imports
-import errno
 import json
 import logging
 import os
@@ -35,26 +34,10 @@ from typing import Tuple
 import rasterio
 from astropy import units as u
 
+# Demcompare imports
 from .dem_processing import DemProcessing
 from .internal_typing import ConfigType
-
-# Demcompare imports
 from .stats_processing import StatsProcessing
-
-
-def mkdir_p(path):
-    """
-    Create a directory without complaining if it already exists.
-
-    :param path: path of directory to create
-    """
-    try:
-        os.makedirs(path)
-    except OSError as exc:  # requires Python > 2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
 
 
 def make_relative_path_absolute(path, directory):

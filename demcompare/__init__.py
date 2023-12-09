@@ -49,7 +49,6 @@ from .dem_tools import (
 from .helpers_init import (
     compute_initialization,
     get_output_files_paths,
-    mkdir_p,
     save_config_file,
 )
 from .internal_typing import ConfigType
@@ -85,7 +84,7 @@ def run(
     cfg = compute_initialization(json_file_path)
 
     # Create output_dir from updated absolute path
-    mkdir_p(cfg["output_dir"])
+    os.makedirs(cfg["output_dir"], exist_ok=True)
 
     # Logging configuration
     log_conf.setup_logging(default_level=loglevel)
@@ -148,7 +147,10 @@ def run(
         # Loop over the DEM processing methods in cfg["statistics"]
         for dem_processing_method in cfg["statistics"]:
             # create directory for dem processing method stats
-            mkdir_p(cfg["statistics"][dem_processing_method]["output_dir"])
+            os.makedirs(
+                cfg["statistics"][dem_processing_method]["output_dir"],
+                exist_ok=True,
+            )
 
             # Create a DEM processing object for each DEM processing method
             dem_processing_object = DemProcessing(dem_processing_method)

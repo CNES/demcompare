@@ -105,7 +105,7 @@ class StatsProcessing:
         # if self.output_dir is not None:
         #     # create stats module output directory if given in configuration
         #     # if used in standalone, be sure that the path is absolute
-        #     mkdir_p(cfg["output_dir"])
+        #     os.makedirs(cfg["output_dir"], exist_ok=True)
 
         # DEM processing method
         self.dem_processing_method = dem_processing_method

@@ -36,7 +36,6 @@ import pytest
 import demcompare
 from demcompare.helpers_init import (
     compute_initialization,
-    mkdir_p,
     read_config_file,
     save_config_file,
 )
@@ -710,7 +709,7 @@ def test_initialization_with_wrong_classification_layers():
 
     # Set output_dir correctly
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-        mkdir_p(tmp_dir)
+        os.makedirs(tmp_dir, exist_ok=True)
 
         cfg["input_sec"]["classification_layers"]["Status"][
             "map_path"

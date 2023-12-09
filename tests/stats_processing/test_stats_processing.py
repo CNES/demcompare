@@ -43,7 +43,7 @@ from demcompare.classification_layer import (
     FusionClassificationLayer,
 )
 from demcompare.dem_processing.dem_processing import DemProcessing
-from demcompare.helpers_init import mkdir_p, read_config_file, save_config_file
+from demcompare.helpers_init import read_config_file, save_config_file
 from demcompare.metric import Metric
 
 # Tests helpers
@@ -437,7 +437,7 @@ def test_statistics_output_dir():
 
     # Test with statistics output_dir set
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-        mkdir_p(tmp_dir)
+        os.makedirs(tmp_dir, exist_ok=True)
         # Modify test's output dir in configuration to tmp test dir
         cfg["output_dir"] = tmp_dir
 

@@ -39,7 +39,7 @@ import pytest
 import demcompare
 from demcompare import coregistration
 from demcompare.dem_tools import SamplingSourceParameter, load_dem
-from demcompare.helpers_init import mkdir_p, read_config_file, save_config_file
+from demcompare.helpers_init import read_config_file, save_config_file
 
 # Tests helpers
 from tests.helpers import demcompare_test_data_path, temporary_dir
@@ -118,7 +118,7 @@ def test_coregistration_with_output_dir():
 
     # Set output_dir correctly
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-        mkdir_p(tmp_dir)
+        os.makedirs(tmp_dir, exist_ok=True)
         # Modify test's output dir in configuration to tmp test dir
         cfg["output_dir"] = tmp_dir
 
