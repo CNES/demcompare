@@ -23,7 +23,6 @@ Mainly contains the SegmentationClassification class.
 """
 import collections
 import logging
-import sys
 from typing import Dict
 
 import xarray as xr
@@ -45,7 +44,6 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
         classification_layer_kind: str,
         cfg: Dict,
         dem: xr.Dataset = None,
-        dem_processing_method: str = None,
     ):
         """
         Init function
@@ -62,14 +60,10 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
             - image : 2D (row, col) xr.DataArray float32
             - georef_transform: 1D (trans_len) xr.DataArray
             - classification_layer_masks : 3D (row, col, indicator) xr.DataArray
-        :param dem_processing_method: DEM processing method
-        :type dem_processing_method: str
         :return: None
         """
         # Call generic init before supercharging
-        super().__init__(
-            name, classification_layer_kind, cfg, dem, dem_processing_method
-        )
+        super().__init__(name, classification_layer_kind, cfg, dem)
 
         # Classes
         self.classes: collections.OrderedDict = self.cfg["classes"]
@@ -116,17 +110,16 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
         if not all(
             isinstance(values, list) for values in classes_dict.values()
         ):
-            logging.error(
+            raise TypeError(
                 "Number associated to class in segmentation must be in a list"
             )
-            sys.exit(1)
+
         if not all(
             isinstance(values[0], int) for values in classes_dict.values()
         ):
-            logging.error(
+            raise TypeError(
                 "Number associated to class in segmentation must be an int"
             )
-            sys.exit(1)
 
     def _create_labelled_map(self):
         """

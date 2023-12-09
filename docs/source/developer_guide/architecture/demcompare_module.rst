@@ -72,12 +72,3 @@ not already defined. Some helper functions to handle the output paths from the `
 .. _log_conf:
 
 The logconf module in demcompare contains logging configuration functions.
-
-- **output_tree_design** module in `output_tree_design.py file <https://github.com/CNES/demcompare/blob/master/demcompare/output_tree_design.py>`_
-
-.. _output_tree_design:
-
-Module containing the default output tree design architecture for demcompare's output directory.
-This module contains the functions to create the output tree directory and defines where each output file is to be
-saved during a demcompare execution. By default, it considers that a pipeline execution with :ref:`coregistration` and
-:ref:`statistics` is run.

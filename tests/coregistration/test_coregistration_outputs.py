@@ -225,7 +225,7 @@ def test_coregistration_save_optional_outputs():
         # test output_dir/coregistration/nuth_kaab_tmp_dir/ creation
         assert (
             os.path.exists(tmp_dir + "/coregistration/nuth_kaab_tmp_dir/")
-            is True
+            is False
         )
 
         # get all files saved in output_dir/coregistration/nuth_kaab_tmp_dir/

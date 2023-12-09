@@ -27,7 +27,6 @@ generic coregistration code to avoid duplication.
 # Standard imports
 import logging
 import os
-import sys
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple
 
@@ -43,9 +42,9 @@ from ..dem_tools import (
     reproject_dems,
     save_dem,
 )
+from ..helpers_init import mkdir_p
 from ..img_tools import compute_gdal_translate_bounds
 from ..internal_typing import ConfigType
-from ..output_tree_design import get_out_file_path
 from ..transformation import Transformation
 
 
@@ -135,6 +134,11 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         # Output directory to save results
         self.output_dir = self.cfg["output_dir"]
 
+        if self.output_dir is not None:
+            # create coreg module output directory if given in configuration
+            # if used in standalone, be sure that the path is absolute
+            mkdir_p(cfg["output_dir"])
+
     @abstractmethod
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
         """
@@ -170,13 +174,12 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
             if cfg["save_optional_outputs"]:
-                logging.error(
+                raise ValueError(
                     "save_optional_outputs"
                     " option IS activated but no output_dir has been set. "
                     "Please set the output_dir parameter or deactivate"
                     " the saving options."
                 )
-                sys.exit(1)
 
         # Configuration schema
         self.schema = {
@@ -370,30 +373,25 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
         :return: None
         """
-
         # Saves reprojected DEM to file system
         self.reproj_sec = save_dem(
             self.reproj_sec,
-            os.path.join(self.output_dir, get_out_file_path("reproj_SEC.tif")),
+            os.path.join(self.output_dir, "reproj_SEC.tif"),
         )
         # Saves reprojected REF to file system
         self.reproj_ref = save_dem(
             self.reproj_ref,
-            os.path.join(self.output_dir, get_out_file_path("reproj_REF.tif")),
+            os.path.join(self.output_dir, "reproj_REF.tif"),
         )
         # Saves reprojected coregistered DEM to file system
         self.reproj_coreg_sec = save_dem(
             self.reproj_coreg_sec,
-            os.path.join(
-                self.output_dir, get_out_file_path("reproj_coreg_SEC.tif")
-            ),
+            os.path.join(self.output_dir, "reproj_coreg_SEC.tif"),
         )
         # Saves reprojected coregistered REF to file system
         self.reproj_coreg_ref = save_dem(
             self.reproj_coreg_ref,
-            os.path.join(
-                self.output_dir, get_out_file_path("reproj_coreg_REF.tif")
-            ),
+            os.path.join(self.output_dir, "reproj_coreg_REF.tif"),
         )
         # Update path on coregistration_results file
         if self.coregistration_results:

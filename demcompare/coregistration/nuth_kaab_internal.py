@@ -45,9 +45,9 @@ from scipy.optimize import leastsq
 
 # Demcompare imports
 from ..dem_tools import DEFAULT_NODATA, create_dem
+from ..helpers_init import mkdir_p
 from ..img_tools import compute_gdal_translate_bounds
 from ..internal_typing import ConfigType
-from ..output_tree_design import get_out_dir
 from ..transformation import Transformation
 from .coregistration import Coregistration
 from .coregistration_template import CoregistrationTemplate
@@ -161,6 +161,10 @@ class NuthKaabInternal(CoregistrationTemplate):
                   xr.DataArray
         :rtype: Tuple[Transformation, xr.Dataset, xr.Dataset]
         """
+        # create nuth and kaab optional output for algorithm detailed options
+        if self.save_optional_outputs and self.output_dir:
+            mkdir_p(os.path.join(self.output_dir, "nuth_kaab_tmp_dir"))
+
         # Copy dataset and extract image array
         sec_im = sec["image"].data
         ref_im = ref["image"].data
@@ -186,9 +190,7 @@ class NuthKaabInternal(CoregistrationTemplate):
         color_bar = pl.colorbar()
         color_bar.set_label("Elevation difference (m)")
         if self.save_optional_outputs:
-            output_dir_ = os.path.join(
-                self.output_dir, get_out_dir("nuth_kaab_tmp_dir")
-            )
+            output_dir_ = os.path.join(self.output_dir, "./nuth_kaab_tmp_dir")
             pl.savefig(
                 os.path.join(output_dir_, "ElevationDiff_BeforeCoreg.png"),
                 dpi=100,
@@ -212,7 +214,7 @@ class NuthKaabInternal(CoregistrationTemplate):
 
             if self.save_optional_outputs:
                 output_dir_ = os.path.join(
-                    self.output_dir, get_out_dir("nuth_kaab_tmp_dir")
+                    self.output_dir, "./nuth_kaab_tmp_dir"
                 )
                 plotfile = os.path.join(output_dir_, f"nuth_kaab_iter#{i}.png")
             else:
@@ -328,9 +330,7 @@ class NuthKaabInternal(CoregistrationTemplate):
         color_bar = pl.colorbar()
         color_bar.set_label("Elevation difference (m)")
         if self.save_optional_outputs:
-            output_dir_ = os.path.join(
-                self.output_dir, get_out_dir("nuth_kaab_tmp_dir")
-            )
+            output_dir_ = os.path.join(self.output_dir, "./nuth_kaab_tmp_dir")
             pl.savefig(
                 os.path.join(output_dir_, "ElevationDiff_AfterCoreg.png"),
                 dpi=100,

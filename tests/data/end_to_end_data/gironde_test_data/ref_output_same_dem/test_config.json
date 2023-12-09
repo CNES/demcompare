@@ -26,45 +26,45 @@
     "estimated_initial_shift_x": 0,
     "estimated_initial_shift_y": 0,
     "save_optional_outputs": "True",
-    "output_dir": "./test_classification_layer_output"
+    "output_dir": "./test_classification_layer_output/coregistration"
   },
   "statistics": {
     "alti-diff": {
       "remove_outliers": "False",
       "classification_layers": {
-      "Status": {
-        "type": "segmentation",
-        "classes": {
-          "sea": [
-            0
-          ],
-          "deep_land": [
-            1
-          ],
-          "coast": [
-            2
+        "Status": {
+          "type": "segmentation",
+          "classes": {
+            "sea": [
+              0
+            ],
+            "deep_land": [
+              1
+            ],
+            "coast": [
+              2
+            ]
+          }
+        },
+        "Slope0": {
+          "type": "slope",
+          "ranges": [
+            0,
+            10,
+            25,
+            50,
+            90
+          ]
+        },
+        "Fusion0": {
+          "type": "fusion",
+          "ref": [
+            "Slope0",
+            "Status"
           ]
         }
       },
-      "Slope0": {
-        "type": "slope",
-        "ranges": [
-          0,
-          10,
-          25,
-          50,
-          90
-        ]
-      },
-      "Fusion0": {
-        "type": "fusion",
-        "ref": [
-          "Slope0",
-          "Status"
-        ]
-      }
-    },
-    "output_dir": "./test_classification_layer_output"
+      "output_dir": "./test_classification_layer_output"
     }
-  },
+  }
 }

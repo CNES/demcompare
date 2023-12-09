@@ -330,13 +330,13 @@ def test_statistics_classification_invalid_input_classes():
     test_cfg["statistics"]["alti-diff"]["classification_layers"]["Status"][
         "classes"
     ]["valid"] = "a"
-    with pytest.raises(SystemExit):
+    with pytest.raises(TypeError):
         _ = StatsProcessing(cfg=test_cfg["statistics"]["alti-diff"])
     # test that all inputs are int
     test_cfg["statistics"]["alti-diff"]["classification_layers"]["Status"][
         "classes"
     ]["valid"] = ["b"]
-    with pytest.raises(SystemExit):
+    with pytest.raises(TypeError):
         _ = StatsProcessing(cfg=test_cfg["statistics"]["alti-diff"])
 
 
@@ -365,7 +365,7 @@ def test_statistics_classification_invalid_input_ranges():
     test_cfg["statistics"]["alti-diff"]["classification_layers"]["Slope0"][
         "ranges"
     ] = "a"
-    with pytest.raises(SystemExit):
+    with pytest.raises(TypeError):
         _ = StatsProcessing(cfg=test_cfg["statistics"]["alti-diff"])
     # test that user's values ranges is a list of int
     test_cfg["statistics"]["alti-diff"]["classification_layers"]["Slope0"][
@@ -377,7 +377,7 @@ def test_statistics_classification_invalid_input_ranges():
         50,
         90,
     ]
-    with pytest.raises(SystemExit):
+    with pytest.raises(TypeError):
         _ = StatsProcessing(cfg=test_cfg["statistics"]["alti-diff"])
 
 

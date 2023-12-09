@@ -30,7 +30,6 @@ Dataset and associated internal functions are described in dataset_tools.py
 import copy
 import logging
 import os
-import sys
 from enum import Enum
 from typing import Dict, Tuple, Union
 
@@ -179,12 +178,12 @@ def load_dem(
             classif_rasterio_source = rasterio.open(layer["map_path"])
             map_array = classif_rasterio_source.read(band)
             if map_array.shape != dem_image.shape:
-                logging.error(
-                    "Input classification layer %s does not have the same size"
-                    " as its reference dem.",
-                    name,
+                raise ValueError(
+                    f"Input classification layer {name} "
+                    "does not have the same size"
+                    " as its reference dem."
                 )
-                sys.exit(1)
+
             classif_layers["map_arrays"][:, :, idx] = map_array
             classif_layers["names"].append(name)
             source_rasterio[name] = classif_rasterio_source

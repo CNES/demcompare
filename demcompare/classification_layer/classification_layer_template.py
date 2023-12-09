@@ -41,7 +41,6 @@ from json_checker import Checker, Or
 from demcompare.dem_tools import DEFAULT_NODATA, create_dem, save_dem
 from demcompare.img_tools import remove_nan_and_flatten
 from demcompare.metric import Metric
-from demcompare.output_tree_design import get_out_dir
 
 # DEMcompare imports
 from ..internal_typing import ConfigType
@@ -78,7 +77,6 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         classification_layer_kind: str,
         cfg: Dict,
         dem: xr.Dataset = None,
-        dem_processing_method: str = None,
     ):
         """
         Initialization of a classification_layer object
@@ -96,8 +94,6 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                  xr.DataArray
-        :param dem_processing_method: DEM processing method
-        :type dem_processing_method: str
         :return: None
         """
 
@@ -146,8 +142,6 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
             # Create stats dir
             self._stats_dir = os.path.join(
                 self.output_dir,
-                get_out_dir("stats_dir"),
-                dem_processing_method,
                 self.name,
             )
             os.makedirs(self._stats_dir, exist_ok=True)

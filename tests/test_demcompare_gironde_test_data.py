@@ -33,7 +33,6 @@ import pytest
 # Demcompare imports
 import demcompare
 from demcompare.helpers_init import read_config_file, save_config_file
-from demcompare.output_tree_design import get_out_file_path
 
 # Tests helpers
 from .helpers import (
@@ -106,8 +105,12 @@ def test_demcompare_with_gironde_test_data():
             os.path.join(test_ref_output_path, cfg_file)
         )
         output_cfg = read_config_file(os.path.join(tmp_dir, cfg_file))
-        ref_output_cfg["coregistration"]["output_dir"] = tmp_dir
-        ref_output_cfg["statistics"]["alti-diff"]["output_dir"] = tmp_dir
+        ref_output_cfg["coregistration"]["output_dir"] = (
+            tmp_dir + "/coregistration"
+        )
+        ref_output_cfg["statistics"]["alti-diff"]["output_dir"] = (
+            tmp_dir + "/stats" + "/alti-diff"
+        )
 
         np.testing.assert_equal(
             ref_output_cfg["statistics"]["alti-diff"]["classification_layers"][
@@ -122,7 +125,7 @@ def test_demcompare_with_gironde_test_data():
         )
 
         # Test coregistration_results.json
-        cfg_file = get_out_file_path("coregistration_results.json")
+        cfg_file = "./coregistration/coregistration_results.json"
         ref_coregistration_results = read_config_file(
             os.path.join(test_ref_output_path, cfg_file)
         )
@@ -202,19 +205,19 @@ def test_demcompare_with_gironde_test_data():
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test coreg_SEC.tif
-        img = get_out_file_path("coreg_SEC.tif")
+        img = "./coregistration/coreg_SEC.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test reproj_coreg_SEC.tif
-        img = get_out_file_path("reproj_coreg_SEC.tif")
+        img = "./coregistration/reproj_coreg_SEC.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test reproj_coreg_REF.tif
-        img = get_out_file_path("reproj_coreg_REF.tif")
+        img = "./coregistration/reproj_coreg_REF.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)

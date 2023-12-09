@@ -156,5 +156,5 @@ def test_coregistration_with_output_dir():
         cfg["coregistration"]["save_optional_outputs"] = "True"
 
         # Create coregistration object
-        with pytest.raises(SystemExit):
+        with pytest.raises(ValueError):
             _ = coregistration.Coregistration(cfg["coregistration"])

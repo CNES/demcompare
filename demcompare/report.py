@@ -41,7 +41,6 @@ from typing import List
 
 # DEMcompare imports
 from .internal_typing import ConfigType
-from .output_tree_design import get_out_dir
 from .sphinx_project_generator import SphinxProjectManager
 from .stats_dataset import StatsDataset
 
@@ -110,7 +109,7 @@ def fill_report_stats(
                 result = (
                     os.path.join(
                         working_dir,
-                        get_out_dir("stats_dir"),
+                        "stats",
                         stats_dataset.dem_processing.type,
                         classification_layer_name,
                         "stats_results.csv",
@@ -120,7 +119,7 @@ def fill_report_stats(
                 result = (
                     os.path.join(
                         working_dir,
-                        get_out_dir("stats_dir"),
+                        "stats",
                         stats_dataset.dem_processing.type,
                         classification_layer_name,
                         f"stats_results_{mode}.csv",
@@ -244,22 +243,22 @@ def fill_report_image_views(  # noqa: C901
     # for one dem for stats: snapshot, pdf, cdf
     dem_for_stats = os.path.join(
         working_dir,
-        get_out_dir("stats_dir"),
+        "stats",
         dem_type,
         "dem_for_stats_snapshot.png",
     )
     dem_for_stats_pdf = os.path.join(
-        working_dir, get_out_dir("stats_dir"), dem_type, "dem_for_stats_pdf.png"
+        working_dir, "stats", dem_type, "dem_for_stats_pdf.png"
     )
     dem_for_stats_cdf = os.path.join(
-        working_dir, get_out_dir("stats_dir"), dem_type, "dem_for_stats_cdf.png"
+        working_dir, "stats", dem_type, "dem_for_stats_cdf.png"
     )
     dem_for_stats_svf = os.path.join(
-        working_dir, get_out_dir("stats_dir"), dem_type, "dem_for_stats_svf.png"
+        working_dir, "stats", dem_type, "dem_for_stats_svf.png"
     )
     dem_for_stats_hillshade = os.path.join(
         working_dir,
-        get_out_dir("stats_dir"),
+        "stats",
         dem_type,
         "dem_for_stats_hillshade.png",
     )
@@ -408,23 +407,20 @@ def generate_report(  # noqa: C901
     """
 
     # sphinx output documentation directory of demcompare report
-    output_doc_dir = os.path.join(
-        cfg["output_dir"], get_out_dir("sphinx_built_doc")
-    )
-    # sphinx source documentation directory for report from OTD
-    src_doc_dir = os.path.join(cfg["output_dir"], get_out_dir("sphinx_src_doc"))
+    output_doc_dir = os.path.join(cfg["output_dir"], "report/published_report")
+    # sphinx source documentation directory of demcompare report
+    src_doc_dir = os.path.join(cfg["output_dir"], "report/src")
 
     # Initialize the sphinx project source and output build config
     spm = SphinxProjectManager(src_doc_dir, output_doc_dir, "index", "")
 
-    # create source
+    # create report contents from demcompare cfg and stats datasets
+    report_content = fill_report(cfg=cfg, stats_datasets=stats_datasets)
 
-    src = fill_report(cfg=cfg, stats_datasets=stats_datasets)
+    # Add report contents to the sphinx project
+    spm.write_body(report_content)
 
-    # Add source to the project
-    spm.write_body(src)
-
-    # Build the project
+    # Build sphinx project in html and latex
     try:
         spm.build_project("html")
     except Exception:
@@ -435,5 +431,5 @@ def generate_report(  # noqa: C901
     except Exception:
         logging.error("Error when building report as pdf output (ignored)")
 
-    # Sphinx project install
+    # Sphinx project install in final directory
     spm.install_project()

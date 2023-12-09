@@ -50,7 +50,6 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         support: str,
         name: str,
         metrics: List = None,
-        dem_processing_method: str = None,
     ):
         """
         :param classification_layers: list of ClassificationLayers
@@ -60,8 +59,6 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         :name: layer name
         :type name: str
         :metrics: optional input metrics
-        :param dem_processing_method: DEM processing method
-        :type dem_processing_method: str
         :type metrics: List
         """
 
@@ -86,7 +83,6 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
             classification_layer_kind="classification_layer_masks",
             dem=classification_layers[0].dem,
             cfg=cfg,
-            dem_processing_method=dem_processing_method,
         )
         # Checking configuration during initialisation step
         # doesn't require classification layers

@@ -99,8 +99,13 @@ class StatsProcessing:
         # Cfg
         cfg = self.fill_conf(cfg)
         self.cfg: Dict = cfg
+
         # Output directory
         self.output_dir: Union[str, None] = self.cfg["output_dir"]
+        # if self.output_dir is not None:
+        #     # create stats module output directory if given in configuration
+        #     # if used in standalone, be sure that the path is absolute
+        #     mkdir_p(cfg["output_dir"])
 
         # DEM processing method
         self.dem_processing_method = dem_processing_method
@@ -204,7 +209,6 @@ class StatsProcessing:
                             clayer["type"],
                             clayer,
                             self.dem,
-                            self.dem_processing_method,
                         )
                     )
                     self.classification_layers_names.append(name)
@@ -248,7 +252,6 @@ class StatsProcessing:
                         support,
                         fusion_name,
                         fusion_metrics,
-                        self.dem_processing_method,
                     )
                 )
                 # Add fusion layer name on the classif_layers_names

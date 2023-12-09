@@ -40,7 +40,6 @@ from demcompare.helpers_init import (
     read_config_file,
     save_config_file,
 )
-from demcompare.output_tree_design import get_out_file_path
 
 # Tests helpers
 from .helpers import TEST_TOL, demcompare_test_data_path, temporary_dir
@@ -116,7 +115,7 @@ def test_demcompare_coregistration_step_with_gironde_test_data():
         # Now test demcompare output with test ref_output:
 
         # Test coregistration_results.json
-        cfg_file = get_out_file_path("coregistration_results.json")
+        cfg_file = "./coregistration/coregistration_results.json"
         ref_coregistration_results = read_config_file(
             os.path.join(test_ref_output_path, cfg_file)
         )
@@ -725,6 +724,6 @@ def test_initialization_with_wrong_classification_layers():
         # Save the new configuration inside the tmp dir
         save_config_file(tmp_cfg_file, cfg)
 
-        with pytest.raises(SystemExit):
-            # Compute initialization with wrong masks
+        with pytest.raises(ValueError):
+            # Compute initialization with wrong masks -> waits for a ValueError
             _ = compute_initialization(tmp_cfg_file)

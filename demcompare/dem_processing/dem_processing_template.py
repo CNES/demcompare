@@ -36,9 +36,6 @@ class DemProcessingTemplate(
     DEM processing class
     """
 
-    # Default DEM procssing type
-    DEFAULT_TYPE = "alti-diff"
-
     def __init__(
         self, parameters: Dict = None
     ):  # pylint:disable = unused-argument
@@ -50,8 +47,12 @@ class DemProcessingTemplate(
         :return: None
         """
 
-        # DEM processing type
-        self.type = self.DEFAULT_TYPE
+        # DEM processing type (set to dataset)
+        self.type: str = None
+        # Dem processing information for report (set to dataset)
+        self.fig_title: str = None
+        self.colorbar_title: str = None
+        self.cmap: str = None
 
     @abstractmethod
     def process_dem(
