@@ -23,10 +23,10 @@ Mainly contains the StatsProcessing class
 for stats computation of an input dem
 """
 
-import copy
-
 # Standard imports
+import copy
 import logging
+import os
 import traceback
 from typing import Dict, List, Union
 
@@ -102,10 +102,10 @@ class StatsProcessing:
 
         # Output directory
         self.output_dir: Union[str, None] = self.cfg["output_dir"]
-        # if self.output_dir is not None:
-        #     # create stats module output directory if given in configuration
-        #     # if used in standalone, be sure that the path is absolute
-        #     os.makedirs(cfg["output_dir"], exist_ok=True)
+        if self.output_dir is not None:
+            # create stats module output directory if given in configuration
+            # if used in standalone, be sure that the path is absolute
+            os.makedirs(cfg["output_dir"], exist_ok=True)
 
         # DEM processing method
         self.dem_processing_method = dem_processing_method

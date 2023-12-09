@@ -68,7 +68,7 @@ class SphinxProjectManager:
 
         # Create directories
         self._build_dir = os.path.join(self._working_dir, "build")
-        os.makedirs(self._build_dir)
+        os.makedirs(self._build_dir, exist_ok=True)
         self._src_dir = os.path.join(self._working_dir, "source")
         os.makedirs(self._src_dir, exist_ok=True)
 
