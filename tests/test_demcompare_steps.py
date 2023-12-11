@@ -36,11 +36,9 @@ import pytest
 import demcompare
 from demcompare.helpers_init import (
     compute_initialization,
-    mkdir_p,
     read_config_file,
     save_config_file,
 )
-from demcompare.output_tree_design import get_out_file_path
 
 # Tests helpers
 from .helpers import TEST_TOL, demcompare_test_data_path, temporary_dir
@@ -62,7 +60,7 @@ def test_demcompare_coregistration_step_with_gironde_test_data():
     - Deletes the statistics step of the configuration file
     - Runs demcompare on a temporary directory
     - Checks that the output files are the same as ground truth
-    - Checked files: demcompare_results.json
+    - Checked files: coregistration_results.json
     """
     # Get "gironde_test_data" test root data directory absolute path
     test_data_path = demcompare_test_data_path("gironde_test_data")
@@ -115,61 +113,75 @@ def test_demcompare_coregistration_step_with_gironde_test_data():
 
         # Now test demcompare output with test ref_output:
 
-        # Test demcompare_results.json
-        cfg_file = get_out_file_path("demcompare_results.json")
-        ref_demcompare_results = read_config_file(
+        # Test coregistration_results.json
+        cfg_file = "./coregistration/coregistration_results.json"
+        ref_coregistration_results = read_config_file(
             os.path.join(test_ref_output_path, cfg_file)
         )
-        demcompare_results = read_config_file(os.path.join(tmp_dir, cfg_file))
+        coregistration_results = read_config_file(
+            os.path.join(tmp_dir, cfg_file)
+        )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "total_bias_value"
             ],
-            demcompare_results["coregistration_results"]["dx"][
+            coregistration_results["coregistration_results"]["dx"][
                 "total_bias_value"
             ],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            ref_coregistration_results["coregistration_results"]["dy"][
                 "total_bias_value"
             ],
-            demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dy"][
                 "total_bias_value"
             ],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "nuth_offset"
             ],
-            demcompare_results["coregistration_results"]["dx"]["nuth_offset"],
-            atol=TEST_TOL,
-        )
-        np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dx"][
                 "nuth_offset"
             ],
-            demcompare_results["coregistration_results"]["dy"]["nuth_offset"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dy"][
+                "nuth_offset"
+            ],
+            coregistration_results["coregistration_results"]["dy"][
+                "nuth_offset"
+            ],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "total_offset"
             ],
-            demcompare_results["coregistration_results"]["dx"]["total_offset"],
-            atol=TEST_TOL,
-        )
-        np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dx"][
                 "total_offset"
             ],
-            demcompare_results["coregistration_results"]["dy"]["total_offset"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["alti_results"]["dz"]["total_bias_value"],
-            demcompare_results["alti_results"]["dz"]["total_bias_value"],
+            ref_coregistration_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
+            coregistration_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_coregistration_results["coregistration_results"]["dz"][
+                "total_bias_value"
+            ],
+            coregistration_results["coregistration_results"]["dz"][
+                "total_bias_value"
+            ],
             atol=TEST_TOL,
         )
 
@@ -361,8 +373,6 @@ def test_demcompare_statistics_step_input_sec_with_gironde_test_data():
     # Pop the coregistration step of the cfg
     test_cfg["statistics"]["alti-diff"]["classification_layers"].pop("Fusion0")
     test_cfg["statistics"]["sec"] = test_cfg["statistics"].pop("alti-diff")
-
-    print(test_cfg)
 
     # Create temporary directory for test output
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
@@ -699,7 +709,7 @@ def test_initialization_with_wrong_classification_layers():
 
     # Set output_dir correctly
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-        mkdir_p(tmp_dir)
+        os.makedirs(tmp_dir, exist_ok=True)
 
         cfg["input_sec"]["classification_layers"]["Status"][
             "map_path"
@@ -713,6 +723,6 @@ def test_initialization_with_wrong_classification_layers():
         # Save the new configuration inside the tmp dir
         save_config_file(tmp_cfg_file, cfg)
 
-        with pytest.raises(SystemExit):
-            # Compute initialization with wrong masks
+        with pytest.raises(ValueError):
+            # Compute initialization with wrong masks -> waits for a ValueError
             _ = compute_initialization(tmp_cfg_file)

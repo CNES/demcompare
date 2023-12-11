@@ -70,7 +70,7 @@ class Metric:
         return metric
 
     @classmethod
-    def print_avalaible_metric_methods(cls):
+    def print_metric_methods(cls):
         """
         Print all registered metric methods
         """

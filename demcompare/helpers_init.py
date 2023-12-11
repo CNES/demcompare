@@ -25,38 +25,19 @@ This is where high level parameters are checked and default options are set
 import copy
 
 # Standard imports
-import errno
 import json
 import logging
 import os
-import sys
 from typing import Tuple
 
 # Third party imports
 import rasterio
 from astropy import units as u
 
+# Demcompare imports
 from .dem_processing import DemProcessing
 from .internal_typing import ConfigType
-from .output_tree_design import get_otd_dirs, supported_OTD
-
-# Demcompare imports
 from .stats_processing import StatsProcessing
-
-
-def mkdir_p(path):
-    """
-    Create a directory without complaining if it already exists.
-
-    :param path: path of directory to create
-    """
-    try:
-        os.makedirs(path)
-    except OSError as exc:  # requires Python > 2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
 
 
 def make_relative_path_absolute(path, directory):
@@ -87,7 +68,7 @@ def read_config_file(config_file: str) -> ConfigType:
 
     :param config_file: Path to json file
     :type config_file: str
-    :return: The json dictionary read from file
+    :return: The json dictionary read from file with absolute paths
     :rtype: ConfigType
     """
     with open(config_file, "r", encoding="utf-8") as _fstream:
@@ -136,7 +117,7 @@ def save_config_file(config_file: str, config: ConfigType):
 def compute_initialization(config_json: str) -> ConfigType:
     """
     Compute demcompare initialization process :
-    Configuration copy, checking, create output dir tree
+    Configuration copy, checking,
     and initial output content.
 
     :param config_json: Config json file name
@@ -151,7 +132,7 @@ def compute_initialization(config_json: str) -> ConfigType:
 
     # Checks input parameters config
     check_input_parameters(cfg)
-
+    # Check statistics configuration by invoking StatsProcessing
     if "statistics" in cfg:
         logging.info("Verify statistics configuration")
         cfg_verif = copy.deepcopy(cfg)
@@ -160,32 +141,17 @@ def compute_initialization(config_json: str) -> ConfigType:
     # Create output directory and update config
     output_dir = os.path.abspath(cfg["output_dir"])
     cfg["output_dir"] = output_dir
+
     # Save output_dir parameter in "coregistration" and/or "statistics" dict
     if "coregistration" in cfg:
-        cfg["coregistration"]["output_dir"] = output_dir
+        cfg["coregistration"]["output_dir"] = os.path.join(
+            cfg["output_dir"], "coregistration"
+        )
     if "statistics" in cfg:
         for dem_processing_method in cfg["statistics"]:
-            cfg["statistics"][dem_processing_method]["output_dir"] = output_dir
-
-    # Create output_dir
-    mkdir_p(cfg["output_dir"])
-
-    # Save initial config
-    # with inputs absolute paths into output_dir
-
-    save_config_file(
-        os.path.join(cfg["output_dir"], os.path.basename(config_json)), cfg
-    )
-
-    # create output tree dirs for each directory
-    for directory in get_otd_dirs(cfg["otd"]):
-        mkdir_p(os.path.join(cfg["output_dir"], directory))
-
-    if "statistics" in cfg:
-        for dem_processing_method in cfg["statistics"]:
-            mkdir_p(
-                os.path.join(cfg["output_dir"], "stats", dem_processing_method)
-            )
+            cfg["statistics"][dem_processing_method][
+                "output_dir"
+            ] = os.path.join(cfg["output_dir"], "stats", dem_processing_method)
 
     # If defined, force the sampling_source of the
     # coregistration step into the stats step
@@ -248,12 +214,11 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
                         cfg[dem]["classification_layers"][key]["map_path"]
                     )
                     if img_dem.shape != mask_dem.shape:
-                        logging.error(
-                            "Dem shape : %s not equal to mask shape : %s",
-                            img_dem.shape,
-                            mask_dem.shape,
+                        raise ValueError(
+                            f"Dem shape : {img_dem.shape} not equal "
+                            "to mask shape : {mask_dem.shape}"
                         )
-                        sys.exit(1)
+
         # Verify z units
         if "zunit" not in cfg[dem]:
             cfg[dem]["zunit"] = "m"
@@ -282,16 +247,6 @@ def check_input_parameters(cfg: ConfigType):  # noqa: C901
                 f"ERROR: {report_name} is not supported,"
                 "report type must be sphinx only for now"
             )
-
-    if "otd" in cfg and cfg["otd"] not in supported_OTD:
-        otd_name = cfg["otd"]
-        raise NameError(
-            "ERROR: output tree design set by user"
-            f" ({otd_name}) is not supported"
-            f" (available options are {supported_OTD})"
-        )
-    # else
-    cfg["otd"] = "default_OTD"
 
     check_dem_processing_methods(cfg)
 

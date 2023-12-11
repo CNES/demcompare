@@ -537,7 +537,7 @@ class SlopeOrientationHistogram(MetricTemplate):
         )
 
         c_f = mpl_pyplot.gcf()
-        c_f.set_size_inches([16.8, 9.45])
+        c_f.set_size_inches((16.8, 9.45))
 
         mpl_pyplot.savefig(output_file, dpi=100, bbox_inches="tight")
         mpl_pyplot.close()
@@ -564,8 +564,8 @@ class SlopeOrientationHistogram(MetricTemplate):
         borne_max = np.max(data1d)
         bin_step = (borne_max - borne_min) / nbins
 
-        bins = np.arange(borne_min, borne_max + bin_step, bin_step)
+        bins = np.arange(borne_min, borne_max + bin_step, bin_step).tolist()
 
         hist, bins, _ = mpl_pyplot.hist(data1d, bins=bins, density=normalise)
 
-        return hist, bins
+        return np.array(hist), bins

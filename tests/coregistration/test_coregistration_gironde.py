@@ -56,7 +56,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
     Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Checked parameters on the demcompare_results output dict are:
+    - Checked parameters on the coregistration_results output dict are:
         - output Transform correct offsets
         - considered sampling source "sec"
         - offsets
@@ -106,7 +106,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
     # Compute coregistration
     transform = coregistration_.compute_coregistration(sec, ref)
     # Get coregistration results
-    demcompare_results = coregistration_.demcompare_results
+    coregistration_results = coregistration_.coregistration_results
 
     # Test that the output offsets and bias are the same as gt
     np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
@@ -114,67 +114,75 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
     assert gt_sampling_source == coregistration_.sampling_source
     np.testing.assert_allclose(
         gt_plani_results["dx"]["nuth_offset"],
-        demcompare_results["coregistration_results"]["dx"]["nuth_offset"],
+        coregistration_results["coregistration_results"]["dx"]["nuth_offset"],
         rtol=1e-02,
     )
     assert (
         gt_plani_results["dx"]["unit_offset"]
-        == demcompare_results["coregistration_results"]["dx"]["unit_offset"]
+        == coregistration_results["coregistration_results"]["dx"]["unit_offset"]
     )
     np.testing.assert_allclose(
         gt_plani_results["dx"]["total_bias_value"],
-        demcompare_results["coregistration_results"]["dx"]["total_bias_value"],
+        coregistration_results["coregistration_results"]["dx"][
+            "total_bias_value"
+        ],
         rtol=1e-02,
     )
     assert (
         gt_plani_results["dx"]["unit_bias_value"]
-        == demcompare_results["coregistration_results"]["dx"]["unit_bias_value"]
+        == coregistration_results["coregistration_results"]["dx"][
+            "unit_bias_value"
+        ]
     )
 
     np.testing.assert_allclose(
         gt_plani_results["dy"]["nuth_offset"],
-        demcompare_results["coregistration_results"]["dy"]["nuth_offset"],
+        coregistration_results["coregistration_results"]["dy"]["nuth_offset"],
         rtol=1e-02,
     )
     assert (
         gt_plani_results["dy"]["unit_offset"]
-        == demcompare_results["coregistration_results"]["dy"]["unit_offset"]
+        == coregistration_results["coregistration_results"]["dy"]["unit_offset"]
     )
     np.testing.assert_allclose(
         gt_plani_results["dy"]["total_bias_value"],
-        demcompare_results["coregistration_results"]["dy"]["total_bias_value"],
+        coregistration_results["coregistration_results"]["dy"][
+            "total_bias_value"
+        ],
         rtol=1e-02,
     )
     assert (
         gt_plani_results["dy"]["unit_bias_value"]
-        == demcompare_results["coregistration_results"]["dy"]["unit_bias_value"]
+        == coregistration_results["coregistration_results"]["dy"][
+            "unit_bias_value"
+        ]
     )
     np.testing.assert_allclose(
         gt_plani_results["gdal_translate_bounds"]["ulx"],
-        demcompare_results["coregistration_results"]["gdal_translate_bounds"][
-            "ulx"
-        ],
+        coregistration_results["coregistration_results"][
+            "gdal_translate_bounds"
+        ]["ulx"],
         rtol=1e-03,
     )
     np.testing.assert_allclose(
         gt_plani_results["gdal_translate_bounds"]["uly"],
-        demcompare_results["coregistration_results"]["gdal_translate_bounds"][
-            "uly"
-        ],
+        coregistration_results["coregistration_results"][
+            "gdal_translate_bounds"
+        ]["uly"],
         rtol=1e-03,
     )
     np.testing.assert_allclose(
         gt_plani_results["gdal_translate_bounds"]["lrx"],
-        demcompare_results["coregistration_results"]["gdal_translate_bounds"][
-            "lrx"
-        ],
+        coregistration_results["coregistration_results"][
+            "gdal_translate_bounds"
+        ]["lrx"],
         rtol=1e-03,
     )
     np.testing.assert_allclose(
         gt_plani_results["gdal_translate_bounds"]["lry"],
-        demcompare_results["coregistration_results"]["gdal_translate_bounds"][
-            "lry"
-        ],
+        coregistration_results["coregistration_results"][
+            "gdal_translate_bounds"
+        ]["lry"],
         rtol=1e-03,
     )
 
@@ -192,7 +200,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Checked parameters on the demcompare_results output dict are:
+    - Checked parameters on the coregistration_results output dict are:
         - output Transform correct offsets
         - considered sampling source "ref"
         - offsets
@@ -244,7 +252,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     # Compute coregistration
     transform = coregistration_.compute_coregistration(sec, ref)
     # Get coregistration results
-    demcompare_results = coregistration_.demcompare_results
+    coregistration_results = coregistration_.coregistration_results
 
     # Test that the output offsets and bias are the same as gt
     np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
@@ -252,66 +260,74 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     assert gt_sampling_source == coregistration_.sampling_source
     np.testing.assert_allclose(
         gt_plani_results["dx"]["nuth_offset"],
-        demcompare_results["coregistration_results"]["dx"]["nuth_offset"],
+        coregistration_results["coregistration_results"]["dx"]["nuth_offset"],
         rtol=1e-02,
     )
     assert (
         gt_plani_results["dx"]["unit_offset"]
-        == demcompare_results["coregistration_results"]["dx"]["unit_offset"]
+        == coregistration_results["coregistration_results"]["dx"]["unit_offset"]
     )
     np.testing.assert_allclose(
         gt_plani_results["dx"]["total_bias_value"],
-        demcompare_results["coregistration_results"]["dx"]["total_bias_value"],
+        coregistration_results["coregistration_results"]["dx"][
+            "total_bias_value"
+        ],
         rtol=1e-02,
     )
     assert (
         gt_plani_results["dx"]["unit_bias_value"]
-        == demcompare_results["coregistration_results"]["dx"]["unit_bias_value"]
+        == coregistration_results["coregistration_results"]["dx"][
+            "unit_bias_value"
+        ]
     )
     np.testing.assert_allclose(
         gt_plani_results["dy"]["nuth_offset"],
-        demcompare_results["coregistration_results"]["dy"]["nuth_offset"],
+        coregistration_results["coregistration_results"]["dy"]["nuth_offset"],
         rtol=1e-02,
     )
     assert (
         gt_plani_results["dy"]["unit_offset"]
-        == demcompare_results["coregistration_results"]["dy"]["unit_offset"]
+        == coregistration_results["coregistration_results"]["dy"]["unit_offset"]
     )
     np.testing.assert_allclose(
         gt_plani_results["dy"]["total_bias_value"],
-        demcompare_results["coregistration_results"]["dy"]["total_bias_value"],
+        coregistration_results["coregistration_results"]["dy"][
+            "total_bias_value"
+        ],
         rtol=1e-02,
     )
     assert (
         gt_plani_results["dy"]["unit_bias_value"]
-        == demcompare_results["coregistration_results"]["dy"]["unit_bias_value"]
+        == coregistration_results["coregistration_results"]["dy"][
+            "unit_bias_value"
+        ]
     )
     np.testing.assert_allclose(
         gt_plani_results["gdal_translate_bounds"]["ulx"],
-        demcompare_results["coregistration_results"]["gdal_translate_bounds"][
-            "ulx"
-        ],
+        coregistration_results["coregistration_results"][
+            "gdal_translate_bounds"
+        ]["ulx"],
         rtol=1e-03,
     )
     np.testing.assert_allclose(
         gt_plani_results["gdal_translate_bounds"]["uly"],
-        demcompare_results["coregistration_results"]["gdal_translate_bounds"][
-            "uly"
-        ],
+        coregistration_results["coregistration_results"][
+            "gdal_translate_bounds"
+        ]["uly"],
         rtol=1e-03,
     )
     np.testing.assert_allclose(
         gt_plani_results["gdal_translate_bounds"]["lrx"],
-        demcompare_results["coregistration_results"]["gdal_translate_bounds"][
-            "lrx"
-        ],
+        coregistration_results["coregistration_results"][
+            "gdal_translate_bounds"
+        ]["lrx"],
         rtol=1e-03,
     )
     np.testing.assert_allclose(
         gt_plani_results["gdal_translate_bounds"]["lry"],
-        demcompare_results["coregistration_results"]["gdal_translate_bounds"][
-            "lry"
-        ],
+        coregistration_results["coregistration_results"][
+            "gdal_translate_bounds"
+        ]["lry"],
         rtol=1e-03,
     )
 
@@ -329,7 +345,7 @@ def test_compute_coregistration_gironde_sampling_sec_and_initial_disparity():
     Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Checked parameters on the demcompare_results output dict are:
+    - Checked parameters on the coregistration_results output dict are:
         - output Transform correct offsets
         - considered sampling source "sec"
         - offsets gt_xoff, gt_yoff
@@ -381,7 +397,7 @@ def test_compute_coregistration_gironde_sampling_ref_and_initial_disparity():
     Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Checked parameters on the demcompare_results output dict are:
+    - Checked parameters on the coregistration_results output dict are:
         - output Transform correct offsets
         - considered sampling source "ref"
         - offsets gt_xoff, gt_yoff
@@ -440,7 +456,7 @@ def test_coregistration_with_same_dems():
     Validation process:
     - Loads the data present in the test root data directory
     - Creates a coregistration object and does compute_coregistration
-    - Checked parameters on the demcompare_results output dict are:
+    - Checked parameters on the coregistration_results output dict are:
        - output Transform correct offsets
     """
     # Get "gironde_test_data" test root data directory absolute path

@@ -29,7 +29,6 @@ import pytest
 from .helpers import notebooks_demcompare_path
 
 
-@pytest.mark.unit_tests
 @pytest.mark.notebook_tests
 def test_reprojection_and_coregistration():
     """
@@ -63,7 +62,6 @@ def test_reprojection_and_coregistration():
     assert out.returncode == 0
 
 
-@pytest.mark.unit_tests
 @pytest.mark.notebook_tests
 def test_statistics():
     """
@@ -94,7 +92,6 @@ def test_statistics():
     assert out.returncode == 0
 
 
-@pytest.mark.unit_tests
 @pytest.mark.notebook_tests
 def test_introduction_and_basic_usage():
     """
@@ -127,7 +124,6 @@ def test_introduction_and_basic_usage():
     assert out.returncode == 0
 
 
-@pytest.mark.unit_tests
 @pytest.mark.notebook_tests
 def test_statistics_all_metrics():
     """

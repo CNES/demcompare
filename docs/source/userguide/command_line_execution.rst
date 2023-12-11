@@ -13,14 +13,14 @@ Execution from the command line
     demcompare config_file.json #run demcompare
 
 The following code-block is an input configuration file example including 
-both **coregistration** and **statistics** steps. These steps are optional.
+both **coregistration** and **statistics** steps with demcompare data samples. These steps are optional.
 Remove one of them from the config file to prevent demcompare from running it.
 
 The **statistics** steps includes an **alti-diff** step.
 This configuration allows to compute the difference in altitude between the two input DEMs.
 **alti-diff** is an example of `dem_processing_methods` (see :ref:`DEM_processing_methods`).
 Several other `dem_processing_methods` are also available. 
-The list of all `dem_processing_methods` can be found in :ref:`List of DEM processing methods <list_DEM_processing_methods>`.
+All `dem_processing_methods` can be found in :ref:`List of DEM processing methods <list_DEM_processing_methods>`.
 They can be used one after the other.
 
 An optional **report** step is included to generate a report if statistics are computed. 
@@ -30,13 +30,13 @@ An optional **report** step is included to generate a report if statistics are c
     {
         "output_dir": "./test_output/",
         "input_ref": {
-            "path": "./Gironde.tif"
+            "path": "./srtm_ref.tif"
         },
         "input_sec": {
-            "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF"
+            "path": "./srtm_blurred_and_shifted.tif"
         },
         "coregistration": {
-            "coregistration_method": "nuth_kaab_internal"
+            "method_name": "nuth_kaab_internal"
         },
         "statistics": {
             "alti-diff": {

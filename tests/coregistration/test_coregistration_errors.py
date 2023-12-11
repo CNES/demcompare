@@ -39,7 +39,7 @@ import pytest
 import demcompare
 from demcompare import coregistration
 from demcompare.dem_tools import SamplingSourceParameter, load_dem
-from demcompare.helpers_init import mkdir_p, read_config_file, save_config_file
+from demcompare.helpers_init import read_config_file, save_config_file
 
 # Tests helpers
 from tests.helpers import demcompare_test_data_path, temporary_dir
@@ -99,7 +99,7 @@ def test_coregistration_with_output_dir():
         - Create temporary_dir named tmp_dir
         - Loads the data present in the test root data directory
         - Creates a coregistration object and does compute_coregistration
-        - Verify that coreg_sec.tif and demcompare_results.json are saved
+        - Verify that coreg_sec.tif and coregistration_results.json are saved
     - parameter output_dir not being specified and save_optional_outputs
       set to True
         - Creates a new coregistration object and does compute_coregistration
@@ -118,7 +118,7 @@ def test_coregistration_with_output_dir():
 
     # Set output_dir correctly
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-        mkdir_p(tmp_dir)
+        os.makedirs(tmp_dir, exist_ok=True)
         # Modify test's output dir in configuration to tmp test dir
         cfg["output_dir"] = tmp_dir
 
@@ -143,7 +143,12 @@ def test_coregistration_with_output_dir():
         # test output_dir/coregistration/coreg_SEC.tif creation
         assert os.path.isfile(tmp_dir + "/coregistration/coreg_SEC.tif") is True
         # test output_dir/coregistration/coreg_SEC.tif creation
-        assert os.path.isfile(tmp_dir + "/demcompare_results.json") is True
+        assert (
+            os.path.isfile(
+                tmp_dir + "/coregistration/coregistration_results.json"
+            )
+            is True
+        )
 
         cfg.pop("output_dir")
         # parameters save_optional_outputs
@@ -151,5 +156,5 @@ def test_coregistration_with_output_dir():
         cfg["coregistration"]["save_optional_outputs"] = "True"
 
         # Create coregistration object
-        with pytest.raises(SystemExit):
+        with pytest.raises(ValueError):
             _ = coregistration.Coregistration(cfg["coregistration"])

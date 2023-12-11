@@ -35,7 +35,7 @@ from typing import List, Tuple, Union
 import xarray as xr
 
 # Demcompare imports
-from . import helpers_init, log_conf, report
+from . import log_conf, report
 from .coregistration import Coregistration
 from .dem_processing import DemProcessing
 from .dem_tools import (
@@ -46,8 +46,12 @@ from .dem_tools import (
     save_dem,
     verify_fusion_layers,
 )
+from .helpers_init import (
+    compute_initialization,
+    get_output_files_paths,
+    save_config_file,
+)
 from .internal_typing import ConfigType
-from .output_tree_design import get_out_file_path
 from .stats_dataset import StatsDataset
 from .stats_processing import StatsProcessing
 
@@ -76,8 +80,11 @@ def run(
 
     # Initialization
 
-    # Configuration copy, checking inputs, create output dir tree
-    cfg = helpers_init.compute_initialization(json_file_path)
+    # Get cfg from json file, checking inputs
+    cfg = compute_initialization(json_file_path)
+
+    # Create output_dir from updated absolute path
+    os.makedirs(cfg["output_dir"], exist_ok=True)
 
     # Logging configuration
     log_conf.setup_logging(default_level=loglevel)
@@ -86,8 +93,15 @@ def run(
 
     logging.info("*** Demcompare ***")
     logging.info("Output directory: %s", cfg["output_dir"])
+
+    # Save initial config
+    # with inputs absolute paths into output_dir
+    save_config_file(
+        os.path.join(cfg["output_dir"], os.path.basename(json_file_path)), cfg
+    )
     logging.debug("Demcompare configuration: %s", cfg)
 
+    # Get input ref and input sec dem datasets from cfg
     input_ref, input_sec = load_input_dems(cfg)
 
     logging.info("Input Reference DEM (REF): %s", input_ref.input_img)
@@ -100,6 +114,10 @@ def run(
 
     # If coregistration step is present
     if "coregistration" in cfg:
+        # update cfg coregistration output (created in coreg sub pipeline)
+        cfg["coregistration"]["output_dir"] = os.path.join(
+            cfg["output_dir"], "coregistration"
+        )
         # Do coregistration and obtain initial
         # and final intermediate dems for stats computation
         (
@@ -128,6 +146,12 @@ def run(
 
         # Loop over the DEM processing methods in cfg["statistics"]
         for dem_processing_method in cfg["statistics"]:
+            # create directory for dem processing method stats
+            os.makedirs(
+                cfg["statistics"][dem_processing_method]["output_dir"],
+                exist_ok=True,
+            )
+
             # Create a DEM processing object for each DEM processing method
             dem_processing_object = DemProcessing(dem_processing_method)
 
@@ -141,7 +165,7 @@ def run(
                 csv_path_pdf,
                 plot_path_svf,
                 plot_path_hillshade,
-            ) = helpers_init.get_output_files_paths(
+            ) = get_output_files_paths(
                 cfg["output_dir"], dem_processing_method, "dem_for_stats"
             )
 
@@ -180,7 +204,7 @@ def run(
                             ],
                             support="sec",
                         )
-
+            logging.info(" Dem processing: %s ", dem_processing_object.type)
             stats_dem = dem_processing_object.process_dem(
                 input_stats_ref, input_stats_sec
             )
@@ -207,7 +231,6 @@ def run(
             stats_processing = StatsProcessing(
                 cfg["statistics"][dem_processing_method],
                 stats_dem,
-                input_diff="coregistration" in cfg,
                 dem_processing_method=dem_processing_method,
             )
 
@@ -268,6 +291,10 @@ def run(
             stats_dataset = stats_processing.compute_stats()
 
             stats_datasets.append(stats_dataset)
+
+    # Save full final config
+    # with inputs absolute paths into output_dir
+    save_config_file(os.path.join(cfg["output_dir"], "full_config.json"), cfg)
 
     # Generate report if statistics are computed (stats_dataset defined)
     # and report configuration is set
@@ -396,22 +423,22 @@ def run_coregistration(
     # Apply coregistration offsets to the original DEM and store it
     # reprojection is also done.
     coreg_sec = transformation.apply_transform(input_sec)
-    # Get demcompare_results dict
-    demcompare_results = coregistration_.demcompare_results
+    # Get coregistration_results dict
+    coregistration_results = coregistration_.coregistration_results
 
     # Save the coregistered DEM (even without save_optional_outputs option)
     # - coreg_SEC.tif -> coregistered sec
     save_dem(
         coreg_sec,
-        os.path.join(cfg["output_dir"], get_out_file_path("coreg_SEC.tif")),
+        os.path.join(cfg["output_dir"], "./coreg_SEC.tif"),
     )
-    # Save demcompare_results
-    helpers_init.save_config_file(
+    # Save coregistration_results
+    save_config_file(
         os.path.join(
             cfg["output_dir"],
-            get_out_file_path("demcompare_results.json"),
+            "./coregistration_results.json",
         ),
-        demcompare_results,
+        coregistration_results,
     )
 
     # Get internal dems

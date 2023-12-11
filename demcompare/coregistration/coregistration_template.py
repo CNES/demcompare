@@ -27,7 +27,6 @@ generic coregistration code to avoid duplication.
 # Standard imports
 import logging
 import os
-import sys
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple
 
@@ -35,8 +34,6 @@ from typing import Dict, Tuple
 import numpy as np
 import xarray as xr
 from json_checker import And, Checker, Or
-
-from ..dem_processing import DemProcessing
 
 # Demcompare imports
 from ..dem_tools import (
@@ -47,7 +44,6 @@ from ..dem_tools import (
 )
 from ..img_tools import compute_gdal_translate_bounds
 from ..internal_typing import ConfigType
-from ..output_tree_design import get_out_file_path
 from ..transformation import Transformation
 
 
@@ -108,15 +104,13 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         self.reproj_coreg_ref: xr.Dataset = None
         # Coregistered sec
         self.coreg_sec: xr.Dataset = None
-        # Final altitude map
-        self.final_dh: xr.Dataset = None
 
         # Computed Transformation: result of coregistration process
         self.transform: Transformation = None
         # Offset adapting factor
         self.adapting_factor: Tuple[float, float] = (1.0, 1.0)
         # Demcompare results dict
-        self.demcompare_results: Dict = None
+        self.coregistration_results: Dict = None
         # Conf schema
         self.schema: Dict = None
 
@@ -138,6 +132,11 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         self.save_optional_outputs = self.cfg["save_optional_outputs"]
         # Output directory to save results
         self.output_dir = self.cfg["output_dir"]
+
+        if self.output_dir is not None:
+            # create coreg module output directory if given in configuration
+            # if used in standalone, be sure that the path is absolute
+            os.makedirs(cfg["output_dir"], exist_ok=True)
 
     @abstractmethod
     def fill_conf_and_schema(self, cfg: ConfigType = None) -> ConfigType:
@@ -174,13 +173,12 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
             if cfg["save_optional_outputs"]:
-                logging.error(
+                raise ValueError(
                     "save_optional_outputs"
                     " option IS activated but no output_dir has been set. "
                     "Please set the output_dir parameter or deactivate"
                     " the saving options."
                 )
-                sys.exit(1)
 
         # Configuration schema
         self.schema = {
@@ -317,7 +315,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
             self.reproj_coreg_ref,
         ) = self._coregister_dems_algorithm(self.reproj_sec, self.reproj_ref)
 
-        # Compute and store the demcompare_results dict
+        # Compute and store the coregistration_results dict
         self.save_results_dict()
         # Save internal_dems if the option was chosen
         if self.save_optional_outputs:
@@ -363,7 +361,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
     def save_internal_outputs(self):
         """
         Save the dems obtained from the coregistration to .tif
-        and updates its path on the demcompare_results file
+        and updates its path on the coregistration_results file
 
         - ./coregistration/reproj_SEC.tif -> reprojected sec
         - ./coregistration/reproj_REF.tif -> reprojected ref
@@ -374,44 +372,35 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
         :return: None
         """
-
         # Saves reprojected DEM to file system
         self.reproj_sec = save_dem(
             self.reproj_sec,
-            os.path.join(self.output_dir, get_out_file_path("reproj_SEC.tif")),
+            os.path.join(self.output_dir, "reproj_SEC.tif"),
         )
         # Saves reprojected REF to file system
         self.reproj_ref = save_dem(
             self.reproj_ref,
-            os.path.join(self.output_dir, get_out_file_path("reproj_REF.tif")),
+            os.path.join(self.output_dir, "reproj_REF.tif"),
         )
         # Saves reprojected coregistered DEM to file system
         self.reproj_coreg_sec = save_dem(
             self.reproj_coreg_sec,
-            os.path.join(
-                self.output_dir, get_out_file_path("reproj_coreg_SEC.tif")
-            ),
+            os.path.join(self.output_dir, "reproj_coreg_SEC.tif"),
         )
         # Saves reprojected coregistered REF to file system
         self.reproj_coreg_ref = save_dem(
             self.reproj_coreg_ref,
-            os.path.join(
-                self.output_dir, get_out_file_path("reproj_coreg_REF.tif")
-            ),
+            os.path.join(self.output_dir, "reproj_coreg_REF.tif"),
         )
-        # Update path on demcompare_results file
-        if self.demcompare_results:
-            self.demcompare_results["alti_results"]["reproj_coreg_ref"][
-                "path"
-            ] = self.reproj_coreg_ref.attrs["input_img"]
-            # Update path on demcompare_results file
-            self.demcompare_results["alti_results"]["reproj_coreg_sec"][
-                "path"
-            ] = self.reproj_coreg_sec.attrs["input_img"]
-            # Update path on demcompare_results file
-            self.demcompare_results["alti_results"]["dz"][
-                "dz_map_path"
-            ] = self.final_dh.attrs["input_img"]
+        # Update path on coregistration_results file
+        if self.coregistration_results:
+            self.coregistration_results["coregistration_results"][
+                "reproj_coreg_ref"
+            ]["path"] = self.reproj_coreg_ref.attrs["input_img"]
+            # Update path on coregistration_results file
+            self.coregistration_results["coregistration_results"][
+                "reproj_coreg_sec"
+            ]["path"] = self.reproj_coreg_sec.attrs["input_img"]
 
     @abstractmethod
     def save_results_dict(self):
@@ -423,88 +412,77 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         :return: None
         """
 
-        # Initialize demcompare_results dict
-        self.demcompare_results = {}
+        # Initialize coregistration_results dict
+        self.coregistration_results = {}
 
-        # Add alti_results with information regarding the
+        # Add coregistration_results with information regarding the
         # reprojected coregistered DEMs
-        self.demcompare_results["alti_results"] = {}
+        self.coregistration_results["coregistration_results"] = {}
 
         # Reprojected coregistered ref information
-        self.demcompare_results["alti_results"]["reproj_coreg_ref"] = {}
-        self.demcompare_results["alti_results"]["reproj_coreg_ref"][
-            "path"
-        ] = self.reproj_coreg_ref.attrs["input_img"]
-        self.demcompare_results["alti_results"]["reproj_coreg_ref"][
-            "nodata"
-        ] = self.reproj_coreg_ref.attrs["nodata"]
-        self.demcompare_results["alti_results"]["reproj_coreg_ref"][
-            "nb_points"
-        ] = self.reproj_coreg_ref["image"].data.size
-        self.demcompare_results["alti_results"]["reproj_coreg_ref"][
-            "nb_valid_points"
-        ] = np.count_nonzero(~np.isnan(self.reproj_coreg_ref["image"].data))
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_ref"
+        ] = {}
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_ref"
+        ]["path"] = self.reproj_coreg_ref.attrs["input_img"]
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_ref"
+        ]["nodata"] = self.reproj_coreg_ref.attrs["nodata"]
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_ref"
+        ]["nb_points"] = self.reproj_coreg_ref["image"].data.size
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_ref"
+        ]["nb_valid_points"] = np.count_nonzero(
+            ~np.isnan(self.reproj_coreg_ref["image"].data)
+        )
 
         # Reprojected coregistered sec information
-        self.demcompare_results["alti_results"]["reproj_coreg_sec"] = {}
-        self.demcompare_results["alti_results"]["reproj_coreg_sec"][
-            "path"
-        ] = self.reproj_coreg_sec.attrs["input_img"]
-        self.demcompare_results["alti_results"]["reproj_coreg_sec"][
-            "nodata"
-        ] = self.reproj_coreg_sec.attrs["nodata"]
-        self.demcompare_results["alti_results"]["reproj_coreg_sec"][
-            "nb_points"
-        ] = self.reproj_coreg_sec["image"].data.size
-        self.demcompare_results["alti_results"]["reproj_coreg_sec"][
-            "nb_valid_points"
-        ] = np.count_nonzero(~np.isnan(self.reproj_coreg_sec["image"].data))
-
-        # Altitude difference information
-        # Compute final_dh to complete the alti_resuts
-        # TODO: clean demprocessing dependency # pylint:disable=fixme
-        # from coregistration
-        dem_processing_object = DemProcessing("alti-diff")
-        self.final_dh = dem_processing_object.process_dem(
-            self.reproj_coreg_ref, self.reproj_coreg_sec
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_sec"
+        ] = {}
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_sec"
+        ]["path"] = self.reproj_coreg_sec.attrs["input_img"]
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_sec"
+        ]["nodata"] = self.reproj_coreg_sec.attrs["nodata"]
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_sec"
+        ]["nb_points"] = self.reproj_coreg_sec["image"].data.size
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_sec"
+        ]["nb_valid_points"] = np.count_nonzero(
+            ~np.isnan(self.reproj_coreg_sec["image"].data)
         )
-        self.demcompare_results["alti_results"]["dz"] = {}
-        self.demcompare_results["alti_results"]["dz"] = {
-            "dz_map_path": self.final_dh.attrs["input_img"],
-            "total_bias_value": round(
-                float(np.nanmean(self.final_dh["image"].data)), 5
-            ),
-            "zunit": self.reproj_coreg_sec.attrs["zunit"].name,
-            "percent": round(
-                100
-                * np.count_nonzero(~np.isnan(self.final_dh["image"].data))
-                / self.final_dh["image"].data.size,
-                5,
-            ),
-            "nodata": self.final_dh.attrs["nodata"],
-            "nb_points": self.final_dh["image"].data.size,
-            "nb_valid_points": np.count_nonzero(
-                ~np.isnan(self.final_dh["image"].data)
-            ),
-        }
 
         # Obtain unit of the bias and compute x and y biases
+        # use abs() to not consider the sign of x,y resolution in orig_sec
         unit_bias_value = self.orig_sec.attrs["zunit"]
-        dx_bias = self.transform.total_offset_x * self.orig_sec.attrs["xres"]
-        dy_bias = self.transform.total_offset_y * self.orig_sec.attrs["xres"]
+        dx_bias = self.transform.total_offset_x * abs(
+            self.orig_sec.attrs["xres"]
+        )
+        dy_bias = self.transform.total_offset_y * abs(
+            self.orig_sec.attrs["yres"]
+        )
 
-        # Save coregistration results
-        self.demcompare_results["coregistration_results"] = {}
-        self.demcompare_results["coregistration_results"]["dx"] = {
+        # Save coregistration offset bias results
+        self.coregistration_results["coregistration_results"]["dx"] = {
             "total_offset": round(self.transform.total_offset_x, 5),
             "unit_offset": "px",
             "total_bias_value": round(dx_bias, 5),
             "unit_bias_value": unit_bias_value.name,
         }
-        self.demcompare_results["coregistration_results"]["dy"] = {
+        self.coregistration_results["coregistration_results"]["dy"] = {
             "total_offset": round(self.transform.total_offset_y, 5),
             "unit_offset": "px",
             "total_bias_value": round(dy_bias, 5),
+            "unit_bias_value": unit_bias_value.name,
+        }
+        # for dz, directly in altitude unit, offset is directly bias (no pixel)
+        self.coregistration_results["coregistration_results"]["dz"] = {
+            "total_bias_value": round(self.transform.z_offset, 5),
             "unit_bias_value": unit_bias_value.name,
         }
 
@@ -516,7 +494,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
             (self.orig_sec["image"].shape[0], self.orig_sec["image"].shape[1]),
             self.orig_sec["georef_transform"].data,
         )
-        self.demcompare_results["coregistration_results"][
+        self.coregistration_results["coregistration_results"][
             "gdal_translate_bounds"
         ] = {
             "ulx": round(ulx, 5),
@@ -527,20 +505,26 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
         # Logging report
         logging.info("Coregistration results:")
-        logging.info("Planimetry 2D shift between reprojected SEC and REF:")
+        logging.info("Planimetry 2D shift found between reprojected REF-SEC:")
         logging.info(
-            " -> row : %s",
-            self.demcompare_results["coregistration_results"]["dy"][
+            " -> row (y) : %s (%s pixels)",
+            self.coregistration_results["coregistration_results"]["dy"][
                 "total_bias_value"
             ]
             * unit_bias_value,
+            self.coregistration_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
         )
         logging.info(
-            " -> col : %s",
-            self.demcompare_results["coregistration_results"]["dx"][
+            " -> col (x) : %s (%s pixels)",
+            self.coregistration_results["coregistration_results"]["dx"][
                 "total_bias_value"
             ]
             * unit_bias_value,
+            self.coregistration_results["coregistration_results"]["dx"][
+                "total_offset"
+            ],
         )
         logging.info("GDAL translate bounds:")
         logging.info(
@@ -551,6 +535,13 @@ class CoregistrationTemplate(metaclass=ABCMeta):
             lry,
         )
         logging.info(
-            "Altimetry shift between reprojected SEC and REF (not applied):"
+            "Mean altimetry shift found "
+            "between reprojected REF-SEC (not applied):"
         )
-        logging.info(" -> alti : %s", self.transform.z_offset * unit_bias_value)
+        logging.info(
+            " -> alti : %s",
+            self.coregistration_results["coregistration_results"]["dz"][
+                "total_bias_value"
+            ]
+            * unit_bias_value,
+        )

@@ -35,7 +35,7 @@ The output of this step are two DEMs intuitively called ``reproj_REF.tif`` and `
 ii) Offsets estimation
 ----------------------
 
-This is the actual coregistration part. Demcompare will use one implemetation of [NuthKaab]_ algorithm to estimate the ``x``, ``y``, and ``z`` shifts between reprojected DEMs (namely ``reproj_REF`` and ``reproj_SEC``).
+This is the actual coregistration part. Demcompare will use one implementation of [NuthKaab]_ algorithm to estimate the ``x``, ``y``, and ``z`` shifts between reprojected DEMs (namely ``reproj_REF`` and ``reproj_SEC``).
 
 The output of this step are two DEMs intuitively called ``reproj_coreg_REF.tif`` and ``reproj_coreg_SEC.tif``.
 
@@ -229,7 +229,7 @@ The coregistration images and files saved to disk :
     :align: left
 
     ``coreg_SEC.tif``,Coregistered secondary DEM
-    ``demcompare_results.json``,Output json file containing coregistration offsets
+    ``coregistration_results.json``,Output json file containing coregistration offsets
     ``logs.log``,Logging file
 
 The images and statistics are saved in the `stats/alti-diff` (since `alti-diff` is specified in the configuration) directory if both ``coregistration`` and ``statistics`` options activated on the configuration :
@@ -282,7 +282,7 @@ If desired, the obtained **x** and **y** offsets may be manually applied using t
 
     gdal_translate -a_ullr <ulx> <uly> <lrx> <lry> /PATH_TO/secondary_dem.tif /PATH_TO/coreg_secondary_dem.tif
 
-Being *<ulx> <uly> <lrx> <lry>* the coordinate bounds of the offsets applied on **sec**. They are shown on logging the information after coregistration or stored in the **demcompare_results.json** file as **gdal_translate_bounds**.
+Being *<ulx> <uly> <lrx> <lry>* the coordinate bounds of the offsets applied on **sec**. They are shown on logging the information after coregistration or stored in the **coregistration_results.json** file as **gdal_translate_bounds**.
 
 Output directories
 ~~~~~~~~~~~~~~~~~~
@@ -293,7 +293,6 @@ With the command line execution, the following directories that may store the re
 .. code-block:: bash
 
     .output_dir
-    +-- demcompare_results.json
     +-- sample_config.json
     +-- stats
         +-- alti-diff
@@ -306,6 +305,7 @@ With the command line execution, the following directories that may store the re
             <classification_layer_name*>
                 +-- stats for each mode
     +-- coregistration
+        +-- coregistration_results.json
         +-- coreg_SEC.tif
         +-- reproj_REF.tif
         +-- reproj_DEM.tif
