@@ -25,4 +25,4 @@ The following sections give details for each subpart.
 
 .. note::
 
-    Please contribute if elements are missing or are unclear to enter demcompare code.
+    Please contribute if elements are missing or are unclear on demcompare source code.

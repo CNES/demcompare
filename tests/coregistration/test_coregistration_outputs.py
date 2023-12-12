@@ -63,7 +63,7 @@ def test_coregistration_save_optional_reprojection():
     cfg = read_config_file(test_cfg_path)
 
     # Manually set the saving of internal dems to True
-    cfg["coregistration"]["save_optional_outputs"] = "True"
+    cfg["coregistration"]["save_optional_outputs"] = True
     # remove useless statistics part
     cfg.pop("statistics")
 
@@ -142,7 +142,7 @@ def test_coregistration_save_optional_outputs():
     # remove useless statistics part
     cfg.pop("statistics")
     # Set save_optional_outputs to True
-    cfg["coregistration"]["save_optional_outputs"] = "True"
+    cfg["coregistration"]["save_optional_outputs"] = True
 
     gt_truth_list_files = [
         "ElevationDiff_AfterCoreg.png",
@@ -197,7 +197,7 @@ def test_coregistration_save_optional_outputs():
         assert all(file in list_test for file in gt_truth_list_files) is True
 
     # Test with save_optional_outputs set to False
-    cfg["coregistration"]["save_optional_outputs"] = "False"
+    cfg["coregistration"]["save_optional_outputs"] = False
 
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
         os.makedirs(tmp_dir, exist_ok=True)

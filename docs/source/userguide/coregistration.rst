@@ -206,9 +206,9 @@ Scientific parameters
         +-------------------------------+-------------------------------------------------+-------------+---------------------+----------+
         | ``sampling_source``           | Sampling source for reprojection                | string      | ``sec``             | No       |
         +-------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-        | ``save_optional_outputs``     | | If save internal DEMs and coregistration      | string      | ``"False"``         | No       |
+        | ``save_optional_outputs``     | | If save internal DEMs and coregistration      | boolean     | ``false``           | No       |
         |                               | | method outputs such as iteration plots        |             |                     |          |
-        |                               | | to disk                                       |             |                     |          |
+        |                               | | to disk (true/false value)                    |             |                     |          |
         +-------------------------------+-------------------------------------------------+-------------+---------------------+----------+
 
 
@@ -251,7 +251,7 @@ The images and statistics are saved in the `stats/alti-diff` (since `alti-diff` 
 | *dem_for_stats_cdf.csv*                 | Data of the cumulative density function of the altitude difference.                      |
 +-----------------------------------------+------------------------------------------------------------------------------------------+
 
-The coregistration images saved with the ``coregistration`` ``save_optional_outputs`` option set to ``"True"``:
+The coregistration images saved with the ``coregistration`` ``save_optional_outputs`` option set to ``true``:
 
 .. csv-table::
     :header: "Name","Description"

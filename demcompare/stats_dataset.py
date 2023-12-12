@@ -213,12 +213,12 @@ class StatsDataset:
 
         # Create and add the xr.DataArray to the dataset
         # overload if already present (through dataset_idx above)
-        self.classif_layers_dataset[dataset_idx][
-            image_indicator
-        ] = xr.DataArray(
-            data=image_maps,
-            coords=coords_classification_layers,
-            dims=["row", "col", "classes"],
+        self.classif_layers_dataset[dataset_idx][image_indicator] = (
+            xr.DataArray(
+                data=image_maps,
+                coords=coords_classification_layers,
+                dims=["row", "col", "classes"],
+            )
         )
 
     def save_as_csv_and_json(

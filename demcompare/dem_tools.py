@@ -684,9 +684,11 @@ def reproject_dems(
         zunit=static.attrs["zunit"],
         input_img=static.attrs["input_img"],
         bounds=intersection_roi,
-        classification_layer_masks=static.classification_layer_masks
-        if "indicator" in static.coords
-        else None,
+        classification_layer_masks=(
+            static.classification_layer_masks
+            if "indicator" in static.coords
+            else None
+        ),
     )
 
     # Full_interp represent a dem with the full interp image
@@ -699,9 +701,11 @@ def reproject_dems(
         zunit=interp.attrs["zunit"],
         input_img=interp.attrs["input_img"],
         bounds=intersection_roi,
-        classification_layer_masks=interp.classification_layer_masks
-        if "indicator" in interp.coords
-        else None,
+        classification_layer_masks=(
+            interp.classification_layer_masks
+            if "indicator" in interp.coords
+            else None
+        ),
     )
 
     # Translate sec according to the initial shift
@@ -1276,7 +1280,9 @@ def compute_curvature_filtering(
         nodata=dem.attrs["nodata"],
         img_crs=dem.crs,
         bounds=dem.bounds,
-        classification_layer_masks=dem["classification_layer_masks"]
-        if hasattr(dem, "classification_layer_masks")
-        else None,
+        classification_layer_masks=(
+            dem["classification_layer_masks"]
+            if hasattr(dem, "classification_layer_masks")
+            else None
+        ),
     )

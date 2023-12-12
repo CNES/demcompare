@@ -14,4 +14,4 @@ The available notebooks are:
 
 - Notebook introduction and basic usage
 - Notebook reprojection and coregistration
-- Notebook statistiques
+- Notebook statistics

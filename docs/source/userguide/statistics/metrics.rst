@@ -31,7 +31,7 @@ The following metrics are currently available on demcompare:
           ,,output_plot_path, "string",``None``
           ``'pdf'``\ Probability Density Function,vector,bin_step, "float",``0.2``
           ,,width, "float",``0.7``
-          ,,filter_p98, "float",``"False"``
+          ,,filter_p98, "boolean",``false``
           ,,output_csv_path, "string",``None``
           ,,output_plot_path, "string",``None``
           ``'ratio_above_threshold'``,vector,elevation_threshold, "List[float, int]", ":math:`[0.5, 1, 3]`"

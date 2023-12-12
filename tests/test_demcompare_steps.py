@@ -99,7 +99,7 @@ def test_demcompare_coregistration_step_with_gironde_test_data():
         # Modify test's output dir in configuration to tmp test dir
         test_cfg["output_dir"] = tmp_dir
         # Manually set the saving of internal dems to True
-        test_cfg["coregistration"]["save_optional_outputs"] = "True"
+        test_cfg["coregistration"]["save_optional_outputs"] = True
 
         # Set a new test_config tmp file path
         tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
@@ -226,7 +226,7 @@ def test_demcompare_statistics_step_with_gironde_test_data():
     #             "map_path": "./FinalWaveBathymetry_T3...TIF"}
     # }},
     # "statistics": {
-    #     "remove_outliers": "False",
+    #     "remove_outliers": false,
     #     "classification_layers": {
     #         "Status": {
     #             "type": "segmentation",
@@ -312,7 +312,7 @@ def test_demcompare_statistics_step_input_ref_with_gironde_test_data():
     #     "nodata": -32768,
     #     },
     # "statistics": {
-    #     "remove_outliers": "False",
+    #     "remove_outliers": false,
     #     "classification_layers": {
     #         "Status": {
     #             "type": "segmentation",
@@ -433,7 +433,7 @@ def test_demcompare_statistics_step_angular_diff_with_gironde_test_data():
     #     "nodata": -32768,
     #     },
     # "statistics": {
-    #     "remove_outliers": "False",
+    #     "remove_outliers": false,
     #     "classification_layers": {
     #         "Status": {
     #             "type": "segmentation",
@@ -509,7 +509,7 @@ def test_demcompare_statistics_step_alti_diff_norm_diff_with_gironde_test_data()
     #     "nodata": -32768,
     #     },
     # "statistics": {
-    #     "remove_outliers": "False",
+    #     "remove_outliers": false,
     #     "classification_layers": {
     #         "Status": {
     #             "type": "segmentation",
@@ -577,7 +577,8 @@ def test_demcompare_statistics_step_curvature_input_ref_with_gironde_test_data()
     test_cfg["statistics"]["ref-curvature"] = test_cfg["statistics"].pop(
         "alti-diff"
     )
-    # Warning: "ref-curvature" does not work with "Slope0" as "classification_layers" # noqa: E501, B950 # pylint: disable=line-too-long
+    # Warning: "ref-curvature" does not work
+    # with "Slope0" as "classification_layers"
     test_cfg["statistics"]["ref-curvature"]["classification_layers"].pop(
         "Slope0"
     )
@@ -597,7 +598,7 @@ def test_demcompare_statistics_step_curvature_input_ref_with_gironde_test_data()
     #     "nodata": -32768,
     #     },
     # "statistics": {
-    #     "remove_outliers": "False",
+    #     "remove_outliers": false,
     #     "classification_layers": {
     #         "Status": {
     #             "type": "segmentation",
@@ -711,11 +712,12 @@ def test_initialization_with_wrong_classification_layers():
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
         os.makedirs(tmp_dir, exist_ok=True)
 
-        cfg["input_sec"]["classification_layers"]["Status"][
-            "map_path"
-        ] = os.path.join(
-            test_data_path,
-            "input/Small_FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF",
+        cfg["input_sec"]["classification_layers"]["Status"]["map_path"] = (
+            os.path.join(
+                test_data_path,
+                "input",
+                "Small_FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF",
+            )
         )
         # Set a new test_config tmp file path
         tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")

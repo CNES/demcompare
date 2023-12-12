@@ -2,7 +2,7 @@
 
 
 Demcompare high level description
-**********************************
+==================================
 
 Demcompare can be run through :ref:`demcompare_cli` that uses :ref:`demcompare_module`.
 
@@ -26,9 +26,6 @@ With an input configuration file, :ref:`demcompare_module` orchestrates :
 
 Demcompare API is also detailed in `notebooks <https://github.com/CNES/demcompare/tree/master/notebooks>`_ and automatic API is generated in :doc:`/api_reference/index` section.
 
-
-Demcompare conception
-**********************
 
 Demcompare architecture combines simple **python modules** with **python classes**. To generalize some parts, some of those classes have an **abstract architecture**.
 

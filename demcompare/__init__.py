@@ -131,9 +131,9 @@ def run(
             input_stats_sec, input_stats_ref, _ = reproject_dems(
                 input_sec,
                 input_ref,
-                sampling_source=cfg["sampling_source"]
-                if "sampling_source" in cfg
-                else None,
+                sampling_source=(
+                    cfg["sampling_source"] if "sampling_source" in cfg else None
+                ),
             )
         # If input_sec is None, input_stats_sec=None
         else:
@@ -219,12 +219,16 @@ def run(
                 fig_title=dem_processing_object.fig_title,
                 colorbar_title=dem_processing_object.colorbar_title,
                 cmap=dem_processing_object.cmap,
-                vmin_plot=cfg["statistics"][dem_processing_method]["vmin_plot"]
-                if "vmin_plot" in cfg["statistics"][dem_processing_method]
-                else None,
-                vmax_plot=cfg["statistics"][dem_processing_method]["vmax_plot"]
-                if "vmax_plot" in cfg["statistics"][dem_processing_method]
-                else None,
+                vmin_plot=(
+                    cfg["statistics"][dem_processing_method]["vmin_plot"]
+                    if "vmin_plot" in cfg["statistics"][dem_processing_method]
+                    else None
+                ),
+                vmax_plot=(
+                    cfg["statistics"][dem_processing_method]["vmax_plot"]
+                    if "vmax_plot" in cfg["statistics"][dem_processing_method]
+                    else None
+                ),
             )
 
             # Create StatsComputation object
@@ -239,43 +243,35 @@ def run(
             plot_metrics = [
                 {
                     "cdf": {
-                        "remove_outliers": str(
-                            cfg["statistics"][dem_processing_method][
-                                "remove_outliers"
-                            ]
-                        ),
+                        "remove_outliers": cfg["statistics"][
+                            dem_processing_method
+                        ]["remove_outliers"],
                         "output_plot_path": plot_path_cdf,
                         "output_csv_path": csv_path_cdf,
                     }
                 },
                 {
                     "pdf": {
-                        "remove_outliers": str(
-                            cfg["statistics"][dem_processing_method][
-                                "remove_outliers"
-                            ]
-                        ),
+                        "remove_outliers": cfg["statistics"][
+                            dem_processing_method
+                        ]["remove_outliers"],
                         "output_plot_path": plot_path_pdf,
                         "output_csv_path": csv_path_pdf,
                     }
                 },
                 {
                     "svf": {
-                        "remove_outliers": str(
-                            cfg["statistics"][dem_processing_method][
-                                "remove_outliers"
-                            ]
-                        ),
+                        "remove_outliers": cfg["statistics"][
+                            dem_processing_method
+                        ]["remove_outliers"],
                         "plot_path": plot_path_svf,
                     }
                 },
                 {
                     "hillshade": {
-                        "remove_outliers": str(
-                            cfg["statistics"][dem_processing_method][
-                                "remove_outliers"
-                            ]
-                        ),
+                        "remove_outliers": cfg["statistics"][
+                            dem_processing_method
+                        ]["remove_outliers"],
                         "plot_path": plot_path_hillshade,
                     }
                 },

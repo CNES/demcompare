@@ -6,7 +6,7 @@ Statistics
 
 .. note::
 
-    In this chapter, we use *ref* and *sec* abbreviations when refering to the reference input DEM (``input_ref``) and the secondary input DEM (``ìnput_sec``) respectively **after coregistration or reprojection, if specified in the configuration file**.
+    In this chapter, we use *ref* and *sec* abbreviations when refering to the reference input DEM (``input_ref``) and the secondary input DEM (``input_sec``) respectively **after coregistration or reprojection, if specified in the configuration file**.
 
 The following subsections detail each statistics topics:
 

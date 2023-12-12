@@ -46,5 +46,4 @@ Another configuration is also available, allowing to compute more interesting me
     # run demcompare
     demcompare sample_config_full.json
 
-- For more information about **demcompare**'s command line execution, please refer to: :ref:`command_line_execution`
-- For more information about **demcompare**'s steps, please refer to: :ref:`coregistration`, :ref:`statistics`, :ref:`report`
+For more details, please refer to :ref:`command_line_execution` section.

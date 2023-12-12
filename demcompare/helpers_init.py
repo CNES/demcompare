@@ -22,9 +22,9 @@
 """
 This is where high level parameters are checked and default options are set
 """
-import copy
 
 # Standard imports
+import copy
 import json
 import logging
 import os
@@ -149,19 +149,9 @@ def compute_initialization(config_json: str) -> ConfigType:
         )
     if "statistics" in cfg:
         for dem_processing_method in cfg["statistics"]:
-            cfg["statistics"][dem_processing_method][
-                "output_dir"
-            ] = os.path.join(cfg["output_dir"], "stats", dem_processing_method)
-
-    # If defined, force the sampling_source of the
-    # coregistration step into the stats step
-    if "coregistration" in cfg:
-        if "sampling_source" in cfg["coregistration"]:
-            if "statistics" in cfg:
-                for dem_processing_method in cfg["statistics"]:
-                    cfg["statistics"][dem_processing_method][
-                        "sampling_source"
-                    ] = cfg["coregistration"]["sampling_source"]
+            cfg["statistics"][dem_processing_method]["output_dir"] = (
+                os.path.join(cfg["output_dir"], "stats", dem_processing_method)
+            )
 
     return cfg
 

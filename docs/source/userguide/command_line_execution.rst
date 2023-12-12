@@ -13,17 +13,7 @@ Execution from the command line
     demcompare config_file.json #run demcompare
 
 The following code-block is an input configuration file example including 
-both **coregistration** and **statistics** steps with demcompare data samples. These steps are optional.
-Remove one of them from the config file to prevent demcompare from running it.
-
-The **statistics** steps includes an **alti-diff** step.
-This configuration allows to compute the difference in altitude between the two input DEMs.
-**alti-diff** is an example of `dem_processing_methods` (see :ref:`DEM_processing_methods`).
-Several other `dem_processing_methods` are also available. 
-All `dem_processing_methods` can be found in :ref:`List of DEM processing methods <list_DEM_processing_methods>`.
-They can be used one after the other.
-
-An optional **report** step is included to generate a report if statistics are computed. 
+both **coregistration**, **statistics** and **report** steps with demcompare data samples.
 
 .. code-block:: json
 
@@ -40,11 +30,21 @@ An optional **report** step is included to generate a report if statistics are c
         },
         "statistics": {
             "alti-diff": {
-                "remove_outliers": "False"
+                "remove_outliers": false
             }
         },
         "report" : "default"
     }
+
+The **coregistration** and **report** steps are optional.
+Remove one of them from the config file to prevent demcompare from running it.
+
+The mandatory **statistics** step includes an **alti-diff** :ref:`DEM_processing_methods` section.
+This **alti-diff** configuration allows to compute the difference in altitude between the two input DEMs.
+All :ref:`DEM_processing_methods` can be found in :ref:`List of DEM processing methods <list_DEM_processing_methods>`.
+They can be used one after the other in the **statistics** step.
+
+The optional **report** step generates a report from computed statistics. 
 
 Configuration parameters are described in associated sub-sections:
 

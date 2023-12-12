@@ -29,7 +29,7 @@ indicated otherwise. If DEMs altitudes are to rely on **geoid**, the configurati
 .. code-block:: json
 
     "input_sec" : {  "path":"./input_sec.tif"
-                     "geoid_georef" : "True",
+                     "geoid_georef" : true,
                   }
 
 In this case, **EGM96 geoid** will be used by default.
@@ -41,7 +41,7 @@ For instance, if DEMs altitudes are to rely on a local *.gtx* available **geoid*
 .. code-block:: json
 
     "input_sec" : {  "path": "./input_sec.tif"
-                     "geoid_georef": "True",
+                     "geoid_georef": true,
                      "geoid_path": "path/to/egm08_25.gtx"
                    }
 
@@ -114,7 +114,7 @@ It allows one to explicitly provide both DEMs unit, so that demcompare can conve
 Nodata
 ******
 
-Demcompare will try to read the nodata value of each DEM from their metadata. However, if for some reasons another nodata value shall be specified then one can use the `nodata` parameter.
+Demcompare will try to read the nodata value of each DEM from their metadata. However, another nodata value can be specified with the `nodata` parameter.
 
 .. code-block:: json
 
@@ -128,11 +128,11 @@ Demcompare will try to read the nodata value of each DEM from their metadata. Ho
         "nodata": -32768,
       }
 
-Input DEMs parameters
-*********************
+Input DEMs configuration
+*************************
 
-Here is the exhaustive list of parameters one can use for the input DEMs. Along with the parameters are the associated default values (when relevant).
-Every parameter here is a key for either the ``input_ref`` or the ```input_sec`` root parameter.
+This section details all input DEMs configuration parameters.
+Every parameter is a key for either the ``input_ref`` or the ``input_sec`` root configuration section.
 
 .. csv-table:: Input DEMs parameters
   :header: "Name", "Description", "Type", "Default value", "Required"
@@ -140,8 +140,8 @@ Every parameter here is a key for either the ``input_ref`` or the ```input_sec``
   :align: left
 
   ``'path'``, "Path", "string", ``None``, "Yes"
-  ``'roi'``, "Processed Region of interest of the input Sec", "Dict", ``None``, "No"
-  ``'geoid_georef'``, "True if the georef of the input Ref", "string", ``False``, "No"
+  ``'roi'``, "Processed Region Of Interest of the input Sec", "Dict", ``None``, "No"
+  ``'geoid_georef'``, "true if the georef of the input Ref", "boolean", ``false``, "No"
   ``'geoid_path'``, "Geoid path of the input Ref", "string", ``None``, "No"
   ``'zunit'``, "Z axes unit", "string", ``m``, "No"
   ``''nodata'``, "No data value of the input Ref", "int", ``None``, "No"
@@ -151,14 +151,17 @@ Every parameter here is a key for either the ``input_ref`` or the ```input_sec``
 
   ``'classification_layers':{'name_map_path':}`` is a parameter used for statistics purpose. See :ref:`statistics` for more information.
 
-Be aware that for a command line execution, one must set the directory where data should be written down.
+Output configuration
+********************
+
+Be aware that for a command line execution, one must set the output directory where data will be saved.
 
 .. csv-table::
     :header: "Name","Description", "Type", "Default value", "Required"
     :widths: auto
     :align: left
 
-    ``'output_dir'``,Output directory path,string, ``None``, Oui
+    ``'output_dir'``,Output directory path,string, ``None``, Yes
 
 .. note::
 

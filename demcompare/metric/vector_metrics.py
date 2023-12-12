@@ -212,7 +212,7 @@ class ProbabilityDensityFunction(MetricTemplate):
             else:
                 self.width = self._WIDTH
             if "filter_p98" in parameters:
-                self.filter_p98 = parameters["filter_p98"] == "True"
+                self.filter_p98 = parameters["filter_p98"]
             else:
                 self.filter_p98 = False
             if "output_csv_path" in parameters:

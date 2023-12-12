@@ -100,9 +100,9 @@ class DemProcessing:
             :param dem_processing_subclass: the subclass to be registered
             :type dem_processing_subclass: object
             """
-            cls.available_dem_processing_methods[
-                dem_processing_method
-            ] = dem_processing_subclass
+            cls.available_dem_processing_methods[dem_processing_method] = (
+                dem_processing_subclass
+            )
             return dem_processing_subclass
 
         return decorator

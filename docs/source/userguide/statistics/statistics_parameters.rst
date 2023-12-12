@@ -12,8 +12,8 @@ Statistics parameters
     +---------------------------------------------+-------------------------------------------------+-------------+------------------------------+----------+
     | Name                                        | Description                                     | Type        | Default value                | Required |
     +=============================================+=================================================+=============+==============================+==========+
-    | ``remove_outliers``                         | | Remove outliers during statistics             | string      | ``"False"``                  | No       |
-    |                                             | | computation                                   |             |                              |          |
+    | ``remove_outliers``                         | | Remove outliers during statistics             | boolean     | ``false``                    | No       |
+    |                                             | | computation  (true/false)                     |             |                              |          |
     +---------------------------------------------+-------------------------------------------------+-------------+------------------------------+----------+
     | ``metrics``                                 | Metrics to be computed                          | List        | ``List of default metrics``  | No       |
     |                                             |                                                 |             |                              |          |

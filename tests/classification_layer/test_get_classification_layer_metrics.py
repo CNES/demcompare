@@ -208,7 +208,7 @@ def test_get_classification_layer_metrics_from_stats_processing():
 
     # Initialize stats input configuration
     input_stats_cfg = {
-        "remove_outliers": "False",
+        "remove_outliers": False,
         "classification_layers": {
             "Status": {
                 "type": "segmentation",

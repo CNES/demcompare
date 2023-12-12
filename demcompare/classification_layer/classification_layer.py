@@ -140,9 +140,9 @@ class ClassificationLayer:
             :param classif_subclass: the subclass to be registered
             :type classif_subclass: object
             """
-            cls.available_classification[
-                classification_layer_type
-            ] = classif_subclass
+            cls.available_classification[classification_layer_type] = (
+                classif_subclass
+            )
             return classif_subclass
 
         return decorator

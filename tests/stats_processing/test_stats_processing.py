@@ -105,7 +105,7 @@ def test_create_classif_layers():
 
     # Initialize stats input configuration
     input_stats_cfg = {
-        "remove_outliers": "False",
+        "remove_outliers": False,
         "classification_layers": {
             "Status": {
                 "type": "segmentation",
@@ -248,7 +248,7 @@ def test_create_classif_layers_without_input_classif():
 
     # Initialize stats input configuration
     input_stats_cfg = {
-        "remove_outliers": "False",
+        "remove_outliers": False,
     }
 
     # Create StatsProcessing object
@@ -266,7 +266,7 @@ def test_create_classif_layers_without_input_classif():
                 "max",
                 "min",
                 "sum",
-                {"percentil_90": {"remove_outliers": "False"}},
+                {"percentil_90": {"remove_outliers": False}},
                 "squared_sum",
                 "nmad",
                 "rmse",

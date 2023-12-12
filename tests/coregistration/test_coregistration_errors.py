@@ -153,7 +153,7 @@ def test_coregistration_with_output_dir():
         cfg.pop("output_dir")
         # parameters save_optional_outputs
         # set to True
-        cfg["coregistration"]["save_optional_outputs"] = "True"
+        cfg["coregistration"]["save_optional_outputs"] = True
 
         # Create coregistration object
         with pytest.raises(ValueError):

@@ -1,7 +1,7 @@
 .. _dem_processing:
 
-DEM processing
-==============
+DEM processing module
+=====================
 
 **DemProcessing**: Implemented in `DemProcessing file <https://github.com/CNES/demcompare/blob/master/demcompare/dem_processing/dem_processing.py>`_
 

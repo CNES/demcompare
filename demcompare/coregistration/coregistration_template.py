@@ -163,11 +163,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         if "estimated_initial_shift_x" not in cfg:
             cfg["estimated_initial_shift_x"] = 0
             cfg["estimated_initial_shift_y"] = 0
-        if "save_optional_outputs" in cfg:
-            cfg["save_optional_outputs"] = (
-                cfg["save_optional_outputs"] == "True"
-            )
-        else:
+        if "save_optional_outputs" not in cfg:
             cfg["save_optional_outputs"] = self._SAVE_OPTIONAL_OUTPUTS
 
         if "output_dir" not in cfg:

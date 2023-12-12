@@ -83,7 +83,7 @@ def test_demcompare_with_gironde_test_data():
         # Modify test's output dir in configuration to tmp test dir
         test_cfg["output_dir"] = tmp_dir
         # Manually set the saving of internal dems to True
-        test_cfg["coregistration"]["save_optional_outputs"] = "True"
+        test_cfg["coregistration"]["save_optional_outputs"] = True
 
         # Set a new test_config tmp file path
         tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")

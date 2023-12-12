@@ -40,7 +40,7 @@ Four types of classification layers exist:
             }
             "statistics": {
                 "alti-diff": {
-                    "remove_outliers": "False",
+                    "remove_outliers": false,
                     "classification_layers": {
                         "Status": {
                             "type": "segmentation",
@@ -62,7 +62,7 @@ Four types of classification layers exist:
 
                 "statistics": {
                     "alti-diff": {
-                        "remove_outliers": "False",
+                        "remove_outliers": false,
                         "classification_layers": {
                             "Status": {
                                 "type": "segmentation",
@@ -218,8 +218,6 @@ Four types of classification layers exist:
 
 The modes
 *********
-
-
 
     As shown in previous section, **demcompare** will classify stats according to classification layers and classification layer masks must be superimposable to one DEM, meaning that the classification mask and its support DEM must have the same size and resolution.
     

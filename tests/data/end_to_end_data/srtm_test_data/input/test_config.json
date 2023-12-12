@@ -16,7 +16,7 @@
     "estimated_initial_shift_y": 0
   },
   "statistics": {
-    "alti-diff":{
+    "alti-diff": {
       "classification_layers": {
         "Slope0": {
           "type": "slope",
@@ -29,7 +29,7 @@
           ]
         }
       },
-      "remove_outliers": "True"
+      "remove_outliers": true
     }
   }
 }

@@ -156,7 +156,7 @@ def test_pdf():
     data = np.array([-7.0, 3.0, 3.0, 1, 3.0, 1.0, 0.0], dtype=np.float32)
 
     # Create metric object
-    metric_obj = Metric("pdf", params={"filter_p98": "False"})
+    metric_obj = Metric("pdf", params={"filter_p98": False})
 
     bin_step = metric_obj._BIN_STEP
     hist, gt_bins = np.histogram(
@@ -179,7 +179,7 @@ def test_pdf():
     data = np.array([-7.0, 3.0, 3.0, 1, 3.0, 1.0, 0.0], dtype=np.float32)
 
     # Create metric object
-    metric_obj = Metric("pdf", params={"filter_p98": "True"})
+    metric_obj = Metric("pdf", params={"filter_p98": True})
 
     bound = np.abs(np.nanpercentile(data, 98))
     bin_step = metric_obj._BIN_STEP

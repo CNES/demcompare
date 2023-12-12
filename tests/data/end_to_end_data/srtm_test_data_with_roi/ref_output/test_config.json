@@ -2,13 +2,11 @@
   "output_dir": "./test_output/",
   "input_ref": {
     "path": "tests/tests_data/strm_test_data/srtm_ref.tif",
-    "zunit": "m",
-    "georef": "WGS84"
+    "zunit": "m"
   },
   "input_sec": {
     "path": "tests/tests_data/strm_test_data/srtm_blurred_and_shifted.tif",
     "zunit": "m",
-    "georef": "WGS84",
     "nodata": -32768,
     "roi": {
       "left": 40.5,
@@ -22,7 +20,7 @@
     "number_of_iterations": 6,
     "estimated_initial_shift_x": 0,
     "estimated_initial_shift_y": 0,
-    "save_optional_outputs": "True"
+    "save_optional_outputs": true
   },
   "statistics": {
     "alti-diff": {
@@ -38,7 +36,7 @@
           ]
         }
       },
-      "remove_outliers": "True"
+      "remove_outliers": true
     }
   }
 }

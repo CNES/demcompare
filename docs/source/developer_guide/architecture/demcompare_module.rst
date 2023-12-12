@@ -1,8 +1,8 @@
 .. _demcompare_module:
 
 
-Demcompare module
-=================
+Demcompare pipeline module
+===========================
 
 The main demcompare module in `demcompare_module file <https://github.com/CNES/demcompare/blob/master/demcompare/__init__.py>`_ orchestrates the demcompare
 API from an input configuration file, hence, from an execution using the :ref:`demcompare_cli`.

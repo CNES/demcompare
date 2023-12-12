@@ -35,7 +35,7 @@
           ]
         }
       },
-      "remove_outliers": "True"
+      "remove_outliers": true
     }
   }
 }

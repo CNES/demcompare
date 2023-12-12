@@ -90,7 +90,7 @@ def initialize_stats_processing():
     stats_dem = dem_processing_object.process_dem(ref, sec)
     # Initialize stats input configuration
     input_stats_cfg = {
-        "remove_outliers": "False",
+        "remove_outliers": False,
         "classification_layers": {
             "Status": {
                 "type": "segmentation",
@@ -155,7 +155,7 @@ def initialize_stats_processing_with_metrics():
     stats_dem = dem_processing_object.process_dem(ref, sec)
     # Initialize stats input configuration
     input_stats_cfg = {
-        "remove_outliers": "False",
+        "remove_outliers": False,
         "classification_layers": {
             "Status": {
                 "type": "segmentation",

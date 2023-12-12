@@ -105,9 +105,7 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         """
         # Initialize cfg layer with necessary parameters
         cfg: Dict = {}
-        cfg["remove_outliers"] = str(
-            self.classification_layers[0].remove_outliers
-        )
+        cfg["remove_outliers"] = self.classification_layers[0].remove_outliers
         cfg["output_dir"] = self.classification_layers[0].output_dir
         cfg["type"] = "fusion"
         cfg["nodata"] = self.classification_layers[0].nodata
@@ -136,9 +134,9 @@ class FusionClassificationLayer(ClassificationLayerTemplate):
         map_fusion = np.ones(dems_shape) * self.nodata
         for idx, (_, class_item) in enumerate(self.classes.items()):
             # Fill fusion map with classes masks
-            map_fusion[
-                np.where(self.classes_masks[self.support][idx])
-            ] = class_item
+            map_fusion[np.where(self.classes_masks[self.support][idx])] = (
+                class_item
+            )
         # Add map_fusion on the map_image
         self.map_image[self.support] = map_fusion
         # Save results

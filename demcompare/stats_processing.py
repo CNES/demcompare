@@ -65,7 +65,7 @@ class StatsProcessing:
             "max",
             "min",
             "sum",
-            {"percentil_90": {"remove_outliers": "False"}},
+            {"percentil_90": {"remove_outliers": False}},
             "squared_sum",
             "nmad",
             "rmse",
@@ -148,9 +148,9 @@ class StatsProcessing:
             cfg["classification_layers"] = {}
 
         # Add default global layer
-        cfg["classification_layers"][
-            self._DEFAULT_GLOBAL_LAYER_NAME
-        ] = copy.deepcopy(self._DEFAULT_GLOBAL_LAYER)
+        cfg["classification_layers"][self._DEFAULT_GLOBAL_LAYER_NAME] = (
+            copy.deepcopy(self._DEFAULT_GLOBAL_LAYER)
+        )
 
         # If metrics have been specified,
         # add them to all classif layers
@@ -171,9 +171,7 @@ class StatsProcessing:
 
         # Give the default value if the required element
         # is not in the configuration
-        if "remove_outliers" in cfg:
-            cfg["remove_outliers"] = cfg["remove_outliers"] == "True"
-        else:
+        if "remove_outliers" not in cfg:
             cfg["remove_outliers"] = self._REMOVE_OUTLIERS
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
@@ -201,7 +199,7 @@ class StatsProcessing:
                     # on the classification layer cfg,
                     # add the global statistics one
                     if "remove_outliers" not in clayer:
-                        clayer["remove_outliers"] = str(self.remove_outliers)
+                        clayer["remove_outliers"] = self.remove_outliers
                     # Create ClassificationLayer object
                     self.classification_layers.append(
                         ClassificationLayer(

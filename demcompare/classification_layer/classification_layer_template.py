@@ -23,9 +23,9 @@
 Mainly contains the ClassificationLayer class.
 A classification_layer defines a way to classify the DEMs alti differences.
 """
-import collections
 
 # Standard imports
+import collections
 import copy
 import logging
 import os
@@ -38,11 +38,11 @@ import rasterio
 import xarray as xr
 from json_checker import Checker, Or
 
+# DEMcompare imports
 from demcompare.dem_tools import DEFAULT_NODATA, create_dem, save_dem
 from demcompare.img_tools import remove_nan_and_flatten
 from demcompare.metric import Metric
 
-# DEMcompare imports
 from ..internal_typing import ConfigType
 from ..stats_dataset import StatsDataset
 
@@ -164,14 +164,12 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         :return cfg: coregistration configuration updated
         :rtype: ConfigType
         """
-
         # Give the default value if the required element
         # is not in the configuration
         if "nodata" not in cfg:
             cfg["nodata"] = DEFAULT_NODATA
-        if "remove_outliers" in cfg:
-            cfg["remove_outliers"] = cfg["remove_outliers"] == "True"
-        else:
+        # set default remove outliers to false
+        if "remove_outliers" not in cfg:
             cfg["remove_outliers"] = False
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
@@ -286,9 +284,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 params = input_metric[name]
                 # If outliers were specified for this metric
                 if "remove_outliers" in params:
-                    remove_outliers_list.append(
-                        params["remove_outliers"] == "True"
-                    )
+                    remove_outliers_list.append(params["remove_outliers"])
                     # copy the params and suppress the
                     # remove_outliers parameter as it is
                     # not part of the metric class

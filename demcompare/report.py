@@ -81,15 +81,20 @@ def fill_report_stats(
         # Initialize mode informations for classification_layer
         modes_information[classification_layer_name] = collections.OrderedDict()
         modes_information[classification_layer_name]["standard"] = {
-            "pitch": "This mode results relies only on **valid values** "
-            "without nan values "
-            "(whether they are from the error image or the reference support "
-            "image when do_classification is on). Outliers and "
-            "masked ones has been also discarded."
+            "pitch": (
+                "This mode results relies only on **valid values** "
+                "without nan values "
+                "(whether they are "
+                "from the error image or the reference support "
+                "image when do_classification is on). Outliers and "
+                "masked ones has been also discarded."
+            )
         }
         modes_information[classification_layer_name]["intersection"] = {
-            "pitch": "This is the standard mode where only the pixels for "
-            "which input DSMs classifications are intersection."
+            "pitch": (
+                "This is the standard mode where only the pixels for "
+                "which input DSMs classifications are intersection."
+            )
         }
         modes_information[classification_layer_name]["exclusion"] = {
             "pitch": "This mode is the 'intersection' " "complementary."
@@ -136,9 +141,11 @@ def fill_report_stats(
                             csv_data.append(
                                 ",".join(
                                     [
-                                        item
-                                        if isinstance(item, str)
-                                        else format(item, ".2f")
+                                        (
+                                            item
+                                            if isinstance(item, str)
+                                            else format(item, ".2f")
+                                        )
                                         for item in row
                                     ]
                                 )
