@@ -20,6 +20,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# pylint:disable=too-many-lines
 """
 utils functions for plotting in notebooks
 """
@@ -28,6 +30,7 @@ import itertools
 import random
 from typing import Any, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from bokeh.colors import RGB
@@ -580,3 +583,286 @@ def plot_slope_orientation_histogram(
         )
 
     show(plot)
+
+
+def plot_visualizations(
+    input_ref: xr.Dataset,
+    input_sec: xr.Dataset,
+    hillshade_ref: xr.Dataset,
+    hillshade_sec: xr.Dataset,
+    svf_ref: xr.Dataset,
+    svf_sec: xr.Dataset,
+    colorbar_range: list,
+):
+    """
+    Show 6 figures: top three are elevation, hillshade and svf visualizations
+        for the reference DEM. Bottom three are the sames for the second DEM.
+    :param input_ref: DEMS
+    :type input_ref: dataset
+    :param input_sec: DEMS
+    :type input_sec: dataset
+    :param hillshade_ref: hillshade
+    :type hillshade_ref: dataset
+    :param hillshade_sec: hillshade
+    :type hillshade_sec: dataset
+    :param svf_ref: sky-view factor
+    :type svf_ref: dataset
+    :param svf_sec: sky-view factor
+    :type svf_sec: dataset
+    :param colorbar_range: min & max value for the 3 visualizations
+    :type colorbar_range: list[6]
+
+    :return: figure
+    """
+
+    plt.figure(figsize=(20, 10))
+
+    plt.subplot(2, 3, 1)
+    plt.imshow(
+        input_ref["image"],
+        vmin=colorbar_range[0],
+        vmax=colorbar_range[1],
+        cmap="terrain",
+    )
+    plt.colorbar()
+    plt.title("ref DEM")
+    plt.subplot(2, 3, 2)
+    plt.imshow(
+        hillshade_ref["image"],
+        vmin=colorbar_range[2],
+        vmax=colorbar_range[3],
+        cmap="Greys_r",
+    )
+    plt.colorbar()
+    plt.title("ref DEM hillshade")
+    plt.subplot(2, 3, 3)
+    plt.imshow(
+        svf_ref["image"],
+        vmin=colorbar_range[4],
+        vmax=colorbar_range[5],
+        cmap="Greys_r",
+    )
+    plt.colorbar()
+    plt.title("ref DEM svf")
+    plt.subplot(2, 3, 4)
+    plt.imshow(
+        input_sec["image"],
+        vmin=colorbar_range[0],
+        vmax=colorbar_range[1],
+        cmap="terrain",
+    )
+    plt.colorbar()
+    plt.title("sec DEM")
+    plt.subplot(2, 3, 5)
+    plt.imshow(
+        hillshade_sec["image"],
+        vmin=colorbar_range[2],
+        vmax=colorbar_range[3],
+        cmap="Greys_r",
+    )
+    plt.colorbar()
+    plt.title("sec DEM hillshade")
+    plt.subplot(2, 3, 6)
+    plt.imshow(
+        svf_sec["image"],
+        vmin=colorbar_range[4],
+        vmax=colorbar_range[5],
+        cmap="Greys_r",
+    )
+    plt.colorbar()
+    plt.title("sec DEM svf")
+
+    plt.show()
+
+
+def plot_side_by_side(
+    input_ref: xr.Dataset,
+    input_sec: xr.Dataset,
+    title_ref: str,
+    title_sec: str,
+    vmin_color_ref: float,
+    vmax_color_ref: float,
+    vmin_color_sec: float,
+    vmax_color_sec: float,
+):
+    """
+    Show both slope orientation histograms on the same plot.
+    :param input_ref: DEMS
+    :type input_ref: Tuple[np.ndarray]
+    :param input_sec: DEMS
+    :type input_sec: Tuple[np.ndarray]
+    :param title_ref: title
+    :type title_ref: str
+    :param title_sec: title
+    :type title_sec: str
+    :param cmap: cmap parameter for the plot
+    :type cmap: str
+    :param vmin_color_ref: min value for the colorbar
+    :type vmin_color_ref: float
+    :param vmax_color_ref: max value for the colorbar
+    :type vmax_color_ref: float
+    :param vmin_color_sec: min value for the colorbar
+    :type vmin_color_sec: float
+    :param vmax_color_sec: max value for the colorbar
+    :type vmax_color_sec: float
+
+    :return: figure
+    """
+
+    plt.figure(figsize=(14, 6))
+
+    plt.subplot(1, 2, 1)
+    plt.imshow(
+        input_ref["image"], vmin=vmin_color_ref, vmax=vmax_color_ref, cmap="bwr"
+    )
+    plt.colorbar()
+    plt.title(title_ref)
+    plt.subplot(1, 2, 2)
+    plt.imshow(
+        input_sec["image"], vmin=vmin_color_sec, vmax=vmax_color_sec, cmap="bwr"
+    )
+    plt.colorbar()
+    plt.title(title_sec)
+
+    plt.show()
+
+
+def plot_two_slope_orientation_histogram(
+    angles_ref: np.ndarray,
+    hist_ref: np.ndarray,
+    angles_sec: np.ndarray,
+    hist_sec: np.ndarray,
+):
+    """
+    Show 2 plots side by side.
+    :param angles_ref: angles
+    :type angles_ref: ndarray
+    :param hist_ref: angles
+    :type hist_ref: ndarray
+    :param angles_sec: bins
+    :type angles_sec: ndarray
+    :param hist_sec: bins
+    :type hist_sec: ndarray
+
+    :return: figure
+    """
+
+    angles_ref = angles_ref[:-1]
+    angles_sec = angles_sec[:-1]
+
+    # matplotlib displays the default 0° in the east direction,
+    # and +90° in the direct trigonometric direction.
+    angles_ref2 = -angles_ref
+    angles_ref2 += np.pi / 2
+    angles_sec2 = -angles_sec
+    angles_sec2 += np.pi / 2
+
+    plt.figure()
+    a_x = plt.subplot(111, polar=True)
+    a_x.plot(angles_ref2, hist_ref, ".", color="red", label="ref DEM")
+    a_x.plot(angles_sec2, hist_sec, ".", color="blue", label="sec DEM")
+    a_x.set_xticks(np.pi / 180.0 * np.linspace(0, 360, 8, endpoint=False))
+    new_label = [
+        "90° \n (E)",
+        "45°",
+        "0° (N)",
+        "315°",
+        "270° \n (W)",
+        "225°",
+        "180° (S)",
+        "135°",
+    ]
+    a_x.set_xticklabels(new_label)
+    plt.legend()
+
+    plt.title("Number of pixels as a function of the slope orientation.")
+
+    c_f = plt.gcf()
+    c_f.set_size_inches([16.8, 9.45])
+
+    plt.show()
+
+
+def plot_cdf_pdf_side_by_side(
+    pdf: np.ndarray, cdf: np.ndarray, method: str
+) -> None:
+    """
+    Plot cdf and pdf function
+    :param pdf: values for pdf
+    :type pdf: np.ndarray
+    :param cdf: values for cdf
+    :type cdf: np.ndarray
+    :param method: method
+    :type method: str
+    """
+
+    plt.figure(figsize=(14, 6))
+
+    plt.subplot(1, 2, 1)
+    a_x = plt.gca()
+    center = (pdf[0][1][:-1] + pdf[0][1][1:]) / 2
+    plt.bar(center, pdf[0][0])
+    a_x.set_xlabel("Elevation difference (m)")
+    a_x.set_ylabel("Probability density")
+    plt.grid()
+    plt.title("pdf for the " + method)
+
+    plt.subplot(1, 2, 2)
+    a_x = plt.gca()
+    center = (cdf[0][1][:-1] + cdf[0][1][1:]) / 2
+    plt.plot(center, cdf[0][0])
+    a_x.set_xlabel("Full absolute elevation difference (m)")
+    a_x.set_ylabel("Cumulative density")
+    plt.grid()
+    plt.title("cdf for the " + method)
+
+    plt.show()
+
+
+def plot_angular_diff(
+    data: xr.Dataset,
+    pdf: np.ndarray,
+    cdf: np.ndarray,
+    vmin_color: float,
+    vmax_color: float,
+) -> None:
+    """
+    Plot cdf and pdf function
+    :param data: angular diff data
+    :type data: dataset
+    :param pdf: values for pdf
+    :type pdf: np.ndarray
+    :param cdf: values for cdf
+    :type cdf: np.ndarray
+    :param vmin_color: min value for the angular diff colorbar
+    :type vmin_color: float
+    :param vmax_color: max value for the angular diff colorbar
+    :type vmax_color: float
+    """
+
+    plt.figure(figsize=(20, 6))
+
+    plt.subplot(1, 3, 1)
+    plt.imshow(data["image"], vmin=vmin_color, vmax=vmax_color, cmap="Reds")
+    plt.colorbar()
+    plt.title("Angular difference (radian)")
+
+    plt.subplot(1, 3, 2)
+    a_x = plt.gca()
+    center = (pdf[0][1][:-1] + pdf[0][1][1:]) / 2
+    plt.bar(center, pdf[0][0], width=0.1)
+    a_x.set_xlabel("Elevation difference (m)")
+    a_x.set_ylabel("Probability density")
+    plt.grid()
+    plt.title("pdf for the angular difference")
+
+    plt.subplot(1, 3, 3)
+    a_x = plt.gca()
+    center = (cdf[0][1][:-1] + cdf[0][1][1:]) / 2
+    plt.plot(center, cdf[0][0])
+    a_x.set_xlabel("Full absolute elevation difference (m)")
+    a_x.set_ylabel("Cumulative density")
+    plt.grid()
+    plt.title("cdf for the angular difference")
+
+    plt.show()
