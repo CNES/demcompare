@@ -155,7 +155,7 @@ docs: install ## generate Sphinx HTML documentation, including API docs
 .PHONY: notebook
 notebook: ## install Jupyter notebook kernel with venv and demcompare install
 	@echo "Install Jupyter Kernel and run Jupyter notebooks environment"
-	@${VENV}/bin/python -m ipykernel install --sys-prefix --name=demcompare-${VENV} --display-name=demcompare-${VERSION}
+	@${VENV}/bin/python -m ipykernel install --sys-prefix --name=demcompare-${VENV} --display-name=demcompare-${VENV}
 	@echo "Use jupyter kernelspec list to know where is the kernel"
 	@echo " --> After demcompare virtualenv activation, please use following command to run local jupyter notebook to open Notebooks:"
 	@echo "jupyter notebook"
