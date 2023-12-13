@@ -4,7 +4,7 @@ User guide
 ==========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
 
    userguide/command_line_execution.rst
@@ -13,6 +13,3 @@ User guide
    userguide/statistics.rst
    userguide/report.rst
    userguide/notebook_execution.rst
-
-
-

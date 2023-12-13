@@ -35,7 +35,7 @@ from tempfile import TemporaryDirectory
 import demcompare
 from demcompare import coregistration
 from demcompare.dem_tools import load_dem
-from demcompare.helpers_init import mkdir_p, read_config_file, save_config_file
+from demcompare.helpers_init import read_config_file, save_config_file
 
 # Tests helpers
 from tests.helpers import demcompare_test_data_path, temporary_dir
@@ -63,7 +63,7 @@ def test_coregistration_save_optional_reprojection():
     cfg = read_config_file(test_cfg_path)
 
     # Manually set the saving of internal dems to True
-    cfg["coregistration"]["save_optional_outputs"] = "True"
+    cfg["coregistration"]["save_optional_outputs"] = True
     # remove useless statistics part
     cfg.pop("statistics")
 
@@ -79,7 +79,7 @@ def test_coregistration_save_optional_reprojection():
     sec = load_dem(cfg["input_sec"]["path"])
 
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-        mkdir_p(tmp_dir)
+        os.makedirs(tmp_dir, exist_ok=True)
         # Modify test's output dir in configuration to tmp test dir
         cfg["output_dir"] = tmp_dir
 
@@ -142,7 +142,7 @@ def test_coregistration_save_optional_outputs():
     # remove useless statistics part
     cfg.pop("statistics")
     # Set save_optional_outputs to True
-    cfg["coregistration"]["save_optional_outputs"] = "True"
+    cfg["coregistration"]["save_optional_outputs"] = True
 
     gt_truth_list_files = [
         "ElevationDiff_AfterCoreg.png",
@@ -160,7 +160,7 @@ def test_coregistration_save_optional_outputs():
     sec = load_dem(cfg["input_sec"]["path"])
 
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-        mkdir_p(tmp_dir)
+        os.makedirs(tmp_dir, exist_ok=True)
         # Modify test's output dir in configuration to tmp test dir
         cfg["output_dir"] = tmp_dir
 
@@ -197,10 +197,10 @@ def test_coregistration_save_optional_outputs():
         assert all(file in list_test for file in gt_truth_list_files) is True
 
     # Test with save_optional_outputs set to False
-    cfg["coregistration"]["save_optional_outputs"] = "False"
+    cfg["coregistration"]["save_optional_outputs"] = False
 
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-        mkdir_p(tmp_dir)
+        os.makedirs(tmp_dir, exist_ok=True)
         # Modify test's output dir in configuration to tmp test dir
         cfg["output_dir"] = tmp_dir
 
@@ -225,7 +225,7 @@ def test_coregistration_save_optional_outputs():
         # test output_dir/coregistration/nuth_kaab_tmp_dir/ creation
         assert (
             os.path.exists(tmp_dir + "/coregistration/nuth_kaab_tmp_dir/")
-            is True
+            is False
         )
 
         # get all files saved in output_dir/coregistration/nuth_kaab_tmp_dir/

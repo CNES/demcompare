@@ -1,0 +1,86 @@
+{
+  "output_dir": "./test_output_full/",
+  "input_ref": {
+    "path": "./srtm_ref.tif",
+    "zunit": "m"
+  },
+  "input_sec": {
+    "path": "./srtm_blurred_and_shifted.tif",
+    "zunit": "m",
+    "nodata": -32768
+  },
+  "coregistration": {
+    "method_name": "nuth_kaab_internal",
+    "number_of_iterations": 6,
+    "estimated_initial_shift_x": 0,
+    "estimated_initial_shift_y": 0
+  },
+  "statistics": {
+    "alti-diff": {
+      "classification_layers": {
+        "Slope0": {
+          "type": "slope",
+          "ranges": [
+            0,
+            5,
+            10,
+            25,
+            45
+          ]
+        }
+      },
+      "remove_outliers": true
+    },
+    "alti-diff-slope-norm": {
+      "classification_layers": {
+        "Slope0": {
+          "type": "slope",
+          "ranges": [
+            0,
+            5,
+            10,
+            25,
+            45
+          ]
+        }
+      },
+      "remove_outliers": true
+    },
+    "angular-diff": {
+      "classification_layers": {
+        "Slope0": {
+          "type": "slope",
+          "ranges": [
+            0,
+            5,
+            10,
+            25,
+            45
+          ]
+        }
+      },
+      "remove_outliers": true
+    },
+    "sec-curvature": {},
+    "ref-curvature": {},
+    "sec": {
+      "metrics": [
+        {
+          "slope-orientation-histogram": {
+            "output_plot_path": "./test_output_full/sec-slope-orientation-histogram"
+          }
+        }
+      ]
+    },
+    "ref": {
+      "metrics": [
+        {
+          "slope-orientation-histogram": {
+            "output_plot_path": "./test_output_full/ref-slope-orientation-histogram"
+          }
+        }
+      ]
+    }
+  },
+  "report": "default"
+}

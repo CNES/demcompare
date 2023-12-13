@@ -35,6 +35,8 @@ from typing import Dict, List, Tuple, Union
 import numpy as np
 import xarray as xr
 
+from .dem_processing import DemProcessing
+
 
 class StatsDataset:
     """
@@ -80,7 +82,7 @@ class StatsDataset:
 
     """
 
-    def __init__(self, image: np.ndarray):
+    def __init__(self, image: np.ndarray, dem_processing_method: str = None):
         # Dictionary with the different classification layers
         # and the modes of each layer
         self.classif_layers_and_modes: Dict = {}
@@ -88,6 +90,10 @@ class StatsDataset:
         self.image: np.ndarray = image
         # List of xr.Dataset for each classification layer
         self.classif_layers_dataset: List[xr.Dataset] = []
+        if dem_processing_method is not None:
+            self.dem_processing: DemProcessing = DemProcessing(
+                dem_processing_method
+            )
 
     def add_classif_layer_and_mode_stats(
         self, classif_name: str, input_stats: List[Dict], mode_name: str
@@ -207,12 +213,12 @@ class StatsDataset:
 
         # Create and add the xr.DataArray to the dataset
         # overload if already present (through dataset_idx above)
-        self.classif_layers_dataset[dataset_idx][
-            image_indicator
-        ] = xr.DataArray(
-            data=image_maps,
-            coords=coords_classification_layers,
-            dims=["row", "col", "classes"],
+        self.classif_layers_dataset[dataset_idx][image_indicator] = (
+            xr.DataArray(
+                data=image_maps,
+                coords=coords_classification_layers,
+                dims=["row", "col", "classes"],
+            )
         )
 
     def save_as_csv_and_json(

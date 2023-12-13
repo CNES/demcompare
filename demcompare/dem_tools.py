@@ -30,7 +30,6 @@ Dataset and associated internal functions are described in dataset_tools.py
 import copy
 import logging
 import os
-import sys
 from enum import Enum
 from typing import Dict, Tuple, Union
 
@@ -41,6 +40,7 @@ import numpy as np
 import rasterio
 import xarray as xr
 from astropy import units as u
+from numpy.fft import fft2, ifft2, ifftshift
 from rasterio import Affine
 from scipy.ndimage import convolve
 
@@ -49,8 +49,12 @@ from .dataset_tools import (
     create_dataset,
     reproject_dataset,
 )
-from .img_tools import convert_pix_to_coord, crop_rasterio_source_with_roi
-from .output_tree_design import get_out_file_path
+from .img_tools import (
+    calc_spatial_freq_2d,
+    convert_pix_to_coord,
+    crop_rasterio_source_with_roi,
+    neighbour_interpol,
+)
 
 DEFAULT_NODATA = -32768
 
@@ -174,12 +178,12 @@ def load_dem(
             classif_rasterio_source = rasterio.open(layer["map_path"])
             map_array = classif_rasterio_source.read(band)
             if map_array.shape != dem_image.shape:
-                logging.error(
-                    "Input classification layer %s does not have the same size"
-                    " as its reference dem.",
-                    name,
+                raise ValueError(
+                    f"Input classification layer {name} "
+                    "does not have the same size"
+                    " as its reference dem."
                 )
-                sys.exit(1)
+
             classif_layers["map_arrays"][:, :, idx] = map_array
             classif_layers["names"].append(name)
             source_rasterio[name] = classif_rasterio_source
@@ -680,9 +684,11 @@ def reproject_dems(
         zunit=static.attrs["zunit"],
         input_img=static.attrs["input_img"],
         bounds=intersection_roi,
-        classification_layer_masks=static.classification_layer_masks
-        if "indicator" in static.coords
-        else None,
+        classification_layer_masks=(
+            static.classification_layer_masks
+            if "indicator" in static.coords
+            else None
+        ),
     )
 
     # Full_interp represent a dem with the full interp image
@@ -695,9 +701,11 @@ def reproject_dems(
         zunit=interp.attrs["zunit"],
         input_img=interp.attrs["input_img"],
         bounds=intersection_roi,
-        classification_layer_masks=interp.classification_layer_masks
-        if "indicator" in interp.coords
-        else None,
+        classification_layer_masks=(
+            interp.classification_layer_masks
+            if "indicator" in interp.coords
+            else None
+        ),
     )
 
     # Translate sec according to the initial shift
@@ -732,46 +740,6 @@ def reproject_dems(
         reproj_cropped_sec = reproj_cropped_static
 
     return reproj_cropped_sec, reproj_cropped_ref, adapting_factor
-
-
-def compute_dems_diff(dem_1: xr.Dataset, dem_2: xr.Dataset) -> xr.Dataset:
-    """
-    Compute altitude difference dem_1 - dem_2 and
-    return it as an xr.Dataset with the dem_2
-    georeferencing and attributes.
-
-    :param dem_1: dem_1 xr.DataSet containing :
-
-                - image : 2D (row, col) xr.DataArray float32
-                - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-    :type dem_1: xr.Dataset
-    :param dem_2: dem_2 xr.DataSet containing :
-
-                - image : 2D (row, col) xr.DataArray float32
-                - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-    :type dem_2: xr.Dataset
-    :return: difference xr.DataSet containing :
-
-                - image : 2D (row, col) xr.DataArray float32
-                - georef_transform: 1D (trans_len) xr.DataArray
-                - classification_layer_masks : 3D (row, col, indicator)
-                  xr.DataArray
-    :rtype: xr.Dataset
-    """
-    diff_raster = dem_1["image"].data - dem_2["image"].data
-
-    diff_dem = create_dem(
-        diff_raster,
-        transform=dem_2.georef_transform.data,
-        nodata=dem_1.attrs["nodata"],
-        img_crs=dem_2.crs,
-        bounds=dem_2.bounds,
-    )
-    return diff_dem
 
 
 def compute_waveform(
@@ -815,7 +783,8 @@ def compute_waveform(
             ),
             os.path.join(
                 output_dir,
-                get_out_file_path("dh_row_wise_wave_detection.tif"),
+                "./stats/",
+                "dh_row_wise_wave_detection.tif",
             ),
         )
         save_dem(
@@ -827,19 +796,19 @@ def compute_waveform(
             ),
             os.path.join(
                 output_dir,
-                get_out_file_path("dh_col_wise_wave_detection.tif"),
+                "./stats/",
+                "dh_col_wise_wave_detection.tif",
             ),
         )
 
     return row_waveform, col_waveform
 
 
-def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
-    ref: xr.Dataset, sec: xr.Dataset
+def accumulates_class_layers(  # pylint:disable=too-many-branches
+    ref: xr.Dataset, sec: xr.Dataset, diff_ref_sec: xr.Dataset
 ) -> xr.Dataset:
     """
-    Computes the difference dem between the two inputs (ref - sec)
-    and accumulates the classification layers of each dem
+    Accumulates the classification layers of each dem
 
     :param ref: ref dem
     :type ref: xr.DataSet containing :
@@ -855,8 +824,17 @@ def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
+    :param diff_ref_sec: difference (i.e angular, in altitude, ...)
+        dem between ref and sec
+    :type diff_ref_sec: xr.DataSet containing :
 
-    :return: the difference dem
+                - image : 2D (row, col) xr.DataArray float32
+                - georef_transform: 1D (trans_len) xr.DataArray
+                - classification_layer_masks : 3D (row, col, indicator)
+                  xr.DataArray
+
+    :return: the difference dem between ref and sec,
+        with the classification layers
     :rtype: xr.Dataset containing :
 
                 - image : 2D (row, col) xr.DataArray float32
@@ -864,8 +842,6 @@ def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
                 - classification_layer_masks : 3D (row, col, indicator)
                   xr.DataArray
     """
-    # Compute altitude diff dataset
-    altitude_diff = compute_dems_diff(ref, sec)
     support_list = []
     # Initialize classif_layers_datarray
     classif_layers_datarray = None
@@ -877,13 +853,13 @@ def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
         )
         for _ in classif_layers_datarray.coords["indicator"].data:
             support_list.append("ref")
-    # Add the fusion information on the altitude diff dataset
+    # Add the fusion information on the diff dataset
     if "fusion_layers" in ref.attrs:
-        altitude_diff.attrs["fusion_layers"] = ref.attrs["fusion_layers"]
+        diff_ref_sec.attrs["fusion_layers"] = ref.attrs["fusion_layers"]
     # If slope is present, add the dataarray
     if "ref_slope" in ref:
         ref_slope = copy.deepcopy(ref["ref_slope"])
-        altitude_diff["ref_slope"] = ref_slope
+        diff_ref_sec["ref_slope"] = ref_slope
 
     if "classification_layer_masks" in sec:
         # If classification layers in sec,
@@ -940,29 +916,36 @@ def compute_alti_diff_for_stats(  # pylint:disable=too-many-branches
     # is always ref_slope by default, so we adapt it to sec_slope
     if "ref_slope" in sec:
         sec_slope = copy.deepcopy(sec["ref_slope"])
-        altitude_diff["sec_slope"] = sec_slope
-    # Add the fusion information on the altitude diff dataset
+        diff_ref_sec["sec_slope"] = sec_slope
+    # Add the fusion information on the diff dataset
     if "fusion_layers" in sec.attrs:
-        if "fusion_layers" in altitude_diff:
-            altitude_diff.attrs["fusion_layers"].append(
+        if "fusion_layers" in diff_ref_sec:
+            diff_ref_sec.attrs["fusion_layers"].append(
                 sec.attrs["fusion_layers"]
             )
         else:
-            altitude_diff.attrs["fusion_layers"] = sec.attrs["fusion_layers"]
-    # Add the dataarray on the altitude diff dataset
-    altitude_diff["classification_layer_masks"] = classif_layers_datarray
+            diff_ref_sec.attrs["fusion_layers"] = sec.attrs["fusion_layers"]
+    # Add the dataarray on the diff dataset
+    diff_ref_sec["classification_layer_masks"] = classif_layers_datarray
     # Add the support_list as an attribute
-    altitude_diff.attrs["support_list"] = support_list
+    diff_ref_sec.attrs["support_list"] = support_list
 
-    return altitude_diff
+    return diff_ref_sec
 
 
-def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
+def compute_dem_slope(
+    dataset: xr.Dataset,
+    degree: bool = False,
+    add_attribute: bool = True,
+    unit_change: bool = True,
+) -> xr.Dataset:
     """
     Computes DEM's slope
     Slope is presented here :
     http://pro.arcgis.com/ \
             fr/pro-app/tool-reference/spatial-analyst/how-aspect-works.htm
+
+    TODO: modify code such as to remove double return at the end
 
     :param dataset: dataset
     :type dataset: xr.DataSet containing :
@@ -973,6 +956,12 @@ def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
                   xr.DataArray
     :param degree:  True if is in degree
     :type degree: bool
+    :param add_attribute: if True, add attribute to the input dataset
+      if False, return the slope
+    :type add_attribute: bool
+    :param unit_change: if True change units of the slope
+      if False, no units change
+    :type unit_change: bool
     :return: slope
     :rtype: np.ndarray
     """
@@ -1046,10 +1035,11 @@ def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
     slope = np.arctan(tan_slope)
 
     # Just simple unit change as required
-    if degree is False:
-        slope *= 100
-    else:
-        slope = (slope * 180) / np.pi
+    if unit_change:
+        if degree is False:
+            slope *= 100
+        else:
+            slope = (slope * 180) / np.pi
 
     # Add slope as a DataArray
     # Slope
@@ -1060,15 +1050,18 @@ def compute_dem_slope(dataset: xr.Dataset, degree: bool = False) -> xr.Dataset:
     # Create the dataarray
     # In case there is a single dem, we name the datarray
     # as ref_slope. If there are two arrays, the sec slope
-    # will be renamed by the compute_alti_diff_for_stats function
+    # will be renamed by the accumulates_class_layers function
     # to sec_slope
-    dataset["ref_slope"] = xr.DataArray(
-        data=data,
-        coords=coords_slope,
-        dims=["row", "col"],
-    )
+    # TODO: remove double output # pylint:disable=fixme
+    if add_attribute:
+        dataset["ref_slope"] = xr.DataArray(
+            data=data,
+            coords=coords_slope,
+            dims=["row", "col"],
+        )
 
-    return dataset
+        return dataset
+    return slope
 
 
 def compute_and_save_image_plots(
@@ -1077,6 +1070,8 @@ def compute_and_save_image_plots(
     fig_title: str = None,
     colorbar_title: str = None,
     cmap: str = "terrain",
+    vmin_plot: float = None,
+    vmax_plot: float = None,
 ):
     """
     Compute and optionnally save plots from a dem using pyplot img_show.
@@ -1092,6 +1087,10 @@ def compute_and_save_image_plots(
     :type title_colorbar: str
     :param cmap: registered colormap name used to map scalar data to colors.
     :type cmap: str
+    :param vmin_plot: minimum value of the z axis when plotting
+    :type vmin_plot: float
+    :param vmax_plot: maximum value of the z axis when plotting
+    :type vmax_plot: float
     """
 
     # Create and save plot using the dem_plot function
@@ -1107,22 +1106,35 @@ def compute_and_save_image_plots(
     if fig_title:
         fig_ax.set_title(fig_title, fontsize="large")
     #
+
+    if vmin_plot is None:
+        vmin = mu - sigma
+    else:
+        vmin = vmin_plot
+    if vmax_plot is None:
+        vmax = mu + sigma
+    else:
+        vmax = vmax_plot
+
     im1 = fig_ax.imshow(
         dem["image"].data,
         cmap=cmap,
-        vmin=mu - sigma,
-        vmax=mu + sigma,
+        vmin=vmin,
+        vmax=vmax,
         interpolation="none",
         aspect="equal",
     )
     fig.colorbar(im1, label=colorbar_title, ax=fig_ax)
-    fig.text(
-        0.15,
-        0.15,
-        f"Values rescaled between"
-        f"\n[mean-std, mean+std]=[{mu - sigma:.2f}, {mu + sigma:.2f}]",
-        fontsize="medium",
-    )
+
+    if vmax_plot is None and vmin_plot is None:
+        fig.text(
+            0.15,
+            0.15,
+            f"Values rescaled between"
+            f"\n[mean-std, mean+std]=[{mu - sigma:.2f}, {mu + sigma:.2f}]",
+            fontsize="medium",
+        )
+
     # Save plot
     if plot_path:
         mpl_pyplot.savefig(plot_path, dpi=100, bbox_inches="tight")
@@ -1191,3 +1203,86 @@ def verify_fusion_layers(dem: xr.Dataset, classif_cfg: Dict, support: str):
                         layer_to_fusion,
                     )
                     raise ValueError
+
+
+def compute_curvature_filtering(
+    dem: xr.Dataset,
+    filter_intensity: float = 0.9,
+    replication: bool = True,
+) -> xr.Dataset:
+    """
+    Return the curvature of the input dem.
+    First, compute the FFT of the input dem: F(y) = FFT(DEM).
+    Then, apply a filter y^filter_intensity
+    with s=0.9: F(y) = F(y)* y^filter_intensity.
+    Finally, apply the inverse FFT: IFFT(F(y)).
+    We keep the real part (imaginary part = digital noise).
+
+    :param dem: dem xr.DataSet containing :
+
+            - image : 2D (row, col) xr.DataArray float32
+            - georef_transform: 1D (trans_len) xr.DataArray
+            - classification_layer_masks : 3D (row, col, indicator)
+              xr.DataArray
+    :type dem: xr.Dataset
+    :param filter_intensity: parameter of the DEM's FFT filter intensity.
+                             Should be close to 1.
+                             Default = 0.9.
+    :type filter_intensity: float
+    :param replication: if true, the image is replicated
+                        by x4 in order to improve resolution.
+                        Default = True.
+    :type replication: bool
+    :return: curvature xr.DataSet containing :
+
+            - image : 2D (row, col) xr.DataArray float32
+            - georef_transform: 1D (trans_len) xr.DataArray
+            - classification_layer_masks : 3D (row, col, indicator)
+              xr.DataArray
+    :rtype: xr.Dataset
+    """
+
+    no_data_location = np.logical_or(
+        dem["image"].data == dem.attrs["nodata"],
+        np.isnan(dem["image"].data),
+    )
+
+    # no data pixel interpolation
+    data_all = neighbour_interpol(dem["image"].data, no_data_location)
+
+    high, wide = dem["image"].data.shape
+
+    if replication:
+        data_all = np.hstack([data_all, np.flip(data_all, axis=1)])
+        data_all = np.vstack([data_all, np.flip(data_all, axis=0)])
+        f_y, f_x = calc_spatial_freq_2d(2 * high, 2 * wide, edge=np.pi)
+
+    else:
+        f_y, f_x = calc_spatial_freq_2d(high, wide, edge=np.pi)
+
+    # spatial frequency (module)
+    spatial_freq = (f_x**2 + f_y**2) ** (filter_intensity / 2)
+    spatial_freq = ifftshift(spatial_freq)
+
+    image = fft2(data_all)
+    image_filtered = image * spatial_freq
+
+    image_filtered = ifft2(image_filtered)
+
+    if replication:
+        image_filtered = image_filtered[:high, :wide]
+
+    image_filtered[no_data_location] = dem.attrs["nodata"]
+
+    return create_dem(
+        image_filtered.real,
+        transform=dem.georef_transform.data,
+        nodata=dem.attrs["nodata"],
+        img_crs=dem.crs,
+        bounds=dem.bounds,
+        classification_layer_masks=(
+            dem["classification_layer_masks"]
+            if hasattr(dem, "classification_layer_masks")
+            else None
+        ),
+    )

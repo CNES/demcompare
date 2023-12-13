@@ -19,47 +19,49 @@
     "number_of_iterations": 6,
     "estimated_initial_shift_x": 0,
     "estimated_initial_shift_y": 0,
-    "save_optional_outputs": "True"
+    "save_optional_outputs": true
   },
   "statistics": {
-    "remove_outliers": "False",
-    "classification_layers": {
-      "Status": {
-        "type": "segmentation",
-        "classes": {
-          "valid": [
-            0
-          ],
-          "KO": [
-            1
-          ],
-          "Land": [
-            2
-          ],
-          "NoData": [
-            3
-          ],
-          "Outside_detector": [
-            4
+    "alti-diff": {
+      "remove_outliers": false,
+      "classification_layers": {
+        "Status": {
+          "type": "segmentation",
+          "classes": {
+            "valid": [
+              0
+            ],
+            "KO": [
+              1
+            ],
+            "Land": [
+              2
+            ],
+            "NoData": [
+              3
+            ],
+            "Outside_detector": [
+              4
+            ]
+          }
+        },
+        "Slope0": {
+          "type": "slope",
+          "ranges": [
+            0,
+            10,
+            25,
+            50,
+            90
+          ]
+        },
+        "Fusion0": {
+          "type": "fusion",
+          "sec": [
+            "Slope0",
+            "Status"
           ]
         }
-      },
-      "Slope0": {
-        "type": "slope",
-        "ranges": [
-          0,
-          10,
-          25,
-          50,
-          90
-        ]
-      },
-      "Fusion0": {
-        "type": "fusion",
-        "sec": [
-          "Slope0",
-          "Status"
-        ]
       }
     }
   }

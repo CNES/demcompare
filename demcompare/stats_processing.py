@@ -23,10 +23,10 @@ Mainly contains the StatsProcessing class
 for stats computation of an input dem
 """
 
-import copy
-
 # Standard imports
+import copy
 import logging
+import os
 import traceback
 from typing import Dict, List, Union
 
@@ -56,22 +56,8 @@ class StatsProcessing:
     }
     # Remove outliers option
     _REMOVE_OUTLIERS = False
-    # Default metrics for input alti_diff
-    _DEFAULT_METRICS_ALTI_DIFF = {
-        "metrics": [
-            "mean",
-            "median",
-            "max",
-            "min",
-            "sum",
-            {"percentil_90": {"remove_outliers": "False"}},
-            "squared_sum",
-            "nmad",
-            "rmse",
-            "std",
-        ]
-    }
-    # Default metrics for a single input dem
+
+    # Default metrics if none in cfg are specified
     _DEFAULT_METRICS = {
         "metrics": [
             "mean",
@@ -79,14 +65,20 @@ class StatsProcessing:
             "max",
             "min",
             "sum",
+            {"percentil_90": {"remove_outliers": False}},
             "squared_sum",
+            "nmad",
+            "rmse",
             "std",
         ]
     }
-    # Initialization
 
+    # Initialization
     def __init__(
-        self, cfg: Dict, dem: xr.Dataset = None, input_diff: bool = False
+        self,
+        cfg: Dict,
+        dem: xr.Dataset = None,
+        dem_processing_method: str = None,
     ):
         """
         Initialization of a StatsProcessing object
@@ -100,16 +92,23 @@ class StatsProcessing:
                 - georef_transform: 1D (trans_len) xr.DataArray
                 - classification_layer_masks : 3D (row, col, nb_classif)
                   xr.DataArray float32
-        :param input_diff: if the input dem is an altitude difference
-        :type input_diff: bool
+        :param dem_processing_method: DEM processing method
+        :type dem_processing_method: str
         :return: None
         """
         # Cfg
-        cfg = self.fill_conf(cfg, input_diff)
+        cfg = self.fill_conf(cfg)
         self.cfg: Dict = cfg
+
         # Output directory
         self.output_dir: Union[str, None] = self.cfg["output_dir"]
+        if self.output_dir is not None:
+            # create stats module output directory if given in configuration
+            # if used in standalone, be sure that the path is absolute
+            os.makedirs(cfg["output_dir"], exist_ok=True)
 
+        # DEM processing method
+        self.dem_processing_method = dem_processing_method
         # Remove outliers option
         self.remove_outliers: bool = self.cfg["remove_outliers"]
         # Input dem
@@ -125,21 +124,20 @@ class StatsProcessing:
         else:
             # Initialize StatsDataset object
             self.stats_dataset: StatsDataset = StatsDataset(
-                self.dem["image"].data
+                self.dem["image"].data, self.dem_processing_method
             )
             # Create classification layers
             self._create_classif_layers()
 
     def fill_conf(
-        self, cfg: ConfigType = None, input_diff: bool = False
+        self,
+        cfg: ConfigType = None,
     ):  # pylint:disable=too-many-branches
         """
         Init Stats options from configuration
 
         :param cfg: Input demcompare configuration
         :type cfg: ConfigType
-        :param input_diff: If the input parameter is an altitude difference
-        :type input_diff: bool
         """
 
         # Initialize if cfg is not defined
@@ -150,9 +148,9 @@ class StatsProcessing:
             cfg["classification_layers"] = {}
 
         # Add default global layer
-        cfg["classification_layers"][
-            self._DEFAULT_GLOBAL_LAYER_NAME
-        ] = copy.deepcopy(self._DEFAULT_GLOBAL_LAYER)
+        cfg["classification_layers"][self._DEFAULT_GLOBAL_LAYER_NAME] = (
+            copy.deepcopy(self._DEFAULT_GLOBAL_LAYER)
+        )
 
         # If metrics have been specified,
         # add them to all classif layers
@@ -169,16 +167,11 @@ class StatsProcessing:
         else:
             for _, classif_cfg in cfg["classification_layers"].items():
                 if "metrics" not in classif_cfg:
-                    if input_diff:
-                        classif_cfg.update(self._DEFAULT_METRICS_ALTI_DIFF)
-                    else:
-                        classif_cfg.update(self._DEFAULT_METRICS)
+                    classif_cfg.update(self._DEFAULT_METRICS)
 
         # Give the default value if the required element
         # is not in the configuration
-        if "remove_outliers" in cfg:
-            cfg["remove_outliers"] = cfg["remove_outliers"] == "True"
-        else:
+        if "remove_outliers" not in cfg:
             cfg["remove_outliers"] = self._REMOVE_OUTLIERS
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
@@ -206,7 +199,7 @@ class StatsProcessing:
                     # on the classification layer cfg,
                     # add the global statistics one
                     if "remove_outliers" not in clayer:
-                        clayer["remove_outliers"] = str(self.remove_outliers)
+                        clayer["remove_outliers"] = self.remove_outliers
                     # Create ClassificationLayer object
                     self.classification_layers.append(
                         ClassificationLayer(
@@ -228,7 +221,7 @@ class StatsProcessing:
                             error,
                         )
                     )
-        # Compute fusion layer it specified in the conf
+        # Compute fusion layer if specified in the conf
         # Fusion layers specify its support on the input cfg
         for fusion_name in fusion_layers:
             # Copy to suppress the metrics information
@@ -253,16 +246,19 @@ class StatsProcessing:
                 # Create fusion layer
                 self.classification_layers.append(
                     FusionClassificationLayer(  # type:ignore
-                        layers_to_fusion, support, fusion_name, fusion_metrics
+                        layers_to_fusion,
+                        support,
+                        fusion_name,
+                        fusion_metrics,
                     )
                 )
                 # Add fusion layer name on the classif_layers_names
                 self.classification_layers_names.append(
                     self.classification_layers[-1].name
                 )
-
+        logging.debug("List of classification layers:")
         for classif in self.classification_layers:
-            logging.debug("List of classification layers: %s", classif)
+            logging.debug(" - %s", classif.name)
 
     def compute_stats(
         self,

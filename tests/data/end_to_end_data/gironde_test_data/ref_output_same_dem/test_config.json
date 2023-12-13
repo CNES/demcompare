@@ -3,7 +3,6 @@
   "input_ref": {
     "path": "./Gironde.tif",
     "zunit": "m",
-    "georef": "WGS84",
     "classification_layers": {
       "Status": {
         "map_path": "./ref_status.tif"
@@ -13,7 +12,6 @@
   "input_sec": {
     "path": "./Gironde.tif",
     "zunit": "m",
-    "georef": "WGS84",
     "classification_layers": {
       "Status": {
         "map_path": "./ref_status.tif"
@@ -25,45 +23,46 @@
     "number_of_iterations": 6,
     "estimated_initial_shift_x": 0,
     "estimated_initial_shift_y": 0,
-    "save_optional_outputs": "True",
-    "output_dir": "./test_classification_layer_output"
+    "save_optional_outputs": true,
+    "output_dir": "./test_classification_layer_output/coregistration"
   },
   "statistics": {
-    "remove_outliers": "False",
-    "classification_layers": {
-      "Status": {
-        "type": "segmentation",
-        "classes": {
-          "sea": [
-            0
-          ],
-          "deep_land": [
-            1
-          ],
-          "coast": [
-            2
+    "alti-diff": {
+      "remove_outliers": false,
+      "classification_layers": {
+        "Status": {
+          "type": "segmentation",
+          "classes": {
+            "sea": [
+              0
+            ],
+            "deep_land": [
+              1
+            ],
+            "coast": [
+              2
+            ]
+          }
+        },
+        "Slope0": {
+          "type": "slope",
+          "ranges": [
+            0,
+            10,
+            25,
+            50,
+            90
+          ]
+        },
+        "Fusion0": {
+          "type": "fusion",
+          "ref": [
+            "Slope0",
+            "Status"
           ]
         }
       },
-      "Slope0": {
-        "type": "slope",
-        "ranges": [
-          0,
-          10,
-          25,
-          50,
-          90
-        ]
-      },
-      "Fusion0": {
-        "type": "fusion",
-        "ref": [
-          "Slope0",
-          "Status"
-        ]
-      }
-    },
-    "output_dir": "./test_classification_layer_output"
-  },
-  "otd": "default_OTD"
+      "output_dir": "./test_classification_layer_output"
+    }
+  }
 }

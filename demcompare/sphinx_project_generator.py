@@ -32,9 +32,6 @@ import os
 import shutil
 import subprocess
 
-# DEMcompare imports
-from .helpers_init import mkdir_p
-
 
 class SphinxProjectManager:
     """
@@ -71,9 +68,9 @@ class SphinxProjectManager:
 
         # Create directories
         self._build_dir = os.path.join(self._working_dir, "build")
-        mkdir_p(self._build_dir)
+        os.makedirs(self._build_dir, exist_ok=True)
         self._src_dir = os.path.join(self._working_dir, "source")
-        mkdir_p(self._src_dir)
+        os.makedirs(self._src_dir, exist_ok=True)
 
         # Create configuration files
         self._makefile = os.path.join(self._working_dir, "Makefile")

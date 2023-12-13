@@ -23,7 +23,6 @@ Mainly contains the SlopeClassification class.
 """
 import collections
 import logging
-import sys
 from typing import Dict, List
 
 import numpy as np
@@ -73,7 +72,12 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
         :return: None
         """
         # Call generic init before supercharging
-        super().__init__(name, classification_layer_kind, cfg, dem)
+        super().__init__(
+            name,
+            classification_layer_kind,
+            cfg,
+            dem,
+        )
 
         # Ranges
         self.ranges: List = self.cfg["ranges"]
@@ -124,8 +128,7 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
             isinstance(values, int) or (ranges_dict is list)
             for values in ranges_dict
         ):
-            logging.error("Ranges must be a list of int")
-            sys.exit(1)
+            raise TypeError("Ranges must be a list of int")
 
     def _create_labelled_map(self):
         """
@@ -232,6 +235,6 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
                 ] = self.ranges[idx]
         # Store map_image
         self.map_image[support] = map_img
-        # If _output_dir is set, create map_dataset and save
-        if self._output_dir:
+        # If output_dir is set, create map_dataset and save
+        if self.output_dir:
             self.save_map_img(map_img, support)

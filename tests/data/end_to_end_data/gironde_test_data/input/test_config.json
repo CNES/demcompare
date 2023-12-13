@@ -9,9 +9,11 @@
     "zunit": "m",
     "nodata": -32768,
     "classification_layers": {
-			"Status": {
-			 "map_path": "./FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF"}
-  }},
+      "Status": {
+        "map_path": "./FinalWaveBathymetry_T30TXR_20200622T105631_Status.TIF"
+      }
+    }
+  },
   "coregistration": {
     "method_name": "nuth_kaab_internal",
     "number_of_iterations": 6,
@@ -19,19 +21,46 @@
     "estimated_initial_shift_y": 0
   },
   "statistics": {
-    "remove_outliers": "False",
-    "classification_layers": {
-      "Status": {
-        "type": "segmentation",
-        "classes": {"valid": [0],"KO": [1],"Land": [2],"NoData": [3],"Outside_detector": [4]}
-      },
-      "Slope0": {
-        "type": "slope",
-        "ranges": [0, 10, 25, 50, 90]
-      },
-      "Fusion0": {
-        "type": "fusion",
-        "sec": ["Slope0", "Status"]
+    "alti-diff": {
+      "remove_outliers": false,
+      "classification_layers": {
+        "Status": {
+          "type": "segmentation",
+          "classes": {
+            "valid": [
+              0
+            ],
+            "KO": [
+              1
+            ],
+            "Land": [
+              2
+            ],
+            "NoData": [
+              3
+            ],
+            "Outside_detector": [
+              4
+            ]
+          }
+        },
+        "Slope0": {
+          "type": "slope",
+          "ranges": [
+            0,
+            10,
+            25,
+            50,
+            90
+          ]
+        },
+        "Fusion0": {
+          "type": "fusion",
+          "sec": [
+            "Slope0",
+            "Status"
+          ]
+        }
       }
     }
   }

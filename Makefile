@@ -29,15 +29,21 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 # Python global variables definition
 PYTHON_VERSION_MIN = 3.8
 
-PYTHON=$(shell command -v python3)
+# Set PYTHON if not defined in command line
+# Example: PYTHON="python3.10" make venv to use python 3.10 for the venv
+# By default the default python3 of the system.
+ifndef PYTHON
+	PYTHON = "python3"
+endif
+PYTHON_CMD=$(shell command -v $(PYTHON))
 
-PYTHON_VERSION_CUR=$(shell $(PYTHON) -c 'import sys; print("%d.%d"% sys.version_info[0:2])')
-PYTHON_VERSION_OK=$(shell $(PYTHON) -c 'import sys; cur_ver = sys.version_info[0:2]; min_ver = tuple(map(int, "$(PYTHON_VERSION_MIN)".split("."))); print(int(cur_ver >= min_ver))')
+PYTHON_VERSION_CUR=$(shell $(PYTHON_CMD) -c 'import sys; print("%d.%d"% sys.version_info[0:2])')
+PYTHON_VERSION_OK=$(shell $(PYTHON_CMD) -c 'import sys; cur_ver = sys.version_info[0:2]; min_ver = tuple(map(int, "$(PYTHON_VERSION_MIN)".split("."))); print(int(cur_ver >= min_ver))')
 
 ############### Check python version supported ############
 
-ifeq (, $(PYTHON))
-    $(error "PYTHON=$(PYTHON) not found in $(PATH)")
+ifeq (, $(PYTHON_CMD))
+    $(error "PYTHON_CMD=$(PYTHON_CMD) not found in $(PATH)")
 endif
 
 ifeq ($(PYTHON_VERSION_OK), 0)
@@ -52,7 +58,7 @@ help: ## this help
 
 .PHONY: venv
 venv: ## create virtualenv in "venv" dir if not exists
-	@test -d ${VENV} || python3 -m venv ${VENV}
+	@test -d ${VENV} || $(PYTHON_CMD) -m venv ${VENV}
 	@touch ${VENV}/bin/activate
 	@${VENV}/bin/python -m pip install --upgrade wheel setuptools pip # no check to upgrade each time
 
@@ -71,11 +77,11 @@ install: venv  ## install environment for development target (depends venv)
 ## Test section
 
 .PHONY: test
-test: install ## run tests and coverage quickly with the default Python
+test: ## run tests and coverage quickly with the default Python
 	@${VENV}/bin/pytest -o log_cli=true --cov-config=.coveragerc --cov --cov-report=term-missing
 
-test-notebook: install ## run notebook tests only with the default Python
-	@echo "Please source ${VENV}/bin/activate before launching tests\n"
+.PHONY: test-notebook
+test-notebook: ## run notebook tests only with the default Python
 	@${VENV}/bin/pytest -m "notebook_tests" -o log_cli=true -o log_cli_level=${LOGLEVEL}
 
 .PHONY: test-all
@@ -83,7 +89,7 @@ test-all: install ## run tests on every Python version with tox
 	@${VENV}/bin/tox -r -p auto  ## recreate venv (-r) and parallel mode (-p auto)
 
 .PHONY: coverage
-coverage: install ## check code coverage quickly with the default Python
+coverage: ## check code coverage quickly with the default Python
 	@${VENV}/bin/coverage run --source demcompare -m pytest
 	@${VENV}/bin/coverage report -m
 	@${VENV}/bin/coverage html
@@ -94,22 +100,22 @@ coverage: install ## check code coverage quickly with the default Python
 ### Format with isort and black
 
 .PHONY: format
-format: install format/isort format/black  ## run black and isort formatting (depends install)
+format: format/isort format/black  ## run black and isort formatting
 
 .PHONY: format/isort
-format/isort: install  ## run isort formatting (depends install)
+format/isort: ## run isort formatting 
 	@echo "+ $@"
 	@${VENV}/bin/isort demcompare tests notebooks/snippets/utils_notebook.py
 
 .PHONY: format/black
-format/black: install  ## run black formatting (depends install)
+format/black: ## run black formatting
 	@echo "+ $@"
 	@${VENV}/bin/black demcompare tests notebooks/snippets/utils_notebook.py
 
 ### Check code quality and linting : isort, black, flake8, pylint
 
 .PHONY: lint
-lint: install lint/isort lint/black lint/flake8 lint/pylint lint/mypy ## check code quality and linting
+lint: lint/isort lint/black lint/flake8 lint/pylint lint/mypy ## check code quality and linting
 
 .PHONY: lint/isort
 lint/isort: ## check imports style with isort
@@ -147,7 +153,7 @@ docs: install ## generate Sphinx HTML documentation, including API docs
 ## Notebook section
 
 .PHONY: notebook
-notebook: install ## install Jupyter notebook kernel with venv and demcompare install
+notebook: ## install Jupyter notebook kernel with venv and demcompare install
 	@echo "Install Jupyter Kernel and run Jupyter notebooks environment"
 	@${VENV}/bin/python -m ipykernel install --sys-prefix --name=demcompare-${VENV} --display-name=demcompare-${VERSION}
 	@echo "Use jupyter kernelspec list to know where is the kernel"
@@ -192,7 +198,7 @@ clean-venv: ## clean venv
 	@rm -rf ${VENV}
 
 .PHONY: clean-build
-clean-build: ## remove build artifacts
+clean-build: ## clean build artifacts
 	@echo "+ $@"
 	@rm -fr build/
 	@rm -fr dist/
@@ -206,14 +212,14 @@ clean-precommit: ## clean precommit hooks in .git/hooks
 	@rm -f .git/hooks/pre-push
 
 .PHONY: clean-pyc
-clean-pyc: ## remove Python file artifacts
+clean-pyc: ## clean Python file artifacts
 	@echo "+ $@"
 	@find . -type f -name "*.py[co]" -exec rm -fr {} +
 	@find . -type d -name "__pycache__" -exec rm -fr {} +
 	@find . -name '*~' -exec rm -fr {} +
 
 .PHONY: clean-test
-clean-test: ## remove test and coverage artifacts
+clean-test: ## clean test and coverage artifacts
 	@echo "+ $@"
 	@rm -fr .tox/
 	@rm -f .coverage
@@ -225,7 +231,7 @@ clean-test: ## remove test and coverage artifacts
 	@find . -type f -name "debug.log" -exec rm -fr {} +
 
 .PHONY: clean-lint
-clean-lint: ## remove linting artifacts
+clean-lint: ## clean linting artifacts
 	@echo "+ $@"
 	@rm -f pylint-report.txt
 	@rm -f pylint-report.xml

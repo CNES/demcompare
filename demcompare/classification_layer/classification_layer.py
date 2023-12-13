@@ -65,20 +65,11 @@ class ClassificationLayer:
                   xr.DataArray
         """
         return cls.create_classification(
-            name,
-            classification_layer_kind,
-            cfg,
-            dem,
+            name, classification_layer_kind, cfg, dem
         )
 
     @classmethod
-    def create_classification(
-        cls,
-        name,
-        classification_layer_kind,
-        cfg,
-        dem,
-    ):
+    def create_classification(cls, name, classification_layer_kind, cfg, dem):
         """
         Factory command to create the classification from
         classification_layer_kind
@@ -105,10 +96,7 @@ class ClassificationLayer:
                 classification_layer_kind
             ]
             classif = classification_class(
-                name,
-                classification_layer_kind,
-                cfg,
-                dem,
+                name, classification_layer_kind, cfg, dem
             )
             logging.debug(
                 "ClassificationLayer of type: %s and name: %s",
@@ -126,7 +114,7 @@ class ClassificationLayer:
         return classif
 
     @classmethod
-    def print_avalaible_classification_layer_type(cls):
+    def print_classification_layer_type(cls):
         """
         Print all registered classification layer type
         """
@@ -152,9 +140,9 @@ class ClassificationLayer:
             :param classif_subclass: the subclass to be registered
             :type classif_subclass: object
             """
-            cls.available_classification[
-                classification_layer_type
-            ] = classif_subclass
+            cls.available_classification[classification_layer_type] = (
+                classif_subclass
+            )
             return classif_subclass
 
         return decorator

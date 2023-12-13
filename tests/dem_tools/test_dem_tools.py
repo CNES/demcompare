@@ -33,6 +33,7 @@ import rasterio
 
 # Demcompare imports
 from demcompare import dem_tools
+from demcompare.dem_processing import DemProcessing
 from demcompare.dem_tools import DEFAULT_NODATA
 from demcompare.helpers_init import read_config_file
 
@@ -143,7 +144,7 @@ def test_translate_dem_original_transform(load_gironde_dem):
 @pytest.mark.unit_tests
 def test_compute_dems_diff_custom_nodata():
     """
-    Test compute_dems_diff function
+    Test process_dem function
     Input data:
     - Two manually created dems with custom nodata (-37, 99, 33)
       values
@@ -151,9 +152,9 @@ def test_compute_dems_diff_custom_nodata():
     - Manually computed dem diff: diff_gt
     Validation process:
     - Create both dems
-    - Compute the difference dem using the compute_dems_diff function
+    - Compute the difference dem using the process_dem function
     - Check that the difference dem is the same as ground truth
-    - Checked function : dem_tools's compute_dems_diff
+    - Checked function : dem_tools's process_dem
     """
     # Create input datasets
     sec = np.array(
@@ -186,7 +187,8 @@ def test_compute_dems_diff_custom_nodata():
         dtype=np.float32,
     )
 
-    diff_dataset = dem_tools.compute_dems_diff(ref_dataset, sec_dataset)
+    dem_processing_obj = DemProcessing("alti-diff")
+    diff_dataset = dem_processing_obj.process_dem(ref_dataset, sec_dataset)
     # Test that the output difference is the same as ground_truth
     np.testing.assert_array_equal(diff_gt, diff_dataset["image"].data)
 
@@ -221,7 +223,8 @@ def test_compute_dems_diff_custom_nodata():
         ],
         dtype=np.float32,
     )
-    diff_dataset = dem_tools.compute_dems_diff(ref_dataset, sec_dataset)
+    dem_processing_obj = DemProcessing("alti-diff")
+    diff_dataset = dem_processing_obj.process_dem(ref_dataset, sec_dataset)
     # Test that the output difference is the same as ground_truth
     np.testing.assert_array_equal(diff_gt, diff_dataset["image"].data)
 
@@ -294,7 +297,8 @@ def test_compute_dem_diff_bounds_transform():
         bounds=from_dataset.bounds,
     )
 
-    alti_dif = dem_tools.compute_dems_diff(dem_1, dem_2)
+    dem_processing_obj = DemProcessing("alti-diff")
+    alti_dif = dem_processing_obj.process_dem(dem_1, dem_2)
 
     np.testing.assert_allclose(
         alti_dif["image"].data,

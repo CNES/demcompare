@@ -77,18 +77,18 @@ class Transformation:
         # the adapting factor is (1.0, 1.0))
         self.adapting_factor = adapting_factor
         x_factor, y_factor = adapting_factor
-        # x pixellic offset
+        # x pixellic offset with x adapting factor
         self.x_offset = x_offset * x_factor
-        # y pixellic offset
+        # y pixellic offset with y adapting factor
         self.y_offset = y_offset * y_factor
         # z pixellic offset
         self.z_offset = z_offset
 
         # Compute the total offsets considering the estimated initial shifts
         # total offset x
-        self.total_offset_x = x_offset * x_factor + estimated_initial_shift_x
+        self.total_offset_x = self.x_offset + estimated_initial_shift_x
         # total offset y
-        self.total_offset_y = y_offset * y_factor + estimated_initial_shift_y
+        self.total_offset_y = self.y_offset + estimated_initial_shift_y
         # rotation
         self.rotation = rotation
 

@@ -1,5 +1,5 @@
 {
-  "alti_results": {
+  "coregistration_results": {
     "reproj_coreg_ref": {
       "path": "./test_classification_layer_output/./coregistration/reproj_coreg_REF.tif",
       "nodata": -32768,
@@ -13,16 +13,13 @@
       "nb_valid_points": 1248206
     },
     "dz": {
-      "dz_map_path": null,
       "total_bias_value": 0.0,
-      "zunit": "m",
+      "unit_bias_value": "m",
       "percent": 100.0,
       "nodata": -32768,
       "nb_points": 1248206,
       "nb_valid_points": 1248206
-    }
-  },
-  "coregistration_results": {
+    },
     "dx": {
       "total_offset": 0.0,
       "unit_offset": "px",

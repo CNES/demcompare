@@ -29,7 +29,6 @@ import pytest
 from .helpers import notebooks_demcompare_path
 
 
-@pytest.mark.unit_tests
 @pytest.mark.notebook_tests
 def test_reprojection_and_coregistration():
     """
@@ -43,11 +42,9 @@ def test_reprojection_and_coregistration():
 
     with tempfile.TemporaryDirectory() as directory:
         subprocess.run(
-            [
-                f"jupyter nbconvert --to script \
+            [f"jupyter nbconvert --to script \
                 {reprojection_and_coregistration_path} \
-                --output-dir {directory}"
-            ],
+                --output-dir {directory}"],
             shell=True,
             check=False,
         )
@@ -63,7 +60,6 @@ def test_reprojection_and_coregistration():
     assert out.returncode == 0
 
 
-@pytest.mark.unit_tests
 @pytest.mark.notebook_tests
 def test_statistics():
     """
@@ -75,10 +71,8 @@ def test_statistics():
 
     with tempfile.TemporaryDirectory() as directory:
         subprocess.run(
-            [
-                f"jupyter nbconvert --to script \
-                    {statistics_path} --output-dir {directory}"
-            ],
+            [f"jupyter nbconvert --to script \
+                    {statistics_path} --output-dir {directory}"],
             shell=True,
             check=False,
         )
@@ -94,7 +88,6 @@ def test_statistics():
     assert out.returncode == 0
 
 
-@pytest.mark.unit_tests
 @pytest.mark.notebook_tests
 def test_introduction_and_basic_usage():
     """
@@ -107,16 +100,44 @@ def test_introduction_and_basic_usage():
 
     with tempfile.TemporaryDirectory() as directory:
         subprocess.run(
-            [
-                f"jupyter nbconvert --to script \
+            [f"jupyter nbconvert --to script \
                 {introduction_and_basic_usage_path} \
-                --output-dir {directory}"
-            ],
+                --output-dir {directory}"],
             shell=True,
             check=False,
         )
         out = subprocess.run(
             [f"ipython {directory}/introduction_and_basic_usage.py"],
+            shell=True,
+            check=False,
+            cwd="../notebooks",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+    assert out.returncode == 0
+
+
+@pytest.mark.notebook_tests
+def test_statistics_all_metrics():
+    """
+    Test that the statistics_all_metrics
+    notebook runs without errors
+    """
+    statistics_all_metrics_path = notebooks_demcompare_path(
+        "statistics_all_metrics.ipynb"
+    )
+
+    with tempfile.TemporaryDirectory() as directory:
+        subprocess.run(
+            [f"jupyter nbconvert --to script \
+                {statistics_all_metrics_path} \
+                --output-dir {directory}"],
+            shell=True,
+            check=False,
+        )
+        out = subprocess.run(
+            [f"ipython {directory}/statistics_all_metrics.py"],
             shell=True,
             check=False,
             cwd="../notebooks",

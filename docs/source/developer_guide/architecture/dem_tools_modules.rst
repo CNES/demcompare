@@ -20,7 +20,7 @@ It represents the primary API to manipulate DEM as xarray dataset in demcompare.
 Dataset and associated internal functions are described in `dataset_tools`_
 
 As one can see in :ref:`demcompare_module`, the main demcompare module in `__init__.py <https://github.com/CNES/demcompare/blob/master/demcompare/__init__.py>`_ file uses `dem_tools`_'s
-functions such as **load_dem**, **reproject_dems** and **compute_alti_diff_for_stats**.
+functions such as **load_dem** and **reproject_dems**.
 
 The full list of API functions available in the `dem_tools`_ module, as well as their description and
 input and output parameters can be found here: :doc:`/api_reference/demcompare/dem_tools/index`

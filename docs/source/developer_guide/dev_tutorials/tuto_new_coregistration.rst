@@ -22,7 +22,7 @@ The new coregistration class inherits from the **CoregistrationTemplate** class 
       Please notice that if crop and interpolations need to be done in the input DEM, then those should also be done on the input classification layers if present
       on the dem demcompare dataset in order to maintain the coherence between the dem and the classification.
 
-- The *compute_results* function will do a logging of the obtained results and save them on the output **demcompare_results.json** file
+- The *compute_results* function will do a logging of the obtained results and save them on the output **coregistration_results.json** file
 - Other functions characteristic to the coregistration class may be implemented as well.
 
 Hence, a basic *NewCoregistrationClass* would be implemented with the following structure :

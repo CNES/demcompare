@@ -85,7 +85,7 @@ class Coregistration:
         return coreg
 
     @classmethod
-    def print_avalaible_coregistration_methods(cls):
+    def print_coregistration_methods(cls):
         """
         Print all registered applications
         """

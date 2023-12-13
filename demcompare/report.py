@@ -32,7 +32,6 @@ Steps:
 # Standard imports
 import collections
 import csv
-import glob
 import json
 import logging
 import os
@@ -42,43 +41,8 @@ from typing import List
 
 # DEMcompare imports
 from .internal_typing import ConfigType
-from .output_tree_design import get_out_dir
 from .sphinx_project_generator import SphinxProjectManager
 from .stats_dataset import StatsDataset
-
-
-def recursive_search(directory: str, pattern: str) -> List[str]:
-    """
-    Recursively look up pattern filename into dir tree
-
-    :param directory: directory
-    :type directory: str
-    :param pattern: pattern
-    :type pattern: str
-    :return: search matches
-    :rtype: List[str]
-    """
-    matches = glob.glob(f"{directory}/**/{pattern}", recursive=True)
-    return matches
-
-
-def first_recursive_search(directory: str, pattern: str):
-    """
-    Recursively look up pattern filename into dir tree
-    with first found result
-    if no results return None
-
-    :param directory: directory
-    :type directory: str
-    :param pattern: pattern
-    :type pattern: str
-    :return: None
-    """
-    result = recursive_search(directory, pattern)
-    if len(result) > 0:
-        return result[0]
-    # else
-    return None
 
 
 def fill_report_stats(
@@ -117,15 +81,20 @@ def fill_report_stats(
         # Initialize mode informations for classification_layer
         modes_information[classification_layer_name] = collections.OrderedDict()
         modes_information[classification_layer_name]["standard"] = {
-            "pitch": "This mode results relies only on **valid values** "
-            "without nan values "
-            "(whether they are from the error image or the reference support "
-            "image when do_classification is on). Outliers and "
-            "masked ones has been also discarded."
+            "pitch": (
+                "This mode results relies only on **valid values** "
+                "without nan values "
+                "(whether they are "
+                "from the error image or the reference support "
+                "image when do_classification is on). Outliers and "
+                "masked ones has been also discarded."
+            )
         }
         modes_information[classification_layer_name]["intersection"] = {
-            "pitch": "This is the standard mode where only the pixels for "
-            "which input DSMs classifications are intersection."
+            "pitch": (
+                "This is the standard mode where only the pixels for "
+                "which input DSMs classifications are intersection."
+            )
         }
         modes_information[classification_layer_name]["exclusion"] = {
             "pitch": "This mode is the 'intersection' " "complementary."
@@ -142,14 +111,24 @@ def fill_report_stats(
             # find csv stats associated with the mode
             # - csv
             if mode == "standard":
-                result = recursive_search(
-                    os.path.join(working_dir, "*", classification_layer_name),
-                    "*.csv",
+                result = (
+                    os.path.join(
+                        working_dir,
+                        "stats",
+                        stats_dataset.dem_processing.type,
+                        classification_layer_name,
+                        "stats_results.csv",
+                    ),
                 )
             else:
-                result = recursive_search(
-                    os.path.join(working_dir, "*", classification_layer_name),
-                    f"*_{mode}*.csv",
+                result = (
+                    os.path.join(
+                        working_dir,
+                        "stats",
+                        stats_dataset.dem_processing.type,
+                        classification_layer_name,
+                        f"stats_results_{mode}.csv",
+                    ),
                 )
             if len(result) > 0:
                 if os.path.exists(result[0]):
@@ -162,9 +141,11 @@ def fill_report_stats(
                             csv_data.append(
                                 ",".join(
                                     [
-                                        item
-                                        if isinstance(item, str)
-                                        else format(item, ".2f")
+                                        (
+                                            item
+                                            if isinstance(item, str)
+                                            else format(item, ".2f")
+                                        )
                                         for item in row
                                     ]
                                 )
@@ -199,19 +180,6 @@ def fill_report_stats(
             "<https://demcompare.readthedocs.io/"
             "en/stable/userguide/statistics.html#classification-layers>`_.",
             "",
-        ]
-    )
-
-    src = "\n".join(
-        [
-            src,
-            "Stats are generated from:",
-            "",
-            "- **input_ref** when one input dem and statistics only",
-            "- reprojected **input_ref - input_sec**"
-            " difference when statistics only",
-            "- reprojected and coregistered **input_ref - input_sec**"
-            " difference with coregistration and statistics",
         ]
     )
 
@@ -265,6 +233,7 @@ def fill_report_stats(
 
 def fill_report_image_views(  # noqa: C901
     working_dir: str,
+    stats_dataset: StatsDataset,
     src: str,
 ) -> str:
     """
@@ -276,40 +245,29 @@ def fill_report_image_views(  # noqa: C901
     :return: filled src
     """
 
-    # TODO: replace with OTD name and not recursive search
-
-    # Find snapshot files depending on mode (one ref dem or ref-sec diff)
-    # for initial dem diff: snapshot, pdf, cdf
-    initial_dem_diff = first_recursive_search(
-        working_dir, "initial_dem_diff_snapshot.png"
-    )
-    initial_dem_diff_pdf = first_recursive_search(
-        working_dir, "initial_dem_diff_pdf.png"
-    )
-    initial_dem_diff_cdf = first_recursive_search(
-        working_dir, "initial_dem_diff_cdf.png"
-    )
-
-    # for final (after coreg) dem diff: snapshot, pdf, cdf
-    final_dem_diff = first_recursive_search(
-        working_dir, "final_dem_diff_snapshot.png"
-    )
-    final_dem_diff_pdf = first_recursive_search(
-        working_dir, "final_dem_diff_pdf.png"
-    )
-    final_dem_diff_cdf = first_recursive_search(
-        working_dir, "final_dem_diff_cdf.png"
-    )
+    dem_type = stats_dataset.dem_processing.type
 
     # for one dem for stats: snapshot, pdf, cdf
-    dem_for_stats = first_recursive_search(
-        working_dir, "dem_for_stats_snapshot.png"
+    dem_for_stats = os.path.join(
+        working_dir,
+        "stats",
+        dem_type,
+        "dem_for_stats_snapshot.png",
     )
-    dem_for_stats_pdf = first_recursive_search(
-        working_dir, "dem_for_stats_pdf.png"
+    dem_for_stats_pdf = os.path.join(
+        working_dir, "stats", dem_type, "dem_for_stats_pdf.png"
     )
-    dem_for_stats_cdf = first_recursive_search(
-        working_dir, "dem_for_stats_cdf.png"
+    dem_for_stats_cdf = os.path.join(
+        working_dir, "stats", dem_type, "dem_for_stats_cdf.png"
+    )
+    dem_for_stats_svf = os.path.join(
+        working_dir, "stats", dem_type, "dem_for_stats_svf.png"
+    )
+    dem_for_stats_hillshade = os.path.join(
+        working_dir,
+        "stats",
+        dem_type,
+        "dem_for_stats_hillshade.png",
     )
 
     # -> show image snapshot, cdf, pdf without coregistration
@@ -318,83 +276,60 @@ def fill_report_image_views(  # noqa: C901
         [
             src,
             "",
-            "Image views",
+            f"**{stats_dataset.dem_processing.fig_title}**",
             "==========================",
             "",
         ]
     )
+
+    tmp = dem_type + "|"
+
     # if exists : -> one dem input REF
     if dem_for_stats:
         src = "\n".join(
             [
                 src,
                 "",
-                "**Initial elevation on one DEM (REF)**",
-                "----------------------",
+                "Image views",
+                "===============",
                 "",
-                f".. |img| image:: /{dem_for_stats}",
+                f".. |img_{dem_type}| image:: /{dem_for_stats}",
                 "  :width: 100%",
-                f".. |pdf| image:: /{dem_for_stats_pdf}",
+                f".. |pdf_{dem_type}| image:: /{dem_for_stats_pdf}",
                 "  :width: 100%",
-                f".. |cdf| image:: /{dem_for_stats_cdf}",
+                f".. |cdf_{dem_type}| image:: /{dem_for_stats_cdf}",
                 "  :width: 100%",
-                "",
-                "+--------------+-------------+-------------------------+",
-                "|   Image view | Histogram   | Cumulative distribution |",
-                "+--------------+-------------+-------------------------+",
-                "| |img|        | |pdf|       |  |cdf|                  |",
-                "+--------------+-------------+-------------------------+",
-                "",
-            ]
-        )
-
-    # if exists : -> two dem initial diff with or without coregistration
-    if initial_dem_diff:
-        src = "\n".join(
-            [
-                src,
-                "",
-                "**Initial elevation (REF-SEC)**",
-                "----------------------",
-                "",
-                f".. |img| image:: /{initial_dem_diff}",
+                f".. |svf_{dem_type}| image:: /{dem_for_stats_svf}",
                 "  :width: 100%",
-                f".. |pdf| image:: /{initial_dem_diff_pdf}",
-                "  :width: 100%",
-                f".. |cdf| image:: /{initial_dem_diff_cdf}",
+                f".. |hillshade_{dem_type}| image:: /{dem_for_stats_hillshade}",
                 "  :width: 100%",
                 "",
-                "+--------------+-------------+-------------------------+",
-                "|   Image view | Histogram   | Cumulative distribution |",
-                "+--------------+-------------+-------------------------+",
-                "| |img|        | |pdf|       |  |cdf|                  |",
-                "+--------------+-------------+-------------------------+",
+                "+--------------------------------------"
+                + "+--------------------------------------"
+                + "+--------------------------------------+",
+                "|   Image view                         "
+                + "| Sky-view factor                      "
+                + "| Hill shade                           |",
+                "+--------------------------------------"
+                + "+--------------------------------------"
+                + "+--------------------------------------+",
+                f"| |img_{tmp.ljust(23)}         "
+                + f"| |svf_{tmp.ljust(22)}          "
+                + f"|  |hillshade_{tmp.ljust(22)}   |",
+                "+--------------------------------------"
+                + "+--------------------------------------"
+                + "+--------------------------------------+",
                 "",
-            ]
-        )
-
-    # if exists : ->  differences with coregistration
-    if final_dem_diff:
-        src = "\n".join(
-            [
-                src,
-                "**Final elevation after coregistration"
-                " (COREG_REF-COREG_SEC)**",
-                "-----------------------------------------",
-                "",
-                f".. |img2| image:: /{final_dem_diff}",
-                "  :width: 100%",
-                f".. |pdf2| image:: /{final_dem_diff_pdf}",
-                "  :width: 100%",
-                f".. |cdf2| image:: /{final_dem_diff_cdf}",
-                "  :width: 100%",
-                "",
-                "+--------------+-------------+-------------------------+",
-                "|   Image view | Histogram   | Cumulative distribution |",
-                "+--------------+-------------+-------------------------+",
-                "| |img2|       | |pdf2|      |  |cdf2|                 |",
-                "+--------------+-------------+-------------------------+",
-                "",
+                "+--------------------------------------"
+                + "+--------------------------------------+",
+                "| Histogram                            "
+                + "| Cumulative distribution              |",
+                "+--------------------------------------"
+                + "+--------------------------------------+",
+                f"| |pdf_{tmp.ljust(23)}         "
+                + f"|  |cdf_{tmp.ljust(28)}   |",
+                "+--------------------------------------"
+                + "+--------------------------------------+",
                 "",
             ]
         )
@@ -404,7 +339,7 @@ def fill_report_image_views(  # noqa: C901
 
 def fill_report(
     cfg: ConfigType,
-    stats_dataset: StatsDataset = None,
+    stats_datasets: List[StatsDataset] = None,
 ) -> str:
     """
     Fill sphinx demcompare report into a string from cfg and stats_dataset
@@ -440,12 +375,13 @@ def fill_report(
         ]
     )
 
-    # Show image views (dependent on initial, final or dem_for_stats images)
-    src = fill_report_image_views(working_dir, src)
-
-    # Fill statistics report
-    if "statistics" in cfg and stats_dataset:
-        src = fill_report_stats(working_dir, stats_dataset, src)
+    if stats_datasets:
+        for stats_dataset in stats_datasets:
+            # Show image views
+            src = fill_report_image_views(working_dir, stats_dataset, src)
+            # Fill statistics report
+            if "statistics" in cfg:
+                src = fill_report_stats(working_dir, stats_dataset, src)
 
     # Show full input configuration with indent last line manually (bug)
     show_cfg = json.dumps(cfg, indent=2)
@@ -468,7 +404,7 @@ def fill_report(
 
 def generate_report(  # noqa: C901
     cfg: ConfigType,
-    stats_dataset: StatsDataset = None,
+    stats_datasets: List[StatsDataset] = None,
 ):
     """
     Generate demcompare report
@@ -477,24 +413,21 @@ def generate_report(  # noqa: C901
     :param stats_dataset: stats dataset demcompare object containing results
     """
 
-    # sphinx output documention directory of demcompare report
-    output_doc_dir = os.path.join(
-        cfg["output_dir"], get_out_dir("sphinx_built_doc")
-    )
-    # sphinx source documentation directory for report from OTD
-    src_doc_dir = os.path.join(cfg["output_dir"], get_out_dir("sphinx_src_doc"))
+    # sphinx output documentation directory of demcompare report
+    output_doc_dir = os.path.join(cfg["output_dir"], "report/published_report")
+    # sphinx source documentation directory of demcompare report
+    src_doc_dir = os.path.join(cfg["output_dir"], "report/src")
 
     # Initialize the sphinx project source and output build config
     spm = SphinxProjectManager(src_doc_dir, output_doc_dir, "index", "")
 
-    # create source
+    # create report contents from demcompare cfg and stats datasets
+    report_content = fill_report(cfg=cfg, stats_datasets=stats_datasets)
 
-    src = fill_report(cfg=cfg, stats_dataset=stats_dataset)
+    # Add report contents to the sphinx project
+    spm.write_body(report_content)
 
-    # Add source to the project
-    spm.write_body(src)
-
-    # Build the project
+    # Build sphinx project in html and latex
     try:
         spm.build_project("html")
     except Exception:
@@ -505,5 +438,5 @@ def generate_report(  # noqa: C901
     except Exception:
         logging.error("Error when building report as pdf output (ignored)")
 
-    # Sphinx project install
+    # Sphinx project install in final directory
     spm.install_project()

@@ -9,7 +9,7 @@ The test data **classification_layer_sampling_ref** folder contains the followin
   * *test_config.json* : input configuration file to run demcompare on the input dems with *nuth_kaab_internal* and a *sampling_source = ref*.
 * **ref_output** folder containing:
   * *test_config.json* : resulting input configuration file from running demcompare (filled with the defaut parameters when not set).
-  * *demcompare_results.json*: output results from coregistration and stats.
+  * *coregistration_results.json*: output results from coregistration and stats.
   * *final_dh.tif* and *initial_dh.tif*: initial and final altitude difference DEMs to evaluate the coregistration.
   * **coregistration** folder: internal DEMs of the coregistration and output coregistered dem to align (*coreg_SEC.tif*).
   * **stats**: one folder for each classification layer (**slope**, **Status** and **fusion_layer**) containing the *.csv* files of the *exclusion/intersection* segmentations and the *support_map.tif* if it is to be tested.

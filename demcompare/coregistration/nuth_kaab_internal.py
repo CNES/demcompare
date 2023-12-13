@@ -47,16 +47,13 @@ from scipy.optimize import leastsq
 from ..dem_tools import DEFAULT_NODATA, create_dem
 from ..img_tools import compute_gdal_translate_bounds
 from ..internal_typing import ConfigType
-from ..output_tree_design import get_out_dir
 from ..transformation import Transformation
 from .coregistration import Coregistration
 from .coregistration_template import CoregistrationTemplate
 
 
 @Coregistration.register("nuth_kaab_internal")
-class NuthKaabInternal(
-    CoregistrationTemplate
-):  # pylint:disable=abstract-method
+class NuthKaabInternal(CoregistrationTemplate):
     """
     NuthKaab class, allows to perform a Nuth & Kaab coregistration
     from authors above and adapted in demcompare
@@ -163,6 +160,13 @@ class NuthKaabInternal(
                   xr.DataArray
         :rtype: Tuple[Transformation, xr.Dataset, xr.Dataset]
         """
+        # create nuth and kaab optional output for algorithm detailed options
+        if self.save_optional_outputs and self.output_dir:
+            os.makedirs(
+                os.path.join(self.output_dir, "nuth_kaab_tmp_dir"),
+                exist_ok=True,
+            )
+
         # Copy dataset and extract image array
         sec_im = sec["image"].data
         ref_im = ref["image"].data
@@ -188,9 +192,7 @@ class NuthKaabInternal(
         color_bar = pl.colorbar()
         color_bar.set_label("Elevation difference (m)")
         if self.save_optional_outputs:
-            output_dir_ = os.path.join(
-                self.output_dir, get_out_dir("nuth_kaab_tmp_dir")
-            )
+            output_dir_ = os.path.join(self.output_dir, "./nuth_kaab_tmp_dir")
             pl.savefig(
                 os.path.join(output_dir_, "ElevationDiff_BeforeCoreg.png"),
                 dpi=100,
@@ -214,7 +216,7 @@ class NuthKaabInternal(
 
             if self.save_optional_outputs:
                 output_dir_ = os.path.join(
-                    self.output_dir, get_out_dir("nuth_kaab_tmp_dir")
+                    self.output_dir, "./nuth_kaab_tmp_dir"
                 )
                 plotfile = os.path.join(output_dir_, f"nuth_kaab_iter#{i}.png")
             else:
@@ -330,9 +332,7 @@ class NuthKaabInternal(
         color_bar = pl.colorbar()
         color_bar.set_label("Elevation difference (m)")
         if self.save_optional_outputs:
-            output_dir_ = os.path.join(
-                self.output_dir, get_out_dir("nuth_kaab_tmp_dir")
-            )
+            output_dir_ = os.path.join(self.output_dir, "./nuth_kaab_tmp_dir")
             pl.savefig(
                 os.path.join(output_dir_, "ElevationDiff_AfterCoreg.png"),
                 dpi=100,
@@ -730,7 +730,7 @@ class NuthKaabInternal(
         axes = pl.gca()
         ax_min = np.min([np.nanmin(slice_filt_median) * 2, -2])
         ax_max = np.max([np.nanmax(slice_filt_median) * 2, 2])
-        axes.set_ylim([ax_min, ax_max])
+        axes.set_ylim((ax_min, ax_max))
         pl.legend(loc="upper left")
         pl.savefig(plot_file, dpi=100, bbox_inches="tight")
         pl.close()
@@ -745,10 +745,13 @@ class NuthKaabInternal(
         """
         # Call generic save_results_dict before supercharging
         super().save_results_dict()
-        # Add Nuth offsets to demcompare_results
-        self.demcompare_results["coregistration_results"]["dx"][
+        # Add Nuth offsets to coregistration_results
+        self.coregistration_results["coregistration_results"]["dx"][
             "nuth_offset"
         ] = round(self.transform.x_offset, 5)
-        self.demcompare_results["coregistration_results"]["dy"][
+        self.coregistration_results["coregistration_results"]["dy"][
             "nuth_offset"
         ] = round(self.transform.y_offset, 5)
+        self.coregistration_results["coregistration_results"]["dz"][
+            "nuth_offset"
+        ] = round(self.transform.z_offset, 5)

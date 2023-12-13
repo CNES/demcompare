@@ -18,13 +18,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# pylint:disable=too-many-branches, too-many-lines
 """
 Mainly contains the ClassificationLayer class.
 A classification_layer defines a way to classify the DEMs alti differences.
 """
-import collections
 
 # Standard imports
+import collections
 import copy
 import logging
 import os
@@ -33,14 +34,14 @@ from typing import Dict, List, Tuple, Union
 
 # Third party imports
 import numpy as np
+import rasterio
 import xarray as xr
 from json_checker import Checker, Or
 
-from demcompare.dem_tools import DEFAULT_NODATA, create_dem, save_dem
-from demcompare.metric import Metric
-
 # DEMcompare imports
-from demcompare.output_tree_design import get_out_dir
+from demcompare.dem_tools import DEFAULT_NODATA, create_dem, save_dem
+from demcompare.img_tools import remove_nan_and_flatten
+from demcompare.metric import Metric
 
 from ..internal_typing import ConfigType
 from ..stats_dataset import StatsDataset
@@ -106,23 +107,42 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         self.classes: collections.OrderedDict = None
         # Dem to be classified
         self.dem: xr.Dataset = dem
+        if self.dem:
+            if hasattr(dem, "georef_transform"):
+                # dx
+                self.dx: float = dem.georef_transform.data[1]
+                # dy
+                self.dy: float = dem.georef_transform.data[5]
+            else:
+                logging.error(
+                    "Input DEM doesn't have a 'georef_transform' attribute"
+                )
+                raise ValueError
         # Fill configuration file
         self.cfg: Dict = self.fill_conf_and_schema(cfg)
         # Check and update configuration file
         self.cfg = self.check_conf(self.cfg)
         # Nodata value
         self.nodata: Union[float, int] = self.cfg["nodata"]
+        # Nodata array
+        self.no_data_location: np.ndarray = None
+        # Bounds
+        self.bounds: rasterio.coords.BoundingBox = None
+        if self.dem:
+            if hasattr(dem, "bounds"):
+                self.bounds = dem.bounds
         # Remove outliers
         self.remove_outliers: bool = self.cfg["remove_outliers"]
         # Output directory
-        self._output_dir: Union[str, None] = self.cfg["output_dir"]
+        self.output_dir: Union[str, None] = self.cfg["output_dir"]
         # Output directory for stats
         self._stats_dir: Union[str, None] = None
         # Create output dir (where to store classification_layer results & data)
-        if self._output_dir:
+        if self.output_dir:
             # Create stats dir
             self._stats_dir = os.path.join(
-                self._output_dir, get_out_dir("stats_dir"), self.name
+                self.output_dir,
+                self.name,
             )
             os.makedirs(self._stats_dir, exist_ok=True)
 
@@ -144,14 +164,12 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         :return cfg: coregistration configuration updated
         :rtype: ConfigType
         """
-
         # Give the default value if the required element
         # is not in the configuration
         if "nodata" not in cfg:
             cfg["nodata"] = DEFAULT_NODATA
-        if "remove_outliers" in cfg:
-            cfg["remove_outliers"] = cfg["remove_outliers"] == "True"
-        else:
+        # set default remove outliers to false
+        if "remove_outliers" not in cfg:
             cfg["remove_outliers"] = False
         if "output_dir" not in cfg:
             cfg["output_dir"] = None
@@ -237,7 +255,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
             )
 
         # Save stats as plots, csv and json and do so for each mode
-        if self._output_dir:
+        if self.output_dir:
             stats_dataset.save_as_csv_and_json(self.name, self._stats_dir)
 
     def create_metrics(
@@ -266,9 +284,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 params = input_metric[name]
                 # If outliers were specified for this metric
                 if "remove_outliers" in params:
-                    remove_outliers_list.append(
-                        params["remove_outliers"] == "True"
-                    )
+                    remove_outliers_list.append(params["remove_outliers"])
                     # copy the params and suppress the
                     # remove_outliers parameter as it is
                     # not part of the metric class
@@ -306,6 +322,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         """
         # Get nonan and nodata mask
         nodata_free_mask = self._get_nonan_mask(array, nodata_value)
+        self.no_data_location = ~nodata_free_mask
         # Apply the nonan and nodata mask to the input array
         array_without_nan = array[np.where(nodata_free_mask)]
         # Compute mean and std of the input array
@@ -454,20 +471,28 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 self.classes.items()
             ):
                 # Class altitude values
-                class_alti_values = dz_values[
-                    np.where((class_masks[idx] * mode_mask))
-                ]
+                # class_alti_values is a 2D matrix
+                class_alti_values = np.where(
+                    (class_masks[idx] * mode_mask), dz_values, np.nan
+                )
+                # flatten the data and remove NaNs values
+                class_alti_values_1d_no_nan = remove_nan_and_flatten(
+                    class_alti_values
+                )
                 # Class outliers free mask
                 class_outliers_free_mask = (
                     class_masks[idx] * mode_mask * self.outliers_free_mask
                 )
                 # Class outliers free altitude values
-                class_outliers_free_alti_values = dz_values[
-                    np.where(class_outliers_free_mask)
-                ]
+                # class_outliers_free_alti_values is a 2D matrix
+                class_outliers_free_alti_values = np.where(
+                    class_outliers_free_mask, dz_values, np.nan
+                )
                 # Do stats computation and obtain class_stats dictionary
                 class_stats = self.stats_computation(
-                    class_alti_values, class_outliers_free_alti_values, metrics
+                    class_alti_values,
+                    class_outliers_free_alti_values,
+                    metrics,
                 )
                 # Masks altitude values not corresponding to the
                 # class and its mode
@@ -478,12 +503,16 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 ] = np.nan
                 class_stats["dz_values"] = class_dz_values
                 # Add nbpts value
-                class_stats["nbpts"] = class_alti_values.size
+                class_stats["nbpts"] = class_alti_values_1d_no_nan.size
                 # Add class name
                 class_stats["class_name"] = class_name + ":" + str(class_item)
                 # Add percent_valid_points value
                 class_stats["percent_valid_points"] = round(
-                    (100 * class_alti_values.size / float(nb_total_points)),
+                    (
+                        100
+                        * class_alti_values_1d_no_nan.size
+                        / float(nb_total_points)
+                    ),
                     5,
                 )
                 # Add the class_stats dictionary to the stats_list
@@ -557,7 +586,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         """
         Compute stats for a specific array
 
-        :param data: input data
+        :param data: 2D input data
         :type data: np.ndarray
         :param outliers_free_data: input outliers_free_data
         :type outliers_free_data: np.ndarray
@@ -572,23 +601,41 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         metric_results: Dict = {}
         # Iterate over each metrics
         for idx, (metric_name, metric_object) in enumerate(metrics.items()):
+            if metric_name == "slope-orientation-histogram":
+                metric_object.dx = self.dx
+                metric_object.dy = self.dy
             # Choose array according to outliers configuration of the metric
             if remove_outliers_list[idx]:
                 array = outliers_free_data
             else:
                 array = data
-            if array.size:
+            # flatten the data and remove NaNs values
+            array_1d_no_nan = remove_nan_and_flatten(array)
+            if array_1d_no_nan.size:
                 # Format output list according to the metric type
                 # Round the float results
                 if metric_object.type == "scalar":
-                    computed_metric = metric_object.compute_metric(array)
+                    computed_metric = metric_object.compute_metric(
+                        array_1d_no_nan
+                    )
                     metric_results[metric_name] = round(
                         float(computed_metric), 5
                     )
                 elif metric_object.type == "vector" and not np.all(
                     np.round(array, decimals=6) == 0
                 ):
-                    computed_metric = metric_object.compute_metric(array)
+                    if metric_object.input_type == "1D":
+                        computed_metric = metric_object.compute_metric(
+                            array_1d_no_nan
+                        )
+                    elif metric_object.input_type == "2D":
+                        computed_metric = metric_object.compute_metric(array)
+                    else:
+                        logging.error(
+                            "The metric input type: %s is not implemented",
+                            metric_object.input_type,
+                        )
+                        raise ValueError
                     for idx_vec, _ in enumerate(computed_metric[0]):
                         computed_metric[0][idx_vec] = round(
                             float(computed_metric[0][idx_vec]), 5
@@ -608,13 +655,19 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                         "second DEMs are the same",
                         metric_name,
                     )
+                elif metric_object.type == "matrix2D":
+                    metric_object.no_data_location = self.no_data_location
+                    metric_object.bounds = self.bounds
+                    computed_metric = metric_object.compute_metric(array)
+                    metric_results[metric_name] = computed_metric
             else:
                 # If the input array is empty, the metric is np.nan
                 if metric_object.type == "scalar":
                     metric_results[metric_name] = np.nan
                 elif metric_object.type == "vector":
                     metric_results[metric_name] = (np.nan, np.nan)
-
+                elif metric_object.type == "matrix2D":
+                    metric_results[metric_name] = None
         return metric_results
 
     def save_map_img(self, map_img: np.ndarray, map_support: str):

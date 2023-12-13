@@ -3,13 +3,14 @@
   "input_ref": {
     "path": "Gironde.tif",
     "zunit": "m",
-    "georef": "WGS84",
     "classification_layers": {
-			"Status": {"map_path": "ref_status.tif"}
+      "Status": {
+        "map_path": "ref_status.tif"
+      }
     }
   },
   "input_sec": {
-     "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
+    "path": "./FinalWaveBathymetry_T30TXR_20200622T105631_D_MSL_invert.TIF",
     "zunit": "m",
     "nodata": -32768
   },
@@ -20,38 +21,40 @@
     "estimated_initial_shift_y": 0
   },
   "statistics": {
-    "remove_outliers": "False",
-    "classification_layers": {
-      "Status": {
-        "type": "segmentation",
-        "classes": {
-          "sea": [
-            0
-          ],
-          "deep_land": [
-            1
-          ],
-          "coast": [
-            2
+    "alti-diff": {
+      "remove_outliers": false,
+      "classification_layers": {
+        "Status": {
+          "type": "segmentation",
+          "classes": {
+            "sea": [
+              0
+            ],
+            "deep_land": [
+              1
+            ],
+            "coast": [
+              2
+            ]
+          }
+        },
+        "Slope0": {
+          "type": "slope",
+          "ranges": [
+            0,
+            10,
+            25,
+            50,
+            90
+          ]
+        },
+        "Fusion0": {
+          "type": "fusion",
+          "ref": [
+            "Slope0",
+            "Status"
           ]
         }
-      },
-      "Slope0": {
-        "type": "slope",
-        "ranges": [
-          0,
-          10,
-          25,
-          50,
-          90
-        ]
-      },
-      "Fusion0": {
-        "type": "fusion",
-        "ref": [
-          "Slope0",
-          "Status"
-        ]
       }
     }
   }

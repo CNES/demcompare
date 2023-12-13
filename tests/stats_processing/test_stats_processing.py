@@ -42,7 +42,8 @@ from demcompare.classification_layer import (
     ClassificationLayer,
     FusionClassificationLayer,
 )
-from demcompare.helpers_init import mkdir_p, read_config_file, save_config_file
+from demcompare.dem_processing.dem_processing import DemProcessing
+from demcompare.helpers_init import read_config_file, save_config_file
 from demcompare.metric import Metric
 
 # Tests helpers
@@ -99,11 +100,12 @@ def test_create_classif_layers():
     ref = dem_tools.compute_dem_slope(ref)
     sec = dem_tools.compute_dem_slope(sec)
     # Compute altitude diff for stats computation
-    stats_dem = dem_tools.compute_alti_diff_for_stats(ref, sec)
+    dem_processing_object = DemProcessing("alti-diff")
+    stats_dem = dem_processing_object.process_dem(ref, sec)
 
     # Initialize stats input configuration
     input_stats_cfg = {
-        "remove_outliers": "False",
+        "remove_outliers": False,
         "classification_layers": {
             "Status": {
                 "type": "segmentation",
@@ -246,7 +248,7 @@ def test_create_classif_layers_without_input_classif():
 
     # Initialize stats input configuration
     input_stats_cfg = {
-        "remove_outliers": "False",
+        "remove_outliers": False,
     }
 
     # Create StatsProcessing object
@@ -264,7 +266,10 @@ def test_create_classif_layers_without_input_classif():
                 "max",
                 "min",
                 "sum",
+                {"percentil_90": {"remove_outliers": False}},
                 "squared_sum",
+                "nmad",
+                "rmse",
                 "std",
             ],
         },
@@ -432,7 +437,7 @@ def test_statistics_output_dir():
 
     # Test with statistics output_dir set
     with TemporaryDirectory(dir=temporary_dir()) as tmp_dir:
-        mkdir_p(tmp_dir)
+        os.makedirs(tmp_dir, exist_ok=True)
         # Modify test's output dir in configuration to tmp test dir
         cfg["output_dir"] = tmp_dir
 
@@ -446,11 +451,10 @@ def test_statistics_output_dir():
         # Put output_dir in coregistration dict config
         demcompare.run(tmp_cfg_file)
 
-        assert os.path.isfile(tmp_dir + "/initial_dem_diff.tif") is True
-
-        assert os.path.exists(tmp_dir + "/stats/Fusion0/") is True
+        assert os.path.exists(tmp_dir + "/stats/alti-diff/Fusion0/") is True
         list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Fusion0/*")
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/stats/alti-diff/Fusion0/*")
         ]
         assert (
             all(
@@ -460,9 +464,10 @@ def test_statistics_output_dir():
             is True
         )
 
-        assert os.path.exists(tmp_dir + "/stats/global/") is True
+        assert os.path.exists(tmp_dir + "/stats/alti-diff/global/") is True
         list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/global/*")
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/stats/alti-diff/global/*")
         ]
         assert (
             all(
@@ -472,18 +477,20 @@ def test_statistics_output_dir():
             is True
         )
 
-        assert os.path.exists(tmp_dir + "/stats/Slope0/") is True
+        assert os.path.exists(tmp_dir + "/stats/alti-diff/Slope0/") is True
         list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Slope0/*")
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/stats/alti-diff/Slope0/*")
         ]
         assert (
             all(file in list_basename for file in gt_truth_list_for_slope)
             is True
         )
 
-        assert os.path.exists(tmp_dir + "/stats/Status/") is True
+        assert os.path.exists(tmp_dir + "/stats/alti-diff/Status/") is True
         list_basename = [
-            os.path.basename(x) for x in glob.glob(tmp_dir + "/stats/Status/*")
+            os.path.basename(x)
+            for x in glob.glob(tmp_dir + "/stats/alti-diff/Status/*")
         ]
         assert (
             all(

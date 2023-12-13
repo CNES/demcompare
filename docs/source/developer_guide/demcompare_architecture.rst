@@ -17,6 +17,7 @@ The following sections give details for each subpart.
   architecture/demcompare_module.rst
   architecture/dem_tools_modules.rst
   architecture/coregistration_modules.rst
+  architecture/dem_processing.rst
   architecture/stats_modules.rst
   architecture/report_module.rst
 
@@ -24,4 +25,4 @@ The following sections give details for each subpart.
 
 .. note::
 
-    Please contribute if elements are missing or are unclear to enter demcompare code.
+    Please contribute if elements are missing or are unclear on demcompare source code.

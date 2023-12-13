@@ -1,6 +1,6 @@
 .. _report_module:
 
-Demcompare report
+Report module
 =================
 
 

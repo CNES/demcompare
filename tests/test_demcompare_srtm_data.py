@@ -35,7 +35,6 @@ import pytest
 # Demcompare imports
 import demcompare
 from demcompare.helpers_init import read_config_file, save_config_file
-from demcompare.output_tree_design import get_out_file_path
 
 # Tests helpers
 from .helpers import (
@@ -62,8 +61,8 @@ def test_demcompare_srtm_test_data():
     - Reads the input configuration file
     - Runs demcompare on a temporary directory
     - Checks that the output files are the same as ground truth
-    - Checked files: test_config.json, demcompare_results.json,
-      initial_dem_diff.tif, final_dem_diff.tif, coreg_SEC.tif,
+    - Checked files: test_config.json, coregistration_results.json,
+      dem_for_stats.tif, coreg_SEC.tif,
       reproj_coreg_REF.tif, reproj_coreg_SEC.tif,
       classif_layer/stats_results.csv,
       classif_layer/stats_results_intersection.csv,
@@ -86,7 +85,7 @@ def test_demcompare_srtm_test_data():
         # Modify test's output dir in configuration to tmp test dir
         test_cfg["output_dir"] = tmp_dir_
         # Manually set the saving of internal dems to True
-        test_cfg["coregistration"]["save_optional_outputs"] = "True"
+        test_cfg["coregistration"]["save_optional_outputs"] = True
 
         # Set a new test_config tmp file path
         tmp_cfg_file = os.path.join(tmp_dir_, "test_config.json")
@@ -105,186 +104,191 @@ def test_demcompare_srtm_test_data():
             os.path.join(test_ref_output_path, cfg_file)
         )
         # Manually add output directory on reference output cfg
-        ref_output_cfg["statistics"]["output_dir"] = tmp_dir_
-        ref_output_cfg["coregistration"]["output_dir"] = tmp_dir_
+        ref_output_cfg["statistics"]["alti-diff"]["output_dir"] = (
+            tmp_dir_ + "/stats" + "/alti-diff"
+        )
+        ref_output_cfg["coregistration"]["output_dir"] = (
+            tmp_dir_ + "/coregistration"
+        )
 
         output_cfg = read_config_file(os.path.join(tmp_dir_, cfg_file))
         np.testing.assert_equal(
-            ref_output_cfg["statistics"], output_cfg["statistics"]
+            ref_output_cfg["statistics"]["alti-diff"],
+            output_cfg["statistics"]["alti-diff"],
         )
         np.testing.assert_equal(
             ref_output_cfg["coregistration"], output_cfg["coregistration"]
         )
 
-        # Test demcompare_results.json
-        cfg_file = get_out_file_path("demcompare_results.json")
-        ref_demcompare_results = read_config_file(
+        # Test coregistration_results.json
+        cfg_file = "./coregistration/coregistration_results.json"
+        ref_coregistration_results = read_config_file(
             os.path.join(test_ref_output_path, cfg_file)
         )
 
-        demcompare_results = read_config_file(os.path.join(tmp_dir_, cfg_file))
+        coregistration_results = read_config_file(
+            os.path.join(tmp_dir_, cfg_file)
+        )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "total_bias_value"
             ],
-            demcompare_results["coregistration_results"]["dx"][
+            coregistration_results["coregistration_results"]["dx"][
                 "total_bias_value"
             ],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            ref_coregistration_results["coregistration_results"]["dy"][
                 "total_bias_value"
             ],
-            demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dy"][
                 "total_bias_value"
             ],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "nuth_offset"
             ],
-            demcompare_results["coregistration_results"]["dx"]["nuth_offset"],
-            atol=TEST_TOL,
-        )
-        np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dx"][
                 "nuth_offset"
             ],
-            demcompare_results["coregistration_results"]["dy"]["nuth_offset"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dy"][
+                "nuth_offset"
+            ],
+            coregistration_results["coregistration_results"]["dy"][
+                "nuth_offset"
+            ],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "total_offset"
             ],
-            demcompare_results["coregistration_results"]["dx"]["total_offset"],
-            atol=TEST_TOL,
-        )
-        np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dx"][
                 "total_offset"
             ],
-            demcompare_results["coregistration_results"]["dy"]["total_offset"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"][
+            ref_coregistration_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
+            coregistration_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_coregistration_results["coregistration_results"][
                 "gdal_translate_bounds"
             ]["lry"],
-            demcompare_results["coregistration_results"][
+            coregistration_results["coregistration_results"][
                 "gdal_translate_bounds"
             ]["lry"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"][
+            ref_coregistration_results["coregistration_results"][
                 "gdal_translate_bounds"
             ]["lrx"],
-            demcompare_results["coregistration_results"][
+            coregistration_results["coregistration_results"][
                 "gdal_translate_bounds"
             ]["lrx"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"][
+            ref_coregistration_results["coregistration_results"][
                 "gdal_translate_bounds"
             ]["uly"],
-            demcompare_results["coregistration_results"][
+            coregistration_results["coregistration_results"][
                 "gdal_translate_bounds"
             ]["uly"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"][
+            ref_coregistration_results["coregistration_results"][
                 "gdal_translate_bounds"
             ]["ulx"],
-            demcompare_results["coregistration_results"][
+            coregistration_results["coregistration_results"][
                 "gdal_translate_bounds"
             ]["ulx"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["alti_results"]["dz"]["total_bias_value"],
-            demcompare_results["alti_results"]["dz"]["total_bias_value"],
+            ref_coregistration_results["coregistration_results"]["dz"][
+                "total_bias_value"
+            ],
+            coregistration_results["coregistration_results"]["dz"][
+                "total_bias_value"
+            ],
             atol=TEST_TOL,
         )
         assert (
             os.path.normpath(
-                ref_demcompare_results["alti_results"]["reproj_coreg_ref"][
-                    "path"
-                ]
+                ref_coregistration_results["coregistration_results"][
+                    "reproj_coreg_ref"
+                ]["path"]
             ).split(os.path.sep)[-1]
             == os.path.normpath(
-                demcompare_results["alti_results"]["reproj_coreg_ref"]["path"]
+                coregistration_results["coregistration_results"][
+                    "reproj_coreg_ref"
+                ]["path"]
             ).split(os.path.sep)[-1]
         )
         assert (
             os.path.normpath(
-                ref_demcompare_results["alti_results"]["reproj_coreg_sec"][
-                    "path"
-                ]
+                ref_coregistration_results["coregistration_results"][
+                    "reproj_coreg_sec"
+                ]["path"]
             ).split(os.path.sep)[-1]
             == os.path.normpath(
-                demcompare_results["alti_results"]["reproj_coreg_sec"]["path"]
+                coregistration_results["coregistration_results"][
+                    "reproj_coreg_sec"
+                ]["path"]
             ).split(os.path.sep)[-1]
         )
 
         # TEST DIFF TIF
 
-        # Test initial_dem_diff.tif
-        img = get_out_file_path("initial_dem_diff.tif")
-        ref_output_data = os.path.join(test_ref_output_path, img)
-        output_data = os.path.join(tmp_dir_, img)
-        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
-
-        # Test final_dem_diff.tif
-        img = get_out_file_path("final_dem_diff.tif")
+        # Test dem_for_stats.tif
+        img = os.path.join("stats", "alti-diff", "dem_for_stats.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test coreg_SEC.tif
-        img = get_out_file_path("coreg_SEC.tif")
+        img = "./coregistration/coreg_SEC.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test reproj_coreg_SEC.tif
-        img = get_out_file_path("reproj_coreg_SEC.tif")
+        img = "./coregistration/reproj_coreg_SEC.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test reproj_coreg_REF.tif
-        img = get_out_file_path("reproj_coreg_REF.tif")
+        img = "./coregistration/reproj_coreg_REF.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TESTS CSV STATS
 
-        # Test initial_dem_diff_pdf.csv
-        file = get_out_file_path("initial_dem_diff_pdf.csv")
+        # Test dem_for_stats_pdf.csv
+        file = os.path.join("stats", "alti-diff", "dem_for_stats_pdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test final_dem_diff_pdf.csv
-        file = get_out_file_path("final_dem_diff_pdf.csv")
-        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
-        output_csv = read_csv_file(os.path.join(tmp_dir_, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
-
-        # Test initial_dem_diff_cdf.csv
-        file = get_out_file_path("initial_dem_diff_cdf.csv")
-        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
-        output_csv = read_csv_file(os.path.join(tmp_dir_, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
-
-        # Test final_dem_diff_cdf.csv
-        file = get_out_file_path("final_dem_diff_cdf.csv")
+        # Test dem_for_stats_cdf.csv
+        file = os.path.join("stats", "alti-diff", "dem_for_stats_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
@@ -292,19 +296,19 @@ def test_demcompare_srtm_test_data():
         # TEST CSV STATS
 
         # Test stats/Slope0/stats_results.csv
-        file = "stats/Slope0/stats_results.csv"
+        file = "stats/alti-diff/Slope0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test stats/Slope0/stats_results_exclusion.csv
-        file = "stats/Slope0/stats_results_exclusion.csv"
+        file = "stats/alti-diff/Slope0/stats_results_exclusion.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test stats/Slope0/stats_results_intersection.csv
-        file = "stats/Slope0/stats_results_intersection.csv"
+        file = "stats/alti-diff/Slope0/stats_results_intersection.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
@@ -325,8 +329,8 @@ def test_demcompare_srtm_test_data_with_roi():
     - Reads the input configuration file
     - Runs demcompare on a temporary directory
     - Checks that the output files are the same as ground truth
-    - Checked files: test_config.json, demcompare_results.json,
-      initial_dem_diff.tif, final_dem_diff.tif, coreg_SEC.tif,
+    - Checked files: test_config.json, coregistration_results.json,
+      dem_for_stats.tif, coreg_SEC.tif,
       reproj_coreg_REF.tif, reproj_coreg_SEC.tif,
       classif_layer/stats_results.csv,
       classif_layer/stats_results_intersection.csv
@@ -348,7 +352,7 @@ def test_demcompare_srtm_test_data_with_roi():
         # Modify test's output dir in configuration to tmp test dir
         test_cfg["output_dir"] = tmp_dir
         # Manually set the saving of internal dems to True
-        test_cfg["coregistration"]["save_optional_outputs"] = "True"
+        test_cfg["coregistration"]["save_optional_outputs"] = True
 
         # Set a new test_config tmp file path
         tmp_cfg_file = os.path.join(tmp_dir, "test_config.json")
@@ -370,114 +374,115 @@ def test_demcompare_srtm_test_data_with_roi():
             os.path.join(test_ref_output_path, cfg_file)
         )
         # Manually add output directory on reference output cfg
-        ref_output_cfg["statistics"]["output_dir"] = tmp_dir
-        ref_output_cfg["coregistration"]["output_dir"] = tmp_dir
+        ref_output_cfg["statistics"]["alti-diff"]["output_dir"] = (
+            tmp_dir + "/stats" + "/alti-diff"
+        )
+        ref_output_cfg["coregistration"]["output_dir"] = (
+            tmp_dir + "/coregistration"
+        )
 
         output_cfg = read_config_file(os.path.join(tmp_dir, cfg_file))
 
         np.testing.assert_equal(
-            ref_output_cfg["statistics"], output_cfg["statistics"]
+            ref_output_cfg["statistics"]["alti-diff"],
+            output_cfg["statistics"]["alti-diff"],
         )
         np.testing.assert_equal(
             ref_output_cfg["coregistration"], output_cfg["coregistration"]
         )
 
-        # Test demcompare_results.json
-        cfg_file = get_out_file_path("demcompare_results.json")
-        ref_demcompare_results = read_config_file(
+        # Test coregistration_results.json
+        cfg_file = "./coregistration/coregistration_results.json"
+        ref_coregistration_results = read_config_file(
             os.path.join(test_ref_output_path, cfg_file)
         )
 
-        demcompare_results = read_config_file(os.path.join(tmp_dir, cfg_file))
+        coregistration_results = read_config_file(
+            os.path.join(tmp_dir, cfg_file)
+        )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "total_bias_value"
             ],
-            demcompare_results["coregistration_results"]["dx"][
+            coregistration_results["coregistration_results"]["dx"][
                 "total_bias_value"
             ],
             atol=TEST_TOL,
         )
 
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            ref_coregistration_results["coregistration_results"]["dy"][
                 "total_bias_value"
             ],
-            demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dy"][
                 "total_bias_value"
             ],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "nuth_offset"
             ],
-            demcompare_results["coregistration_results"]["dx"]["nuth_offset"],
-            atol=TEST_TOL,
-        )
-        np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dx"][
                 "nuth_offset"
             ],
-            demcompare_results["coregistration_results"]["dy"]["nuth_offset"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dx"][
+            ref_coregistration_results["coregistration_results"]["dy"][
+                "nuth_offset"
+            ],
+            coregistration_results["coregistration_results"]["dy"][
+                "nuth_offset"
+            ],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_coregistration_results["coregistration_results"]["dx"][
                 "total_offset"
             ],
-            demcompare_results["coregistration_results"]["dx"]["total_offset"],
-            atol=TEST_TOL,
-        )
-        np.testing.assert_allclose(
-            ref_demcompare_results["coregistration_results"]["dy"][
+            coregistration_results["coregistration_results"]["dx"][
                 "total_offset"
             ],
-            demcompare_results["coregistration_results"]["dy"]["total_offset"],
             atol=TEST_TOL,
         )
         np.testing.assert_allclose(
-            ref_demcompare_results["alti_results"]["dz"]["total_bias_value"],
-            demcompare_results["alti_results"]["dz"]["total_bias_value"],
+            ref_coregistration_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
+            coregistration_results["coregistration_results"]["dy"][
+                "total_offset"
+            ],
+            atol=TEST_TOL,
+        )
+        np.testing.assert_allclose(
+            ref_coregistration_results["coregistration_results"]["dz"][
+                "total_bias_value"
+            ],
+            coregistration_results["coregistration_results"]["dz"][
+                "total_bias_value"
+            ],
             atol=TEST_TOL,
         )
 
         # TEST DIFF TIF
 
-        # Test initial_dem_diff.tif
-        img = get_out_file_path("initial_dem_diff.tif")
-        ref_output_data = os.path.join(test_ref_output_path, img)
-        output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
-
-        # Test final_dem_diff.tif
-        img = get_out_file_path("final_dem_diff.tif")
+        # Test dem_for_stats.tif
+        img = os.path.join("stats", "alti-diff", "dem_for_stats.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TESTS CSV STATS
 
-        # Test initial_dem_diff_pdf.csv
-        file = get_out_file_path("initial_dem_diff_pdf.csv")
+        # Test dem_for_stats_pdf.csv
+        file = os.path.join("stats", "alti-diff", "dem_for_stats_pdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
-        # Test final_dem_diff_pdf.csv
-        file = get_out_file_path("final_dem_diff_pdf.csv")
-        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
-        output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
-
-        # Test initial_dem_diff_cdf.csv
-        file = get_out_file_path("initial_dem_diff_cdf.csv")
-        ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
-        output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
-
-        # Test final_dem_diff_cdf.csv
-        file = get_out_file_path("final_dem_diff_cdf.csv")
+        # Test dem_for_stats_cdf.csv
+        file = os.path.join("stats", "alti-diff", "dem_for_stats_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
@@ -485,13 +490,13 @@ def test_demcompare_srtm_test_data_with_roi():
         # TEST CSV STATS
 
         # Test stats/Slope0/stats_results.csv
-        file = "stats/Slope0/stats_results.csv"
+        file = "stats/alti-diff/Slope0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test stats/Slope0/stats_results_intersection.csv
-        file = "stats/Slope0/stats_results_intersection.csv"
+        file = "stats/alti-diff/Slope0/stats_results_intersection.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
         np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)

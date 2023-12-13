@@ -23,7 +23,6 @@ Mainly contains the SegmentationClassification class.
 """
 import collections
 import logging
-import sys
 from typing import Dict
 
 import xarray as xr
@@ -111,17 +110,16 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
         if not all(
             isinstance(values, list) for values in classes_dict.values()
         ):
-            logging.error(
+            raise TypeError(
                 "Number associated to class in segmentation must be in a list"
             )
-            sys.exit(1)
+
         if not all(
             isinstance(values[0], int) for values in classes_dict.values()
         ):
-            logging.error(
+            raise TypeError(
                 "Number associated to class in segmentation must be an int"
             )
-            sys.exit(1)
 
     def _create_labelled_map(self):
         """
@@ -140,6 +138,6 @@ class SegmentationClassificationLayer(ClassificationLayerTemplate):
                     support = "ref"
                 # Store map_image
                 self.map_image[support] = map_img
-                # If _output_dir is set, create map_dataset and save
-                if self._output_dir:
+                # If output_dir is set, create map_dataset and save
+                if self.output_dir:
                     self.save_map_img(map_img, support)

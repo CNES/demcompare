@@ -1,12 +1,12 @@
 .. _coregistration_modules:
 
 
-Coregistration modules
+Coregistration module
 ======================
 
-This section explains coregistration modules in demcompare. 
+This section explains coregistration module in demcompare. 
 
-In the following image we can find the classes that take part in demcompare's coregistration step, along
+In the following image, we can find the classes that take part in demcompare's coregistration step, along
 with their relationship.
 
 Coregistration step architecture
