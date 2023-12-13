@@ -12,6 +12,31 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Fixed
 
+## 0.6.0 New metrics and dem processings
+
+### Added
+
+- add new dem processing structure [#222, #225, #235]
+- new metrics structure [#196, #218]
+- new curvature metric [#199, #227]
+- new  slope orientation histogram metric [#201]
+- new angular difference dem processing [#202, #233]
+- new slope-normalized difference dem processing [#203, #219, #220, #230]
+- new hillshade, svf representations [#223]
+- add new notebooks for new metrics and dem processing [#234, #248]
+
+### Changed
+
+- stats module evolution [#200]
+- refactoring pipeline [#214, #221, #228, #231]
+- update report accordingly [#226]
+- update documentation with new API, new configuration [#232]
+
+### Fixed
+
+- quality fixes [#210, #224]
+- bug build configuration readthedocs [#237]
+
 ## 0.5.2 Developer guide, fix bugs (June 2023)
 
 ### Added
