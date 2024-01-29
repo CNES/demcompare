@@ -42,9 +42,11 @@ def test_reprojection_and_coregistration():
 
     with tempfile.TemporaryDirectory() as directory:
         subprocess.run(
-            [f"jupyter nbconvert --to script \
+            [
+                f"jupyter nbconvert --to script \
                 {reprojection_and_coregistration_path} \
-                --output-dir {directory}"],
+                --output-dir {directory}"
+            ],
             shell=True,
             check=False,
         )
@@ -71,8 +73,10 @@ def test_statistics():
 
     with tempfile.TemporaryDirectory() as directory:
         subprocess.run(
-            [f"jupyter nbconvert --to script \
-                    {statistics_path} --output-dir {directory}"],
+            [
+                f"jupyter nbconvert --to script \
+                    {statistics_path} --output-dir {directory}"
+            ],
             shell=True,
             check=False,
         )
@@ -100,9 +104,11 @@ def test_introduction_and_basic_usage():
 
     with tempfile.TemporaryDirectory() as directory:
         subprocess.run(
-            [f"jupyter nbconvert --to script \
+            [
+                f"jupyter nbconvert --to script \
                 {introduction_and_basic_usage_path} \
-                --output-dir {directory}"],
+                --output-dir {directory}"
+            ],
             shell=True,
             check=False,
         )
@@ -130,9 +136,11 @@ def test_statistics_all_metrics():
 
     with tempfile.TemporaryDirectory() as directory:
         subprocess.run(
-            [f"jupyter nbconvert --to script \
+            [
+                f"jupyter nbconvert --to script \
                 {statistics_all_metrics_path} \
-                --output-dir {directory}"],
+                --output-dir {directory}"
+            ],
             shell=True,
             check=False,
         )
