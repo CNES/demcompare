@@ -53,7 +53,7 @@ The following metrics are currently available on demcompare:
         ,,fig_title, "str", ``DEM hill shade``
         ,,plot_path, "str", ``None``
         ``'svf'``\ SkyViewFactor,matrix,filter_intensity, "float", ``315``
-        ,,replication, "bool", ``True``
+        ,,replication, "bool", true
         ,,quantiles, "List[float]", ":math:`[0.09, 0.91]`"
         ,,cmap, "str", ``Greys_r``
         ,,cmap_nodata, "str", ``royalblue``
@@ -95,11 +95,11 @@ The following metrics are currently available on demcompare:
             }
             "statistics": {
                 "alti-diff": {
-                    "remove_outliers": "True",
+                    "remove_outliers": true,
                     "metrics": ["mean", {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}}]
                 },
                 "ref": {
-                    "remove_outliers": "True",
+                    "remove_outliers": true,
                     "metrics": [
                         {
                             "slope-orientation-histogram": {
