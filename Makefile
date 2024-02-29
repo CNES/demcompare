@@ -10,12 +10,12 @@
 SHELL := /bin/bash
 
 # Set Virtualenv directory name
-# Exemple: VENV="other-venv/" make install
+# Example: VENV="other-venv/" make install
 ifndef VENV
 	VENV = "venv"
 endif
 
-# Browser definition
+# Browser definition for sphinx and coverage
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
 
@@ -28,7 +28,6 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 # Python global variables definition
 PYTHON_VERSION_MIN = 3.8
-
 # Set PYTHON if not defined in command line
 # Example: PYTHON="python3.10" make venv to use python 3.10 for the venv
 # By default the default python3 of the system.
