@@ -164,15 +164,6 @@ notebook-clean-output:
 	@echo "Clean Jupyter notebooks"
 	@${VENV}/bin/jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace notebooks/*.ipynb
 
-## Docker section
-
-docker: ## Build docker image (and check Dockerfile)
-	@echo "Check Dockerfile with hadolint"
-	@docker pull hadolint/hadolint
-	@docker run --rm -i hadolint/hadolint < Dockerfile
-	@echo "Build Docker image demcompare dev"
-	@docker build -t cnes/demcompare:dev -t cnes/demcompare:latest .
-
 ## Release section
 
 .PHONY: dist
@@ -189,7 +180,7 @@ release: dist ## package and upload a release
 ## Clean section
 
 .PHONY: clean
-clean: clean-venv clean-build clean-precommit clean-pyc clean-test clean-lint clean-docs clean-notebook ## clean all (except docker)
+clean: clean-venv clean-build clean-precommit clean-pyc clean-test clean-lint clean-docs clean-notebook ## clean all
 
 .PHONY: clean-venv
 clean-venv: ## clean venv
@@ -247,10 +238,3 @@ clean-docs: ## clean builded documentations
 clean-notebook: ## clean notebooks cache
 	@echo "+ $@"
 	@find . -type d -name ".ipynb_checkpoints" -exec rm -fr {} +
-
-.PHONY: clean-docker
-clean-docker: ## clean created docker images
-		@echo "+ $@"
-		@echo "Clean Docker image demcompare dev"
-		@docker image rm cnes/demcompare:dev
-		@docker image rm cnes/demcompare:latest
