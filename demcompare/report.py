@@ -436,7 +436,9 @@ def generate_report(  # noqa: C901
     try:
         spm.build_project("latexpdf")
     except Exception:
-        logging.error("Error when building report as pdf output (ignored)")
+        # put only INFO to be more silent to logging when latexpdf not present
+        # to change if we keep or not pdf report
+        logging.info("Error when building report as pdf output (ignored)")
 
     # Sphinx project install in final directory
     spm.install_project()

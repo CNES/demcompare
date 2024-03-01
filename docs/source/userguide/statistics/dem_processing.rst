@@ -62,25 +62,25 @@ All the different DEM processing methods can be used within a single configurati
             }
             "statistics": {
                 "alti-diff": {
-                    "remove_outliers": "True"
+                    "remove_outliers": true
                 },
                 "alti-diff-slope-norm": {
-                    "remove_outliers": "True"
+                    "remove_outliers": true
                 },
                 "angular-diff": {
-                    "remove_outliers": "True"
+                    "remove_outliers": true
                 },
                 "ref": {
-                    "remove_outliers": "True"
+                    "remove_outliers": true
                 },
                 "sec": {
-                    "remove_outliers": "True"
+                    "remove_outliers": true
                 },
                 "ref-curvature": {
-                    "remove_outliers": "True"
+                    "remove_outliers": true
                 },
                 "sec-curvature": {
-                    "remove_outliers": "True"
+                    "remove_outliers": true
                 }
             }
         }
@@ -103,7 +103,7 @@ The user may specify the required metrics as follows:
             }
             "statistics": {
                 "alti-diff": {
-                    "remove_outliers": "True",
+                    "remove_outliers": true,
                     "metrics": ["mean", {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}}]
                 }
             }
@@ -121,10 +121,10 @@ The DEM processing methods applied on one DEM can also be used with a single DEM
             },
             "statistics": {
                 "ref": {
-                    "remove_outliers": "True"
+                    "remove_outliers": true
                 },
                 "ref-curvature": {
-                    "remove_outliers": "True"
+                    "remove_outliers": true
                 }
             }
         }
@@ -143,7 +143,7 @@ The user may specify the required metrics as follows:
             },
             "statistics": {
                 "ref": {
-                    "remove_outliers": "True",
+                    "remove_outliers": true,
                     "metrics": ["mean", {"ratio_above_threshold": {"elevation_threshold": [1, 2, 3]}}]
                 }
             }

@@ -190,26 +190,26 @@ Scientific parameters
 
         Here is the list of the parameters of the input configuration file for the coregistration step and its associated default value when it exists:
 
-        +-------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-        | Name                          | Description                                     | Type        | Default value       | Required |
-        +===============================+=================================================+=============+=====================+==========+
-        | ``method_name``               | Planimetric coregistration method               | string      | ``nuth_kaab``       | No       |
-        +-------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-        | ``number_of_iterations``      | | Number of iterations                          | int         | ``6``               | No       |
-        |                               | | of the coregistration method                  |             |                     |          |
-        +-------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-        | ``estimated_initial_shift_x`` | | Estimated initial x                           | int         |  ``0``              | No       |
-        |                               | | coregistration shift                          |             |                     |          |
-        +-------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-        | ``estimated_initial_shift_y`` | | Estimated initial y                           | int         |  ``0``              | No       |
-        |                               | | coregistration shift                          |             |                     |          |
-        +-------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-        | ``sampling_source``           | Sampling source for reprojection                | string      | ``sec``             | No       |
-        +-------------------------------+-------------------------------------------------+-------------+---------------------+----------+
-        | ``save_optional_outputs``     | | If save internal DEMs and coregistration      | boolean     | ``false``           | No       |
-        |                               | | method outputs such as iteration plots        |             |                     |          |
-        |                               | | to disk (true/false value)                    |             |                     |          |
-        +-------------------------------+-------------------------------------------------+-------------+---------------------+----------+
+        +-------------------------------+-------------------------------------------------+-------------+----------------------+----------+
+        | Name                          | Description                                     | Type        | Default value        | Required |
+        +===============================+=================================================+=============+======================+==========+
+        | ``method_name``               | Planimetric coregistration method               | string      |``nuth_kaab_internal``| No       |
+        +-------------------------------+-------------------------------------------------+-------------+----------------------+----------+
+        | ``number_of_iterations``      | | Number of iterations                          | int         | ``6``                | No       |
+        |                               | | of the coregistration method                  |             |                      |          |
+        +-------------------------------+-------------------------------------------------+-------------+----------------------+----------+
+        | ``estimated_initial_shift_x`` | | Estimated initial x                           | int         |  ``0``               | No       |
+        |                               | | coregistration shift                          |             |                      |          |
+        +-------------------------------+-------------------------------------------------+-------------+----------------------+----------+
+        | ``estimated_initial_shift_y`` | | Estimated initial y                           | int         |  ``0``               | No       |
+        |                               | | coregistration shift                          |             |                      |          |
+        +-------------------------------+-------------------------------------------------+-------------+----------------------+----------+
+        | ``sampling_source``           | Sampling source for reprojection                | string      | ``sec``              | No       |
+        +-------------------------------+-------------------------------------------------+-------------+----------------------+----------+
+        | ``save_optional_outputs``     | | If save internal DEMs and coregistration      | boolean     | ``false``            | No       |
+        |                               | | method outputs such as iteration plots        |             |                      |          |
+        |                               | | to disk (true/false value)                    |             |                      |          |
+        +-------------------------------+-------------------------------------------------+-------------+----------------------+----------+
 
 
 I/O parameters

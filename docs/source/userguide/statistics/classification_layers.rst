@@ -229,7 +229,7 @@ The modes
 
   .. tab:: The **standard mode**
 
-       Within this mode **all valid pixels are considered**. It means nan values but also outliers (if ``remove_outliers`` was set to ``"True"``) and masked ones are discarded.
+       Within this mode **all valid pixels are considered**. It means nan values but also outliers (if ``remove_outliers`` was set to ``true``) and masked ones are discarded.
 
        Note that the nan values can be originated from the altitude differences image and / or the exogenous classification layers themselves (ie. if the input segmentation
        has NaN values, the corresponding pixels will not be considered for the statistics computation of this classification layer).
