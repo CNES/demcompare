@@ -26,6 +26,7 @@ import argparse
 import json
 import logging
 import os
+import shutil
 import traceback
 
 # Third party imports
@@ -36,6 +37,7 @@ from affine import Affine
 
 from demcompare import run as run_demcompare_on_tile
 from demcompare.img_tools import convert_pix_to_coord
+
 from . import log_conf
 
 
@@ -62,7 +64,7 @@ def get_parser():
 
     parser.add_argument(
         "--loglevel",
-        default="INFO",
+        default="WARNING",
         choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
         help="Logger level (default: INFO. Should be one of "
         "(DEBUG, INFO, WARNING, ERROR, CRITICAL)",
@@ -83,14 +85,25 @@ def run_tiles(tiles_config, loglevel):  # pylint:disable=too-many-locals
         dict_config = json.load(json_file)
 
     # tiles management
-    tile_size = dict_config["tile_size"]
-    overlap_size = dict_config["overlap_size"]
+    height = dict_config["tiling"]["height"]
+    width = dict_config["tiling"]["width"]
+    overlap_size = dict_config["tiling"]["overlap"]
 
     # path management
-    working_dir = os.getcwd()
-    output_dir = working_dir + "/" + dict_config["output_dir"] + "/"
+    #  working_dir = os.getcwd()
+    output_dir = os.path.abspath(dict_config["output_dir"])
 
-    # datas
+    dict_config["input_ref"]["path"] = os.path.abspath(
+        dict_config["input_ref"]["path"]
+    )
+    dict_config["input_sec"]["path"] = os.path.abspath(
+        dict_config["input_sec"]["path"]
+    )
+    dict_config["output_dir"] = output_dir
+
+    # Create output_dir from updated absolute path
+    os.makedirs(dict_config["output_dir"], exist_ok=True)
+
     ref_dem = rasterio.open(dict_config["input_ref"]["path"])
     sec_dem = rasterio.open(dict_config["input_sec"]["path"])
 
@@ -143,11 +156,26 @@ def run_tiles(tiles_config, loglevel):  # pylint:disable=too-many-locals
         int((intersection_roi.left - intersection_roi.right) / ref_dem.res[0])
     )
 
-    logging.info("The intersection DEM size is %s row and %s col", image_height, image_width)
-    logging.info("The tile size is %s pixel", tile_size)
+    logging.info(
+        "The intersection DEM size is %s row and %s col",
+        image_height,
+        image_width,
+    )
+    logging.info("The tile size is %s row %s col", height, width)
 
-    nb_tiles_row = (image_height - overlap_size) // (tile_size - overlap_size)
-    nb_tiles_col = (image_width - overlap_size) // (tile_size - overlap_size)
+    nb_tiles_row = (image_height - overlap_size) // (height - overlap_size)
+    if (image_height - overlap_size) % (height - overlap_size) != 0:
+        nb_tiles_row += 1
+
+    nb_tiles_col = (image_width - overlap_size) // (width - overlap_size)
+    if (image_width - overlap_size) % (width - overlap_size) != 0:
+        nb_tiles_col += 1
+
+    logging.info(
+        "There is %s tiles in columns and %s tiles in row",
+        nb_tiles_col,
+        nb_tiles_row,
+    )
 
     x_2d = np.empty((nb_tiles_row, nb_tiles_col))
     y_2d = np.empty((nb_tiles_row, nb_tiles_col))
@@ -155,11 +183,11 @@ def run_tiles(tiles_config, loglevel):  # pylint:disable=too-many-locals
 
     for row in range(nb_tiles_row):
         for col in range(nb_tiles_col):
-            top_left_col = col * (tile_size - overlap_size)
-            top_left_row = -row * (tile_size - overlap_size)
+            top_left_col = col * (width - overlap_size)
+            top_left_row = -row * (height - overlap_size)
 
-            bottom_right_col = top_left_col + tile_size
-            bottom_right_row = top_left_row - tile_size
+            bottom_right_col = top_left_col + width
+            bottom_right_row = top_left_row - height
 
             left_point = convert_pix_to_coord(
                 new_geotransform, top_left_row, top_left_col
@@ -179,52 +207,64 @@ def run_tiles(tiles_config, loglevel):  # pylint:disable=too-many-locals
             dict_config["input_sec"]["roi"] = roi
 
             saving_dir = (
-                output_dir + "row_" + str(row) + "/col_" + str(col) + "/"
+                output_dir + "/row_" + str(row) + "/col_" + str(col) + "/"
             )
 
             dict_config["output_dir"] = saving_dir
 
-            with open(
-                working_dir + "tiles_config.json", "w", encoding="utf-8"
-            ) as f:
+            config = output_dir + "/with_roi_" + os.path.basename(tiles_config)
+
+            with open(config, "w", encoding="utf-8") as f:
                 json.dump(dict_config, f)
 
-            run_demcompare_on_tile(
-                working_dir + "tiles_config.json", loglevel=loglevel
+            try:
+                run_demcompare_on_tile(config, loglevel=loglevel)
+
+                with open(
+                    saving_dir + "coregistration/coregistration_results.json",
+                    "r",
+                    encoding="utf-8",
+                ) as coreg_results:
+                    dict_coreg_results = json.load(coreg_results)
+
+                x_2d[row, col] = dict_coreg_results["coregistration_results"][
+                    "dx"
+                ]["total_offset"]
+                y_2d[row, col] = dict_coreg_results["coregistration_results"][
+                    "dy"
+                ]["total_offset"]
+                # dz directly in altitude unit, offset is directly bias
+                z_2d[row, col] = dict_coreg_results["coregistration_results"][
+                    "dz"
+                ]["total_bias_value"]
+
+            except ValueError:
+                logging.error(
+                    "Tile (%s, %s) is to small, NaN values are returned",
+                    row,
+                    col,
+                )
+                x_2d[row, col] = np.nan
+                y_2d[row, col] = np.nan
+                z_2d[row, col] = np.nan
+
+                shutil.rmtree(saving_dir)
+
+            logging.info(
+                "The %s out of %s tiles is complete",
+                row * nb_tiles_col + col + 1,
+                nb_tiles_row * nb_tiles_col,
             )
 
-            with open(
-                saving_dir + "/coregistration/coregistration_results.json",
-                "r",
-                encoding="utf-8",
-            ) as coreg_results:
-                dict_coreg_results = json.load(coreg_results)
-
-            x_2d[row, col] = dict_coreg_results["coregistration_results"]["dx"][
-                "total_offset"
-            ]
-            y_2d[row, col] = dict_coreg_results["coregistration_results"]["dy"][
-                "total_offset"
-            ]
-            # dz directly in altitude unit, offset is directly bias (no pixel)
-            z_2d[row, col] = dict_coreg_results["coregistration_results"]["dz"][
-                "total_bias_value"
-            ]
-
-            print(
-                f"The {row * nb_tiles_col + col + 1} out of "
-                f"{nb_tiles_row * nb_tiles_col} tiles is complete"
-            )
-
-            os.remove(working_dir + "tiles_config.json")
+            os.remove(config)
 
     x_2d = np.flip(x_2d, axis=0)
     y_2d = np.flip(y_2d, axis=0)
     z_2d = np.flip(z_2d, axis=0)
 
-    np.save(output_dir + "coreg_results_x2D.npy", x_2d)
-    np.save(output_dir + "coreg_results_y2D.npy", y_2d)
-    np.save(output_dir + "coreg_results_z2D.npy", z_2d)
+    np.save(output_dir + "/coreg_results_x2D.npy", x_2d)
+    np.save(output_dir + "/coreg_results_y2D.npy", y_2d)
+    np.save(output_dir + "/coreg_results_z2D.npy", z_2d)
 
 
 def main():
