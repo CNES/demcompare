@@ -45,7 +45,7 @@ iii) Shift of the ``input_sec`` DEM from ``x`` and ``y`` planimetric offsets
 
 The last step consists in changing the origin of the ``input_sec`` DEM so that it now matches the ``input_ref`` ones. 
 
-The output of this step is then a ``coreg_SEC.tif`` DEM. One can now open the ``input_ref``  and the ``coreg_SEC.tif`` in a GIS viewer and, hopefully, observe no residual shift. 
+The output of this step is then a ``coreg_SEC.tif`` DEM. One can now open the ``input_ref``  and the ``coreg_SEC.tif`` in a GIS viewer and, hopefully, observe no residual shift.
 
 
 Schematic overview
@@ -228,7 +228,6 @@ The coregistration images and files saved to disk :
     :widths: auto
     :align: left
 
-    ``coreg_SEC.tif``,Coregistered secondary DEM
     ``coregistration_results.json``,Output json file containing coregistration offsets
     ``logs.log``,Logging file
 
@@ -262,6 +261,7 @@ The coregistration images saved with the ``coregistration`` ``save_optional_outp
     *reproj_coreg_REF.tif*,Intermediate coregistered reference DEM.
     *reproj_SEC.tif*,Intermediate reprojected secondary DEM.
     *reproj_REF.tif*, Intermediate reprojected reference DEM.
+    *coreg_SEC.tif*, Coregistered secondary DEM
     *nuth_kaab_iter#.png*,Iteration fit plot
     *ElevationDiff_AfterCoreg.png*,Elevation difference plot after coregistration
     *ElevationDiff_BeforeCoreg.png*,Elevation difference plot before coregistration
