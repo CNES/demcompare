@@ -311,11 +311,16 @@ class CoregistrationTemplate(metaclass=ABCMeta):
             self.reproj_coreg_ref,
         ) = self._coregister_dems_algorithm(self.reproj_sec, self.reproj_ref)
 
+        # Apply coregistration offsets to the original DEM and store it
+        # reprojection is also done.
+        self.coreg_sec = self.transform.apply_transform(sec)
+
         # Compute and store the coregistration_results dict
         self.save_results_dict()
         # Save internal_dems if the option was chosen
         if self.save_optional_outputs:
             self.save_internal_outputs()
+
         # Return the transform
         return self.transform
 
@@ -365,6 +370,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
           coregistered sec
         - ./coregistration/reproj_coreg_REF.tif -> reprojected
           coregistered ref
+        - ./coregistration/coreg_sec.tif -> coregistered ref
 
         :return: None
         """
@@ -387,6 +393,11 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         self.reproj_coreg_ref = save_dem(
             self.reproj_coreg_ref,
             os.path.join(self.output_dir, "reproj_coreg_REF.tif"),
+        )
+        # Save the coregistered DEM
+        self.coreg_sec = save_dem(
+            self.coreg_sec,
+            os.path.join(self.output_dir, "coreg_SEC.tif"),
         )
         # Update path on coregistration_results file
         if self.coregistration_results:

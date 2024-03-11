@@ -73,7 +73,7 @@ def run(
     Demcompare RUN execution.
 
     :param json_file_path: Input Json configuration file
-    :type json_file: str
+    :type json_file_path: str
     :param loglevel: Choose Loglevel (default: WARNING)
     :type loglevel: int
     """
@@ -311,7 +311,7 @@ def load_input_dems(
     :param cfg: input configuration
     :type cfg: ConfigType
     :return: input_ref and input_dem datasets or None
-    :rtype:   Tuple(xr.Dataset, xr.dataset)
+    :rtype:   Tuple(xr.Dataset, xr.Dataset)
           The xr.Datasets containing :
 
           - im : 2D (row, col) xarray.DataArray float32
@@ -403,7 +403,7 @@ def run_coregistration(
                 - im : 2D (row, col) xarray.DataArray float32
                 - trans: 1D (trans_len) xarray.DataArray
     :return: reproj_coreg_sec, reproj_coreg_ref
-    :rtype:   Tuple(xr.Dataset, xr.dataset)
+    :rtype:   Tuple(xr.Dataset, xr.Dataset)
              The xr.Datasets containing :
 
              - im : 2D (row, col) xarray.DataArray float32
@@ -412,22 +412,13 @@ def run_coregistration(
     logging.info("[Coregistration]")
     # Create coregistration object
     coregistration_ = Coregistration(cfg)
-    # Compute coregistration to get applicable transformation object
-    transformation = coregistration_.compute_coregistration(
-        input_sec, input_ref
-    )
-    # Apply coregistration offsets to the original DEM and store it
-    # reprojection is also done.
-    coreg_sec = transformation.apply_transform(input_sec)
+
+    # Compute coregistration
+    _ = coregistration_.compute_coregistration(input_sec, input_ref)
+
     # Get coregistration_results dict
     coregistration_results = coregistration_.coregistration_results
 
-    # Save the coregistered DEM (even without save_optional_outputs option)
-    # - coreg_SEC.tif -> coregistered sec
-    save_dem(
-        coreg_sec,
-        os.path.join(cfg["output_dir"], "./coreg_SEC.tif"),
-    )
     # Save coregistration_results
     save_config_file(
         os.path.join(
