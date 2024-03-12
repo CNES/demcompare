@@ -36,7 +36,12 @@ from demcompare import dem_tools, load_input_dems
 from demcompare.helpers_init import read_config_file
 
 # Tests helpers
-from tests.helpers import demcompare_test_data_path, temporary_dir
+from tests.helpers import (
+    RES_TOL,
+    TRANSFORM_TOL,
+    demcompare_test_data_path,
+    temporary_dir,
+)
 
 
 @pytest.mark.unit_tests
@@ -85,13 +90,15 @@ def test_load_dem():
     )
     # Test that the loaded dem has the groud truth values
     assert gt_nodata == dem.attrs["nodata"]
-    np.testing.assert_allclose(gt_xres, dem.attrs["xres"], rtol=1e-02)
-    np.testing.assert_allclose(gt_yres, dem.attrs["yres"], rtol=1e-02)
+    np.testing.assert_allclose(gt_xres, dem.attrs["xres"], rtol=RES_TOL)
+    np.testing.assert_allclose(gt_yres, dem.attrs["yres"], rtol=RES_TOL)
     assert gt_plani_unit == dem.attrs["plani_unit"]
     assert gt_zunit == dem.attrs["zunit"]
     assert gt_georef == dem.attrs["crs"]
     assert gt_shape == dem["image"].shape
-    np.testing.assert_allclose(gt_transform, dem.georef_transform, rtol=1e-02)
+    np.testing.assert_allclose(
+        gt_transform, dem.georef_transform, rtol=TRANSFORM_TOL
+    )
 
 
 # Filter warning: Dataset has no geotransform, gcps, or rpcs
@@ -103,7 +110,7 @@ def test_load_dem_with_nodata():
     """
     Test the load_dem function with NODATA values
     Input data:
-     - Hand crafted dem with -32768.0 value as NODATA value
+     - Handcrafted dem with -32768.0 value as NODATA value
     Validation data:
     - NONE
     Validation process:

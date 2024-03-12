@@ -94,10 +94,9 @@ def test_apply():
     output_dataset_transformed = transform.apply_transform(dataset)
     # Test that the output_dataset_transformed
     # has the same offsets as the ground truth
-    np.testing.assert_allclose(
+    np.testing.assert_array_equal(
         output_dataset_transformed.georef_transform,
         gt_dataset_transformed.georef_transform,
-        rtol=1e-02,
     )
 
 
@@ -135,15 +134,13 @@ def test_adapt_transform_offset():
 
     # Test that the adapted transform
     # has the same attributes as the ground truth
-    np.testing.assert_allclose(
+    np.testing.assert_array_equal(
         transform.x_offset,
         gt_x_off,
-        rtol=1e-02,
     )
-    np.testing.assert_allclose(
+    np.testing.assert_array_equal(
         transform.y_offset,
         gt_y_off,
-        rtol=1e-02,
     )
 
 
@@ -196,8 +193,7 @@ def test_apply_original_dem():
     _ = transform.apply_transform(dataset)
     # Test that the output_dataset_transformed
     # has the same offsets as the ground truth
-    np.testing.assert_allclose(
+    np.testing.assert_array_equal(
         from_dataset.georef_transform.data,
         dataset.georef_transform.data,
-        rtol=1e-02,
     )

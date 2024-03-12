@@ -59,7 +59,7 @@ def test_crop_dem_with_offset_pos_x_pos_y(initialize_dem_and_coreg):
         int(np.floor(y_offset)) : input_dem.shape[0],
         0 : input_dem.shape[1] - int(np.ceil(x_offset)),
     ]
-    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
+    np.testing.assert_equal(gt_cropped_dem, output_cropped_dem)
 
 
 @pytest.mark.unit_tests
@@ -89,7 +89,7 @@ def test_crop_dem_with_offset_pos_x_neg_y(initialize_dem_and_coreg):
         0 : input_dem.shape[0] - int(np.ceil(-y_offset)),
         0 : input_dem.shape[1] - int(np.ceil(x_offset)),
     ]
-    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
+    np.testing.assert_equal(gt_cropped_dem, output_cropped_dem)
 
 
 @pytest.mark.unit_tests
@@ -119,7 +119,7 @@ def test_crop_dem_with_offset_neg_x_pos_y(initialize_dem_and_coreg):
         int(np.floor(y_offset)) : input_dem.shape[0],
         int(np.floor(-x_offset)) : input_dem.shape[1],
     ]
-    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
+    np.testing.assert_equal(gt_cropped_dem, output_cropped_dem)
 
 
 @pytest.mark.unit_tests
@@ -149,4 +149,4 @@ def test_crop_dem_with_offset_neg_x_neg_y(initialize_dem_and_coreg):
         0 : input_dem.shape[0] - int(np.ceil(-y_offset)),
         int(np.floor(-x_offset)) : input_dem.shape[1],
     ]
-    np.testing.assert_allclose(gt_cropped_dem, output_cropped_dem, rtol=1e-02)
+    np.testing.assert_equal(gt_cropped_dem, output_cropped_dem)

@@ -120,10 +120,9 @@ def test_reproject_dataset():
     )
     # Test that the output dataset now has the
     # transform of reproject_on_dataset
-    np.testing.assert_allclose(
+    np.testing.assert_array_equal(
         reproject_on_dataset.georef_transform,
         output_reprojected_dataset.georef_transform,
-        rtol=1e-02,
     )
     # Test that the output dataset now has the
     # georef of reproject_on_dataset
@@ -133,10 +132,9 @@ def test_reproject_dataset():
     )
     # Test that the output dataset still has
     # its original nodata value
-    np.testing.assert_allclose(
+    np.testing.assert_array_equal(
         dataset_to_be_reprojected.attrs["nodata"],
         output_reprojected_dataset.attrs["nodata"],
-        rtol=1e-02,
     )
 
 
@@ -234,7 +232,7 @@ def test_get_geoid_offset_error():
     data = np.ones((2, 2))
 
     # Define transformation that will compute the data coordinates
-    # outside of the geoid scope --------------------
+    # outside the geoid scope --------------------
     trans = np.array(
         [
             182.0,

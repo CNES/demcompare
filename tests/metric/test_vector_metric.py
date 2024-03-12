@@ -62,7 +62,7 @@ def test_ratio_above_threshold():
     # Compute metric from metric class
     output = metric_obj.compute_metric(data)
 
-    np.testing.assert_allclose(gt_output, output, rtol=1e-02)
+    np.testing.assert_equal(gt_output, output)
 
     # Test with custom elevation threshold ----------------------------
 
@@ -84,7 +84,7 @@ def test_ratio_above_threshold():
     # Compute metric from metric class
     output = metric_obj.compute_metric(data)
 
-    np.testing.assert_allclose(gt_output, output, rtol=1e-02)  # type:ignore
+    np.testing.assert_equal(gt_output, output)
 
 
 @pytest.mark.unit_tests
@@ -133,8 +133,8 @@ def test_cdf():
     # Compute metric from metric class
     output_cdf, output_bins_count = metric_obj.compute_metric(data)
 
-    np.testing.assert_allclose(output_cdf, gt_cdf, rtol=1e-02)
-    np.testing.assert_allclose(output_bins_count, gt_bins_count, rtol=1e-02)
+    np.testing.assert_equal(output_cdf, gt_cdf)
+    np.testing.assert_equal(output_bins_count, gt_bins_count)
 
 
 @pytest.mark.unit_tests
@@ -170,8 +170,8 @@ def test_pdf():
     # Compute metric from metric class
     output_pdf, output_bins = metric_obj.compute_metric(data)
 
-    np.testing.assert_allclose(output_pdf, gt_pdf, rtol=1e-02)
-    np.testing.assert_allclose(output_bins, gt_bins, rtol=1e-02)
+    np.testing.assert_equal(output_pdf, gt_pdf)
+    np.testing.assert_equal(output_bins, gt_bins)
 
     # Test with percentil 98 filtering ---------------------------
 
@@ -194,8 +194,8 @@ def test_pdf():
     # Compute metric from metric class
     output_pdf, output_bins = metric_obj.compute_metric(data)
 
-    np.testing.assert_allclose(output_pdf, gt_pdf, rtol=1e-02)
-    np.testing.assert_allclose(output_bins, gt_bins, rtol=1e-02)
+    np.testing.assert_equal(output_pdf, gt_pdf)
+    np.testing.assert_equal(output_bins, gt_bins)
 
 
 @pytest.mark.unit_tests
@@ -438,5 +438,5 @@ def test_slope_orientation_histogram():
         1.6575346654708851,
     ]
 
-    np.testing.assert_allclose(output, gt, rtol=1e-02)
-    np.testing.assert_allclose(output_bins, gt_bins, rtol=1e-02)
+    np.testing.assert_equal(output, gt)
+    np.testing.assert_equal(output_bins, gt_bins)

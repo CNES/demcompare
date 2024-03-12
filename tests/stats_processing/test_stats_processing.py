@@ -47,7 +47,7 @@ from demcompare.helpers_init import read_config_file, save_config_file
 from demcompare.metric import Metric
 
 # Tests helpers
-from tests.helpers import demcompare_test_data_path, temporary_dir
+from tests.helpers import STAT_TOL, demcompare_test_data_path, temporary_dir
 
 
 @pytest.mark.unit_tests
@@ -370,12 +370,12 @@ def test_compute_stats_from_cfg_status(
     np.testing.assert_allclose(
         gt_std,
         output_std,
-        rtol=1e-02,
+        rtol=STAT_TOL,
     )
     np.testing.assert_allclose(
         gt_ratio,
         output_ratio,
-        rtol=1e-02,
+        rtol=STAT_TOL,
     )
     # Test that the nmad metric has not been computed for the Status dataset
     # Test that an error is raised

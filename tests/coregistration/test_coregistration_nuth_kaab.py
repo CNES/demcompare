@@ -136,8 +136,8 @@ def test_grad2d():
         output_aspect,
     ) = coregistration_._grad2d(dh)
     # Test that the output slope and aspect are the same as ground truth
-    np.testing.assert_allclose(output_slope, gt_slope, rtol=1e-02)
-    np.testing.assert_allclose(output_aspect, gt_aspect, rtol=1e-02)
+    np.testing.assert_equal(output_slope, gt_slope)
+    np.testing.assert_equal(output_aspect, gt_aspect)
 
 
 @pytest.mark.unit_tests
@@ -208,11 +208,9 @@ def test_filter_target():
 
     # Test that the output filtered target and
     # filtered median are the same as ground truth
+    np.testing.assert_equal(gt_filtered_target, output_filtered_target)
     np.testing.assert_allclose(
-        gt_filtered_target, output_filtered_target, rtol=1e-02
-    )
-    np.testing.assert_allclose(
-        gt_slice_filt_median, output_slice_filt_median, rtol=1e-02
+        gt_slice_filt_median, output_slice_filt_median, rtol=1e-03
     )
 
 
@@ -255,7 +253,7 @@ def test_nuth_kaab_single_iter():
     slope[np.where(slope < 0.001)] = np.nan
     # Compute target
     target = dh / slope
-    # Filer target and aspect non finite values
+    # Filer target and aspect non-finite values
     target = target[np.isfinite(dh)]
     aspect_filt = aspect[np.isfinite(dh)]
     # Compute filtered target and target median
@@ -298,9 +296,9 @@ def test_nuth_kaab_single_iter():
         output_c,
     ) = coregistration_._nuth_kaab_single_iter(dh, slope, aspect)
     # Test that the output offsets are the same as ground truth
-    np.testing.assert_allclose(output_east, gt_east, rtol=1e-02)
-    np.testing.assert_allclose(output_north, gt_north, rtol=1e-02)
-    np.testing.assert_allclose(output_c, gt_c, rtol=1e-02)
+    np.testing.assert_equal(output_east, gt_east)
+    np.testing.assert_equal(output_north, gt_north)
+    np.testing.assert_equal(output_c, gt_c)
 
 
 @pytest.mark.unit_tests
@@ -382,26 +380,14 @@ def test_interpolate_dem_on_grid():
     # Test that the output splines are the same as ground_truth
     # spline.tck is a tuple (t,c,k) containing the vector of knots,
     # the B-spline coefficients, and the degree of the spline.
-    np.testing.assert_allclose(
-        gt_spline_1.tck[0], output_spline_1.tck[0], rtol=1e-02
-    )
-    np.testing.assert_allclose(
-        gt_spline_2.tck[0], output_spline_2.tck[0], rtol=1e-02
-    )
+    np.testing.assert_equal(gt_spline_1.tck[0], output_spline_1.tck[0])
+    np.testing.assert_equal(gt_spline_2.tck[0], output_spline_2.tck[0])
 
-    np.testing.assert_allclose(
-        gt_spline_1.tck[1], output_spline_1.tck[1], rtol=1e-02
-    )
-    np.testing.assert_allclose(
-        gt_spline_2.tck[1], output_spline_2.tck[1], rtol=1e-02
-    )
+    np.testing.assert_equal(gt_spline_1.tck[1], output_spline_1.tck[1])
+    np.testing.assert_equal(gt_spline_2.tck[1], output_spline_2.tck[1])
 
-    np.testing.assert_allclose(
-        gt_spline_1.tck[2], output_spline_1.tck[2], rtol=1e-02
-    )
-    np.testing.assert_allclose(
-        gt_spline_2.tck[2], output_spline_2.tck[2], rtol=1e-02
-    )
+    np.testing.assert_equal(gt_spline_1.tck[2], output_spline_1.tck[2])
+    np.testing.assert_equal(gt_spline_2.tck[2], output_spline_2.tck[2])
 
 
 @pytest.mark.unit_tests
@@ -471,7 +457,7 @@ def test_type_iteration_number():
     - Check that DictCheckerError error is raised
     """
 
-    # Define cfg with an str as iteration
+    # Define cfg with a str as iteration
     cfg = {
         "method_name": "nuth_kaab_internal",
         "number_of_iterations": "test",

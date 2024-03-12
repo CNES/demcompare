@@ -36,7 +36,7 @@ from demcompare import dem_tools, img_tools
 from demcompare.helpers_init import read_config_file
 
 # Tests helpers
-from .helpers import demcompare_test_data_path
+from .helpers import BOUNDS_TOL, demcompare_test_data_path
 
 
 @pytest.mark.unit_tests
@@ -69,8 +69,8 @@ def test_convert_pix_to_coord_neg_x_pos_y(initialize_transformation):
     x_coord_gt = 594080
     y_coord_gt = 5097195
 
-    np.testing.assert_allclose(x_coord_gt, x_coord, atol=1e-03)
-    np.testing.assert_allclose(y_coord_gt, y_coord, atol=1e-03)
+    np.testing.assert_equal(x_coord_gt, x_coord)
+    np.testing.assert_equal(y_coord_gt, y_coord)
 
 
 @pytest.mark.unit_tests
@@ -103,8 +103,8 @@ def test_convert_pix_to_coord_pos_x_pos_y(initialize_transformation):
     x_coord_gt = 598430
     y_coord_gt = 5097195
 
-    np.testing.assert_allclose(x_coord_gt, x_coord, atol=1e-03)
-    np.testing.assert_allclose(y_coord_gt, y_coord, atol=1e-03)
+    np.testing.assert_equal(x_coord_gt, x_coord)
+    np.testing.assert_equal(y_coord_gt, y_coord)
 
 
 @pytest.mark.unit_tests
@@ -137,8 +137,8 @@ def test_convert_pix_to_coord_neg_x_neg_y(initialize_transformation):
     x_coord_gt = 594080
     y_coord_gt = 5102295
 
-    np.testing.assert_allclose(x_coord_gt, x_coord, atol=1e-03)
-    np.testing.assert_allclose(y_coord_gt, y_coord, atol=1e-03)
+    np.testing.assert_equal(x_coord_gt, x_coord)
+    np.testing.assert_equal(y_coord_gt, y_coord)
 
 
 @pytest.mark.unit_tests
@@ -171,8 +171,8 @@ def test_convert_pix_to_coord_pos_x_neg_y(initialize_transformation):
     x_coord_gt = 598430
     y_coord_gt = 5102295
 
-    np.testing.assert_allclose(x_coord_gt, x_coord, atol=1e-03)
-    np.testing.assert_allclose(y_coord_gt, y_coord, atol=1e-03)
+    np.testing.assert_equal(x_coord_gt, x_coord)
+    np.testing.assert_equal(y_coord_gt, y_coord)
 
 
 @pytest.mark.unit_tests
@@ -224,10 +224,10 @@ def test_compute_gdal_translate_bounds_srtm_dir():
         dem["georef_transform"].data,
     )
     # Test that the reprojected offsets are the same as ground_truth
-    np.testing.assert_allclose(ulx, gt_ulx, rtol=1e-04)
-    np.testing.assert_allclose(uly, gt_uly, rtol=1e-04)
-    np.testing.assert_allclose(lrx, gt_lrx, rtol=1e-04)
-    np.testing.assert_allclose(lry, gt_lry, rtol=1e-04)
+    np.testing.assert_allclose(ulx, gt_ulx, rtol=BOUNDS_TOL)
+    np.testing.assert_allclose(uly, gt_uly, rtol=BOUNDS_TOL)
+    np.testing.assert_allclose(lrx, gt_lrx, rtol=BOUNDS_TOL)
+    np.testing.assert_allclose(lry, gt_lry, rtol=BOUNDS_TOL)
 
 
 @pytest.mark.unit_tests
@@ -279,7 +279,7 @@ def test_compute_gdal_translate_bounds_gironde_dir():
     )
 
     # Test that the reprojected offsets are the same as ground_truth
-    np.testing.assert_allclose(ulx, gt_ulx, rtol=1e-04)
-    np.testing.assert_allclose(uly, gt_uly, rtol=1e-04)
-    np.testing.assert_allclose(lrx, gt_lrx, rtol=1e-04)
-    np.testing.assert_allclose(lry, gt_lry, rtol=1e-04)
+    np.testing.assert_allclose(ulx, gt_ulx, rtol=BOUNDS_TOL)
+    np.testing.assert_allclose(uly, gt_uly, rtol=BOUNDS_TOL)
+    np.testing.assert_allclose(lrx, gt_lrx, rtol=BOUNDS_TOL)
+    np.testing.assert_allclose(lry, gt_lry, rtol=BOUNDS_TOL)

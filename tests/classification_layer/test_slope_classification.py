@@ -73,9 +73,7 @@ def test_classify_slope_by_ranges(initialize_slope_layer):
     )
 
     # Test that the output classified slope is the same as gt
-    np.testing.assert_allclose(
-        gt_classified_slope, output_classified_slope, rtol=1e-02
-    )
+    np.testing.assert_equal(gt_classified_slope, output_classified_slope)
 
 
 @pytest.mark.unit_tests
@@ -135,8 +133,6 @@ def test_create_class_masks(initialize_slope_layer):
     ]
 
     # Test that the computed sets_masks_dict is the same as ground truth
-    np.testing.assert_allclose(
-        gt_classes_masks_masks,
-        slope_classif_layer_.classes_masks["ref"],
-        rtol=1e-02,
+    np.testing.assert_equal(
+        gt_classes_masks_masks, slope_classif_layer_.classes_masks["ref"]
     )

@@ -33,6 +33,11 @@ import rasterio as rio
 
 # Define tests tolerance
 TEST_TOL = 1e-02
+BOUNDS_TOL = 1e-06
+TRANSFORM_TOL = 1e-04
+RESULT_TOL = 1e-07
+RES_TOL = 1e-04
+STAT_TOL = 1e-04
 
 
 def demcompare_test_data_path(test_name: str) -> str:

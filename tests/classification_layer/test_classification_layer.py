@@ -124,9 +124,7 @@ def test_get_outliers_free_mask(get_default_metrics):
     gt_filtered_mask[np.where(data > upper_threshold)] = False
     gt_filtered_mask[np.where(data < lower_threshold)] = False
 
-    np.testing.assert_allclose(
-        gt_filtered_mask, output_filtered_mask, rtol=1e-02
-    )
+    np.testing.assert_equal(gt_filtered_mask, output_filtered_mask)
 
 
 @pytest.mark.unit_tests
@@ -168,7 +166,7 @@ def test_get_nonan_mask_custom_nodata(initialize_slope_layer):
         dtype=np.float32,
     )
     # Test that the computed no nan mask is equal to ground truth
-    np.testing.assert_allclose(gt_nonan_mask, output_nonan_mask, rtol=1e-02)
+    np.testing.assert_equal(gt_nonan_mask, output_nonan_mask)
 
 
 @pytest.mark.unit_tests
@@ -210,7 +208,7 @@ def test_get_nonan_mask_defaut_nodata(initialize_slope_layer):
         dtype=np.float32,
     )
     # Test that the computed no nan mask is equal to ground truth
-    np.testing.assert_allclose(gt_nonan_mask, output_nonan_mask, rtol=1e-02)
+    np.testing.assert_equal(gt_nonan_mask, output_nonan_mask)
 
 
 @pytest.mark.unit_tests
@@ -295,13 +293,9 @@ def test_create_mode_masks(get_default_metrics):
     )
 
     # Test that the computed masks_modes are the same as ground truth
-    np.testing.assert_allclose(gt_standard_mode_mask, mode_masks[0], rtol=1e-02)
-    np.testing.assert_allclose(
-        gt_intersection_mode_mask, mode_masks[1], rtol=1e-02
-    )
-    np.testing.assert_allclose(
-        gt_exclusion_mode_mask, mode_masks[2], rtol=1e-02
-    )
+    np.testing.assert_equal(gt_standard_mode_mask, mode_masks[0])
+    np.testing.assert_equal(gt_intersection_mode_mask, mode_masks[1])
+    np.testing.assert_equal(gt_exclusion_mode_mask, mode_masks[2])
 
 
 @pytest.mark.unit_tests

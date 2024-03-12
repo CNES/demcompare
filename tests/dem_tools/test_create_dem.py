@@ -34,7 +34,7 @@ import xarray as xr
 from demcompare import dataset_tools, dem_tools
 
 # Tests helpers
-from tests.helpers import demcompare_path
+from tests.helpers import RESULT_TOL, demcompare_path
 
 
 @pytest.mark.unit_tests
@@ -42,7 +42,7 @@ def test_create_dem():
     """
     Test create_dem function
     Input data:
-    - A manually created np.array as data
+    - A manually created np.ndarray as data
     - A manually created bounds, transform and nodata value
     Validation data:
     - The values used to create the dem: data, bounds_dem,
@@ -86,11 +86,11 @@ def test_create_dem():
     gt_plani_unit = "m"
 
     # Test that the created dataset has the ground truth values
-    np.testing.assert_allclose(trans, dataset.georef_transform, rtol=1e-02)
-    np.testing.assert_allclose(nodata, dataset.attrs["nodata"], rtol=1e-02)
+    np.testing.assert_equal(trans, dataset.georef_transform)
+    np.testing.assert_equal(nodata, dataset.attrs["nodata"])
     assert gt_plani_unit == dataset.attrs["plani_unit"]
     assert gt_zunit == dataset.attrs["zunit"]
-    np.testing.assert_allclose(bounds_dem, dataset.attrs["bounds"], rtol=1e-02)
+    np.testing.assert_equal(bounds_dem, dataset.attrs["bounds"])
     assert gt_img_crs == dataset.attrs["crs"]
 
 
@@ -164,7 +164,7 @@ def test_create_dem_with_geoid_georef():
     np.testing.assert_allclose(
         output_dataset_with_offset["image"].data,
         gt_data_with_offset,
-        rtol=1e-02,
+        rtol=RESULT_TOL,
     )
 
 

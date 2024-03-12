@@ -246,4 +246,4 @@ def test_percentil_90():
     # Compute metric from metric class
     output = metric_obj.compute_metric(data)
 
-    np.testing.assert_allclose(gt_output, output, rtol=1e-02)
+    np.testing.assert_equal(gt_output, output)
