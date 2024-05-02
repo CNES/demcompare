@@ -123,7 +123,10 @@ Four types of classification layers exist:
                 }
             }
 
+        .. note::
 
+            - If only one value [X] is entered in the ranges, then the calculated intervals are [0%, X[; [X, inf[
+            - If range is [0], then the calculated interval is [0%, inf[
 
     .. tab:: Fusion 
 

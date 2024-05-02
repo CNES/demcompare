@@ -33,7 +33,7 @@ The DEM processing methods can be split in two categories: DEM processing method
 
 .. note::
 
-   More informations about the curvature, the difference in altitude between the two input DEMs normalized by the slope and the angular difference can be found in :ref:`curvature`, :ref:`slope_normalized_elevation_difference` and :ref:`angular_difference` respectively.
+   More information about the curvature, the difference in altitude between the two input DEMs normalized by the slope and the angular difference can be found in :ref:`curvature`, :ref:`slope_normalized_elevation_difference` and :ref:`angular_difference` respectively.
 
 After the DEM processing methods, statistics can be computed on the resulting DEM.
 

@@ -81,6 +81,9 @@ class SlopeClassificationLayer(ClassificationLayerTemplate):
 
         # Ranges
         self.ranges: List = self.cfg["ranges"]
+        if len(self.ranges) == 1 and self.ranges[0] != 0:
+            self.ranges.insert(0, 0)
+
         # Checking configuration during initialisation step
         # doesn't require classification layers
         if dem is not None:
