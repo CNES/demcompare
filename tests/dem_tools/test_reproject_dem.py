@@ -34,7 +34,13 @@ from demcompare import dem_tools
 from demcompare.helpers_init import read_config_file
 
 # Tests helpers
-from tests.helpers import demcompare_test_data_path
+from tests.helpers import (
+    BOUNDS_TOL,
+    RES_TOL,
+    RESULT_TOL,
+    TRANSFORM_TOL,
+    demcompare_test_data_path,
+)
 
 
 @pytest.mark.unit_tests
@@ -89,31 +95,31 @@ def test_reproject_dems_sampling_sec(load_gironde_dem):
         reproj_sec["image"].shape, reproj_ref["image"].shape
     )
     np.testing.assert_allclose(
-        reproj_sec["image"].shape, gt_output_shape, rtol=1e-03
+        reproj_sec["image"].shape, gt_output_shape, rtol=RESULT_TOL
     )
     np.testing.assert_allclose(
-        reproj_ref["image"].shape, gt_output_shape, rtol=1e-03
+        reproj_ref["image"].shape, gt_output_shape, rtol=RESULT_TOL
     )
     # Tests dems resolution
-    np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=1e-02)
-    np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=1e-02)
-    np.testing.assert_allclose(reproj_sec.xres, gt_output_xres, rtol=1e-02)
-    np.testing.assert_allclose(reproj_ref.xres, gt_output_xres, rtol=1e-02)
+    np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=RES_TOL)
+    np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=RES_TOL)
+    np.testing.assert_allclose(reproj_sec.xres, gt_output_xres, rtol=RES_TOL)
+    np.testing.assert_allclose(reproj_ref.xres, gt_output_xres, rtol=RES_TOL)
     # Tests dems bounds
     np.testing.assert_allclose(
-        reproj_sec.attrs["bounds"], gt_intersection_roi, rtol=1e-03
+        reproj_sec.attrs["bounds"], gt_intersection_roi, rtol=BOUNDS_TOL
     )
     np.testing.assert_allclose(
-        reproj_ref.attrs["bounds"], gt_intersection_roi, rtol=1e-03
+        reproj_ref.attrs["bounds"], gt_intersection_roi, rtol=BOUNDS_TOL
     )
     # Test adapting_factor
-    np.testing.assert_allclose(adapting_factor, gt_adapting_factor, rtol=1e-02)
+    np.testing.assert_equal(adapting_factor, gt_adapting_factor)
     # Test dems transform
     np.testing.assert_allclose(
-        reproj_sec.georef_transform, gt_output_trans, atol=1e-02
+        reproj_sec.georef_transform, gt_output_trans, atol=TRANSFORM_TOL
     )
     np.testing.assert_allclose(
-        reproj_ref.georef_transform, gt_output_trans, atol=1e-02
+        reproj_ref.georef_transform, gt_output_trans, atol=TRANSFORM_TOL
     )
 
 
@@ -165,17 +171,13 @@ def test_reproject_dems_sampling_ref(load_gironde_dem):
     np.testing.assert_array_equal(
         reproj_sec["image"].shape, reproj_ref["image"].shape
     )
-    np.testing.assert_allclose(
-        reproj_sec["image"].shape, gt_output_shape, rtol=1e-03
-    )
-    np.testing.assert_allclose(
-        reproj_ref["image"].shape, gt_output_shape, rtol=1e-03
-    )
+    np.testing.assert_equal(reproj_sec["image"].shape, gt_output_shape)
+    np.testing.assert_equal(reproj_ref["image"].shape, gt_output_shape)
     # Tests dems resolution
-    np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=1e-02)
-    np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=1e-02)
-    np.testing.assert_allclose(reproj_sec.xres, gt_output_xres, rtol=1e-02)
-    np.testing.assert_allclose(reproj_ref.xres, gt_output_xres, rtol=1e-02)
+    np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=RES_TOL)
+    np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=RES_TOL)
+    np.testing.assert_allclose(reproj_sec.xres, gt_output_xres, rtol=RES_TOL)
+    np.testing.assert_allclose(reproj_ref.xres, gt_output_xres, rtol=RES_TOL)
     # Tests dems bounds
     np.testing.assert_allclose(
         reproj_sec.attrs["bounds"], gt_intersection_roi, rtol=1e-02
@@ -187,10 +189,10 @@ def test_reproject_dems_sampling_ref(load_gironde_dem):
     np.testing.assert_allclose(adapting_factor, gt_adapting_factor, rtol=1e-02)
     # Test dems transform
     np.testing.assert_allclose(
-        reproj_sec.georef_transform, gt_output_trans, rtol=1e-02
+        reproj_sec.georef_transform, gt_output_trans, rtol=TRANSFORM_TOL
     )
     np.testing.assert_allclose(
-        reproj_ref.georef_transform, gt_output_trans, rtol=1e-02
+        reproj_ref.georef_transform, gt_output_trans, rtol=TRANSFORM_TOL
     )
 
 
@@ -251,32 +253,28 @@ def test_reproject_dems_sampling_sec_initial_disparity(load_gironde_dem):
     np.testing.assert_array_equal(
         reproj_sec["image"].shape, reproj_ref["image"].shape
     )
-    np.testing.assert_allclose(
-        reproj_sec["image"].shape, gt_output_shape, rtol=1e-03
-    )
-    np.testing.assert_allclose(
-        reproj_ref["image"].shape, gt_output_shape, rtol=1e-03
-    )
+    np.testing.assert_equal(reproj_sec["image"].shape, gt_output_shape)
+    np.testing.assert_equal(reproj_ref["image"].shape, gt_output_shape)
     # Tests dems resolution
-    np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=1e-02)
-    np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=1e-02)
-    np.testing.assert_allclose(reproj_sec.xres, gt_output_xres, rtol=1e-02)
-    np.testing.assert_allclose(reproj_ref.xres, gt_output_xres, rtol=1e-02)
+    np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=RES_TOL)
+    np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=RES_TOL)
+    np.testing.assert_allclose(reproj_sec.xres, gt_output_xres, rtol=RES_TOL)
+    np.testing.assert_allclose(reproj_ref.xres, gt_output_xres, rtol=RES_TOL)
     # Tests dems bounds
     np.testing.assert_allclose(
-        reproj_sec.attrs["bounds"], gt_intersection_roi, rtol=1e-03
+        reproj_sec.attrs["bounds"], gt_intersection_roi, rtol=BOUNDS_TOL
     )
     np.testing.assert_allclose(
-        reproj_ref.attrs["bounds"], gt_intersection_roi, rtol=1e-03
+        reproj_ref.attrs["bounds"], gt_intersection_roi, rtol=BOUNDS_TOL
     )
     # Test adapting_factor
     np.testing.assert_allclose(adapting_factor, gt_adapting_factor, rtol=1e-02)
     # Test dems transform
     np.testing.assert_allclose(
-        reproj_sec.georef_transform, gt_output_trans, rtol=1e-02
+        reproj_sec.georef_transform, gt_output_trans, rtol=TRANSFORM_TOL
     )
     np.testing.assert_allclose(
-        reproj_ref.georef_transform, gt_output_trans, rtol=1e-02
+        reproj_ref.georef_transform, gt_output_trans, rtol=TRANSFORM_TOL
     )
 
 
@@ -346,12 +344,8 @@ def test_reproject_different_z_units():
     np.testing.assert_array_equal(
         reproj_sec["image"].shape, reproj_ref["image"].shape
     )
-    np.testing.assert_allclose(
-        reproj_sec["image"].shape, gt_output_shape, rtol=1e-03
-    )
-    np.testing.assert_allclose(
-        reproj_ref["image"].shape, gt_output_shape, rtol=1e-03
-    )
+    np.testing.assert_equal(reproj_sec["image"].shape, gt_output_shape)
+    np.testing.assert_equal(reproj_ref["image"].shape, gt_output_shape)
     # Tests dems resolution
     np.testing.assert_allclose(reproj_sec.yres, gt_output_yres, rtol=1e-02)
     np.testing.assert_allclose(reproj_ref.yres, gt_output_yres, rtol=1e-02)

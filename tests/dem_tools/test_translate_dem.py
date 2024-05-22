@@ -30,6 +30,7 @@ import pytest
 
 # Demcompare imports
 from demcompare import dem_tools
+from tests.helpers import TRANSFORM_TOL
 
 # Force protected access to test protected functions
 # pylint:disable=protected-access
@@ -71,15 +72,13 @@ def test_translate_dem_pos_x_neg_y(load_gironde_dem):
     transformed_dem = dem_tools.translate_dem(dem, x_off_pix, y_off_pix)
     # Verify that the transform of the transformed
     # dem has the ground truth values
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_offset_coord_x,
         transformed_dem["georef_transform"].data[0],
-        rtol=1e-02,
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_offset_coord_y,
         transformed_dem["georef_transform"].data[3],
-        rtol=1e-02,
     )
 
 
@@ -170,12 +169,12 @@ def test_translate_dem_neg_x_pos_y(load_gironde_dem):
     np.testing.assert_allclose(
         gt_offset_coord_x,
         transformed_dem["georef_transform"].data[0],
-        atol=1e-05,
+        atol=TRANSFORM_TOL,
     )
     np.testing.assert_allclose(
         gt_offset_coord_y,
         transformed_dem["georef_transform"].data[3],
-        atol=1e-02,
+        atol=TRANSFORM_TOL,
     )
 
 
@@ -218,10 +217,10 @@ def test_translate_dem_pos_x_pos_y(load_gironde_dem):
     np.testing.assert_allclose(
         gt_offset_coord_x,
         transformed_dem["georef_transform"].data[0],
-        atol=1e-02,
+        atol=TRANSFORM_TOL,
     )
     np.testing.assert_allclose(
         gt_offset_coord_y,
         transformed_dem["georef_transform"].data[3],
-        atol=1e-05,
+        atol=TRANSFORM_TOL,
     )

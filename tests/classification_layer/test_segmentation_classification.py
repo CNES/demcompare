@@ -56,9 +56,7 @@ def test_create_labelled_map(initialize_segmentation_classification):
     # Test that the test_first_classif's map image has been correctly loaded
     # on the dataset
     gt_map_image = classif_data[:, :, 0]
-    np.testing.assert_allclose(
-        gt_map_image, classif_layer_.map_image["ref"], rtol=1e-02
-    )
+    np.testing.assert_equal(gt_map_image, classif_layer_.map_image["ref"])
 
 
 @pytest.mark.unit_tests
@@ -109,8 +107,7 @@ def _test_create_class_masks(initialize_segmentation_classification):
     }
 
     # Test that the computed classes_masks are the same as gt
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_classes_masks["test_first_classif"],
         classif_layer_.classes_masks["ref"],
-        rtol=1e-02,
     )

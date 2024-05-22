@@ -116,23 +116,20 @@ def test_add_classif_layer_and_mode_stats_status_layer(
     )
 
     # Test alti diff
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         status_dataset.image.data,
         gt_image,
-        rtol=1e-02,
     )
     # Test alti diff by class
     # Standard mode
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         status_dataset.image_by_class.data[:, :, class_idx],
         input_stats_status_standard[class_idx]["dz_values"],
-        rtol=1e-02,
     )
     # Intersection mode
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         status_dataset.image_by_class_intersection.data[:, :, class_idx],
         input_stats_status_intersection[class_idx]["dz_values"],
-        rtol=1e-02,
     )
 
     class_idx = 1  # ----------------------------
@@ -160,16 +157,14 @@ def test_add_classif_layer_and_mode_stats_status_layer(
 
     # Test alti diff by class
     # Standard mode
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         status_dataset.image_by_class.data[:, :, class_idx],
         input_stats_status_standard[class_idx]["dz_values"],
-        rtol=1e-02,
     )
     # Intersection mode
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         status_dataset.image_by_class_intersection[:, :, class_idx],
         input_stats_status_intersection[class_idx]["dz_values"],
-        rtol=1e-02,
     )
 
 
@@ -244,29 +239,25 @@ def test_add_classif_layer_and_mode_stats_slope_layer(
         == input_stats_slope_exclusion[class_idx]["nbpts"]
     )
     # Test alti diff
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         slope_dataset.image.data,
         gt_image,
-        rtol=1e-02,
     )
     # Test alti diff by class
     # Standard mode
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         slope_dataset.image_by_class.data[:, :, class_idx],
         input_stats_slope_standard[class_idx]["dz_values"],
-        rtol=1e-02,
     )
     # Intersection mode
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         slope_dataset.image_by_class_intersection.data[:, :, class_idx],
         input_stats_slope_intersection[class_idx]["dz_values"],
-        rtol=1e-02,
     )
     # Exclusion mode
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         slope_dataset.image_by_class_exclusion.data[:, :, class_idx],
         input_stats_slope_exclusion[class_idx]["dz_values"],
-        rtol=1e-02,
     )
 
     class_idx = 1  # ----------------------------
@@ -303,20 +294,17 @@ def test_add_classif_layer_and_mode_stats_slope_layer(
 
     # Test alti diff by class
     # Standard mode
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         slope_dataset.image_by_class.data[:, :, class_idx],
         input_stats_slope_standard[class_idx]["dz_values"],
-        rtol=1e-02,
     )
     # Intersection mode
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         slope_dataset.image_by_class_intersection.data[:, :, class_idx],
         input_stats_slope_intersection[class_idx]["dz_values"],
-        rtol=1e-02,
     )
     # Exclusion mode
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         slope_dataset.image_by_class_exclusion.data[:, :, class_idx],
         input_stats_slope_exclusion[class_idx]["dz_values"],
-        rtol=1e-02,
     )

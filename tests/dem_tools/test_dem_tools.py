@@ -38,7 +38,7 @@ from demcompare.dem_tools import DEFAULT_NODATA
 from demcompare.helpers_init import read_config_file
 
 # Tests helpers
-from tests.helpers import demcompare_test_data_path
+from tests.helpers import RESULT_TOL, demcompare_test_data_path
 
 # Force protected access to test protected functions
 # pylint:disable=protected-access
@@ -79,15 +79,13 @@ def test_translate_dem_no_offset(load_gironde_dem):
     transformed_dem = dem_tools.translate_dem(dem, x_off_pix, y_off_pix)
     # Verify that the transform of the transformed
     # dem has the ground truth values
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_offset_coord_x,
         transformed_dem["georef_transform"].data[0],
-        atol=1e-02,
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_offset_coord_y,
         transformed_dem["georef_transform"].data[3],
-        atol=1e-02,
     )
 
 
@@ -129,15 +127,13 @@ def test_translate_dem_original_transform(load_gironde_dem):
     _ = dem_tools.translate_dem(dem, x_off_pix, y_off_pix)
     # Verify that the transform of the transformed
     # dem has the ground truth values
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_offset_coord_x,
         dem["georef_transform"].data[0],
-        atol=1e-02,
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_offset_coord_y,
         dem["georef_transform"].data[3],
-        atol=1e-02,
     )
 
 
@@ -235,10 +231,10 @@ def test_compute_dem_diff_bounds_transform():
     Test the compute_dem_diff output dem's bounds and transform
     Input data:
     - input DEMs present in "strm_test_data" test root data directory
-    - Hand crafted data
+    - Handcrafted data
     Validation data:
     - Manually computed ROI and BoundingBox obtained by rasterio
-    - Hand crafted ground truth
+    - Handcrafted ground truth
     Validation process:
     - Load the dem with the load_dem function.
     - Create dems with create_dem function.
@@ -300,10 +296,9 @@ def test_compute_dem_diff_bounds_transform():
     dem_processing_obj = DemProcessing("alti-diff")
     alti_dif = dem_processing_obj.process_dem(dem_1, dem_2)
 
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         alti_dif["image"].data,
         ground_truth,
-        rtol=1e-02,
     )
     assert alti_dif.bounds == from_dataset.bounds
     assert alti_dif.crs == from_dataset.crs
@@ -345,8 +340,8 @@ def test_compute_waveform():
     # Obtain output waveform
     output_row_waveform, output_col_waveform = dem_tools.compute_waveform(dem)
 
-    np.testing.assert_allclose(gt_col_waveform, output_col_waveform, rtol=1e-02)
-    np.testing.assert_allclose(gt_row_waveform, output_row_waveform, rtol=1e-02)
+    np.testing.assert_equal(gt_col_waveform, output_col_waveform)
+    np.testing.assert_equal(gt_row_waveform, output_row_waveform)
 
 
 @pytest.mark.unit_tests
@@ -397,5 +392,5 @@ def test_compute_dem_slope():
     np.testing.assert_allclose(
         gt_slope,
         output_slope["ref_slope"].data[:, :],
-        rtol=1e-02,
+        rtol=RESULT_TOL,
     )
