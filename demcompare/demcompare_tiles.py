@@ -258,10 +258,6 @@ def run_tiles(tiles_config, loglevel):  # pylint:disable=too-many-locals
 
             os.remove(config)
 
-    x_2d = np.flip(x_2d, axis=0)
-    y_2d = np.flip(y_2d, axis=0)
-    z_2d = np.flip(z_2d, axis=0)
-
     np.save(output_dir + "/coreg_results_x2D.npy", x_2d)
     np.save(output_dir + "/coreg_results_y2D.npy", y_2d)
     np.save(output_dir + "/coreg_results_z2D.npy", z_2d)
