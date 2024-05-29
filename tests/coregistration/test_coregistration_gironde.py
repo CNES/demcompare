@@ -39,7 +39,7 @@ from demcompare.dem_tools import SamplingSourceParameter, load_dem
 from demcompare.helpers_init import read_config_file
 
 # Tests helpers
-from tests.helpers import demcompare_test_data_path
+from tests.helpers import TRANSFORM_TOL, demcompare_test_data_path
 
 
 @pytest.mark.unit_tests
@@ -109,24 +109,22 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
     coregistration_results = coregistration_.coregistration_results
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=TRANSFORM_TOL)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=TRANSFORM_TOL)
     assert gt_sampling_source == coregistration_.sampling_source
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["dx"]["nuth_offset"],
         coregistration_results["coregistration_results"]["dx"]["nuth_offset"],
-        rtol=1e-02,
     )
     assert (
         gt_plani_results["dx"]["unit_offset"]
         == coregistration_results["coregistration_results"]["dx"]["unit_offset"]
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["dx"]["total_bias_value"],
         coregistration_results["coregistration_results"]["dx"][
             "total_bias_value"
         ],
-        rtol=1e-02,
     )
     assert (
         gt_plani_results["dx"]["unit_bias_value"]
@@ -135,21 +133,19 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
         ]
     )
 
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["dy"]["nuth_offset"],
         coregistration_results["coregistration_results"]["dy"]["nuth_offset"],
-        rtol=1e-02,
     )
     assert (
         gt_plani_results["dy"]["unit_offset"]
         == coregistration_results["coregistration_results"]["dy"]["unit_offset"]
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["dy"]["total_bias_value"],
         coregistration_results["coregistration_results"]["dy"][
             "total_bias_value"
         ],
-        rtol=1e-02,
     )
     assert (
         gt_plani_results["dy"]["unit_bias_value"]
@@ -157,33 +153,29 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
             "unit_bias_value"
         ]
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["gdal_translate_bounds"]["ulx"],
         coregistration_results["coregistration_results"][
             "gdal_translate_bounds"
         ]["ulx"],
-        rtol=1e-03,
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["gdal_translate_bounds"]["uly"],
         coregistration_results["coregistration_results"][
             "gdal_translate_bounds"
         ]["uly"],
-        rtol=1e-03,
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["gdal_translate_bounds"]["lrx"],
         coregistration_results["coregistration_results"][
             "gdal_translate_bounds"
         ]["lrx"],
-        rtol=1e-03,
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["gdal_translate_bounds"]["lry"],
         coregistration_results["coregistration_results"][
             "gdal_translate_bounds"
         ]["lry"],
-        rtol=1e-03,
     )
 
 
@@ -255,24 +247,22 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
     coregistration_results = coregistration_.coregistration_results
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=TRANSFORM_TOL)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=TRANSFORM_TOL)
     assert gt_sampling_source == coregistration_.sampling_source
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["dx"]["nuth_offset"],
         coregistration_results["coregistration_results"]["dx"]["nuth_offset"],
-        rtol=1e-02,
     )
     assert (
         gt_plani_results["dx"]["unit_offset"]
         == coregistration_results["coregistration_results"]["dx"]["unit_offset"]
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["dx"]["total_bias_value"],
         coregistration_results["coregistration_results"]["dx"][
             "total_bias_value"
         ],
-        rtol=1e-02,
     )
     assert (
         gt_plani_results["dx"]["unit_bias_value"]
@@ -280,21 +270,19 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
             "unit_bias_value"
         ]
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["dy"]["nuth_offset"],
         coregistration_results["coregistration_results"]["dy"]["nuth_offset"],
-        rtol=1e-02,
     )
     assert (
         gt_plani_results["dy"]["unit_offset"]
         == coregistration_results["coregistration_results"]["dy"]["unit_offset"]
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["dy"]["total_bias_value"],
         coregistration_results["coregistration_results"]["dy"][
             "total_bias_value"
         ],
-        rtol=1e-02,
     )
     assert (
         gt_plani_results["dy"]["unit_bias_value"]
@@ -302,33 +290,29 @@ def test_compute_coregistration_with_gironde_test_data_sampling_ref():
             "unit_bias_value"
         ]
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["gdal_translate_bounds"]["ulx"],
         coregistration_results["coregistration_results"][
             "gdal_translate_bounds"
         ]["ulx"],
-        rtol=1e-03,
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["gdal_translate_bounds"]["uly"],
         coregistration_results["coregistration_results"][
             "gdal_translate_bounds"
         ]["uly"],
-        rtol=1e-03,
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["gdal_translate_bounds"]["lrx"],
         coregistration_results["coregistration_results"][
             "gdal_translate_bounds"
         ]["lrx"],
-        rtol=1e-03,
     )
-    np.testing.assert_allclose(
+    np.testing.assert_equal(
         gt_plani_results["gdal_translate_bounds"]["lry"],
         coregistration_results["coregistration_results"][
             "gdal_translate_bounds"
         ]["lry"],
-        rtol=1e-03,
     )
 
 
@@ -378,8 +362,8 @@ def test_compute_coregistration_gironde_sampling_sec_and_initial_disparity():
     transform = coregistration_.compute_coregistration(sec, ref)
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=TRANSFORM_TOL)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=TRANSFORM_TOL)
     # Get coregistration results
     assert gt_sampling_source == coregistration_.sampling_source
 
@@ -433,8 +417,8 @@ def test_compute_coregistration_gironde_sampling_ref_and_initial_disparity():
     transform = coregistration_.compute_coregistration(sec, ref)
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
+    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=TRANSFORM_TOL)
+    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=TRANSFORM_TOL)
     assert gt_sampling_source == coregistration_.sampling_source
 
 
@@ -474,7 +458,7 @@ def test_coregistration_with_same_dems():
 
     # Define ground truth offsets
     gt_xoff = 0.0
-    gt_yoff = 0.0
+    gt_yoff = -0.0
 
     # Initialize coregistration object
     coregistration_ = coregistration.Coregistration(cfg["coregistration"])
@@ -482,5 +466,5 @@ def test_coregistration_with_same_dems():
     transform = coregistration_.compute_coregistration(sec, ref)
 
     # Test that the output offsets and bias are the same as gt
-    np.testing.assert_allclose(gt_xoff, transform.x_offset, rtol=1e-02)
-    np.testing.assert_allclose(gt_yoff, transform.y_offset, rtol=1e-02)
+    np.testing.assert_equal(gt_xoff, transform.x_offset)
+    np.testing.assert_equal(gt_yoff, transform.y_offset)

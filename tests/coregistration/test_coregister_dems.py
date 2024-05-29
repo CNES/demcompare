@@ -38,7 +38,7 @@ from demcompare import coregistration, dem_tools
 from demcompare.helpers_init import read_config_file
 
 # Tests helpers
-from tests.helpers import demcompare_test_data_path
+from tests.helpers import BOUNDS_TOL, TRANSFORM_TOL, demcompare_test_data_path
 
 
 @pytest.mark.unit_tests
@@ -104,9 +104,9 @@ def test_coregister_dems_algorithm_gironde_sampling_sec():
 
     # Test that the outputs match the ground truth
     assert rotation == transform.rotation
-    np.testing.assert_allclose(x_offset, transform.x_offset, rtol=1e-02)
-    np.testing.assert_allclose(y_offset, transform.y_offset, rtol=1e-02)
-    np.testing.assert_allclose(z_offset, transform.z_offset, rtol=1e-02)
+    np.testing.assert_allclose(x_offset, transform.x_offset, rtol=TRANSFORM_TOL)
+    np.testing.assert_allclose(y_offset, transform.y_offset, rtol=TRANSFORM_TOL)
+    np.testing.assert_allclose(z_offset, transform.z_offset, rtol=TRANSFORM_TOL)
 
 
 @pytest.mark.unit_tests
@@ -176,10 +176,10 @@ def test_bounds_in_coregister_dems_algorithm_gironde_sampling_sec():
 
     # Test that the outputs match the ground truth
     np.testing.assert_allclose(
-        coreg_sec_dataset.bounds, (ulx, uly, lrx, lry), rtol=1e-02
+        coreg_sec_dataset.bounds, (ulx, uly, lrx, lry), rtol=BOUNDS_TOL
     )
     np.testing.assert_allclose(
-        coreg_ref_dataset.bounds, (ulx, uly, lrx, lry), rtol=1e-02
+        coreg_ref_dataset.bounds, (ulx, uly, lrx, lry), rtol=BOUNDS_TOL
     )
 
 
@@ -251,6 +251,6 @@ def test_coregister_dems_algorithm_gironde_sampling_ref():
 
     # Test that the outputs match the ground truth
     assert rotation == transform.rotation
-    np.testing.assert_allclose(x_offset, transform.x_offset, rtol=1e-02)
-    np.testing.assert_allclose(y_offset, transform.y_offset, rtol=1e-02)
-    np.testing.assert_allclose(z_offset, transform.z_offset, rtol=1e-02)
+    np.testing.assert_allclose(x_offset, transform.x_offset, rtol=TRANSFORM_TOL)
+    np.testing.assert_allclose(y_offset, transform.y_offset, rtol=TRANSFORM_TOL)
+    np.testing.assert_allclose(z_offset, transform.z_offset, rtol=TRANSFORM_TOL)

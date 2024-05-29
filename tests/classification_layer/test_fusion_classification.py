@@ -139,10 +139,8 @@ def test_merge_classes_and_create_sets_masks(initialize_fusion_layer):
         "fusion_layer": gt_sets_masks,
     }
     # Test that the computed sets_masks_dict is the same as gt
-    np.testing.assert_allclose(
-        gt_classes_masks["fusion_layer"],
-        fusion_layer_.classes_masks["sec"],
-        rtol=1e-02,
+    np.testing.assert_equal(
+        gt_classes_masks["fusion_layer"], fusion_layer_.classes_masks["sec"]
     )
 
 
@@ -188,6 +186,4 @@ def test_create_labelled_map(initialize_fusion_layer):
         [[1, 4, 5], [5, 6, 3], [-9999, -9999, -9999], [-9999, 6, 2]]
     )
 
-    np.testing.assert_allclose(
-        gt_map_image, fusion_layer_.map_image["sec"], rtol=1e-02
-    )
+    np.testing.assert_equal(gt_map_image, fusion_layer_.map_image["sec"])

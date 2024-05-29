@@ -99,7 +99,7 @@ def test_coregistration_with_output_dir():
         - Create temporary_dir named tmp_dir
         - Loads the data present in the test root data directory
         - Creates a coregistration object and does compute_coregistration
-        - Verify that coreg_sec.tif and coregistration_results.json are saved
+        - Verify that coregistration_results.json are saved
     - parameter output_dir not being specified and save_optional_outputs
       set to True
         - Creates a new coregistration object and does compute_coregistration
@@ -140,8 +140,6 @@ def test_coregistration_with_output_dir():
         # compute coregistration
         _ = coregistration_.compute_coregistration(sec, ref)
 
-        # test output_dir/coregistration/coreg_SEC.tif creation
-        assert os.path.isfile(tmp_dir + "/coregistration/coreg_SEC.tif") is True
         # test output_dir/coregistration/coreg_SEC.tif creation
         assert (
             os.path.isfile(

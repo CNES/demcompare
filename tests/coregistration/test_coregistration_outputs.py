@@ -72,6 +72,7 @@ def test_coregistration_save_optional_reprojection():
         "reproj_coreg_REF.tif",
         "reproj_SEC.tif",
         "reproj_REF.tif",
+        "coreg_SEC.tif",
     ]
 
     # Load dems

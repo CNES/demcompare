@@ -28,6 +28,7 @@ import numpy as np
 import pytest
 
 from demcompare.metric import Metric
+from tests.helpers import RESULT_TOL
 
 
 @pytest.mark.unit_tests
@@ -69,7 +70,7 @@ def test_svf():
         ]
     )
 
-    np.testing.assert_allclose(output["image"].data, gt, rtol=1e-02)
+    np.testing.assert_allclose(output["image"].data, gt, rtol=RESULT_TOL)
 
 
 @pytest.mark.unit_tests
@@ -111,4 +112,4 @@ def test_hillshade():
         ]
     )
 
-    np.testing.assert_allclose(output["image"].data, gt, rtol=1e-02)
+    np.testing.assert_allclose(output["image"].data, gt, rtol=RESULT_TOL)

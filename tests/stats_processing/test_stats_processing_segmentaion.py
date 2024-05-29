@@ -34,6 +34,7 @@ import pytest
 
 # Demcompare imports
 from demcompare.metric import Metric
+from tests.helpers import STAT_TOL
 
 
 @pytest.mark.unit_tests
@@ -115,12 +116,12 @@ def test_compute_stats_segmentation_layer(initialize_stats_processing):
     np.testing.assert_allclose(
         gt_mean,
         output_mean,
-        rtol=1e-02,
+        rtol=STAT_TOL,
     )
     np.testing.assert_allclose(
         gt_sum,
         output_sum,
-        rtol=1e-02,
+        rtol=STAT_TOL,
     )
 
     # Do the same test with the ratio_above_threshold 2D metric
@@ -150,5 +151,5 @@ def test_compute_stats_segmentation_layer(initialize_stats_processing):
     np.testing.assert_allclose(
         gt_ratio,
         output_ratio,
-        rtol=1e-02,
+        rtol=STAT_TOL,
     )

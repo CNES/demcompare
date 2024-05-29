@@ -25,12 +25,21 @@ This module contains functions to test the
 methods for slope layer in the StatsProcessing class.
 """
 
+import os
+
 # Third party imports
 import numpy as np
 import pytest
 
 # Demcompare imports
+import demcompare
+from demcompare import dem_tools
+from demcompare.dem_processing import DemProcessing
+from demcompare.helpers_init import read_config_file
 from demcompare.metric import Metric
+
+# Tests helpers
+from ..helpers import demcompare_test_data_path
 
 # pylint:disable = duplicate-code
 
@@ -511,3 +520,78 @@ def test_compute_stats_from_cfg_slope(initialize_stats_processing_with_metrics):
             mode="standard",
             metric="ratio_above_threshold",
         )
+
+
+@pytest.mark.unit_tests
+def test_ranges_slope():
+    """
+    Tests the ranges slope creation
+    Input data:
+    - Loads the ref and sec dems present in the "gironde_test_data_sampling_ref"
+      test data directory using the load_dem function
+    - Reproject both dems using the reproject_dems function
+    - Computes the slope of both reprojected dems
+    - Computes the altitude difference between both dems
+    - Computes an input statistics configuration containing a slope
+      classification layer called "Slope0" with different ranges
+    - Creates a StatsProcessing object with the altitude difference and
+      the statistics configuration
+    Validation data:
+    - The manually computed slope ranges
+    Validation process:
+    - Creates the StatsProcessing object
+    - Checks that the slope ranges are the same as ground truth
+    - Checked function: StatsProcessing's __init__
+    """
+    # Get "gironde_test_data" test root data directory absolute path
+    test_data_path = demcompare_test_data_path("gironde_test_data_sampling_ref")
+
+    # Load "gironde_test_data" demcompare config from input/test_config.json
+    test_cfg_path = os.path.join(test_data_path, "input/test_config.json")
+    cfg = read_config_file(test_cfg_path)
+
+    # Initialize sec and ref, necessary for StatsProcessing creation
+    sec = dem_tools.load_dem(cfg["input_sec"]["path"])
+    ref = dem_tools.load_dem(
+        cfg["input_ref"]["path"],
+        classification_layers=(cfg["input_ref"]["classification_layers"]),
+    )
+    sec, ref, _ = dem_tools.reproject_dems(sec, ref, sampling_source="ref")
+
+    # Compute slope and add it as a classification_layer
+    ref = dem_tools.compute_dem_slope(ref)
+    sec = dem_tools.compute_dem_slope(sec)
+    # Compute altitude diff for stats computation
+    dem_processing_object = DemProcessing("alti-diff")
+    stats_dem = dem_processing_object.process_dem(ref, sec)
+    # Initialize stats input configuration
+    input_stats_cfg = {
+        "classification_layers": {
+            "Slope0": {
+                "type": "slope",
+                "ranges": [25],
+            },
+        },
+    }
+    # Create StatsProcessing object
+    stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
+
+    assert stats_processing.cfg["classification_layers"]["Slope0"][
+        "ranges"
+    ] == [0, 25]
+
+    # Initialize stats input configuration
+    input_stats_cfg = {
+        "classification_layers": {
+            "Slope0": {
+                "type": "slope",
+                "ranges": [0],
+            },
+        },
+    }
+    # Create StatsProcessing object
+    stats_processing = demcompare.StatsProcessing(input_stats_cfg, stats_dem)
+
+    assert stats_processing.cfg["classification_layers"]["Slope0"][
+        "ranges"
+    ] == [0]
