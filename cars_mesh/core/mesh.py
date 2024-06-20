@@ -28,6 +28,7 @@ from typing import Union
 
 # Third party imports
 import matplotlib.tri as mtri
+import numpy as np
 import open3d as o3d
 from scipy.spatial import Delaunay
 
@@ -102,7 +103,7 @@ def ball_pivoting_reconstruction(
 
     else:
         pcd.o3d_pcd.normals = o3d.utility.Vector3dVector(
-            pcd.df[["n_x", "n_y", "n_z"]].to_numpy()
+            np.ascontiguousarray(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
         )
 
     # Mesh point cloud
@@ -204,7 +205,7 @@ def poisson_reconstruction(
 
     else:
         pcd.o3d_pcd.normals = o3d.utility.Vector3dVector(
-            pcd.df[["n_x", "n_y", "n_z"]].to_numpy()
+            np.ascontiguousarray(pcd.df[["n_x", "n_y", "n_z"]].to_numpy())
         )
 
     # Mesh point cloud
