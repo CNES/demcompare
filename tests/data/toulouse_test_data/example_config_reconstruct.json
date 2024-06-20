@@ -1,0 +1,63 @@
+{
+  "input_path": "point_cloud.laz",
+  "output_dir": "output_reconstruct",
+  "output_name": "textured_mesh",
+  "rpc_path": "rpc.XML",
+  "tif_img_path": "texture_image.tif",
+  "image_offset": [
+    15029,
+    17016
+  ],
+  "utm_code": 32631,
+  "state_machine": [
+    {
+      "action": "filter",
+      "method": "radius_o3d",
+      "save_output": true,
+      "params": {
+        "radius": 4,
+        "nb_points": 25
+      }
+    },
+    {
+      "action": "denoise_pcd",
+      "method": "bilateral",
+      "save_output": true,
+      "params": {
+        "num_iterations": 10,
+        "neighbour_kdtree_dict": {
+          "knn": 10,
+          "num_workers_kdtree": 6
+        },
+        "neighbour_normals_dict": {
+          "knn_normals": 10,
+          "use_open3d": true
+        },
+        "sigma_d": 1.5,
+        "sigma_n": 1,
+        "num_chunks": 2
+      }
+    },
+    {
+      "action": "mesh",
+      "method": "delaunay_2d",
+      "save_output": true,
+      "params": {
+        "method": "scipy"
+      }
+    },
+    {
+      "action": "simplify_mesh",
+      "method": "garland-heckbert",
+      "save_output": true,
+      "params": {
+        "reduction_ratio_of_triangles": 0.75
+      }
+    },
+    {
+      "action": "texture",
+      "method": "texturing",
+      "params": {}
+    }
+  ]
+}

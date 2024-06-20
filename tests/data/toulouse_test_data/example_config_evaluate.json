@@ -1,0 +1,5 @@
+{
+  "input_path_1": "point_cloud.laz",
+  "input_path_2": "output_reconstruct/textured_mesh.ply",
+  "output_dir": "output_evaluate"
+}

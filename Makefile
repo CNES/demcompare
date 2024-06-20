@@ -80,13 +80,23 @@ install: venv  ## install the package in dev mode in virtualenv
 ## Test section
 	
 .PHONY: test
-test: ## run tests and coverage quickly with the default Python
-	@${VENV}/bin/pytest -o log_cli=true --cov-config=.coveragerc --cov --cov-report=term-missing
+test: ## run tests and coverage quickly with the default python3 (only slow test)
+	@${VENV}/bin/pytest -m fast -o log_cli=true --cov-config=.coveragerc --cov --cov-report=term-missing
 
 .PHONY: test-all
-test-all: ## run tests on every Python version with tox
+test-all: ## run all tests and coverage with the default python3 (slow and fast)
+	@${VENV}/bin/pytest  -o log_cli=true --cov-config=.coveragerc --cov --cov-report=term-missing
+
+.PHONY: tox
+tox: ## run tests via tox on every python version (only slow test)
+	@${VENV}/bin/tox -r -p auto -- -m slow  ## recreate venv (-r) and parallel mode (-p auto)
+
+.PHONY: tox-all
+tox-all: ## run all tests on every Python version with tox
 	@${VENV}/bin/tox -r -p auto  ## recreate venv (-r) and parallel mode (-p auto)
-	
+
+
+
 .PHONY: coverage
 coverage: ## check code coverage quickly with the default Python
 	@${VENV}/bin/coverage run --source cars_mesh -m pytest

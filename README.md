@@ -1,11 +1,27 @@
 <div align="center">
-  <a href="https://github.com/CNES/cars-mesh"><img src="docs/source/images/picto_transparent.png" alt="CARS" title="CARS"  width="20%"></a>
+<a target="_blank" href="https://github.com/CNES/cars-mesh">
+<picture>
+  <source
+    srcset="https://raw.githubusercontent.com/CNES/cars-mesh/master/docs/source/images/picto_dark.png"
+    media="(prefers-color-scheme: dark)"
+  />
+  <img
+    src="https://raw.githubusercontent.com/CNES/cars-mesh/master/docs/source/images/picto_light.png"
+    alt="CARS"
+    width="40%"
+  />
+</picture>
+</a>
 
 <h4>CARS-MESH</h4>
 
-[![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0/)
+
+[![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](CONTRIBUTING.md)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0/)
+[![Documentation](https://readthedocs.org/projects/cars-mesh/badge/?version=stable)](https://cars-mesh.readthedocs.io/?badge=stable)
+
+
 
 <p>
   <a href="#overview">Overview</a> •
@@ -26,6 +42,8 @@ This tool is part of 3D CNES tools around [CARS](https://github.com/cnes/cars) b
 
 CARS-MESH depends heavily on [open3D](http://www.open3d.org/) toolbox.
 
+CARS-MESH is a study project and is not recommended for production. The project is for experimental use only, with no guaranty on stability.
+
 * Free software: Apache Software License 2.0
 
 [//]: # (* Documentation: https://cars-mesh.readthedocs.io.)
@@ -44,7 +62,7 @@ are respectively:
 
 It can be run on a point cloud or directly on a mesh if only the last steps are chosen.
 
-In the meantime, CARS-MESH provides a point clouds comparison and evaluation tool.
+In the meantime, CARS-MESH provides a simple point clouds comparison and evaluation tool.
 It computes a bunch of metrics between two point clouds or meshes (vertices are used
 for the comparison for mesh) and gives a visual glimpse of the local distances from one point cloud to the other.
 
