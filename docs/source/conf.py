@@ -13,13 +13,14 @@
 
 # -- Path setup --------------------------------------------------------------
 
+import os
+import sys
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 from pkg_resources import get_distribution
-import os
-import sys
 
 sys.path.insert(0, os.path.abspath("../.."))
 sys.setrecursionlimit(1500)
@@ -103,10 +104,11 @@ html_title = "CARS-MESH Documentation"
 html_short_title = "CARS-MESH Documentation"
 
 # Logo
-# html_logo = "images/picto_transparent_mini.png"
+html_logo = "images/picto_dark.png"
 
 # Favicon
-# html_favicon = "images/favicon_noname.ico"
+html_favicon = "images/favicon.ico"
+
 
 # Theme options
 html_theme_options = {
