@@ -11,6 +11,7 @@ workflow:
 stages:
   - init
   - quality
+  - sync-github
 
 # Default configuration for all jobs
 default:
@@ -32,11 +33,17 @@ variables:
   # TAGS for images if each stages: base python and at3d cnes3d/testall for tox
   TAG_IMAGE_PYTHON: "python:3.10.8"
   TAG_IMAGE_CNES3D: "cnes3d/testall:0.1.0"
+  TAG_IMAGE_GIT: "alpine/git"
   # Can be used to move pip cache in local directory
   PIP_CACHE_DIR: "${WORKSPACE}/.pip-cache/"
   # Local artifactory Dockerhub URL containing copies of docker hub images
-  ARTIFACTORY_URL_DOCKERHUB: "${ARTIFACTORY_HOST}/docker"
-  ARTIFACTORY_URL_CNES3D: "${ARTIFACTORY_HOST}/docker"
+  ARTIFACTORY_URL_DOCKER: "${ARTIFACTORY_HOST}/docker"
+  ARTIFACTORY_URL_PUBLIC: "${ARTIFACTORY_HOST}/publicremotes-docker"
+
+  # Paramètres proxy
+  HTTP_PROXY: http://${PROXY_USER}:${PROXY_PWD}@${PROXY_URL}
+  HTTPS_PROXY: http://${PROXY_USER}:${PROXY_PWD}@${PROXY_URL}
+  NO_PROXY: ${NO_PROXY}
 
 # Steps:
 #    - checkout (done automatically as gitlab-ci is in the same project)
@@ -45,11 +52,12 @@ variables:
 #    - test-all (all combinations, slow)
 #    - lint
 #    - docs
+#    - sync-github
 
 build:
   stage: init
   image:
-    ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}
+    ${ARTIFACTORY_URL_DOCKER}/${TAG_IMAGE_CNES3D}
     #  before_script:
     # set up proxy
     #- export HTTP_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
@@ -70,7 +78,7 @@ build:
 
 test:
   stage: quality
-  image: ${ARTIFACTORY_URL_CNES3D}/${TAG_IMAGE_CNES3D}
+  image: ${ARTIFACTORY_URL_DOCKER}/${TAG_IMAGE_CNES3D}
   needs:
     - build
   script:
@@ -87,7 +95,7 @@ test:
 
 test-all:
   stage: quality
-  image: ${ARTIFACTORY_URL_CNES3D}/${TAG_IMAGE_CNES3D}
+  image: ${ARTIFACTORY_URL_DOCKER}/${TAG_IMAGE_CNES3D}
   needs:
     - build
   script:
@@ -106,7 +114,7 @@ test-all:
 
 linting:
   stage: quality
-  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}
+  image: ${ARTIFACTORY_URL_DOCKER}/${TAG_IMAGE_CNES3D}
   needs:
     - build
   script:
@@ -122,7 +130,7 @@ linting:
 
 docs:
   stage: quality
-  image: ${ARTIFACTORY_URL_DOCKERHUB}/${TAG_IMAGE_CNES3D}
+  image: ${ARTIFACTORY_URL_DOCKER}/${TAG_IMAGE_CNES3D}
   needs:
     - build
   script:
@@ -135,3 +143,39 @@ docs:
   artifacts:
     untracked: false
     expire_in: 1 day
+
+sync-github:
+  stage: sync-github
+  needs:
+    - test-all
+    - linting
+    - docs
+  # Get a small docker git image
+  image:
+    name: ${ARTIFACTORY_URL_PUBLIC}/${TAG_IMAGE_GIT}
+    entrypoint: [""]
+
+  before_script:
+    # Add CNES certificates to allow the runner to clone gitlab repo.
+    # CNES_CERTIFICATE is defined in the CNES global gitlab instance
+    - cat ${CNES_CERTIFICATE} > /usr/local/share/ca-certificates/my-cert.crt
+    # Certificate update
+    - update-ca-certificates
+  script:
+    # Clone this repo
+    - git clone $CI_REPOSITORY_URL
+    # Get in the repo directory
+    - cd $(basename $CI_REPOSITORY_URL .git)
+    - echo "no sync for now, no proxy password"
+    # push to our branch from HEAD (since we always are on a detached HEAD)
+    # configure proxy TECH ! (depends on proxy creds!)
+    #git -c http.proxy=http://${PROXY_USER}:${PROXY_PWD}@${PROXY_URL} push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/CNES/cars-mesh HEAD:master
+
+    # Add remote github with identification information
+    #- git remote add gitlabsync https://${GITHUB_TOKEN_NAME}:${GITHUB_TOKEN}@${GITHUB_URL}/gitlabsync.git
+    # Push modifications from gitlab master to github master
+    #- git push gitlabsync master:master
+    # Trigger only on master branch
+  only:
+    - master
+  timeout: 20 minutes
