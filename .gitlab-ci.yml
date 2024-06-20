@@ -41,7 +41,8 @@ variables:
 # Steps:
 #    - checkout (done automatically as gitlab-ci is in the same project)
 #    - build (stage, init)
-#    - test
+#    - test (only fast tests)
+#    - test-all (all combinations, slow)
 #    - lint
 #    - docs
 
@@ -76,13 +77,29 @@ test:
     # Load previous python venv
     - source venv/bin/activate
 
-    # Run test (with open3D openGL working)
-    # only with local python3
-    #- make test
-    # with tox and several python3 versions
-    - make test-all
+    # Run only fast tests with tox and several python3 versions
+    - make tox
     - deactivate
     - make clean
+  artifacts:
+    untracked: false
+    expire_in: 1 day
+
+test-all:
+  stage: quality
+  image: ${ARTIFACTORY_URL_CNES3D}/${TAG_IMAGE_CNES3D}
+  needs:
+    - build
+  script:
+    # Load previous python venv
+    - source venv/bin/activate
+
+    # Run all tests (slow) with tox and several python3 versions
+    - make tox-all
+    - deactivate
+    - make clean
+  only:
+    - master
   artifacts:
     untracked: false
     expire_in: 1 day

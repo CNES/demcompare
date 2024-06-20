@@ -28,8 +28,8 @@ from tempfile import TemporaryDirectory
 import pytest
 
 # cars_mesh imports
-from cars_mesh import param
-from cars_mesh.config import read_config
+from cars_mesh import param, reconstruct_pipeline
+from cars_mesh.config import read_config, save_config_file
 from cars_mesh.tools.handlers import read_input_path
 
 # Tests helpers
@@ -40,7 +40,45 @@ from .helpers import get_temporary_dir, get_test_data_path
 @pytest.mark.filterwarnings(
     "ignore: Dataset has no geotransform, gcps, or rpcs"
 )
+@pytest.mark.end2end_tests
+@pytest.mark.fast
+def test_example_end2end():
+    """
+    Test one run on a fast end2end test.
+    Run example configuration reconstruction (same from doc quickstart example).
+    TODO : check the outputs !
+    only run failed, no data verification.
+    """
+    # Get "toulouse_test_data" test root data
+    # directory absolute path
+    test_data_path = get_test_data_path("toulouse_test_data")
+
+    # Load a reconstruct configuration example config
+    test_cfg_path = os.path.join(
+        test_data_path, "example_config_reconstruct.json"
+    )
+
+    # Create temporary directory for test output
+    with TemporaryDirectory(dir=get_temporary_dir()) as tmp_dir:
+
+        # Open config, Modify test's output dir to tmp test dir, save config
+        test_cfg = read_config(test_cfg_path)
+        test_cfg["output_dir"] = tmp_dir
+        test_cfg_tmp_path = os.path.join(
+            tmp_dir, os.path.basename(test_cfg_path)
+        )
+        save_config_file(test_cfg_tmp_path, test_cfg)
+
+        # run cars-mesh main reconstruct pipeline in tmp dir
+        reconstruct_pipeline.main(test_cfg_tmp_path)
+
+
+# Filter rasterio warning when image is not georeferenced
+@pytest.mark.filterwarnings(
+    "ignore: Dataset has no geotransform, gcps, or rpcs"
+)
 @pytest.mark.functional_tests
+@pytest.mark.slow
 def test_all_possible_combinations():
     """
     Test all the possible combinations directly from methods
@@ -55,7 +93,6 @@ def test_all_possible_combinations():
     test_data_path = get_test_data_path("toulouse_test_data")
 
     # Load a config_tests json config containing all sub steps configuration
-    # Not a cars config file !
     test_cfg_path = os.path.join(test_data_path, "config_tests.json")
 
     # open json config file to run automatically the tests
