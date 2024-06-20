@@ -123,9 +123,10 @@ class PointCloud:
 
     def set_o3d_pcd_from_df(self):
         """Set open3d PointCloud from pandas.DataFrame"""
+        # add np.ascontiguousarray to avoid seg fault in c parts of open3d
         self.o3d_pcd = o3d.geometry.PointCloud(
             points=o3d.utility.Vector3dVector(
-                self.df[["x", "y", "z"]].to_numpy()
+                np.ascontiguousarray(self.df[["x", "y", "z"]].to_numpy())
             )
         )
 
@@ -136,7 +137,6 @@ class PointCloud:
 
     def set_o3d_colors(self) -> None:
         """Set color attribute of open3D PointCloud"""
-
         # Check o3d point cloud is initialized
         if self.o3d_pcd is None:
             raise ValueError("Open3D Point Cloud is empty.")
@@ -163,7 +163,9 @@ class PointCloud:
             where=(colors_arr.max() - colors_arr.min()) != 0.0,
         )
         # add to opend3d point cloud
-        self.o3d_pcd.colors = o3d.utility.Vector3dVector(colors_arr)
+        self.o3d_pcd.colors = o3d.utility.Vector3dVector(
+            np.ascontiguousarray(colors_arr)
+        )
 
     def set_o3d_normals(self) -> None:
         """Set normal attribute of open3D PointCloud"""
@@ -173,7 +175,7 @@ class PointCloud:
             raise ValueError("Open3D Point Cloud is empty.")
 
         self.o3d_pcd.normals = o3d.utility.Vector3dVector(
-            self.df[NORMALS].to_numpy()
+            np.ascontiguousarray(self.df[NORMALS].to_numpy())
         )
 
     def get_vertices(self) -> pd.DataFrame:
@@ -364,10 +366,10 @@ class Mesh:
 
         self.o3d_mesh = o3d.geometry.TriangleMesh(
             vertices=o3d.utility.Vector3dVector(
-                self.pcd.df[["x", "y", "z"]].to_numpy()
+                np.ascontiguousarray(self.pcd.df[["x", "y", "z"]].to_numpy())
             ),
             triangles=o3d.utility.Vector3iVector(
-                self.df[["p1", "p2", "p3"]].to_numpy()
+                np.ascontiguousarray(self.df[["p1", "p2", "p3"]].to_numpy())
             ),
         )
         # Add attributes if available
@@ -414,7 +416,9 @@ class Mesh:
             where=(colors_arr.max() - colors_arr.min()) != 0.0,
         )
         # add to opend3d mesh
-        self.o3d_mesh.vertex_colors = o3d.utility.Vector3dVector(colors_arr)
+        self.o3d_mesh.vertex_colors = o3d.utility.Vector3dVector(
+            np.ascontiguousarray(colors_arr)
+        )
 
     def set_o3d_vertex_normals(self) -> None:
         """Set normal attribute of open3D TriangleMesh"""
@@ -426,7 +430,7 @@ class Mesh:
             )
 
         self.o3d_mesh.vertex_normals = o3d.utility.Vector3dVector(
-            self.pcd.df[NORMALS].to_numpy()
+            np.ascontiguousarray(self.pcd.df[NORMALS].to_numpy())
         )
 
     def set_o3d_image_texture_and_uvs(self) -> None:

@@ -122,7 +122,6 @@ def main(cfg_path: str) -> None:
     cfg_path: str
         Path to the JSON configuration file
     """
-
     # To avoid having a logger INFO for each state machine step
     logging.getLogger("transitions").setLevel(logging.WARNING)
 
