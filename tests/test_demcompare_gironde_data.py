@@ -284,8 +284,6 @@ def test_demcompare_with_gironde_test_data_sampling_ref():
         assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
 
-# Filter warning: Assigning the 'data' attribute will be removed in the future
-@pytest.mark.filterwarnings("ignore: Assigning the 'data' attribute")
 @pytest.mark.end2end_tests
 @pytest.mark.functional_tests
 def test_demcompare_with_gironde_same_dem():

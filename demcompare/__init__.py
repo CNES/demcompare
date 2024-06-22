@@ -278,6 +278,7 @@ def run(
             ]
 
             # generate intermediate stats results CDF and PDF for report
+            # refacto type hinting standardize metrics input type
             stats_processing.compute_stats(
                 classification_layer=["global"],
                 metrics=plot_metrics,  # type: ignore
