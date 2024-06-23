@@ -1,10 +1,10 @@
 "Set Name","mean","median","max","min","sum","percentil_90","squared_sum","nmad","rmse","std","nbpts","percent_valid_points"
-"Slope0_[0%;10%[_&_Status_sea:1",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
-"Slope0_[0%;10%[_&_Status_deep_land:2",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
-"Slope0_[0%;10%[_&_Status_coast:3",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
-"Slope0_[10%;25%[_&_Status_sea:4",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[0%;10%[_&_Status_sea:1",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,584673,46.84107
+"Slope0_[0%;10%[_&_Status_deep_land:2",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,389196,31.18043
+"Slope0_[0%;10%[_&_Status_coast:3",0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,0.0,0.0,267565,21.43596
+"Slope0_[10%;25%[_&_Status_sea:4",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,3958,0.3171
 "Slope0_[10%;25%[_&_Status_deep_land:5",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
-"Slope0_[10%;25%[_&_Status_coast:6",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
+"Slope0_[10%;25%[_&_Status_coast:6",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,56,0.00449
 "Slope0_[25%;50%[_&_Status_sea:7",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
 "Slope0_[25%;50%[_&_Status_deep_land:8",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
 "Slope0_[25%;50%[_&_Status_coast:9",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
