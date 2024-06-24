@@ -12,6 +12,19 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Fixed
 
+## 0.1.2 Fix bugs
+
+### Added
+- add a faster unit test for continuous integration
+- sync gitlab -> github
+
+### Changed
+- new CARS logo
+
+### Fixed
+- bug readthedocs configuration
+- bug segmentation fault Vector3Vector opend3d [#37]
+
 ## 0.1.1 Public version (2023-10-11)
 
 ### Added
