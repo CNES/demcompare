@@ -169,9 +169,12 @@ sync-github:
     # Get in the repo directory
     - cd $(basename $CI_REPOSITORY_URL .git)
 
+    # Checkout to tag or master
+    - git checkout ${CI_COMMIT_REF_NAME}
+
     # push to our branch from HEAD (since we always are on a detached HEAD)
     # configure proxy TECH ! (depends on proxy creds!)
-    - git -c http.proxy=http://${PROXY_USER}:${PROXY_PWD}@${PROXY_URL} push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/CNES/cars-mesh HEAD:master
+    - git -c http.proxy=http://${PROXY_USER}:${PROXY_PWD}@${PROXY_URL} push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/CNES/cars-mesh HEAD:${CI_COMMIT_REF_NAME}
 
     # Add remote github with identification information
     #- git remote add gitlabsync https://${GITHUB_TOKEN_NAME}:${GITHUB_TOKEN}@${GITHUB_URL}/gitlabsync.git
