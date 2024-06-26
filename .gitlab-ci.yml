@@ -179,4 +179,5 @@ sync-github:
     # Trigger only on master branch
   only:
     - master
+    - tags
   timeout: 20 minutes
