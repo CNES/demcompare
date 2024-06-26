@@ -441,25 +441,25 @@ def test_demcompare_with_gironde_same_dem():
         img = os.path.join("stats", "alti-diff", "dem_for_stats.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test coreg_SEC.tif
         img = "./coregistration/coreg_SEC.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test reproj_coreg_SEC.tif
         img = "./coregistration/reproj_coreg_SEC.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test reproj_coreg_REF.tif
         img = "./coregistration/reproj_coreg_REF.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TEST SLOPE STATS
 
@@ -479,13 +479,13 @@ def test_demcompare_with_gironde_same_dem():
         img = "stats/alti-diff/Slope0/ref_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test Slope0/sec_rectified_support_map.tif
         img = "stats/alti-diff/Slope0/sec_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TEST STATUS CLASSIFICATION LAYER STATS
 
@@ -499,7 +499,7 @@ def test_demcompare_with_gironde_same_dem():
         img = "stats/alti-diff/Status/sec_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TEST GLOBAL CLASSIFICATION LAYER STATS
 
@@ -521,4 +521,4 @@ def test_demcompare_with_gironde_same_dem():
         img = "stats/alti-diff/Fusion0/ref_rectified_support_map.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)

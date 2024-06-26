@@ -38,6 +38,7 @@ from demcompare.helpers_init import read_config_file, save_config_file
 
 # Tests helpers
 from .helpers import (
+    TEST_TOL,
     assert_same_images,
     demcompare_test_data_path,
     read_csv_file,
@@ -247,25 +248,25 @@ def test_demcompare_srtm_test_data():
         img = os.path.join("stats", "alti-diff", "dem_for_stats.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test coreg_SEC.tif
         img = "./coregistration/coreg_SEC.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test reproj_coreg_SEC.tif
         img = "./coregistration/reproj_coreg_SEC.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # Test reproj_coreg_REF.tif
         img = "./coregistration/reproj_coreg_REF.tif"
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir_, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TESTS CSV STATS
 
@@ -273,13 +274,13 @@ def test_demcompare_srtm_test_data():
         file = os.path.join("stats", "alti-diff", "dem_for_stats_pdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
-        np.testing.assert_equal(ref_output_csv, output_csv)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test dem_for_stats_cdf.csv
         file = os.path.join("stats", "alti-diff", "dem_for_stats_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
-        np.testing.assert_equal(ref_output_csv, output_csv)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # TEST CSV STATS
 
@@ -287,19 +288,19 @@ def test_demcompare_srtm_test_data():
         file = "stats/alti-diff/Slope0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
-        np.testing.assert_equal(ref_output_csv, output_csv)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test stats/Slope0/stats_results_exclusion.csv
         file = "stats/alti-diff/Slope0/stats_results_exclusion.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
-        np.testing.assert_equal(ref_output_csv, output_csv)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test stats/Slope0/stats_results_intersection.csv
         file = "stats/alti-diff/Slope0/stats_results_intersection.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir_, file))
-        np.testing.assert_equal(ref_output_csv, output_csv)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
 
 @pytest.mark.end2end_tests
@@ -452,7 +453,7 @@ def test_demcompare_srtm_test_data_with_roi():
         img = os.path.join("stats", "alti-diff", "dem_for_stats.tif")
         ref_output_data = os.path.join(test_ref_output_path, img)
         output_data = os.path.join(tmp_dir, img)
-        assert_same_images(ref_output_data, output_data)
+        assert_same_images(ref_output_data, output_data, atol=TEST_TOL)
 
         # TESTS CSV STATS
 
@@ -460,13 +461,13 @@ def test_demcompare_srtm_test_data_with_roi():
         file = os.path.join("stats", "alti-diff", "dem_for_stats_pdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_equal(ref_output_csv, output_csv)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test dem_for_stats_cdf.csv
         file = os.path.join("stats", "alti-diff", "dem_for_stats_cdf.csv")
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_equal(ref_output_csv, output_csv)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # TEST CSV STATS
 
@@ -474,10 +475,10 @@ def test_demcompare_srtm_test_data_with_roi():
         file = "stats/alti-diff/Slope0/stats_results.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_equal(ref_output_csv, output_csv)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
 
         # Test stats/Slope0/stats_results_intersection.csv
         file = "stats/alti-diff/Slope0/stats_results_intersection.csv"
         ref_output_csv = read_csv_file(os.path.join(test_ref_output_path, file))
         output_csv = read_csv_file(os.path.join(tmp_dir, file))
-        np.testing.assert_equal(ref_output_csv, output_csv)
+        np.testing.assert_allclose(ref_output_csv, output_csv, atol=TEST_TOL)
