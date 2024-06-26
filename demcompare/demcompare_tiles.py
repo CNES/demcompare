@@ -25,9 +25,11 @@ This module contains a wrapper for performing tiling on datas
 import argparse
 import json
 import logging
+import multiprocessing as mp
 import os
 import shutil
 import traceback
+from typing import Callable, Tuple
 
 # Third party imports
 import argcomplete
@@ -35,10 +37,9 @@ import numpy as np
 import rasterio
 from affine import Affine
 
+from demcompare import log_conf
 from demcompare import run as run_demcompare_on_tile
 from demcompare.img_tools import convert_pix_to_coord
-
-from . import log_conf
 
 
 def get_parser():
@@ -73,24 +74,198 @@ def get_parser():
     return parser
 
 
-def run_tiles(tiles_config, loglevel):  # pylint:disable=too-many-locals
+def process_tile(args):
+    """
+    Function that uses multiprocessing to run `demcompare`
+    on multiple tiles concurrently.
+
+    :param args: arguments list to compute process_tile with multiprocessing,
+        see list below
+    :type args: list
+
+        :param row: Row index of the tile
+        :type row: int
+        :param col: Column index of the tile
+        :type col: int
+        :param width: Width of the tile
+        :type width: int
+        :param height: Height of the tile
+        :type height: int
+        :param overlap_size: overlap_size between two tiles
+        :type overlap_size: int
+        :param new_geotransform: geotransform's intersection of two tiles
+        :type new_geotransform: affine
+        :param output_dir: output directory for one tile
+        :type output_dir: str
+        :param dict_config: Tile's demcompare configuration
+        :type dict_config: dict
+        :param loglevel: log level
+        :type loglevel: str
+    """
+
+    (
+        row,
+        col,
+        width,
+        height,
+        overlap_size,
+        new_geotransform,
+        output_dir,
+        dict_config,
+        loglevel,
+    ) = args
+
+    # Get tile in DEM
+    top_left_col = col * (width - overlap_size)
+    top_left_row = -row * (height - overlap_size)
+
+    bottom_right_col = top_left_col + width
+    bottom_right_row = top_left_row - height
+
+    left_point = convert_pix_to_coord(
+        new_geotransform, top_left_row, top_left_col
+    )
+    right_point = convert_pix_to_coord(
+        new_geotransform, bottom_right_row, bottom_right_col
+    )
+
+    roi = {
+        "left": float(left_point[0]),
+        "bottom": float(left_point[1]),
+        "right": float(right_point[0]),
+        "top": float(right_point[1]),
+    }
+
+    dict_config["input_ref"]["roi"] = roi
+    dict_config["input_sec"]["roi"] = roi
+
+    saving_dir = os.path.join(output_dir, f"row_{row}/col_{col}/")
+    os.makedirs(saving_dir, exist_ok=True)
+
+    dict_config["output_dir"] = saving_dir
+    config = os.path.join(output_dir, f"with_roi_{row}_{col}.json")
+
+    # Create new config with roi
+    with open(config, "w", encoding="utf-8") as f:
+        json.dump(dict_config, f)
+
+    try:
+        # run demcompare
+        run_demcompare_on_tile(config, loglevel=loglevel)
+
+        with open(
+            os.path.join(
+                saving_dir, "coregistration/coregistration_results.json"
+            ),
+            "r",
+            encoding="utf-8",
+        ) as coreg_results:
+            dict_coreg_results = json.load(coreg_results)
+
+        # Get coregistration results
+        x = dict_coreg_results["coregistration_results"]["dx"]["total_offset"]
+        y = dict_coreg_results["coregistration_results"]["dy"]["total_offset"]
+        z = dict_coreg_results["coregistration_results"]["dz"][
+            "total_bias_value"
+        ]
+
+    # If gradient function doesn't work on tile
+    except ValueError:
+        logging.info(
+            "Tile (%s, %s) is too small, NaN values are returned", row, col
+        )
+        x, y, z = np.nan, np.nan, np.nan
+        shutil.rmtree(saving_dir)
+
+    # remove tile config from disk
+    os.remove(config)
+
+    # tile(row, col), dx, dy, dz
+    return row, col, x, y, z
+
+
+def verify_config(dict_config_tiling: dict) -> Tuple[int, int, int, int]:
+    """
+    Functions that verify tiling configuration
+
+    :param dict_config_tiling: dictionary containing the tiles parameters
+    :type dict_config_tiling: dict
+    :return: height, width, overlap_size, nb_cpu
+    :rtype: Tuple[int, int, int, int]
+    """
+
+    # Function to validate each parameter
+    def validate_param(
+        param_name: str, condition: Callable, error_message: str
+    ) -> int:
+        """
+        Validate parameter from tile_configuration
+        :param param_name: a tile's parameter
+        :type param_name: str
+        :param condition: a lambda function describing the condition
+        :type condition: Callable
+        :param error_message: Error message for user
+        :type error_message: str
+
+        :return: The parameter value
+        :rtype: int
+        """
+        if param_name in dict_config_tiling and condition(
+            dict_config_tiling[param_name]
+        ):
+            return dict_config_tiling[param_name]
+
+        raise ValueError(error_message)
+
+    # Define validation conditions
+    conditions = {
+        "height": lambda x: isinstance(x, int) and x > 0,
+        "width": lambda x: isinstance(x, int) and x > 0,
+        "overlap": lambda x: isinstance(x, int) and x >= 0,
+        "nb_cpu": lambda x: isinstance(x, int) and x > 0,
+    }
+
+    # Validate parameters
+    height = validate_param(
+        "height", conditions["height"], "Height is not consistent"
+    )
+    width = validate_param(
+        "width", conditions["width"], "Width is not consistent"
+    )
+    overlap_size = validate_param(
+        "overlap", conditions["overlap"], "Overlap is not consistent"
+    )
+
+    # Get actual CPU usage from the environment to automate the default pipeline
+    # and validate CPU load.
+    if "nb_cpu" not in dict_config_tiling:
+        nb_cpu = len(os.sched_getaffinity(0))
+    else:
+        nb_cpu = validate_param(
+            "nb_cpu", conditions["nb_cpu"], "Number of CPUs is incorrect"
+        )
+    if nb_cpu > len(os.sched_getaffinity(0)):
+        raise ValueError(
+            "Number of CPUs in the config is more than available CPUs"
+        )
+
+    return height, width, overlap_size, nb_cpu
+
+
+def run_tiles(tiles_config, loglevel):
     """
     Call demcompare_tiles's main
     """
-
     # Logging configuration
     log_conf.setup_logging(default_level=loglevel)
 
     with open(tiles_config, "r", encoding="utf-8") as json_file:
         dict_config = json.load(json_file)
 
-    # tiles management
-    height = dict_config["tiling"]["height"]
-    width = dict_config["tiling"]["width"]
-    overlap_size = dict_config["tiling"]["overlap"]
+    # Verify config and get tiles management
+    height, width, overlap_size, nb_cpu = verify_config(dict_config["tiling"])
 
-    # path management
-    #  working_dir = os.getcwd()
+    # Path management
     output_dir = os.path.abspath(dict_config["output_dir"])
 
     dict_config["input_ref"]["path"] = os.path.abspath(
@@ -130,6 +305,7 @@ def run_tiles(tiles_config, loglevel):  # pylint:disable=too-many-locals
         transformed_sec_bounds, transformed_ref_bounds
     ):
         raise NameError("ERROR: ROIs do not intersect")
+
     intersection_roi = rasterio.coords.BoundingBox(
         max(transformed_sec_bounds[0], transformed_ref_bounds[0]),
         max(transformed_sec_bounds[1], transformed_ref_bounds[1]),
@@ -149,6 +325,7 @@ def run_tiles(tiles_config, loglevel):  # pylint:disable=too-many-locals
         ).to_gdal()
     )
 
+    # Instance of tiles parameters
     image_height = abs(
         int((intersection_roi.top - intersection_roi.bottom) / ref_dem.res[0])
     )
@@ -172,95 +349,43 @@ def run_tiles(tiles_config, loglevel):  # pylint:disable=too-many-locals
         nb_tiles_col += 1
 
     logging.info(
-        "There is %s tiles in columns and %s tiles in row",
+        "There are %s tiles in columns and %s tiles in rows",
         nb_tiles_col,
         nb_tiles_row,
     )
 
-    x_2d = np.empty((nb_tiles_row, nb_tiles_col))
-    y_2d = np.empty((nb_tiles_row, nb_tiles_col))
-    z_2d = np.empty((nb_tiles_row, nb_tiles_col))
+    tasks = [
+        (
+            row,
+            col,
+            width,
+            height,
+            overlap_size,
+            new_geotransform,
+            output_dir,
+            dict_config,
+            loglevel,
+        )
+        for row in range(nb_tiles_row)
+        for col in range(nb_tiles_col)
+    ]
 
-    for row in range(nb_tiles_row):
-        for col in range(nb_tiles_col):
-            top_left_col = col * (width - overlap_size)
-            top_left_row = -row * (height - overlap_size)
+    with mp.Pool(processes=nb_cpu) as pool:
+        results = pool.map(process_tile, tasks)
 
-            bottom_right_col = top_left_col + width
-            bottom_right_row = top_left_row - height
+    # Compute matrix to store dx, dy, dz
+    x_2d = np.full((nb_tiles_row, nb_tiles_col), np.nan)
+    y_2d = np.full((nb_tiles_row, nb_tiles_col), np.nan)
+    z_2d = np.full((nb_tiles_row, nb_tiles_col), np.nan)
 
-            left_point = convert_pix_to_coord(
-                new_geotransform, top_left_row, top_left_col
-            )
-            right_point = convert_pix_to_coord(
-                new_geotransform, bottom_right_row, bottom_right_col
-            )
+    for row, col, x, y, z in results:
+        x_2d[row, col] = x
+        y_2d[row, col] = y
+        z_2d[row, col] = z
 
-            roi = {
-                "left": float(left_point[0]),
-                "bottom": float(left_point[1]),
-                "right": float(right_point[0]),
-                "top": float(right_point[1]),
-            }
-
-            dict_config["input_ref"]["roi"] = roi
-            dict_config["input_sec"]["roi"] = roi
-
-            saving_dir = (
-                output_dir + "/row_" + str(row) + "/col_" + str(col) + "/"
-            )
-
-            dict_config["output_dir"] = saving_dir
-
-            config = output_dir + "/with_roi_" + os.path.basename(tiles_config)
-
-            with open(config, "w", encoding="utf-8") as f:
-                json.dump(dict_config, f)
-
-            try:
-                run_demcompare_on_tile(config, loglevel=loglevel)
-
-                with open(
-                    saving_dir + "coregistration/coregistration_results.json",
-                    "r",
-                    encoding="utf-8",
-                ) as coreg_results:
-                    dict_coreg_results = json.load(coreg_results)
-
-                x_2d[row, col] = dict_coreg_results["coregistration_results"][
-                    "dx"
-                ]["total_offset"]
-                y_2d[row, col] = dict_coreg_results["coregistration_results"][
-                    "dy"
-                ]["total_offset"]
-                # dz directly in altitude unit, offset is directly bias
-                z_2d[row, col] = dict_coreg_results["coregistration_results"][
-                    "dz"
-                ]["total_bias_value"]
-
-            except ValueError:
-                logging.error(
-                    "Tile (%s, %s) is to small, NaN values are returned",
-                    row,
-                    col,
-                )
-                x_2d[row, col] = np.nan
-                y_2d[row, col] = np.nan
-                z_2d[row, col] = np.nan
-
-                shutil.rmtree(saving_dir)
-
-            logging.info(
-                "The %s out of %s tiles is complete",
-                row * nb_tiles_col + col + 1,
-                nb_tiles_row * nb_tiles_col,
-            )
-
-            os.remove(config)
-
-    np.save(output_dir + "/coreg_results_x2D.npy", x_2d)
-    np.save(output_dir + "/coreg_results_y2D.npy", y_2d)
-    np.save(output_dir + "/coreg_results_z2D.npy", z_2d)
+    np.save(os.path.join(output_dir, "coreg_results_x2D.npy"), x_2d)
+    np.save(os.path.join(output_dir, "coreg_results_y2D.npy"), y_2d)
+    np.save(os.path.join(output_dir, "coreg_results_z2D.npy"), z_2d)
 
 
 def main():
