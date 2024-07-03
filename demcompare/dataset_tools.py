@@ -130,6 +130,7 @@ def create_dataset(  # pylint: disable=too-many-arguments, too-many-branches
     )
 
     # Add classification layers
+    # Refacto: put the dict part in caller in dem_tools (only one call)
     if isinstance(classification_layer_masks, dict):
         # Define coords, the third col is the indicator
         # with the classification layer name
@@ -305,9 +306,7 @@ def reproject_dataset(
                 src_nodata=dataset.attrs["nodata"],
                 dst_nodata=from_dataset.attrs["nodata"],
             )
-            classification_layer_masks[
-                :, :, idx
-            ].data = dest_array_classif  # type: ignore
+            classification_layer_masks[:, :, idx] = dest_array_classif
 
         # Define coords, the third col is the indicator
         # with the classification layer name

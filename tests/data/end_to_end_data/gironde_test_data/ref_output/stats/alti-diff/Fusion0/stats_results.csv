@@ -1,5 +1,5 @@
 "Set Name","mean","median","max","min","sum","percentil_90","squared_sum","nmad","rmse","std","nbpts","percent_valid_points"
-"Slope0_[0%;10%[_&_Status_valid:1",1.32648,1.91784,58.27498,-36.03861,1306.58569,12.44714,68871.8125,4.58626,8.36186,8.25597,985,2.78076
+"Slope0_[0%;10%[_&_Status_valid:1",1.32648,1.91784,58.27498,-36.03861,1306.58569,12.44713,68871.8125,4.58626,8.36186,8.25597,985,2.78076
 "Slope0_[0%;10%[_&_Status_KO:2",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
 "Slope0_[0%;10%[_&_Status_Land:3",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
 "Slope0_[0%;10%[_&_Status_NoData:4",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,0,0.0
