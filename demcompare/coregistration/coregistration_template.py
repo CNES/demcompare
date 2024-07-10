@@ -444,6 +444,16 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         ]["nb_valid_points"] = np.count_nonzero(
             ~np.isnan(self.reproj_coreg_ref["image"].data)
         )
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_ref"
+        ]["percentage_valid_points"] = (
+            self.coregistration_results["coregistration_results"][
+                "reproj_coreg_ref"
+            ]["nb_valid_points"]
+            / self.coregistration_results["coregistration_results"][
+                "reproj_coreg_ref"
+            ]["nb_points"]
+        ) * 100
 
         # Reprojected coregistered sec information
         self.coregistration_results["coregistration_results"][
@@ -463,6 +473,16 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         ]["nb_valid_points"] = np.count_nonzero(
             ~np.isnan(self.reproj_coreg_sec["image"].data)
         )
+        self.coregistration_results["coregistration_results"][
+            "reproj_coreg_sec"
+        ]["percentage_valid_points"] = (
+            self.coregistration_results["coregistration_results"][
+                "reproj_coreg_sec"
+            ]["nb_valid_points"]
+            / self.coregistration_results["coregistration_results"][
+                "reproj_coreg_sec"
+            ]["nb_points"]
+        ) * 100
 
         # Obtain unit of the bias and compute x and y biases
         # use abs() to not consider the sign of x,y resolution in orig_sec

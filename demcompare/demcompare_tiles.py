@@ -153,35 +153,15 @@ def process_tile(args):
         # run demcompare
         run_demcompare_on_tile(config, loglevel=loglevel)
 
-        with open(
-            os.path.join(
-                saving_dir, "coregistration/coregistration_results.json"
-            ),
-            "r",
-            encoding="utf-8",
-        ) as coreg_results:
-            dict_coreg_results = json.load(coreg_results)
-
-        # Get coregistration results
-        x = dict_coreg_results["coregistration_results"]["dx"]["total_offset"]
-        y = dict_coreg_results["coregistration_results"]["dy"]["total_offset"]
-        z = dict_coreg_results["coregistration_results"]["dz"][
-            "total_bias_value"
-        ]
-
     # If gradient function doesn't work on tile
     except ValueError:
         logging.info(
             "Tile (%s, %s) is too small, NaN values are returned", row, col
         )
-        x, y, z = np.nan, np.nan, np.nan
         shutil.rmtree(saving_dir)
 
     # remove tile config from disk
     os.remove(config)
-
-    # tile(row, col), dx, dy, dz
-    return row, col, x, y, z
 
 
 def verify_config(dict_config_tiling: dict) -> Tuple[int, int, int, int]:
@@ -252,7 +232,33 @@ def verify_config(dict_config_tiling: dict) -> Tuple[int, int, int, int]:
     return height, width, overlap_size, nb_cpu
 
 
-def run_tiles(tiles_config, loglevel):
+def get_coreg_results(
+    coreg_results: dict,
+) -> Tuple[float, float, float, float, float]:
+    """
+    Get coregistration results for one tile
+
+    :param coreg_results: Coregistration dictionary results
+    :type coreg_results: dict
+    :return: x, y and z shifts, percentage of valid data (ref, sec)
+    :rtype: float, float, float, float, float
+    """
+
+    x = coreg_results["coregistration_results"]["dx"]["total_offset"]
+    y = coreg_results["coregistration_results"]["dy"]["total_offset"]
+    z = coreg_results["coregistration_results"]["dz"]["total_bias_value"]
+
+    nb_valid_pts_ref = coreg_results["coregistration_results"][
+        "reproj_coreg_ref"
+    ]["percentage_valid_points"]
+    nb_valid_pts_sec = coreg_results["coregistration_results"][
+        "reproj_coreg_sec"
+    ]["percentage_valid_points"]
+
+    return x, y, z, nb_valid_pts_ref, nb_valid_pts_sec
+
+
+def run_tiles(tiles_config, loglevel):  # pylint:disable=too-many-locals
     """
     Call demcompare_tiles's main
     """
@@ -371,21 +377,44 @@ def run_tiles(tiles_config, loglevel):
     ]
 
     with mp.Pool(processes=nb_cpu) as pool:
-        results = pool.map(process_tile, tasks)
+        _ = pool.map(process_tile, tasks)
 
-    # Compute matrix to store dx, dy, dz
+    # Compute matrix to store dx, dy, dz and valid points percentage
     x_2d = np.full((nb_tiles_row, nb_tiles_col), np.nan)
     y_2d = np.full((nb_tiles_row, nb_tiles_col), np.nan)
     z_2d = np.full((nb_tiles_row, nb_tiles_col), np.nan)
+    percentage_valid_points = np.full((2, nb_tiles_row, nb_tiles_col), np.nan)
 
-    for row, col, x, y, z in results:
-        x_2d[row, col] = x
-        y_2d[row, col] = y
-        z_2d[row, col] = z
+    for row in range(nb_tiles_row):
+        for col in range(nb_tiles_col):
+
+            # Sometimes demcompare is not robust and the directory is removed
+            if os.path.isdir(output_dir + f"/row_{row}/col_{col}"):
+                with open(
+                    output_dir + f"/row_{row}/col_{col}/coregistration/"
+                    f"coregistration_results.json",
+                    "r",
+                    encoding="utf-8",
+                ) as json_file:
+                    coreg_results = json.load(json_file)
+
+                x, y, z, valid_point_ref, valid_point_sec = get_coreg_results(
+                    coreg_results
+                )
+
+                x_2d[row, col] = x
+                y_2d[row, col] = y
+                z_2d[row, col] = z
+                percentage_valid_points[0, row, col] = valid_point_ref
+                percentage_valid_points[1, row, col] = valid_point_sec
 
     np.save(os.path.join(output_dir, "coreg_results_x2D.npy"), x_2d)
     np.save(os.path.join(output_dir, "coreg_results_y2D.npy"), y_2d)
     np.save(os.path.join(output_dir, "coreg_results_z2D.npy"), z_2d)
+    np.save(
+        os.path.join(output_dir, "percentage_valid_points.npy"),
+        percentage_valid_points,
+    )
 
 
 def main():
