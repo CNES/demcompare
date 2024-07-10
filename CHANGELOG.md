@@ -12,7 +12,27 @@ A new section Unreleased is opened then for next dev phase.
 
 ### Fixed
 
-## 0.6.0 New metrics and dem processings
+## 0.6.1 Tiling POC, bugs, typos 
+
+### Added 
+
+- pyarrow installation in developer mode [#252]
+- **POC** multiprocessing tiling of demcompare [#254, #266, #259]
+- Publishing to PyPI from GitHub instead of Jenkins [#256]
+
+### Changed
+
+- coreg_sec.tif not saved automatically [#257]
+- remove Dockerfile [#29]
+- Strengthen the calculation of slopes [#161]
+
+### Fixed
+
+- documentation on classification size [#211]
+- typo error [#250, #255]
+- using numpy 2.0.0 [#267]
+
+## 0.6.0 New metrics and dem processing
 
 ### Added
 
