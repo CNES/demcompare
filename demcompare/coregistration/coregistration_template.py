@@ -116,8 +116,8 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
         # Fill configuration file
         self.cfg = self.fill_conf_and_schema(cfg)
-        # Check and update configuration file
-        self.cfg = self.check_conf(self.cfg)
+        # Check configuration file
+        self.check_conf(self.cfg)
 
         # Initialize coregistration attributes
 
@@ -193,7 +193,7 @@ class CoregistrationTemplate(metaclass=ABCMeta):
         }
         return cfg
 
-    def check_conf(self, cfg: ConfigType = None) -> ConfigType:
+    def check_conf(self, cfg: ConfigType = None):
         """
         Check if the config is correct according
         to the class configuration schema
@@ -202,13 +202,10 @@ class CoregistrationTemplate(metaclass=ABCMeta):
 
         :param cfg: coregistration configuration
         :type cfg: ConfigType
-        :return: cfg coregistration configuration updated
-        :rtype: ConfigType
         """
 
         checker = Checker(self.schema)
-        cfg = checker.validate(cfg)
-        return cfg
+        checker.validate(cfg)
 
     def prepare_dems_for_coregistration(
         self,

@@ -96,9 +96,9 @@ class StatsProcessing:
         :type dem_processing_method: str
         :return: None
         """
-        # Cfg
-        cfg = self.fill_conf(cfg)
-        self.cfg: Dict = cfg
+        # Set cfg attribute after completing it.
+        self.cfg: Dict = self.fill_conf(cfg)
+        # check json config with json checker to be done !
 
         # Output directory
         self.output_dir: Union[str, None] = self.cfg["output_dir"]
