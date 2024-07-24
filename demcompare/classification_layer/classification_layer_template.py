@@ -120,8 +120,8 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
                 raise ValueError
         # Fill configuration file
         self.cfg: Dict = self.fill_conf_and_schema(cfg)
-        # Check and update configuration file
-        self.cfg = self.check_conf(self.cfg)
+        # Check configuration file
+        self.check_conf(self.cfg)
         # Nodata value
         self.nodata: Union[float, int] = self.cfg["nodata"]
         # Nodata array
@@ -183,7 +183,7 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
         }
         return cfg
 
-    def check_conf(self, cfg: ConfigType = None) -> ConfigType:
+    def check_conf(self, cfg: ConfigType = None):
         """
         Check if the config is correct according
         to the class configuration schema
@@ -192,13 +192,10 @@ class ClassificationLayerTemplate(metaclass=ABCMeta):
 
         :param cfg: coregistration configuration
         :type cfg: ConfigType
-        :return cfg: coregistration configuration updated
-        :rtype: ConfigType
         """
 
         checker = Checker(self.schema)
         cfg = checker.validate(cfg)
-        return cfg
 
     def compute_classif_stats(
         self,
