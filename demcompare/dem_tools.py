@@ -886,8 +886,11 @@ def accumulates_class_layers(  # pylint:disable=too-many-branches
             updated_data[:, :, classif_layers_datarray.shape[2] :] = sec[
                 "classification_layer_masks"
             ].data
-
-            indicator = np.copy(classif_layers_datarray.coords["indicator"])
+            # quick fix to avoid deprecation warning using to_numpy
+            # Clean must be done using xr.dataArray all along and not numpy
+            indicator = np.copy(
+                classif_layers_datarray.coords["indicator"].to_numpy()
+            )
             for new_indicator in sec["classification_layer_masks"].coords[
                 "indicator"
             ]:
