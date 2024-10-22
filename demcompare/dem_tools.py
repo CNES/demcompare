@@ -1011,6 +1011,10 @@ def compute_dem_slope(
         lon, lat = convert_pix_to_coord(
             dataset["georef_transform"].data, yp, xp
         )
+        # lon, lat is flattened in rasterio > 1.4.0, to be corrected
+        # quick fix, reshape after function
+        lon = np.reshape(lon, (ny, nx))
+        lat = np.reshape(lat, (ny, nx))
         lonr = np.roll(lon, 1, 1)
         latl = np.roll(lat, 1, 0)
         # Get distance between all pixels
