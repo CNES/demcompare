@@ -187,9 +187,9 @@ class NuthKaabInternal(CoregistrationTemplate):
             np.abs(initial_dh[np.isfinite(initial_dh)] - median)
         )
         maxval = 3 * nmad_old
-        fig1, ax1 = plt.subplots(figsize=(7.0, 8.0))        
+        fig1, ax1 = plt.subplots(figsize=(7.0, 8.0))
         image_ax1 = ax1.imshow(initial_dh, vmin=-maxval, vmax=maxval)
-        color_bar = fig.colorbar(image_ax1, ax=ax1)
+        color_bar = fig1.colorbar(image_ax1, ax=ax1)
         color_bar.set_label("Elevation difference (m)")
         if self.save_optional_outputs:
             output_dir_ = os.path.join(self.output_dir, "./nuth_kaab_tmp_dir")
@@ -327,9 +327,9 @@ class NuthKaabInternal(CoregistrationTemplate):
             np.abs(final_dh[np.isfinite(final_dh)] - median)
         )
         maxval = 3 * nmad_old
-        fig2, ax2 = plt.subplots(figsize=(7.0, 8.0))        
+        fig2, ax2 = plt.subplots(figsize=(7.0, 8.0))
         image_ax2 = ax2.imshow(final_dh, vmin=-maxval, vmax=maxval)
-        color_bar2 = fig.colorbar(image_ax2, ax=ax2)        
+        color_bar2 = fig2.colorbar(image_ax2, ax=ax2)
         color_bar2.set_label("Elevation difference (m)")
         if self.save_optional_outputs:
             output_dir_ = os.path.join(self.output_dir, "./nuth_kaab_tmp_dir")

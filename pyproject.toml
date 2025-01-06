@@ -36,6 +36,7 @@ profile = 'black'
 line_length = 80
 
 [tool.mypy]
+explicit_package_bases = true
 no_implicit_optional = false
 strict_optional = false
 allow_redefinition = true
