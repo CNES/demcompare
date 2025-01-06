@@ -36,7 +36,7 @@ import os
 from typing import Tuple, Union
 
 # Third party imports
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from json_checker import And
@@ -187,18 +187,18 @@ class NuthKaabInternal(CoregistrationTemplate):
             np.abs(initial_dh[np.isfinite(initial_dh)] - median)
         )
         maxval = 3 * nmad_old
-        pl.figure(1, figsize=(7.0, 8.0))
-        pl.imshow(initial_dh, vmin=-maxval, vmax=maxval)
-        color_bar = pl.colorbar()
+        fig1, ax1 = plt.subplots(figsize=(7.0, 8.0))        
+        image_ax1 = ax1.imshow(initial_dh, vmin=-maxval, vmax=maxval)
+        color_bar = fig.colorbar(image_ax1, ax=ax1)
         color_bar.set_label("Elevation difference (m)")
         if self.save_optional_outputs:
             output_dir_ = os.path.join(self.output_dir, "./nuth_kaab_tmp_dir")
-            pl.savefig(
+            fig1.savefig(
                 os.path.join(output_dir_, "ElevationDiff_BeforeCoreg.png"),
                 dpi=100,
                 bbox_inches="tight",
             )
-        pl.close()
+        plt.close(fig1)
         # Initialize offsets
         x_offset, y_offset = 0.0, 0.0
         logging.debug("Nuth & Kaab iterations: %s", self.iterations)
@@ -327,18 +327,18 @@ class NuthKaabInternal(CoregistrationTemplate):
             np.abs(final_dh[np.isfinite(final_dh)] - median)
         )
         maxval = 3 * nmad_old
-        pl.figure(1, figsize=(7.0, 8.0))
-        pl.imshow(final_dh, vmin=-maxval, vmax=maxval)
-        color_bar = pl.colorbar()
-        color_bar.set_label("Elevation difference (m)")
+        fig2, ax2 = plt.subplots(figsize=(7.0, 8.0))        
+        image_ax2 = ax2.imshow(final_dh, vmin=-maxval, vmax=maxval)
+        color_bar2 = fig.colorbar(image_ax2, ax=ax2)        
+        color_bar2.set_label("Elevation difference (m)")
         if self.save_optional_outputs:
             output_dir_ = os.path.join(self.output_dir, "./nuth_kaab_tmp_dir")
-            pl.savefig(
+            fig2.savefig(
                 os.path.join(output_dir_, "ElevationDiff_AfterCoreg.png"),
                 dpi=100,
                 bbox_inches="tight",
             )
-        pl.close()
+        plt.close(fig2)
         z_offset = float(np.nanmean(final_dh))
         transform = Transformation(
             x_offset=x_offset,
@@ -698,8 +698,8 @@ class NuthKaabInternal(CoregistrationTemplate):
         """
 
         # plotting results
-        pl.figure(1, figsize=(7.0, 8.0))
-        pl.plot(
+        fig, ax = plt.subplots(figsize=(7.0, 8.0))
+        ax.plot(
             aspect * 180 / np.pi,
             target,
             ".",
@@ -707,33 +707,35 @@ class NuthKaabInternal(CoregistrationTemplate):
             markersize=3,
             label="target",
         )
-        pl.plot(
+        ax.plot(
             aspect * 180 / np.pi,
             target_filt,
             "c.",
             markersize=3,
             label="target filtered",
         )
-        pl.plot(
+        ax.plot(
             self.aspect_bounds * 180 / np.pi,
             slice_filt_median,
             "k.",
             label="median",
         )
-        pl.plot(
-            self.aspect_bounds * 180 / np.pi, yfit, "b-", label="median fit"
+        ax.plot(
+            self.aspect_bounds * 180 / np.pi,
+            yfit,
+            "b-",
+            label="median fit",
         )
-        pl.xlabel("Terrain aspect (deg)")
-        pl.ylabel(r"dh/tan($\alpha$) (meters)")
+        ax.set_xlabel("Terrain aspect (deg)")
+        ax.set_ylabel(r"dh/tan($\alpha$) (meters)")
         # set axes limit on twice the min/max of the median,
         # or +-2 if the value is below it
-        axes = pl.gca()
         ax_min = np.min([np.nanmin(slice_filt_median) * 2, -2])
         ax_max = np.max([np.nanmax(slice_filt_median) * 2, 2])
-        axes.set_ylim((ax_min, ax_max))
-        pl.legend(loc="upper left")
-        pl.savefig(plot_file, dpi=100, bbox_inches="tight")
-        pl.close()
+        ax.set_ylim((ax_min, ax_max))
+        ax.legend(loc="upper left")
+        fig.savefig(plot_file, dpi=100, bbox_inches="tight")
+        plt.close(fig)
 
     def save_results_dict(self):
         """
