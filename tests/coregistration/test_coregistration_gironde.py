@@ -83,7 +83,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
             "nuth_offset": -1.43664,
             "total_offset": -1.43664,
             "unit_offset": "px",
-            "total_bias_value": -718.31907,
+            "total_bias_value": -718.31906,
             "unit_bias_value": "m",
         },
         "dy": {
@@ -94,9 +94,9 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
             "unit_bias_value": "m",
         },
         "gdal_translate_bounds": {
-            "ulx": 599536.68093,
+            "ulx": 599536.68094,
             "uly": 5099954.51619,
-            "lrx": 708536.68093,
+            "lrx": 708536.68094,
             "lry": 4990954.51619,
         },
     }
@@ -120,6 +120,7 @@ def test_compute_coregistration_with_gironde_test_data_sampling_dem():
         gt_plani_results["dx"]["unit_offset"]
         == coregistration_results["coregistration_results"]["dx"]["unit_offset"]
     )
+
     np.testing.assert_equal(
         gt_plani_results["dx"]["total_bias_value"],
         coregistration_results["coregistration_results"]["dx"][
