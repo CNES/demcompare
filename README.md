@@ -16,6 +16,10 @@
 </p>
 </div>
 
+## Caution
+
+DemCompare is not maintained anymore. You can use xDEM instead: https://github.com/GlacioHack/xdem. 
+
 ## Overview
 
 Demcompare is a python software that aims at **comparing two DEMs** together.
